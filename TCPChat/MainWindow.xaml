@@ -1,0 +1,482 @@
+﻿<Window x:Class="TCPChat.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="TCP Chat"
+        MinHeight="400"
+        MinWidth="350"
+        Height="400" 
+        Width="350" 
+        Closed="Window_Closed" 
+        Icon="chat.ico"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+
+        <DataTemplate x:Key="CommonMessageTemplate">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Path=Title}"
+                               FontWeight="Bold"
+                               TextWrapping="Wrap"
+                               Foreground="#FFAA0000"
+                               Margin="6, 2.5, 0, 2.5"/>
+
+                    <TextBlock Text="{Binding Path=Sender.Nick}"
+                               FontWeight="Bold"
+                               Margin="0, 2.5, 5, 2.5"
+                               TextWrapping="Wrap">
+
+                        <TextBlock.Foreground>
+                            <SolidColorBrush Color="{Binding Path=Sender.NickColor}"/>
+                        </TextBlock.Foreground>
+
+                    </TextBlock>
+                </StackPanel>
+
+                <TextBox IsReadOnly="True"
+                         BorderThickness="0"
+                         Text="{Binding Path=Message}"
+                         TextWrapping="Wrap"
+                         Margin="5, 2.5, 5, 2.5"
+                         Padding="0"
+                         Background="Transparent"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="SystemMessageTemplate">
+            <StackPanel Orientation="Vertical">
+                <TextBox IsReadOnly="True"
+                         BorderThickness="0"
+                         Text="{Binding Path=Message}"
+                         TextWrapping="Wrap"
+                         Margin="5, 2.5, 5, 2.5"
+                         Padding="0"
+                         Background="Transparent"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="PrivateMessageTemplate">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Path=Title}"
+                               FontWeight="Bold"                           
+                               TextWrapping="Wrap"
+                               Foreground="#FF00AA00"
+                               Margin="6, 2.5, 0, 2.5"/>
+
+                    <TextBlock Text="{Binding Path=Sender.Nick}"
+                               FontWeight="Bold"                           
+                               TextWrapping="Wrap"
+                               Margin="0, 2.5, 0, 2.5">
+
+                        <TextBlock.Foreground>
+                            <SolidColorBrush Color="{Binding Path=Sender.NickColor}"/>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+
+                    <TextBlock Text=" to: "
+                               FontWeight="Bold"                           
+                               TextWrapping="Wrap"
+                               Foreground="#FF00AA00"
+                               Margin="0, 2.5, 0, 2.5"/>
+
+                    <TextBlock Text="{Binding Path=Receiver.Nick}"
+                               FontWeight="Bold"                           
+                               TextWrapping="Wrap"
+                               Margin="0, 2.5, 5, 2.5">
+
+                        <TextBlock.Foreground>
+                            <SolidColorBrush Color="{Binding Path=Receiver.NickColor}"/>
+                        </TextBlock.Foreground>
+
+                    </TextBlock>
+                </StackPanel>
+
+                <TextBox IsReadOnly="True"
+                         BorderThickness="0"
+                         Text="{Binding Path=Message}"
+                         TextWrapping="Wrap"
+                         Margin="5, 2.5, 5, 2.5"
+                         Padding="0"
+                         Background="Transparent"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="FileMessageTemplate">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Path=Title}"
+                               FontWeight="Bold"
+                               TextWrapping="Wrap"
+                               Foreground="#FFAA0000"
+                               Margin="6, 2.5, 0, 2.5"/>
+
+                    <TextBlock Text="{Binding Path=Sender.Nick}"
+                               FontWeight="Bold"
+                               Margin="0, 2.5, 5, 2.5"
+                               TextWrapping="Wrap">
+
+                        <TextBlock.Foreground>
+                            <SolidColorBrush Color="{Binding Path=Sender.NickColor}"/>
+                        </TextBlock.Foreground>
+
+                    </TextBlock>
+                </StackPanel>
+
+                <TextBlock Text="{Binding Path=Message}"
+                           Tag="{Binding Path=File}"
+                           TextWrapping="Wrap"
+                           Margin="5, 2.5, 5, 2.5"
+                           Padding="0"
+                           Background="Transparent"
+                           MouseDown="DownloadFile_Click"
+                           Foreground="Blue"
+                           Cursor="Hand"
+                           TextDecorations="Underline"/>
+
+                <ProgressBar Height="10"
+                             Margin="5, 2.5, 5, 2.5" SmallChange="1"
+                             Value="{Binding Path=Progress}">
+                    <ProgressBar.Style>
+                        <Style>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=Progress}"
+                                             Value="0">
+                                    <Setter Property="ProgressBar.Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ProgressBar.Style>
+                </ProgressBar>
+            </StackPanel>
+        </DataTemplate>
+
+        <Style x:Key="MessagesStyle">
+            <Style.Triggers>
+
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=IsSystem}" 
+                                   Value="False"/>
+                        <Condition Binding="{Binding Path=IsPrivate}" 
+                                   Value="False"/>
+                        <Condition Binding="{Binding Path=IsFile}"
+                                   Value="False"/>
+                    </MultiDataTrigger.Conditions>
+                    <MultiDataTrigger.Setters>
+                        <Setter Property="ContentPresenter.ContentTemplate" 
+                                Value="{StaticResource ResourceKey=CommonMessageTemplate}"/>
+                    </MultiDataTrigger.Setters>
+                </MultiDataTrigger>
+
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=IsSystem}" 
+                                   Value="True"/>
+                        <Condition Binding="{Binding Path=IsPrivate}" 
+                                   Value="False"/>
+                        <Condition Binding="{Binding Path=IsFile}"
+                                   Value="False"/>
+                    </MultiDataTrigger.Conditions>
+                    <MultiDataTrigger.Setters>
+                        <Setter Property="ContentPresenter.ContentTemplate" 
+                                Value="{StaticResource ResourceKey=SystemMessageTemplate}"/>
+                    </MultiDataTrigger.Setters>
+                </MultiDataTrigger>
+
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=IsSystem}" 
+                                   Value="False"/>
+                        <Condition Binding="{Binding Path=IsPrivate}" 
+                                   Value="True"/>
+                        <Condition Binding="{Binding Path=IsFile}"
+                                   Value="False"/>
+                    </MultiDataTrigger.Conditions>
+                    <MultiDataTrigger.Setters>
+                        <Setter Property="ContentPresenter.ContentTemplate" 
+                                Value="{StaticResource ResourceKey=PrivateMessageTemplate}"/>
+                    </MultiDataTrigger.Setters>
+                </MultiDataTrigger>
+
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=IsSystem}" 
+                                   Value="False"/>
+                        <Condition Binding="{Binding Path=IsPrivate}" 
+                                   Value="False"/>
+                        <Condition Binding="{Binding Path=IsFile}"
+                                   Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <MultiDataTrigger.Setters>
+                        <Setter Property="ContentPresenter.ContentTemplate" 
+                                Value="{StaticResource ResourceKey=FileMessageTemplate}"/>
+                    </MultiDataTrigger.Setters>
+                </MultiDataTrigger>
+
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="UsersTemplate">
+            <TextBlock Text="{Binding Path=Nick}"
+                       Margin="5,2.5,5,2.5"                     
+                       FontWeight="Bold"
+                       Cursor="Hand"
+                       MouseLeftButtonDown="User_Click">
+
+                <TextBlock.Foreground>
+                    <SolidColorBrush x:Name="ForegroundBrush"
+                                     Color="{Binding Path=NickColor}"/>
+                </TextBlock.Foreground>
+
+                <TextBlock.ContextMenu>
+                    <ContextMenu>
+                        <ContextMenu.Resources>
+                            <Style x:Key="TriggerMenuStyle">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=ItsMe}" 
+                                                 Value="True">
+                                        <Setter Property="Control.IsEnabled"
+                                                Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContextMenu.Resources>
+
+                        <MenuItem Header="Написать ЛС"
+                                  Tag="{Binding Path=Nick}"
+                                  Click="SendPM_Click"
+                                  Style="{StaticResource ResourceKey=TriggerMenuStyle}"/>
+
+                        <MenuItem Header="Назначить администратором"
+                                  Tag="{Binding Path=Nick}"
+                                  Click="SetRoomAdmin_Click"
+                                  Style="{StaticResource ResourceKey=TriggerMenuStyle}"/>
+                    </ContextMenu>
+                </TextBlock.ContextMenu>
+
+                <TextBlock.Triggers>
+
+                    <EventTrigger RoutedEvent="TextBlock.ContextMenuOpening">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetName="ForegroundBrush"
+										        Storyboard.TargetProperty="Color" 
+                                                Duration="0:0:0.2" 
+                                                To="Black" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+
+                    <EventTrigger RoutedEvent="TextBlock.ContextMenuClosing">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetName="ForegroundBrush"
+										        Storyboard.TargetProperty="Color" 
+                                                Duration="0:0:0.2" 
+                                                To="{Binding Path=NickColor}"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+
+                    <EventTrigger RoutedEvent="TextBlock.MouseLeftButtonDown">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetName="ForegroundBrush"
+										        Storyboard.TargetProperty="Color"
+                                                AutoReverse="True"
+                                                Duration="0:0:0.2"
+                                                To="Black"
+                                                From="{Binding Path=NickColor}"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+
+                </TextBlock.Triggers>
+            </TextBlock>
+        </DataTemplate>
+
+        <DataTemplate x:Key="RoomTabTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" MinWidth="200"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*" MinWidth="100"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="4*" MinHeight="200"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="1*" MinHeight="50"/>
+                </Grid.RowDefinitions>
+
+                <Border Margin="5, 5, 0, 0"
+                        Grid.Column="0"
+                        BorderThickness="1" 
+                        BorderBrush="#FF828790" 
+                        Background="White">
+
+                    <ScrollViewer x:Name="MessagesListScroll" 
+                                  VerticalScrollBarVisibility="Auto" 
+                                  Loaded="MessagesListScroll_Loaded">
+
+                        <ItemsControl x:Name="MessagesList"
+                                      VerticalAlignment="Top"
+                                      ItemContainerStyle="{StaticResource ResourceKey=MessagesStyle}"                              
+                                      ItemsSource="{Binding Path=MessagesCollection, UpdateSourceTrigger=PropertyChanged}"/>
+                    </ScrollViewer>
+                </Border>
+
+                <Border Margin="0, 5, 5, 0"
+                        Grid.Column="2"
+                        BorderThickness="1" 
+                        BorderBrush="#FF828790" 
+                        Background="White">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="UsersList"
+                                      ItemTemplate="{StaticResource ResourceKey=UsersTemplate}"
+                                      ItemsSource="{Binding Path=UsersCollection, UpdateSourceTrigger=PropertyChanged}"/>
+                    </ScrollViewer>
+                </Border>
+
+                <GridSplitter Grid.Column="1" 
+                              Grid.Row="0"
+                              Grid.RowSpan="1"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Width="5" 
+                              Background="Transparent"/>
+
+                <GridSplitter Grid.Column="0"
+                              Grid.ColumnSpan="3"
+                              Grid.Row="1" 
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Height="5"
+                              Background="Transparent"/>
+
+                <Border Margin="5, 0, 5, 5"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="3"
+                        Grid.Row="2"
+                        BorderThickness="1" 
+                        BorderBrush="#FF828790" 
+                        Background="White">
+
+                    <TextBox x:Name="MessageField"
+                             BorderThickness="0"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             PreviewKeyDown="MessageField_PreviewKeyDown"
+                             Loaded="MessageField_Loaded"
+                             PreviewDrop="File_PreviewDrop"
+                             PreviewDragOver="File_PreviewDragOver"
+                             AllowDrop="True"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" MinWidth="150"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Menu x:Name="ChatMenu"
+              Grid.Column="0"
+              Grid.ColumnSpan="3"
+              Grid.Row="0">
+            <MenuItem Header="Соединение">
+
+                <MenuItem Header="Подключиться"
+                          Click="Connect_Click"/>
+                <MenuItem Header="Разорвать соединение"
+                          Click="Disconnect_Click"/>
+                <Separator/>
+                <MenuItem Header="Включить сервер"
+                          Click="EnableServer_Click"/>
+                <MenuItem Header="Выключить сервер"
+                          Click="DisableServer_Click"/>
+                <Separator/>
+                <MenuItem Header="Выход"
+                          Click="Exit_Click"/>
+            </MenuItem>
+
+            <MenuItem Header="Комнаты">
+                <MenuItem Header="Создать комнату"
+                          Click="CreateRoom_Click"/>
+                <MenuItem Header="Закрыть комнату"
+                          Click="DeleteRoom_Click"/>
+                <Separator/>
+                <MenuItem Header="Пригласить в комнату"
+                          Click="InvateInRoom_Click"/>
+                <MenuItem Header="Кикнуть из комнаты"
+                          Click="KickFormRoom_Click"/>
+                <Separator/>
+                <MenuItem Header="Выйти из комнаты"
+                          Click="ExitFormRoom_Click"/>
+            </MenuItem>
+
+            <MenuItem Header="Файлы">
+                <MenuItem Header="Раздающиеся файлы"
+                          Click="Files_Click"/>
+                <Separator/>
+                <MenuItem Header="Добавить файл в комнату"
+                          Click="AddFile_Click"/>
+            </MenuItem>
+
+            <MenuItem Header="Другое">
+                <MenuItem x:Name="AlertsMenuBtn"
+                          Header="Оповещения"
+                          IsCheckable="True"
+                          IsChecked="True"/>
+            </MenuItem>
+        </Menu>
+
+        <ToolBar x:Name="ChatToolBar"
+                 Grid.Column="0"
+                 Grid.ColumnSpan="3"
+                 Grid.Row="1">
+            <Button x:Name="EnableServer"
+                    Content="Включить сервер"
+                    Margin="2"
+                    Click="EnableServer_Click"/>
+
+            <Button x:Name="Connect"
+                    Content="Подключиться"
+                    Margin="2"
+                    Click="Connect_Click"/>           
+        </ToolBar>
+
+        <TabControl x:Name="ChatRooms"
+                    BorderThickness="0"
+                    Grid.Column="0"
+                    Grid.Row="2" 
+                    Padding="0" 
+                    SelectedIndex="0"
+                    ContentTemplate="{StaticResource ResourceKey=RoomTabTemplate}"
+                    SelectionChanged="ChatRooms_SelectionChanged">
+
+            <TabControl.ItemContainerStyle>
+                <Style>
+                    <Setter Property="TabItem.Header" Value="{Binding Path=RoomName}"/>
+
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=Updated}" Value="True">
+                            <Setter Property="TabItem.Foreground" Value="Red"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TabControl.ItemContainerStyle>
+
+        </TabControl>
+    </Grid>
+</Window>
