@@ -1,7 +1,7 @@
 TCPChat
 =======
 
-![alt tag](https://github.com/Nirklav/TCPChat/blob/master/screen.png)
+![alt tag](https://raw.github.com/Nirklav/TCPChat/master/screen.png)
 
 Многопользовательский чат, работающий по протоколу TCP. 
 Поддержка личных сообщений, комнат, а также передача файлов (пока реализована через сервер).
