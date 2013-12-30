@@ -14,6 +14,7 @@
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
     <TargetFrameworkProfile />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>опубликовать\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -26,7 +27,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -60,7 +60,14 @@
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>Key.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <PropertyGroup>
+    <NoWin32Manifest>true</NoWin32Manifest>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Lidgren.Network, Version=2012.1.7.0, Culture=neutral, PublicKeyToken=a529c9bb5641bc9e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\Lidgren.Network.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -78,6 +85,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Dialogs\AboutProgramDialog.xaml.cs">
+      <DependentUpon>AboutProgramDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Dialogs\ConnectDialog.xaml.cs">
       <DependentUpon>ConnectDialog.xaml</DependentUpon>
     </Compile>
@@ -94,9 +104,11 @@
     <Compile Include="Engine\API\StandartAPI\StandartClientAPI.cs" />
     <Compile Include="Engine\Connections\ClientConnection.cs" />
     <Compile Include="Engine\Connections\Connection.cs" />
+    <Compile Include="Engine\Connections\PeerConnection.cs" />
     <Compile Include="Engine\Crypter.cs" />
     <Compile Include="Engine\EngineContainers.cs" />
     <Compile Include="Engine\EngineExceptions.cs" />
+    <Compile Include="Engine\P2PService.cs" />
     <Compile Include="Engine\RoomDescription.cs" />
     <Compile Include="Engine\FileDescription.cs" />
     <Compile Include="Engine\UserDescription.cs" />
@@ -109,7 +121,11 @@
     </Compile>
     <Compile Include="Dialogs\RgbToColorConverter.cs" />
     <Compile Include="RoomContainer.cs" />
-    <Compile Include="UsersContainer.cs" />
+    <Compile Include="UserContainer.cs" />
+    <Page Include="Dialogs\AboutProgramDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Dialogs\ConnectDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -191,6 +207,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

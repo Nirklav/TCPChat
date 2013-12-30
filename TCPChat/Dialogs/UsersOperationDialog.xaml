@@ -44,15 +44,15 @@
             <Button x:Name="OkBtn"
                     Content="Принять"
                     Margin="10, 5, 5, 10"
-                    Width="100"
-                    Height="25"
+                    MinWidth="100"
+                    MinHeight="25"
                     Click="OkBtn_Click"/>
 
             <Button x:Name="CancelBtn"
                     Content="Отмена"
                     Margin="5, 5, 10, 10"
-                    Width="100"
-                    Height="25"
+                    MinWidth="100"
+                    MinHeight="25"
                     Click="CancelBtn_Click"/>
         </StackPanel>
     </Grid>

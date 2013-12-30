@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
+using TCPChat.Engine.Connections;
 
 namespace TCPChat.Engine
 {
@@ -52,5 +54,13 @@ namespace TCPChat.Engine
         public FileDescription File { get; set; }
         public string RoomName { get; set; }
         public bool Canceled { get; set; }
+    }
+
+    public class AddressReceivedEventArgs : EventArgs
+    {
+        public IPEndPoint RemoutePoint { get; set; }
+        public ServerConnection ReceivingConnection { get; set; }
+        public ServerConnection SendedConnection { get; set; }
+        public Exception Error { get; set; }
     }
 }

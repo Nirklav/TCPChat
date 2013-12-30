@@ -1,23 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Drawing;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Runtime.InteropServices;
 using System.Windows.Interop;
+using System.Xml.Linq;
 using TCPChat.Dialogs;
 using TCPChat.Engine;
 using TCPChat.Engine.Connections;
-using System.Threading;
-using System.Xml.Linq;
-using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
-using System.IO;
+using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 
 namespace TCPChat
 {
@@ -30,6 +30,7 @@ namespace TCPChat
         const string ProgramName = "TCPChat";
         const string ServerAlreadyRunning = "Сервер уже запущен. Остановите сервер для выполнения операции.";
         const string ServerNotRunnig = "Сервер и так не запущен.";
+        const string ParamsError = "Ошибка входных данных.";
         const string ClientAlreadyConnected = "Клиент уже соединен с сервером. Разорвите соединение для выполнения операции.";
         const string ClientDicsonnected = "Клиент и так не соедниен с сервером.";
         const string ClientNotCreated = "Клинет не соединен ни с каким сервером. Установите соединение.";
@@ -44,6 +45,7 @@ namespace TCPChat
         const string KickFormRoom = "Удалить из комнаты";
         const string NoBodyToInvite = "Некого пригласить. Все и так в комнате.";
         const string FileMustDontExist = "Необходимо выбрать несуществующий файл.";
+        const string AllInRoom = "Все в комнате";
 
         const int ClientMaxMessageLength = 100 * 1024;
         const string ServerLogFile = "ServerErrors.log";
@@ -54,6 +56,7 @@ namespace TCPChat
         AsyncServer server;
         ClientConnection client;
         TextBox messageField;
+        ComboBox receiverField;
         ScrollViewer messagesScroll;
         SynchronizationContext GUIContext;
 
@@ -89,6 +92,12 @@ namespace TCPChat
             messageField = (TextBox)sender;
         }
 
+        private void ReceiverField_Loaded(object sender, RoutedEventArgs e)
+        {
+            receiverField = (ComboBox)sender;
+            RefreshReceiversList();
+        }
+
         private void Window_Closed(object sender, EventArgs e)
         {
             SaveSettings();
@@ -97,7 +106,7 @@ namespace TCPChat
             {
                 try
                 {
-                    client.SendUnregisterRequestAsync();
+                    client.SendUnregisterRequest();
                 }
                 catch (SocketException) { }
 
@@ -114,75 +123,50 @@ namespace TCPChat
         {
             if (server != null)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ServerAlreadyRunning);
+                GetCurrentRoom().AddSystemMessage(ServerAlreadyRunning);
                 return;
             }
 
             if (client != null)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientAlreadyConnected);
+                GetCurrentRoom().AddSystemMessage(ClientAlreadyConnected);
                 return;
             }
 
             ServerDialog dialog = new ServerDialog(lastNick, lastNickColor, lastPort, lastStateOfIPv6Protocol);
             if (dialog.ShowDialog() == true)
             {
-                lastNick = dialog.Nick;
-                lastNickColor = dialog.NickColor;
-                lastPort = dialog.Port;
-                lastStateOfIPv6Protocol = dialog.UsingIPv6Protocol;
+                try
+                {
+                    lastNick = dialog.Nick;
+                    lastNickColor = dialog.NickColor;
+                    lastPort = dialog.Port;
+                    lastStateOfIPv6Protocol = dialog.UsingIPv6Protocol;
 
-                server = new AsyncServer(ServerLogFile);
-                server.Start(dialog.Port, dialog.UsingIPv6Protocol);
+                    server = new AsyncServer(ServerLogFile);
+                    server.Start(dialog.Port, dialog.UsingIPv6Protocol);
 
-                CreateClient(dialog.Nick);
-                client.Info.NickColor = dialog.NickColor;
-                client.ConnectAsync(new IPEndPoint((dialog.UsingIPv6Protocol) ? IPAddress.IPv6Loopback : IPAddress.Loopback, dialog.Port));
+                    CreateClient(dialog.Nick);
+                    client.Info.NickColor = dialog.NickColor;
+                    client.Connect(new IPEndPoint((dialog.UsingIPv6Protocol) ? IPAddress.IPv6Loopback : IPAddress.Loopback, dialog.Port));
+                }
+                catch (ArgumentException)
+                {
+                    GetCurrentRoom().AddSystemMessage(ParamsError);
+
+                    if (server != null)
+                    {
+                        server.Dispose();
+                        server = null;
+                    }
+
+                    if (client != null)
+                    {
+                        client.Dispose();
+                        client = null;
+                    }
+                }
             }
-        }
-
-        private void Connect_Click(object sender, RoutedEventArgs e)
-        {
-            if (client != null)
-            {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientAlreadyConnected);
-                return;
-            }
-
-            ConnectDialog dialog = new ConnectDialog(lastNick, lastNickColor, lastAddress, lastPort);
-            if (dialog.ShowDialog() == true)
-            {
-                lastNick = dialog.Nick;
-                lastNickColor = dialog.NickColor;
-                lastPort = dialog.Port;
-                lastAddress = dialog.Address.ToString();
-
-                CreateClient(dialog.Nick);
-                client.Info.NickColor = dialog.NickColor;
-                client.ConnectAsync(new IPEndPoint(dialog.Address, dialog.Port));
-            }
-        }
-
-        private void Disconnect_Click(object sender, RoutedEventArgs e)
-        {
-            if (client == null)
-            {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientDicsonnected);
-                return;
-            }
-
-            try
-            {
-                client.SendUnregisterRequestAsync();
-            }
-            catch(SocketException) { }
-
-            client.Dispose();
-            client = null;
-
-            ChatRooms.Items.Clear();
-            ChatRooms.Items.Add(new RoomContainer(new RoomDescription(null, AsyncServer.MainRoomName), MessageList_Changed));
-            ChatRooms.SelectedIndex = 0;
         }
 
         private void DisableServer_Click(object sender, RoutedEventArgs e)
@@ -192,7 +176,7 @@ namespace TCPChat
 
             if (server == null)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ServerNotRunnig);
+                GetCurrentRoom().AddSystemMessage(ServerNotRunnig);
                 return;
             }
 
@@ -210,6 +194,50 @@ namespace TCPChat
             ChatRooms.SelectedIndex = 0;
         }
 
+        private void Connect_Click(object sender, RoutedEventArgs e)
+        {
+            if (client != null)
+            {
+                GetCurrentRoom().AddSystemMessage(ClientAlreadyConnected);
+                return;
+            }
+
+            ConnectDialog dialog = new ConnectDialog(lastNick, lastNickColor, lastAddress, lastPort);
+            if (dialog.ShowDialog() == true)
+            {
+                lastNick = dialog.Nick;
+                lastNickColor = dialog.NickColor;
+                lastPort = dialog.Port;
+                lastAddress = dialog.Address.ToString();
+
+                CreateClient(dialog.Nick);
+                client.Info.NickColor = dialog.NickColor;
+                client.Connect(new IPEndPoint(dialog.Address, dialog.Port));
+            }
+        }
+
+        private void Disconnect_Click(object sender, RoutedEventArgs e)
+        {
+            if (client == null)
+            {
+                GetCurrentRoom().AddSystemMessage(ClientDicsonnected);
+                return;
+            }
+
+            try
+            {
+                client.SendUnregisterRequest();
+            }
+            catch(SocketException) { }
+
+            client.Dispose();
+            client = null;
+
+            ChatRooms.Items.Clear();
+            ChatRooms.Items.Add(new RoomContainer(new RoomDescription(null, AsyncServer.MainRoomName), MessageList_Changed));
+            ChatRooms.SelectedIndex = 0;
+        }
+
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
             Close();
@@ -221,15 +249,15 @@ namespace TCPChat
             {
                 CreateRoomDialog dialog = new CreateRoomDialog();
                 if (dialog.ShowDialog() == true)
-                    client.CreateRoomAsync(dialog.RoomName);
+                    client.CreateRoom(dialog.RoomName);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -240,16 +268,15 @@ namespace TCPChat
                 if (MessageBox.Show(this, RoomCloseQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
                     return;
 
-                RoomContainer selectedRoom = (RoomContainer)ChatRooms.SelectedContent;
-                client.DeleteRoomAsync(selectedRoom.RoomName);
+                client.DeleteRoom(GetCurrentRoom().RoomName);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -257,30 +284,26 @@ namespace TCPChat
         {
             try
             {
-                RoomContainer mainRoom = ChatRooms.Items.Cast<RoomContainer>().First((room) => room.RoomName == AsyncServer.MainRoomName);
-                RoomContainer selectedRoom = (RoomContainer)ChatRooms.SelectedContent;
+                RoomContainer mainRoom = GetRoom(AsyncServer.MainRoomName);
 
-                IEnumerable<UserContainer> availableUsers = mainRoom.UsersCollection.Except(selectedRoom.UsersCollection);
+                IEnumerable<UserContainer> availableUsers = mainRoom.UsersCollection.Except(GetCurrentRoom().UsersCollection);
                 if (availableUsers.Count() == 0)
                 {
-                    selectedRoom.AddSystemMessage(NoBodyToInvite);
+                    GetCurrentRoom().AddSystemMessage(NoBodyToInvite);
                     return;
                 }
 
                 UsersOperationDialog dialog = new UsersOperationDialog(InviteInRoom, availableUsers);
                 if (dialog.ShowDialog() == true)
-                {
-                    RoomContainer currentRoom = (RoomContainer)ChatRooms.SelectedContent;
-                    client.InviteUsersAsync(currentRoom.RoomName, dialog.Users);
-                }
+                    client.InviteUsers(GetCurrentRoom().RoomName, dialog.Users);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -288,21 +311,17 @@ namespace TCPChat
         {
             try
             {
-                RoomContainer currentRoom = (RoomContainer)ChatRooms.SelectedContent;
-
-                UsersOperationDialog dialog = new UsersOperationDialog(KickFormRoom, currentRoom.UsersCollection);
+                UsersOperationDialog dialog = new UsersOperationDialog(KickFormRoom, GetCurrentRoom().UsersCollection);
                 if (dialog.ShowDialog() == true)
-                {             
-                    client.KickUsersAsync(currentRoom.RoomName, dialog.Users);
-                }
+                    client.KickUsers(GetCurrentRoom().RoomName, dialog.Users);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -313,16 +332,15 @@ namespace TCPChat
                 if (MessageBox.Show(this, RoomExitQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
                     return;
 
-                RoomContainer selectedRoom = (RoomContainer)ChatRooms.SelectedContent;
-                client.ExitFormRoomAsync(selectedRoom.RoomName);
+                client.ExitFormRoom(GetCurrentRoom().RoomName);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -331,17 +349,16 @@ namespace TCPChat
             try
             {
                 string newAdminNick = (string)((MenuItem)sender).Tag;
-                RoomContainer mainRoom = ChatRooms.Items.Cast<RoomContainer>().First((room) => room.RoomName == AsyncServer.MainRoomName);
-                UserDescription newAdmin = mainRoom.UsersCollection.First((user) => string.Equals(user.Nick, newAdminNick)).Info;
+                UserDescription newAdmin = GetUser(newAdminNick).Info;
                 client.SetRoomAdmin(((RoomContainer)ChatRooms.SelectedContent).RoomName, newAdmin);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -357,17 +374,29 @@ namespace TCPChat
                 {
                     try
                     {
-                        RoomContainer room = (RoomContainer)ChatRooms.SelectedContent;
-                        client.SendMessageAsync(messageField.Text, room.RoomName);
+                        if (receiverField.SelectedIndex == 0)
+                            client.SendMessage(messageField.Text, GetCurrentRoom().RoomName);
+                        else
+                        {
+                            string receiverNick = receiverField.SelectedValue.ToString();
+
+                            client.SendPrivateMessage(receiverNick, messageField.Text);
+
+                            UserContainer senderUser = GetUser(client.Info.Nick);
+                            UserContainer receiverUser = GetUser(receiverNick);
+
+                            GetCurrentRoom().AddMessage(senderUser, receiverUser, messageField.Text, true);
+                        }
+
                         messageField.Text = string.Empty;
                     }
                     catch (NullReferenceException)
                     {
-                        ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                        GetCurrentRoom().AddSystemMessage(ClientNotCreated);
                     }
                     catch (SocketException se)
                     {
-                        ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                        GetCurrentRoom().AddSystemMessage(se.Message);
                     }
                 }
                 else
@@ -380,32 +409,21 @@ namespace TCPChat
 
         private void DownloadFile_Click(object sender, MouseButtonEventArgs e)
         {
+            FileDescription file = (FileDescription)((TextBlock)sender).Tag;
+
             try
             {
-                FileDescription file = (FileDescription)((TextBlock)sender).Tag;
-
                 if (file == null)
                 {
-                    ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(FileNotFound);
+                    GetCurrentRoom().AddSystemMessage(FileNotFound);
                     return;
                 }
 
-                if (client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(file)) != null)
-                {
-                    if (MessageBox.Show(CancelDownloadingQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-                    {
-                        client.CancelDownloading(file, true);
+                if (client.DownloadingFiles.Exists((dFile) => dFile.File.Equals(file)))
+                    throw new FileAlreadyDownloadingException(file);
 
-                        MessageContainer message = ((RoomContainer)ChatRooms.SelectedContent).MessagesCollection.FirstOrDefault((current) => file.Equals(current.File));
-
-                        if (message == null)
-                            return;
-
-                        message.Progress = 0;
-                    }
-
-                    return;
-                }
+                if (client.Info.Equals(file.Owner))
+                    throw new ArgumentException("Нельзя скачивать свой файл.");
 
                 SaveFileDialog saveDialog = new SaveFileDialog();
                 saveDialog.OverwritePrompt = false;
@@ -413,22 +431,33 @@ namespace TCPChat
                 saveDialog.FileName = file.Name;
 
                 if (saveDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    if (File.Exists(saveDialog.FileName))
-                    {
-                        MessageBox.Show(this, FileMustDontExist, ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
                     client.DownloadFile(saveDialog.FileName, ((RoomContainer)ChatRooms.SelectedContent).RoomName, file);
+            }
+            catch (FileAlreadyDownloadingException)
+            {
+                if (MessageBox.Show(CancelDownloadingQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    client.CancelDownloading(file, true);
+
+                    MessageContainer message = GetCurrentRoom().MessagesCollection.FirstOrDefault((current) => file.Equals(current.File));
+
+                    if (message == null)
+                        return;
+
+                    message.Progress = 0;
                 }
+            }
+            catch (ArgumentException ae)
+            {
+                GetCurrentRoom().AddSystemMessage(ae.Message);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -440,17 +469,15 @@ namespace TCPChat
                 openDialog.Filter = FileDialogFilter;
 
                 if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    client.AddFileToRoomAsyc(((RoomContainer)ChatRooms.SelectedContent).RoomName, openDialog.FileName);
-                }
+                    client.AddFileToRoom(GetCurrentRoom().RoomName, openDialog.FileName);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -463,11 +490,11 @@ namespace TCPChat
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -482,17 +509,15 @@ namespace TCPChat
 
                 for (int i = 0; i < fileNames.Count(); i++)
                     if (e.Data.GetDataPresent(DataFormats.FileDrop) && fileNames[i].Contains("."))
-                    {
-                        client.AddFileToRoomAsyc(((RoomContainer)ChatRooms.SelectedContent).RoomName, fileNames[i]);
-                    }
+                        client.AddFileToRoom(GetCurrentRoom().RoomName, fileNames[i]);
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
@@ -508,27 +533,18 @@ namespace TCPChat
             }
             catch (NullReferenceException)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(ClientNotCreated);
+                GetCurrentRoom().AddSystemMessage(ClientNotCreated);
             }
             catch (SocketException se)
             {
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(se.Message);
+                GetCurrentRoom().AddSystemMessage(se.Message);
             }
         }
 
-        private void SendPM_Click(object sender, RoutedEventArgs e)
+        private void AboutProgram_Click(object sender, RoutedEventArgs e)
         {
-            if (messageField.Text == string.Empty) return;
-
-            string receiverNick = (string)((MenuItem)sender).Tag;
-            client.SendPrivateMessageAsync(receiverNick, messageField.Text);
-
-            RoomContainer mainRoom = ChatRooms.Items.Cast<RoomContainer>().First((room) => room.RoomName == AsyncServer.MainRoomName);
-            UserContainer senderUser = mainRoom.UsersCollection.First((user) => string.Equals(user.Nick, client.Info.Nick));
-            UserContainer receiverUser = mainRoom.UsersCollection.First((user) => string.Equals(user.Nick, receiverNick));
-
-            ((RoomContainer)ChatRooms.SelectedContent).AddMessage(senderUser, receiverUser, messageField.Text, true);
-            messageField.Text = string.Empty;
+            AboutProgramDialog dialog = new AboutProgramDialog();
+            dialog.ShowDialog();
         }
 
         private void User_Click(object sender, MouseButtonEventArgs e)
@@ -576,7 +592,7 @@ namespace TCPChat
    
                 if (!args.Registered)
                 {
-                    ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(RegFailNickAlreadyExist);
+                    GetCurrentRoom().AddSystemMessage(RegFailNickAlreadyExist);
 
                     client.Dispose();
                     client = null;
@@ -590,7 +606,7 @@ namespace TCPChat
             {
                 RoomEventArgs args = (RoomEventArgs)Obj;
 
-                if (ChatRooms.Items.Cast<RoomContainer>().FirstOrDefault((currentRoom) => string.Equals(currentRoom.RoomName, args.Room.Name)) != null)
+                if (GetRoom(args.Room.Name) != null)
                     return;
 
                 RoomContainer room = new RoomContainer(args.Room, client.Info.Nick, MessageList_Changed);
@@ -607,13 +623,12 @@ namespace TCPChat
             {
                 RoomEventArgs args = (RoomEventArgs)Obj;
 
-                RoomContainer deletingRoom = ChatRooms.Items.Cast<RoomContainer>().FirstOrDefault((current) => current.RoomName == args.Room.Name);
+                RoomContainer deletingRoom = GetRoom(args.Room.Name);
 
                 if (deletingRoom == null)
                     return;
 
                 ChatRooms.Items.Remove(deletingRoom);
-
                 Alert();
             }, e);
         }
@@ -623,9 +638,15 @@ namespace TCPChat
             GUIContext.Post(Obj =>
             {
                 RoomEventArgs args = (RoomEventArgs)Obj;
+                RoomContainer refreshedRoom = GetRoom(args.Room.Name);
 
-                RoomContainer refreshedRoom = ChatRooms.Items.Cast<RoomContainer>().First((current) => current.RoomName == args.Room.Name);
+                if (refreshedRoom == null)
+                    return;
+
                 refreshedRoom.Refresh(args.Room, client.Info.Nick);
+
+                if (args.Room.Name == AsyncServer.MainRoomName)
+                    RefreshReceiversList();
             }, e);
         }
 
@@ -638,25 +659,20 @@ namespace TCPChat
                 RoomContainer room = null;
 
                 if (args.IsPrivateMessage || args.IsSystemMessage)
-                    room = (RoomContainer)ChatRooms.SelectedContent;
+                    room = GetCurrentRoom();
                 else
-                    room = ChatRooms.Items.Cast<RoomContainer>().First((current) => current.RoomName == args.RoomName);
+                    room = GetRoom(args.RoomName);
 
                 if (room != null && !args.IsSystemMessage && !args.IsFileMessage)
                 {
-                    RoomContainer mainRoom = ChatRooms.Items.Cast<RoomContainer>().First((currentRoom) => currentRoom.RoomName == AsyncServer.MainRoomName);
-                    UserContainer senderUser = mainRoom.UsersCollection.First((user) => string.Equals(user.Nick, args.Sender));
-                    UserContainer receiverUser = mainRoom.UsersCollection.First((user) => string.Equals(user.Nick, client.Info.Nick));
+                    UserContainer senderUser = GetUser(args.Sender);
+                    UserContainer receiverUser = GetUser(client.Info.Nick);
                     room.AddMessage(senderUser, receiverUser, args.Message, args.IsPrivateMessage);
-
-                    if (!string.Equals(room.RoomName, ((RoomContainer)ChatRooms.SelectedContent).RoomName))
-                        room.Updated = true;
                 }
 
                 if (room != null && !args.IsSystemMessage && args.IsFileMessage)
                 {
-                    RoomContainer mainRoom = ChatRooms.Items.Cast<RoomContainer>().First((currentRoom) => currentRoom.RoomName == AsyncServer.MainRoomName);
-                    UserContainer senderUser = mainRoom.UsersCollection.First((user) => string.Equals(user.Nick, args.Sender));
+                    UserContainer senderUser = GetUser(args.Sender);
                     room.AddFileMessage(senderUser, e.Message, (FileDescription)e.State);
                 }
 
@@ -664,6 +680,9 @@ namespace TCPChat
                 {
                     room.AddSystemMessage(args.Message);
                 }
+
+                if (!string.Equals(room.RoomName, GetCurrentRoom().RoomName))
+                    room.Updated = true;
 
                 Alert();
             }, e);
@@ -674,7 +693,7 @@ namespace TCPChat
             GUIContext.Post(Obj =>
             {
                 FileDownloadEventArgs args = (FileDownloadEventArgs)Obj;
-                RoomContainer room = ChatRooms.Items.Cast<RoomContainer>().FirstOrDefault((current) => string.Equals(current.RoomName, args.RoomName));
+                RoomContainer room = GetRoom(args.RoomName);
 
                 if (room == null)
                     return;
@@ -693,7 +712,6 @@ namespace TCPChat
                 {
                     message.Progress = args.Progress;
                 }
-
             }, e);
         }
 
@@ -702,18 +720,21 @@ namespace TCPChat
             GUIContext.Post(Obj =>
             {
                 FileDownloadEventArgs args = (FileDownloadEventArgs)Obj;
-                RoomContainer room = ChatRooms.Items.Cast<RoomContainer>().FirstOrDefault((current) => string.Equals(current.RoomName, args.RoomName));
+                RoomContainer room = GetRoom(args.RoomName);
 
                 if (room == null)
                     return;
 
-                MessageContainer message = room.MessagesCollection.FirstOrDefault((current) => args.File.Equals(current.File));
+                IEnumerable<MessageContainer> messages = room.MessagesCollection.Where((current) => args.File.Equals(current.File));
 
-                if (message == null)
+                if (messages.Count() == 0)
                     return;
 
-                message.Progress = 0;
-                message.File = null;
+                foreach (MessageContainer message in messages)
+                {
+                    message.Progress = 0;
+                    message.File = null;
+                }
             }, e);
         }
 
@@ -725,13 +746,13 @@ namespace TCPChat
 
                 if (args.Error != null)
                 {
-                    ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(args.Error.Message);
+                    GetCurrentRoom().AddSystemMessage(args.Error.Message);
                     client.Dispose();
                     client = null;
                     return;
                 }
 
-                client.SendRegisterRequestAsync();
+                client.SendRegisterRequest();
             }, e);
         }
 
@@ -747,7 +768,7 @@ namespace TCPChat
                     client = null;
                 }
 
-                ((RoomContainer)ChatRooms.SelectedContent).AddSystemMessage(args.Error.Message);
+                GetCurrentRoom().AddSystemMessage(args.Error.Message);
             }, e);
         }
         #endregion
@@ -776,10 +797,37 @@ namespace TCPChat
             logger.Write(error);
         }
 
+        private RoomContainer GetCurrentRoom()
+        {
+            return (RoomContainer)ChatRooms.SelectedContent;
+        }
+
+        private RoomContainer GetRoom(string name)
+        {
+            return ChatRooms.Items.Cast<RoomContainer>().FirstOrDefault((current) => string.Equals(current.RoomName, name));
+        }
+
+        private UserContainer GetUser(string name)
+        {
+            return GetRoom(AsyncServer.MainRoomName).UsersCollection.FirstOrDefault((user) => string.Equals(user.Nick, name));
+        }
+
+        private void RefreshReceiversList()
+        {
+            receiverField.Items.Clear();
+            receiverField.Items.Add(AllInRoom);
+
+            foreach (UserDescription user in GetRoom(AsyncServer.MainRoomName).Info.Users)
+                if (!user.Equals(client.Info))
+                    receiverField.Items.Add(user.Nick);
+
+            receiverField.SelectedIndex = 0;
+        }
+
         private void CreateClient(string nick)
         {
             client = new ClientConnection(nick);
-            client.Connect += Client_Connect;
+            client.Connected += Client_Connect;
             client.ReceiveMessage += Client_ReceiveMessage;
             client.ReceiveRegistrationResponse += Client_Registration;
             client.RoomRefreshed += Client_RoomRefreshed;

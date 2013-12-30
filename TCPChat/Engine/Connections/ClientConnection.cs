@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using System.Drawing;
-using System.Linq;
 using TCPChat.Engine.API;
 using TCPChat.Engine.API.StandartAPI;
 
@@ -22,11 +20,11 @@ namespace TCPChat.Engine.Connections
     {
         #region consts
         public const int CryptorKeySize = 2048;
-        public const long DefaultFilePartSize = 512 * 1024;
+        public const long DefaultFilePartSize = 500 * 1024;
         private const int MaxReceivedDataSize = 1024 * 1024;
         private const int SystemTimerInterval = 1000;
         private const int ReconnectTimeInterval = 10 * 1000;
-        private const int PingInterval = 1000;
+        private const int PingInterval = 3000;
         #endregion
 
         #region private fields
@@ -39,11 +37,14 @@ namespace TCPChat.Engine.Connections
         private bool awaitingAPIName;
         private string serverAPIVersion;
 
-        private int[] reconnectErrorsList;
+        private SocketError[] reconnectErrorsList;
         private bool reconnect;
         private bool reconnecting;
         private DateTime lastReconnect;
         private DateTime lastPingRequest;
+
+        private List<PeerConnection> peers;
+        private List<WaitingCommand> awaitingCommands;
 
         private List<DownloadingFile> downloadingFiles;
         private List<PostedFile> postedFiles;
@@ -61,10 +62,14 @@ namespace TCPChat.Engine.Connections
             GUIContext = SynchronizationContext.Current;
             downloadingFiles = new List<DownloadingFile>();
             postedFiles = new List<PostedFile>();
+            peers = new List<PeerConnection>();
+            awaitingCommands = new List<WaitingCommand>();
             awaitingAPIName = false;
             reconnecting = false;
             reconnect = true;
-            reconnectErrorsList = new int[] { 10052, 10053, 10054, 10060, 10064 };
+            reconnectErrorsList = new SocketError[] { SocketError.NetworkReset, SocketError.ConnectionAborted,
+                                                      SocketError.ConnectionReset, SocketError.TimedOut,
+                                                      SocketError.HostDown };
 
             info = new UserDescription(nick);
         }
@@ -74,7 +79,7 @@ namespace TCPChat.Engine.Connections
         /// <summary>
         /// Взвращает значение, характеризующее подключен ли клиент к серверу.
         /// </summary>
-        public bool Connected
+        public bool IsConnected
         {
             get { return handler.Connected; }
         }
@@ -136,6 +141,14 @@ namespace TCPChat.Engine.Connections
         }
 
         /// <summary>
+        /// Подключенные напрямую пользователи.
+        /// </summary>
+        public List<PeerConnection> Peers
+        {
+            get { return peers; }
+        }
+
+        /// <summary>
         /// Событие происходит при обновлении списка подключенных к серверу клиентов.
         /// </summary>
         public event EventHandler<RoomEventArgs> RoomRefreshed;
@@ -143,7 +156,7 @@ namespace TCPChat.Engine.Connections
         /// <summary>
         /// Событие происходит при подключении клиента к серверу.
         /// </summary>
-        public event EventHandler<ConnectEventArgs> Connect;
+        public event EventHandler<ConnectEventArgs> Connected;
 
         /// <summary>
         /// Событие происходит при полученни ответа от сервера, о регистрации.
@@ -186,7 +199,7 @@ namespace TCPChat.Engine.Connections
         /// Асинхронно соединяет клиент с сервером.
         /// </summary>
         /// <param name="ServerAddress">Адресс сервера.</param>
-        public void ConnectAsync(IPEndPoint serverAddress)
+        public void Connect(IPEndPoint serverAddress)
         {
             if (handler != null)
                 if (handler.Connected == true)
@@ -203,12 +216,12 @@ namespace TCPChat.Engine.Connections
         /// Асинхронно отправляет сообщение всем пользователям в комнате. Если клиента нет в комнате, сообщение игнорируется сервером.
         /// </summary>
         /// <param name="message">Сообщение.</param>
-        public void SendMessageAsync(string message, string roomName)
+        public void SendMessage(string message, string roomName)
         {
             if (API == null)
                 return;
 
-            API.SendMessageAsync(message, roomName);
+            API.SendMessage(message, roomName);
         }
 
         /// <summary>
@@ -216,50 +229,50 @@ namespace TCPChat.Engine.Connections
         /// </summary>
         /// <param name="receiver">Ник получателя.</param>
         /// <param name="message">Сообщение.</param>
-        public void SendPrivateMessageAsync(string receiver, string message)
+        public void SendPrivateMessage(string receiver, string message)
         {
             if (API == null)
                 return;
 
-            API.SendPrivateMessageAsync(receiver, message);
+            API.SendPrivateMessage(receiver, message);
         }
 
         /// <summary>
         /// Асинхронно послыает запрос для регистрации на сервере.
         /// </summary>
         /// <param name="info">Ник, по которому будет совершена попытка подключения.</param>
-        public void SendRegisterRequestAsync()
+        public void SendRegisterRequest()
         {
             if (API == null)
                 return;
 
             UserDescription userDescription = new UserDescription(info.Nick);
             userDescription.NickColor = info.NickColor;
-            API.SendRegisterRequestAsync(userDescription, keyCryptor.ExportParameters(false));
+            API.SendRegisterRequest(userDescription, keyCryptor.ExportParameters(false));
         }
 
         /// <summary>
         /// Создает на сервере комнату.
         /// </summary>
         /// <param name="roomName">Название комнаты для создания.</param>
-        public void CreateRoomAsync(string roomName)
+        public void CreateRoom(string roomName)
         {
             if (API == null)
                 return;
 
-            API.CreateRoomAsync(roomName);
+            API.CreateRoom(roomName);
         }
 
         /// <summary>
         /// Удаляет комнату на сервере. Необходимо являться создателем комнаты.
         /// </summary>
         /// <param name="roomName">Название комнаты.</param>
-        public void DeleteRoomAsync(string roomName)
+        public void DeleteRoom(string roomName)
         {
             if (API == null)
                 return;
 
-            API.DeleteRoomAsync(roomName);
+            API.DeleteRoom(roomName);
         }
 
         /// <summary>
@@ -267,12 +280,12 @@ namespace TCPChat.Engine.Connections
         /// </summary>
         /// <param name="roomName">Название комнаты.</param>
         /// <param name="users">Перечисление пользователей, которые будут приглашены.</param>
-        public void InviteUsersAsync(string roomName, IEnumerable<UserDescription> users)
+        public void InviteUsers(string roomName, IEnumerable<UserDescription> users)
         {
             if (API == null)
                 return;
 
-            API.InviteUsersAsync(roomName, users);
+            API.InviteUsers(roomName, users);
         }
 
         /// <summary>
@@ -280,36 +293,36 @@ namespace TCPChat.Engine.Connections
         /// </summary>
         /// <param name="roomName">Название комнаты.</param>
         /// <param name="users">Перечисление пользователей, которые будут удалены из комнаты.</param>
-        public void KickUsersAsync(string roomName, IEnumerable<UserDescription> users)
+        public void KickUsers(string roomName, IEnumerable<UserDescription> users)
         {
             if (API == null)
                 return;
 
-            API.KickUsersAsync(roomName, users);
+            API.KickUsers(roomName, users);
         }
 
         /// <summary>
         /// Осуществляет выход из комнаты пользователя.
         /// </summary>
         /// <param name="roomName">Название комнаты.</param>
-        public void ExitFormRoomAsync(string roomName)
+        public void ExitFormRoom(string roomName)
         {
             if (API == null)
                 return;
 
-            API.ExitFormRoomAsync(roomName);
+            API.ExitFormRoom(roomName);
         }
 
         /// <summary>
         /// Отправляет запрос о необходимости получения списка пользователей комнаты.
         /// </summary>
         /// <param name="roomName">Название комнтаы.</param>
-        public void RefreshRoomAsync(string roomName)
+        public void RefreshRoom(string roomName)
         {
             if (API == null)
                 return;
 
-            API.RefreshRoomAsync(roomName);
+            API.RefreshRoom(roomName);
         }
 
         /// <summary>
@@ -328,12 +341,12 @@ namespace TCPChat.Engine.Connections
         /// <summary>
         /// Асинхронно посылает запрос для отмены регистрации на сервере.
         /// </summary>
-        public void SendUnregisterRequestAsync()
+        public void SendUnregisterRequest()
         {
             if (API == null)
                 return;
 
-            API.SendUnregisterRequestAsync();
+            API.SendUnregisterRequest();
         }
 
         /// <summary>
@@ -341,12 +354,12 @@ namespace TCPChat.Engine.Connections
         /// </summary>
         /// <param name="roomName">Название комнаты в которую добавляется файл.</param>
         /// <param name="fileName">Путь к добовляемому файлу.</param>
-        public void AddFileToRoomAsyc(string roomName, string fileName)
+        public void AddFileToRoom(string roomName, string fileName)
         {
             if (API == null)
                 return;
 
-            API.AddFileToRoomAsyc(roomName, fileName);
+            API.AddFileToRoom(roomName, fileName);
         }
 
         /// <summary>
@@ -354,12 +367,12 @@ namespace TCPChat.Engine.Connections
         /// </summary>
         /// <param name="roomName">Название комнаты из которой удаляется файл.</param>
         /// <param name="file">Описание удаляемого файла.</param>
-        public void RemoveFileFromRoomAsyc(string roomName, FileDescription file)
+        public void RemoveFileFromRoom(string roomName, FileDescription file)
         {
             if (API == null)
                 return;
 
-            API.RemoveFileFromRoomAsyc(roomName, file);
+            API.RemoveFileFromRoom(roomName, file);
         }
 
         /// <summary>
@@ -388,6 +401,49 @@ namespace TCPChat.Engine.Connections
 
             API.CancelDownloading(file, leaveLoadedPart);
         }
+
+        /// <summary>
+        /// Асинхронно отправляет команду напрямую к пользователю. 
+        /// Если подключение с пользователем еще не создано, оно будет создано.
+        /// </summary>
+        /// <param name="id">Индетификатор команды.</param>
+        /// <param name="messageContent">Содержимое команды.</param>
+        /// <param name="info">Пользователь которому следуюет отправить команду.</param>
+        public void SendMessage(ushort id, object messageContent, UserDescription info)
+        {
+            PeerConnection connection;
+            lock (peers)
+                connection = peers.FirstOrDefault((conn) => conn.Info.Equals(info));
+
+            if (connection != null)
+                connection.SendMessage(id, messageContent);
+            else
+            {
+                lock (awaitingCommands)
+                    awaitingCommands.Add(new WaitingCommand(info, id, messageContent));
+
+                API.ConnectToPeer(info);
+            }
+        }
+
+        /// <summary>
+        /// Создает несоединенное подключение, зарегистрированное в данном клиенте.
+        /// </summary>
+        /// <returns>Прямое подключение к пользовтелю. (Не соединенное)</returns>
+        public PeerConnection CreatePeerConnection()
+        {
+            PeerConnection peer = new PeerConnection();
+
+            lock (peers)
+                peers.Add(peer);
+
+            peer.AsyncError += PeerAsyncError;
+            peer.DataReceived += PeerDataReceived;
+            peer.Connected += PeerConnected;
+            peer.Disconnected += PeerDisconnect;
+
+            return peer;
+        }
         #endregion
 
         #region private/protected override methods
@@ -403,7 +459,7 @@ namespace TCPChat.Engine.Connections
             }
             catch (SocketException se)
             {
-                if (se.ErrorCode == 10061)
+                if (se.SocketErrorCode == SocketError.ConnectionRefused)
                     reconnecting = true;
                 else
                     OnConnect(new ConnectEventArgs() { Error = se });
@@ -414,80 +470,89 @@ namespace TCPChat.Engine.Connections
             }
         }
 
-        private void OnConnect(ConnectEventArgs args)
+        private void PeerConnected(object sender, ConnectEventArgs e)
         {
-            EventHandler<ConnectEventArgs> temp = Interlocked.CompareExchange<EventHandler<ConnectEventArgs>>(ref Connect, null, null);
+            if (e.Error != null)
+            {
+                OnAsyncError(new AsyncErrorEventArgs() { Error = e.Error });
+                return;
+            }
+            
+            PeerConnection peerConnection = (PeerConnection)sender;
 
-            if (temp != null)
-                GUIContext.Post(O => temp(this, args), null);
-        }
+            lock (awaitingCommands)
+            {
+                IEnumerable<WaitingCommand> commands = awaitingCommands.Where((command) => command.Info.Equals(peerConnection.Info)).ToArray();
 
-        private void OnAsyncError(AsyncErrorEventArgs args)
-        {
-            EventHandler<AsyncErrorEventArgs> temp = Interlocked.CompareExchange<EventHandler<AsyncErrorEventArgs>>(ref AsyncError, null, null);
-
-            if (temp != null)
-                GUIContext.Post(O => temp(this, args), null);
-        }
-
-        private void OnSystemMessage(string message)
-        {
-            EventHandler<ReceiveMessageEventArgs> temp = Interlocked.CompareExchange<EventHandler<ReceiveMessageEventArgs>>(ref ReceiveMessage, null, null);
-
-            if (temp != null)
-                temp(this, new ReceiveMessageEventArgs()
+                foreach (WaitingCommand command in commands)
                 {
-                    IsSystemMessage = true,
-                    IsPrivateMessage = false,
-                    Message = message
-                });
+                    peerConnection.SendMessage(command.CommandId, command.MessageContent);
+                    awaitingCommands.Remove(command);
+                }
+            }
         }
 
-        private void SetStandartAPI()
+        private void PeerDisconnect(object sender, ConnectEventArgs e)
         {
-            API = new StandartClientAPI(this);
-            API.AddCommand(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand(ReceiveRegistrationResponse));
-            API.AddCommand(ClientRoomRefreshedCommand.Id, new ClientRoomRefreshedCommand(RoomRefreshed));
-            API.AddCommand(ClientOutRoomMessageCommand.Id, new ClientOutRoomMessageCommand(ReceiveMessage));
-            API.AddCommand(ClientOutPrivateMessageCommand.Id, new ClientOutPrivateMessageCommand(ReceiveMessage));
-            API.AddCommand(ClientOutSystemMessageCommand.Id, new ClientOutSystemMessageCommand(ReceiveMessage));
-            API.AddCommand(ClientOutFileMessageCommand.Id, new ClientOutFileMessageCommand(ReceiveMessage));
-            API.AddCommand(ClientReceiveUserOpenKeyCommand.Id, new ClientReceiveUserOpenKeyCommand());
-            API.AddCommand(ClientRoomOpenedCommand.Id, new ClientRoomOpenedCommand(RoomOpened));
-            API.AddCommand(ClientRoomClosedCommand.Id, new ClientRoomClosedCommand(RoomClosed));
-            API.AddCommand(ClientReadFilePartCommand.Id, new ClientReadFilePartCommand());
-            API.AddCommand(ClientWriteFilePartCommand.Id, new ClientWriteFilePartCommand(DownloadProgress));
-            API.AddCommand(ClientPostedFileDeletedCommand.Id, new ClientPostedFileDeletedCommand(PostedFileDeleted));
-            API.AddCommand(ClientCancelDownloadingCommand.Id, new ClientCancelDownloadingCommand());
-            API.AddCommand(ClientPingResponceCommand.Id, new ClientPingResponceCommand());
+            if (e.Error != null)
+            {
+                OnAsyncError(new AsyncErrorEventArgs() { Error = e.Error });
+                return;
+            }
+
+            PeerConnection peerConnection = (PeerConnection)sender;
+
+            lock (peers)
+            {
+                if (peers.Contains(peerConnection))
+                    peers.Remove(peerConnection);
+
+                peerConnection.Dispose();
+            }
         }
 
-        protected override void ReleaseResource()
+        private void PeerAsyncError(object sender, AsyncErrorEventArgs e)
         {
-            keyCryptor.Clear();
-
-            if (systemTimer != null)
-                systemTimer.Dispose();
-
-            foreach (DownloadingFile current in downloadingFiles)
-                current.Dispose();
-
-            foreach (PostedFile current in postedFiles)
-                current.Dispose();
-
-            base.ReleaseResource();
+            if (e.Error != null)
+            {
+                OnAsyncError(new AsyncErrorEventArgs() { Error = e.Error });
+                return;
+            }
         }
 
-        protected override void OnDataReceived(DataReceivedEventArgs args)
+        private void PeerDataReceived(object sender, DataReceivedEventArgs e)
         {
             try
             {
-                if (args.Error != null)
-                    throw args.Error;
+                if (e.Error != null)
+                    throw e.Error;
+
+                IClientAPICommand command = API.GetCommand(e.ReceivedData);
+                ClientCommandArgs args = new ClientCommandArgs()
+                {
+                    Message = e.ReceivedData,
+                    API = API,
+                    Peer = (PeerConnection)sender
+                };
+
+                command.Run(args);
+            }
+            catch (Exception exc)
+            {
+                OnAsyncError(new AsyncErrorEventArgs() { Error = exc });
+            }
+        }
+
+        protected override void OnDataReceived(DataReceivedEventArgs e)
+        {
+            try
+            {
+                if (e.Error != null)
+                    throw e.Error;
 
                 if (awaitingAPIName)
                 {
-                    serverAPIVersion = Encoding.Unicode.GetString(args.ReceivedData);
+                    serverAPIVersion = Encoding.Unicode.GetString(e.ReceivedData);
 
                     switch (serverAPIVersion)
                     {
@@ -508,47 +573,74 @@ namespace TCPChat.Engine.Connections
                     return;
                 }
 
-                IClientAPICommand command = API.GetCommand(args.ReceivedData);
-                command.Run(new ClientCommandArgs() 
-                { 
-                    Message = args.ReceivedData,
+                IClientAPICommand command = API.GetCommand(e.ReceivedData);
+                ClientCommandArgs args = new ClientCommandArgs()
+                {
+                    Message = e.ReceivedData,
                     API = API
-                });
+                };
+
+                command.Run(args);
             }
-            catch (Exception e)
+            catch (Exception exc)
             {
-                OnAsyncError(new AsyncErrorEventArgs() { Error = e });
+                OnAsyncError(new AsyncErrorEventArgs() { Error = exc });
             }
         }
 
-        private void SystemTimerCallback(object state)
+        private void SetStandartAPI()
         {
-            if (handler != null && Connected)
-            {
-                if ((DateTime.Now - lastPingRequest).TotalMilliseconds >= PingInterval)
-                {
-                    SendAsync(ServerPingRequest.Id, null);
+            API = new StandartClientAPI(this);
+            API.AddCommand(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand(ReceiveRegistrationResponse));
+            API.AddCommand(ClientRoomRefreshedCommand.Id, new ClientRoomRefreshedCommand(RoomRefreshed));
+            API.AddCommand(ClientOutRoomMessageCommand.Id, new ClientOutRoomMessageCommand(ReceiveMessage));
+            API.AddCommand(ClientOutPrivateMessageCommand.Id, new ClientOutPrivateMessageCommand(ReceiveMessage));
+            API.AddCommand(ClientOutSystemMessageCommand.Id, new ClientOutSystemMessageCommand(ReceiveMessage));
+            API.AddCommand(ClientFilePostedCommand.Id, new ClientFilePostedCommand(ReceiveMessage));
+            API.AddCommand(ClientReceiveUserOpenKeyCommand.Id, new ClientReceiveUserOpenKeyCommand());
+            API.AddCommand(ClientRoomOpenedCommand.Id, new ClientRoomOpenedCommand(RoomOpened));
+            API.AddCommand(ClientRoomClosedCommand.Id, new ClientRoomClosedCommand(RoomClosed));
+            API.AddCommand(ClientPostedFileDeletedCommand.Id, new ClientPostedFileDeletedCommand(PostedFileDeleted));
+            API.AddCommand(ClientReadFilePartCommand.Id, new ClientReadFilePartCommand());
+            API.AddCommand(ClientWriteFilePartCommand.Id, new ClientWriteFilePartCommand(DownloadProgress));
+            API.AddCommand(ClientPingResponceCommand.Id, new ClientPingResponceCommand());
+            API.AddCommand(ClientConnectToPeerCommand.Id, new ClientConnectToPeerCommand());
+            API.AddCommand(ClientWaitPeerConnectionCommand.Id, new ClientWaitPeerConnectionCommand());
+            API.AddCommand(ClientConnectToP2PServiceCommand.Id, new ClientConnectToP2PServiceCommand());
+        }
 
-                    lastPingRequest = DateTime.Now;
-                }
+        protected override void ReleaseResource()
+        {
+            keyCryptor.Clear();
+
+            if (systemTimer != null)
+                systemTimer.Dispose();
+
+            lock (downloadingFiles)
+            {
+                foreach (DownloadingFile current in downloadingFiles)
+                    current.Dispose();
+
+                downloadingFiles.Clear();
             }
 
-            if (reconnecting)
+            lock (postedFiles)
             {
-                if ((DateTime.Now - lastReconnect).TotalMilliseconds >= ReconnectTimeInterval)
-                {
-                    OnSystemMessage("Попытка соединения с сервером...");
+                foreach (PostedFile current in postedFiles)
+                    current.Dispose();
 
-                    if (handler != null)
-                        handler.Close();
-
-                    ConnectAsync(hostAddress);
-
-                    lastReconnect = DateTime.Now;
-                }
+                postedFiles.Clear();
             }
 
-            systemTimer.Change(SystemTimerInterval, -1);
+            lock (peers)
+            {
+                foreach (PeerConnection current in peers)
+                    current.Dispose();
+
+                peers.Clear();
+            }
+
+            base.ReleaseResource();
         }
 
         protected override void OnDataSended(DataSendedEventArgs args)
@@ -562,12 +654,87 @@ namespace TCPChat.Engine.Connections
             if (!reconnect)
                 return false;
 
-            if (!reconnectErrorsList.Contains(se.ErrorCode))
+            if (!reconnectErrorsList.Contains(se.SocketErrorCode))
                 return false;
 
             reconnecting = true;
             lastReconnect = DateTime.Now;
             return true;
+        }
+
+        private void SystemTimerCallback(object state)
+        {
+            try
+            {
+                if (handler != null && IsConnected)
+                {
+                    if ((DateTime.Now - lastPingRequest).TotalMilliseconds >= PingInterval)
+                    {
+                        SendMessage(ServerPingRequest.Id, null);
+
+                        lastPingRequest = DateTime.Now;
+                    }
+
+                    lock(peers)
+                    {
+                        for (int i = peers.Count - 1; i >= 0; i--)
+                        {
+                            if (peers[i].IntervalOfSilence >= PeerConnection.ConnectionTimeOut)
+                            {
+                                peers[i].Dispose();
+                                peers.Remove(peers[i]);
+                            }
+                        }
+                    }
+                }
+
+                if (reconnecting)
+                {
+                    if ((DateTime.Now - lastReconnect).TotalMilliseconds >= ReconnectTimeInterval)
+                    {
+                        OnSystemMessage("Попытка соединения с сервером...");
+
+                        if (handler != null)
+                            handler.Close();
+
+                        Connect(hostAddress);
+
+                        lastReconnect = DateTime.Now;
+                    }
+                }
+
+                systemTimer.Change(SystemTimerInterval, -1);
+            }
+            catch (ObjectDisposedException) { }
+        }
+
+        private void OnConnect(ConnectEventArgs args)
+        {
+            EventHandler<ConnectEventArgs> temp = Interlocked.CompareExchange<EventHandler<ConnectEventArgs>>(ref Connected, null, null);
+
+            if (temp != null)
+                GUIContext.Post(O => temp(this, args), null);
+        }
+
+        private void OnAsyncError(AsyncErrorEventArgs args)
+        {
+            EventHandler<AsyncErrorEventArgs> temp = Interlocked.CompareExchange<EventHandler<AsyncErrorEventArgs>>(ref AsyncError, null, null);
+
+            if (temp != null)
+                GUIContext.Post(O => temp(this, args), null);
+        }
+
+        private void OnSystemMessage(string message)
+        {
+            EventHandler<ReceiveMessageEventArgs> temp = Interlocked.CompareExchange<EventHandler<ReceiveMessageEventArgs>>(ref ReceiveMessage, null, null);
+
+            if (temp != null)
+                GUIContext.Post(O => temp(this, new ReceiveMessageEventArgs()
+                {
+                    IsSystemMessage = true,
+                    IsPrivateMessage = false,
+                    Message = message
+                }), null);
         }
         #endregion
     }

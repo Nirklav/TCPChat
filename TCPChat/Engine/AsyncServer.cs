@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
@@ -17,9 +18,11 @@ namespace TCPChat.Engine
     {
         #region const
         private const int ListenConnections = 100;
-        private const int MaxDataSize = 2 * 1024 * 1024;
         private const int SystemTimerInterval = 1000;
+        public const int StartPort = 10000;
+        public const int EndPort = 49151;
         public const string MainRoomName = "Main room";
+        public const int MaxDataSize = 2 * 1024 * 1024;
         #endregion
 
         #region private fields
@@ -30,6 +33,7 @@ namespace TCPChat.Engine
         private Dictionary<string, RoomDescription> rooms;
         private Logger logger;
         private IServerAPI API;
+        private P2PService p2pService;
         #endregion
 
         #region properties and events
@@ -55,6 +59,14 @@ namespace TCPChat.Engine
         public Dictionary<string, RoomDescription> Rooms
         {
             get { return rooms; }
+        }
+
+        /// <summary>
+        /// Сервис использующийся для прямого соединения пользователей.
+        /// </summary>
+        public P2PService P2PService
+        {
+            get { return p2pService; }
         }
         #endregion
 
@@ -87,28 +99,34 @@ namespace TCPChat.Engine
         /// <summary>
         /// Включает сервер.
         /// </summary>
-        /// <param name="ServerPort">Порт для соединение с сервером.</param>
-        /// <param name="UsingIPv6">Использовать ли IPv6, при ложном значении будет использован IPv4.</param>
-        public void Start(int ServerPort, bool UsingIPv6)
+        /// <param name="serverPort">Порт для соединение с сервером.</param>
+        /// <param name="usingIPv6">Использовать ли IPv6, при ложном значении будет использован IPv4.</param>
+        /// <exception cref="System.ArgumentException"/>
+        public void Start(int serverPort, bool usingIPv6)
         {
             if (isServerRunning) return;
 
-            isServerRunning = true;
-            systemTimer = new System.Threading.Timer(SystemTimerCallback, null, 0, SystemTimerInterval);
+            if (!Connection.TCPPortIsAvailable(serverPort))
+                throw new ArgumentException("port not available", "serverPort");
 
-            if (UsingIPv6)
+            p2pService = new P2PService(usingIPv6, logger);
+            systemTimer = new Timer(SystemTimerCallback, null, 0, SystemTimerInterval);
+
+            if (usingIPv6)
             {
                 listener = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
-                listener.Bind(new IPEndPoint(IPAddress.IPv6Any, ServerPort));
+                listener.Bind(new IPEndPoint(IPAddress.IPv6Any, serverPort));
             }
             else
             {
                 listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                listener.Bind(new IPEndPoint(IPAddress.Any, ServerPort));
+                listener.Bind(new IPEndPoint(IPAddress.Any, serverPort));
             }
             
             listener.Listen(ListenConnections);
             listener.BeginAccept(AcceptCallback, null);
+
+            isServerRunning = true;
         }
 
         /// <summary>
@@ -134,8 +152,8 @@ namespace TCPChat.Engine
             API.AddCommand(ServerSetRoomAdminCommand.Id, new ServerSetRoomAdminCommand());
             API.AddCommand(ServerAddFileToRoomCommand.Id, new ServerAddFileToRoomCommand());
             API.AddCommand(ServerRemoveFileFormRoomCommand.Id, new ServerRemoveFileFormRoomCommand());
-            API.AddCommand(ServerFilePartRequestCommand.Id, new ServerFilePartRequestCommand());
-            API.AddCommand(ServerFilePartResponceCommand.Id, new ServerFilePartResponceCommand());
+            API.AddCommand(ServerP2PConnectRequestCommand.Id, new ServerP2PConnectRequestCommand());
+            API.AddCommand(ServerP2PConnectResponceCommand.Id, new ServerP2PConnectResponceCommand());
             API.AddCommand(ServerPingRequest.Id, new ServerPingRequest());
         }
         #endregion
@@ -165,65 +183,73 @@ namespace TCPChat.Engine
             }
         }
 
-        private void DataReceivedCallBack(ServerConnection Sender, DataReceivedEventArgs args)
+        private void DataReceivedCallBack(object sender, DataReceivedEventArgs e)
         {
             try
             {
-                if (args.Error != null)
-                    throw args.Error;
+                if (e.Error != null)
+                    throw e.Error;
 
-                IServerAPICommand command = API.GetCommand(args.ReceivedData);
-                command.Run(new ServerCommandArgs() 
+                IServerAPICommand command = API.GetCommand(e.ReceivedData);
+                ServerCommandArgs args = new ServerCommandArgs() 
                 { 
-                    Message = args.ReceivedData,
-                    UserConnection = Sender,
+                    Message = e.ReceivedData,
+                    UserConnection = (ServerConnection)sender,
                     API = API
-                });
+                };
+
+                command.Run(args);           
             }
-            catch (Exception e)
+            catch (Exception exc)
             {
                 if (logger != null)
-                    logger.Write(e);
+                    logger.Write(exc);
             }
         }
 
         private void SystemTimerCallback(object arg)
         {
-            for (int i = connections.Count - 1; i >= 0; i--)
+            lock (connections)
             {
-                try
+                for (int i = connections.Count - 1; i >= 0; i--)
                 {
-                    if (connections[i].UnregisteredTimeInterval >= ServerConnection.UnregisteredTimeOut)
+                    try
                     {
-                        API.CloseConnection(connections[i]);
-                        continue;
-                    }
+                        if (connections[i].UnregisteredTimeInterval >= ServerConnection.UnregisteredTimeOut)
+                        {
+                            API.CloseConnection(connections[i]);
+                            continue;
+                        }
 
-                    if (connections[i].IntervalOfSilence >= ServerConnection.ConnectionTimeOut)
+                        if (connections[i].IntervalOfSilence >= ServerConnection.ConnectionTimeOut)
+                        {
+                            API.CloseConnection(connections[i]);
+                            continue;
+                        }
+                    }
+                    catch (SocketException)
                     {
                         API.CloseConnection(connections[i]);
-                        continue;
                     }
-                }
-                catch (SocketException)
-                {
-                    API.CloseConnection(connections[i]);
-                }
-                catch (Exception e)
-                {
-                    if (logger != null)
-                        logger.Write(e);
+                    catch (Exception e)
+                    {
+                        if (logger != null)
+                            logger.Write(e);
+                    }
                 }
             }
 
-            IList<string> roomsNames = rooms.Keys.ToList();
-            for (int i = rooms.Count - 1; i >= 0; i--)
+            lock (rooms)
             {
-                if (string.Equals(roomsNames[i], AsyncServer.MainRoomName))
-                    continue;
+                IList<string> roomsNames = rooms.Keys.ToList();
+                for (int i = rooms.Count - 1; i >= 0; i--)
+                {
+                    if (string.Equals(roomsNames[i], AsyncServer.MainRoomName))
+                        continue;
 
-                if (rooms[roomsNames[i]].Users.Count == 0)
-                    rooms.Remove(roomsNames[i]);
+                    if (rooms[roomsNames[i]].Users.Count == 0)
+                        rooms.Remove(roomsNames[i]);
+                }
             }
         }
         #endregion
@@ -233,8 +259,10 @@ namespace TCPChat.Engine
 
         private void ReleaseManagedResource()
         {
-            if (disposed) return;
+            if (disposed)
+                return;
 
+            disposed = true;
             isServerRunning = false;
 
             lock (connections)
@@ -246,10 +274,14 @@ namespace TCPChat.Engine
                 connections.Clear();
             }
 
-            disposed = true;
+            if (listener != null)
+                listener.Close();
 
-            listener.Close();
-            systemTimer.Dispose();
+            if (p2pService != null)
+                p2pService.Dispose();
+
+            if (systemTimer != null)
+                systemTimer.Dispose();
         }
 
         /// <summary>

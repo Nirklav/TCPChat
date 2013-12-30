@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using System.Windows.Media;
 using TCPChat.Engine.Connections;
 
 namespace TCPChat.Engine.API.StandartAPI
@@ -18,8 +18,7 @@ namespace TCPChat.Engine.API.StandartAPI
 
     //80 10: Вывести общее сообщение для комнаты
     //80 11: Вывести личное сообщение
-    //80 12: Вывести сообщение с файлом
-    //80 13: Вывести системное сообщение
+    //80 12: Вывести системное сообщение
 
     //80 20: Получен откртый ключ пользователя
 
@@ -27,10 +26,14 @@ namespace TCPChat.Engine.API.StandartAPI
     //80 31: Закрыта комната
     //80 32: Комната обновлена
 
-    //80 40: Запрос части файла
-    //80 41: Дописать часть файла
-    //80 42: Файл больше не раздается
-    //80 43: Прекращение загрузки файла
+    //80 40: Опубликовать файл
+    //80 41: Файл больше не раздается
+    //80 42: Прочитать часть файла.
+    //80 43: Записать часть файла.
+
+    //80 50: Ожидать прямое соединение
+    //80 51: Выполнить прямое соединение
+    //80 52: Подключится к сервису P2P
 
     //80 FF: Пинг ответ
 
@@ -42,7 +45,6 @@ namespace TCPChat.Engine.API.StandartAPI
 
         OutRoomMessage = 0x8010,
         OutPrivateMessage = 0x8011,
-        OutFileMessage = 0x8012,
         OutSystemMessage = 0x8013,
 
         ReceiveUserOpenKey = 0x8020,
@@ -51,10 +53,14 @@ namespace TCPChat.Engine.API.StandartAPI
         RoomClosed = 0x8031,
         RoomRefreshed = 0x8032,
 
-        ReadFilePart = 0x8040,
-        WriteFilePart = 0x8041,
-        PostedFileDeleted = 0x8042,
-        CancelDownloading = 0x8043,
+        FilePosted = 0x8040,
+        PostedFileDeleted = 0x8041,
+        ReadFilePart = 0x8042,
+        WriteFilePart = 0x8043,
+
+        WaitPeerConnection = 0x8050,
+        ConnectToPeer = 0x8051,
+        ConnectToP2PService = 0x8052,
 
         PingResponce = 0x80FF,
 
@@ -212,7 +218,7 @@ namespace TCPChat.Engine.API.StandartAPI
             StandartClientAPI API = (StandartClientAPI)args.API;
             MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
 
-            AwaitingPrivateMessage awaitingMessage = API.AwaitingPrivateMessages.Find((message) => message.Receiver.Equals(receivedContent.Nick));
+            WaitingPrivateMessage awaitingMessage = API.AwaitingPrivateMessages.Find((message) => message.Receiver.Equals(receivedContent.Nick));
             if (awaitingMessage == null) return;
             lock (API.AwaitingPrivateMessages)
                 API.AwaitingPrivateMessages.Remove(awaitingMessage);
@@ -236,7 +242,7 @@ namespace TCPChat.Engine.API.StandartAPI
             encryptedMessageStream.Dispose();
             messageCrypter.Dispose();
 
-            args.API.Client.SendAsync(ServerSendOneUserCommand.Id, sendingContent);
+            args.API.Client.SendMessage(ServerSendOneUserCommand.Id, sendingContent);
         }
 
         [Serializable]
@@ -250,48 +256,6 @@ namespace TCPChat.Engine.API.StandartAPI
         }
 
         public const ushort Id = (ushort)ClientCommand.ReceiveUserOpenKey;
-    }
-
-    class ClientOutFileMessageCommand :
-        BaseClientCommand,
-        IClientAPICommand
-    {
-        private EventHandler<ReceiveMessageEventArgs> callback;
-
-        public ClientOutFileMessageCommand(EventHandler<ReceiveMessageEventArgs> commandCallback)
-        {
-            callback = commandCallback;
-        }
-
-        public void Run(ClientCommandArgs args)
-        {
-            MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
-
-            ReceiveMessageEventArgs receiveMessageArgs = new ReceiveMessageEventArgs();
-            receiveMessageArgs.IsFileMessage = true;
-            receiveMessageArgs.IsPrivateMessage = false;
-            receiveMessageArgs.IsSystemMessage = false;
-            receiveMessageArgs.Message = receivedContent.File.Name;
-            receiveMessageArgs.Sender = receivedContent.File.Owner.Nick;
-            receiveMessageArgs.RoomName = receivedContent.RoomName;
-            receiveMessageArgs.State = receivedContent.File;
-
-            EventHandler<ReceiveMessageEventArgs> temp = Interlocked.CompareExchange<EventHandler<ReceiveMessageEventArgs>>(ref callback, null, null);
-            if (temp != null)
-                temp(args.API.Client, receiveMessageArgs);
-        }
-
-        [Serializable]
-        public class MessageContent
-        {
-            FileDescription file;
-            string roomName;
-
-            public FileDescription File { get { return file; } set { file = value; } }
-            public string RoomName { get { return roomName; } set { roomName = value; } }
-        }
-
-        public const ushort Id = (ushort)ClientCommand.OutFileMessage;
     }
 
     class ClientRoomOpenedCommand :
@@ -424,130 +388,33 @@ namespace TCPChat.Engine.API.StandartAPI
         public const ushort Id = (ushort)ClientCommand.OutSystemMessage;
     }
 
-    class ClientReadFilePartCommand :
+    class ClientFilePostedCommand :
         BaseClientCommand,
         IClientAPICommand
     {
-        public void Run(ClientCommandArgs args)
-        {
-            MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+        private EventHandler<ReceiveMessageEventArgs> callback;
 
-            if (receivedContent.File == null)
-                throw new ArgumentNullException("File");
-
-            if (receivedContent.Length <= 0)
-                throw new ArgumentException("Length <= 0");
-
-            if (receivedContent.StartPartPosition < 0)
-                throw new ArgumentException("StartPartPosition < 0");
-
-            if (args.API.Client.PostedFiles.FirstOrDefault((current) => current.File.Equals(receivedContent.File)) == null)
-            {
-                ServerRemoveFileFormRoomCommand.MessageContent fileNotPostContent = new ServerRemoveFileFormRoomCommand.MessageContent();
-                fileNotPostContent.File = receivedContent.File;
-                fileNotPostContent.RoomName = receivedContent.RoomName;
-                args.API.Client.SendAsync(ServerRemoveFileFormRoomCommand.Id, fileNotPostContent);
-            }
-
-            ServerFilePartResponceCommand.MessageContent sendingContent = new ServerFilePartResponceCommand.MessageContent();
-            sendingContent.File = receivedContent.File;
-            sendingContent.RequestID = receivedContent.RequestID;
-            sendingContent.StartPartPosition = receivedContent.StartPartPosition;
-            sendingContent.RoomName = receivedContent.RoomName;
-
-            long partSize;
-            if (receivedContent.File.Size < receivedContent.StartPartPosition + receivedContent.Length)
-                partSize = receivedContent.File.Size - receivedContent.StartPartPosition;
-            else
-                partSize = receivedContent.Length;
-
-            sendingContent.Part = new byte[partSize];
-
-            FileStream sendingFileStream = args.API.Client.PostedFiles.First((current) => current.File.Equals(receivedContent.File)).ReadStream;
-            sendingFileStream.Position = receivedContent.StartPartPosition;
-            sendingFileStream.Read(sendingContent.Part, 0, sendingContent.Part.Length);
-
-            args.API.Client.SendAsync(ServerFilePartResponceCommand.Id, sendingContent);
-        }
-
-        [Serializable]
-        public class MessageContent
-        {
-            FileDescription file;
-            long startPartPosition;
-            long length;
-            int requestID;
-            string roomName;
-
-            public FileDescription File { get { return file; } set { file = value; } }
-            public long StartPartPosition { get { return startPartPosition; } set { startPartPosition = value; } }
-            public long Length { get { return length; } set { length = value; } }
-            public int RequestID { get { return requestID; } set { requestID = value; } }
-            public string RoomName { get { return roomName; } set { roomName = value; } } 
-        }
-
-        public const ushort Id = (ushort)ClientCommand.ReadFilePart;
-    }
-
-    class ClientWriteFilePartCommand :
-        BaseClientCommand,
-        IClientAPICommand
-    {
-        EventHandler<FileDownloadEventArgs> callback;
-
-        public ClientWriteFilePartCommand(EventHandler<FileDownloadEventArgs> commandCallback)
+        public ClientFilePostedCommand(EventHandler<ReceiveMessageEventArgs> commandCallback)
         {
             callback = commandCallback;
         }
 
-        private void OnDownload(FileDescription file, int progress, string roomName, ClientConnection client)
-        {
-            FileDownloadEventArgs downloadEventArgs = new FileDownloadEventArgs() { File = file, Progress = progress, RoomName = roomName};
-
-            EventHandler<FileDownloadEventArgs> temp = Interlocked.CompareExchange<EventHandler<FileDownloadEventArgs>>(ref callback, null, null);
-            if (temp != null)
-                temp(client, downloadEventArgs);
-        }
-
         public void Run(ClientCommandArgs args)
         {
             MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
 
-            if (receivedContent.File == null)
-                throw new ArgumentNullException("File");
+            ReceiveMessageEventArgs receiveMessageArgs = new ReceiveMessageEventArgs();
+            receiveMessageArgs.IsFileMessage = true;
+            receiveMessageArgs.IsPrivateMessage = false;
+            receiveMessageArgs.IsSystemMessage = false;
+            receiveMessageArgs.Message = receivedContent.File.Name;
+            receiveMessageArgs.Sender = receivedContent.File.Owner.Nick;
+            receiveMessageArgs.RoomName = receivedContent.RoomName;
+            receiveMessageArgs.State = receivedContent.File;
 
-            if (receivedContent.Part == null)
-                throw new ArgumentNullException("Part");
-
-            if (receivedContent.StartPartPosition < 0)
-                throw new ArgumentException("StartPartPosition < 0");
-
-            if (args.API.Client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(receivedContent.File)) == null)
-                return;
-
-            DownloadingFile downloadingFile = args.API.Client.DownloadingFiles.First((current) => current.File.Equals(receivedContent.File));
-
-            if (downloadingFile.WriteStream.Position == receivedContent.StartPartPosition)
-                downloadingFile.WriteStream.Write(receivedContent.Part, 0, receivedContent.Part.Length);
-
-            if (downloadingFile.WriteStream.Position >= receivedContent.File.Size)
-            {
-                args.API.Client.DownloadingFiles.Remove(downloadingFile);
-                downloadingFile.WriteStream.Dispose();
-
-                OnDownload(receivedContent.File, 100, receivedContent.RoomName, args.API.Client);
-            }
-            else
-            {
-                ServerFilePartRequestCommand.MessageContent sendingContent = new ServerFilePartRequestCommand.MessageContent();
-                sendingContent.File = receivedContent.File;
-                sendingContent.Length = ClientConnection.DefaultFilePartSize;
-                sendingContent.RoomName = receivedContent.RoomName;
-                sendingContent.StartPartPosition = downloadingFile.WriteStream.Position;
-                args.API.Client.SendAsync(ServerFilePartRequestCommand.Id, sendingContent);
-
-                OnDownload(receivedContent.File, (int)((downloadingFile.WriteStream.Position * 100) / receivedContent.File.Size), receivedContent.RoomName, args.API.Client);
-            }
+            EventHandler<ReceiveMessageEventArgs> temp = Interlocked.CompareExchange<EventHandler<ReceiveMessageEventArgs>>(ref callback, null, null);
+            if (temp != null)
+                temp(args.API.Client, receiveMessageArgs);
         }
 
         [Serializable]
@@ -555,16 +422,12 @@ namespace TCPChat.Engine.API.StandartAPI
         {
             FileDescription file;
             string roomName;
-            long startPartPosition;
-            byte[] part;
 
             public FileDescription File { get { return file; } set { file = value; } }
-            public long StartPartPosition { get { return startPartPosition; } set { startPartPosition = value; } }
-            public string RoomName { get { return roomName; } set { roomName = value; } } 
-            public byte[] Part { get { return part; } set { part = value; } }
+            public string RoomName { get { return roomName; } set { roomName = value; } }
         }
 
-        public const ushort Id = (ushort)ClientCommand.WriteFilePart;
+        public const ushort Id = (ushort)ClientCommand.FilePosted;
     }
 
     class ClientPostedFileDeletedCommand :
@@ -584,6 +447,14 @@ namespace TCPChat.Engine.API.StandartAPI
 
             EventHandler<FileDownloadEventArgs> temp = Interlocked.CompareExchange<EventHandler<FileDownloadEventArgs>>(ref callback, null, null);
 
+            lock (args.API.Client.DownloadingFiles)
+            {
+                IEnumerable<DownloadingFile> downloadFiles = args.API.Client.DownloadingFiles.Where((dFile) => dFile.File.Equals(receivedContent.File));
+
+                foreach (DownloadingFile file in downloadFiles)
+                    file.Dispose();
+            }
+
             if (temp != null)
                 temp(args.API.Client, new FileDownloadEventArgs() { File = receivedContent.File, Progress = 0, RoomName = receivedContent.RoomName });
         }
@@ -601,20 +472,146 @@ namespace TCPChat.Engine.API.StandartAPI
         public const ushort Id = (ushort)ClientCommand.PostedFileDeleted;
     }
 
-    class ClientCancelDownloadingCommand :
+    class ClientReadFilePartCommand :
         BaseClientCommand,
         IClientAPICommand
     {
         public void Run(ClientCommandArgs args)
         {
+            if (args.Peer == null)
+                return;
+
             MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
 
-            DownloadingFile downloadingFile = args.API.Client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(receivedContent.File));
+            if (receivedContent.File == null)
+                throw new ArgumentNullException("File");
+
+            if (receivedContent.Length <= 0)
+                throw new ArgumentException("Length <= 0");
+
+            if (receivedContent.StartPartPosition < 0)
+                throw new ArgumentException("StartPartPosition < 0");
+
+            lock (args.API.Client.PostedFiles)
+            {
+                if (!args.API.Client.PostedFiles.Exists((current) => current.File.Equals(receivedContent.File)))
+                {
+                    ServerRemoveFileFormRoomCommand.MessageContent fileNotPostContent = new ServerRemoveFileFormRoomCommand.MessageContent();
+                    fileNotPostContent.File = receivedContent.File;
+                    fileNotPostContent.RoomName = receivedContent.RoomName;
+                    args.API.Client.SendMessage(ServerRemoveFileFormRoomCommand.Id, fileNotPostContent);
+                    return;
+                }
+            }
+
+            ClientWriteFilePartCommand.MessageContent sendingContent = new ClientWriteFilePartCommand.MessageContent();
+            sendingContent.File = receivedContent.File;
+            sendingContent.StartPartPosition = receivedContent.StartPartPosition;
+            sendingContent.RoomName = receivedContent.RoomName;
+
+            long partSize;
+            if (receivedContent.File.Size < receivedContent.StartPartPosition + receivedContent.Length)
+                partSize = receivedContent.File.Size - receivedContent.StartPartPosition;
+            else
+                partSize = receivedContent.Length;
+
+            sendingContent.Part = new byte[partSize];
+
+            FileStream sendingFileStream = args.API.Client.PostedFiles.First((current) => current.File.Equals(receivedContent.File)).ReadStream;
+            sendingFileStream.Position = receivedContent.StartPartPosition;
+            sendingFileStream.Read(sendingContent.Part, 0, sendingContent.Part.Length);
+
+            args.Peer.SendMessage(ClientWriteFilePartCommand.Id, sendingContent);
+        }
+
+        [Serializable]
+        public class MessageContent
+        {
+            FileDescription file;
+            long startPartPosition;
+            long length;
+            string roomName;
+
+            public FileDescription File { get { return file; } set { file = value; } }
+            public long StartPartPosition { get { return startPartPosition; } set { startPartPosition = value; } }
+            public long Length { get { return length; } set { length = value; } }
+            public string RoomName { get { return roomName; } set { roomName = value; } }
+        }
+
+        public const ushort Id = (ushort)ClientCommand.ReadFilePart;
+    }
+
+    class ClientWriteFilePartCommand :
+        BaseClientCommand,
+        IClientAPICommand
+    {
+        EventHandler<FileDownloadEventArgs> callback;
+
+        public ClientWriteFilePartCommand(EventHandler<FileDownloadEventArgs> commandCallback)
+        {
+            callback = commandCallback;
+        }
+
+        private void OnDownload(FileDescription file, int progress, string roomName, ClientConnection client)
+        {
+            FileDownloadEventArgs downloadEventArgs = new FileDownloadEventArgs() { File = file, Progress = progress, RoomName = roomName };
+
+            EventHandler<FileDownloadEventArgs> temp = Interlocked.CompareExchange<EventHandler<FileDownloadEventArgs>>(ref callback, null, null);
+            if (temp != null)
+                temp(client, downloadEventArgs);
+        }
+
+        public void Run(ClientCommandArgs args)
+        {
+            if (args.Peer == null)
+                return;
+
+            MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+
+            if (receivedContent.File == null)
+                throw new ArgumentNullException("File");
+
+            if (receivedContent.Part == null)
+                throw new ArgumentNullException("Part");
+
+            if (receivedContent.StartPartPosition < 0)
+                throw new ArgumentException("StartPartPosition < 0");
+
+            DownloadingFile downloadingFile;
+            lock (args.API.Client.DownloadingFiles)
+                downloadingFile = args.API.Client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(receivedContent.File));
 
             if (downloadingFile == null)
                 return;
 
-            args.API.Client.CancelDownloading(downloadingFile.File, false);
+            if (downloadingFile.WriteStream == null)
+                downloadingFile.WriteStream = File.Create(downloadingFile.FullName);
+
+            lock (downloadingFile.WriteStream)
+            {
+                if (downloadingFile.WriteStream.Position == receivedContent.StartPartPosition)
+                    downloadingFile.WriteStream.Write(receivedContent.Part, 0, receivedContent.Part.Length);
+            }
+
+            if (downloadingFile.WriteStream.Position >= receivedContent.File.Size)
+            {
+                lock (args.API.Client.DownloadingFiles)
+                    args.API.Client.DownloadingFiles.Remove(downloadingFile);
+
+                downloadingFile.WriteStream.Dispose();
+                OnDownload(receivedContent.File, 100, receivedContent.RoomName, args.API.Client);
+            }
+            else
+            {
+                ClientReadFilePartCommand.MessageContent sendingContent = new ClientReadFilePartCommand.MessageContent();
+                sendingContent.File = receivedContent.File;
+                sendingContent.Length = ClientConnection.DefaultFilePartSize;
+                sendingContent.RoomName = receivedContent.RoomName;
+                sendingContent.StartPartPosition = downloadingFile.WriteStream.Position;
+                args.Peer.SendMessage(ClientReadFilePartCommand.Id, sendingContent);
+
+                OnDownload(receivedContent.File, (int)((downloadingFile.WriteStream.Position * 100) / receivedContent.File.Size), receivedContent.RoomName, args.API.Client);
+            }
         }
 
         [Serializable]
@@ -622,12 +619,137 @@ namespace TCPChat.Engine.API.StandartAPI
         {
             FileDescription file;
             string roomName;
+            long startPartPosition;
+            byte[] part;
 
             public FileDescription File { get { return file; } set { file = value; } }
+            public long StartPartPosition { get { return startPartPosition; } set { startPartPosition = value; } }
             public string RoomName { get { return roomName; } set { roomName = value; } }
+            public byte[] Part { get { return part; } set { part = value; } }
         }
 
-        public const ushort Id = (ushort)ClientCommand.CancelDownloading;
+        public const ushort Id = (ushort)ClientCommand.WriteFilePart;
+    }
+
+    class ClientWaitPeerConnectionCommand :
+        BaseClientCommand,
+        IClientAPICommand
+    {
+        public void Run(ClientCommandArgs args)
+        {
+            MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+
+            if (receivedContent.RemoteInfo == null)
+                throw new ArgumentNullException("info");
+
+            PeerConnection connection;
+            lock(args.API.Client.Peers)
+                connection = args.API.Client.Peers.FirstOrDefault((conn) => !conn.ConnectedToPeer && 
+                                                                            conn.ConnectId == receivedContent.ServiceConnectId);
+
+            if (connection == null)
+                throw new ArgumentException("empty peer connection do not found");
+
+            connection.Disconnect();
+            connection.Info = receivedContent.RemoteInfo;
+            connection.WaitConnection(receivedContent.SenderPoint);
+
+            ServerP2PConnectResponceCommand.MessageContent sendingContent = new ServerP2PConnectResponceCommand.MessageContent();
+            sendingContent.PeerPoint = receivedContent.RequestPoint;
+            sendingContent.ReceiverNick = receivedContent.RemoteInfo.Nick;
+            sendingContent.RemoteInfo = args.API.Client.Info;
+            sendingContent.ServiceConnectId = receivedContent.ServiceConnectId;
+            args.API.Client.SendMessage(ServerP2PConnectResponceCommand.Id, sendingContent);
+        }
+
+        [Serializable]
+        public class MessageContent
+        {
+            UserDescription remoteInfo;
+            IPEndPoint senderPoint;
+            IPEndPoint requestPoint;
+            int serviceConnectId;
+
+            public UserDescription RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }
+            public IPEndPoint SenderPoint { get { return senderPoint; } set { senderPoint = value; } }
+            public IPEndPoint RequestPoint { get { return requestPoint; } set { requestPoint = value; } }
+            public int ServiceConnectId { get { return serviceConnectId; } set { serviceConnectId = value; } }
+        }
+
+        public const ushort Id = (ushort)ClientCommand.WaitPeerConnection;
+    }
+
+    class ClientConnectToPeerCommand :
+        BaseClientCommand,
+        IClientAPICommand
+    {
+        public void Run(ClientCommandArgs args)
+        {
+            MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+
+            if (receivedContent.RemoteInfo == null)
+                throw new ArgumentNullException("info");
+
+            if (receivedContent.PeerPoint == null)
+                throw new ArgumentNullException("PeerPoint");
+
+            PeerConnection connection;
+            lock (args.API.Client.Peers)
+                connection = args.API.Client.Peers.FirstOrDefault((conn) => !conn.ConnectedToPeer &&
+                                                                            conn.ConnectId == receivedContent.ServiceConnectId);
+
+            if (connection == null)
+                throw new ArgumentException("empty peer connection do not found");
+
+            connection.Disconnect();
+            connection.Info = receivedContent.RemoteInfo;
+            connection.ConnectToPeer(receivedContent.PeerPoint);
+        }
+
+        [Serializable]
+        public class MessageContent
+        {
+            int serviceConnectId;
+            IPEndPoint peerPoint;
+            UserDescription remoteInfo;
+
+            public int ServiceConnectId { get { return serviceConnectId; } set { serviceConnectId = value; } }
+            public IPEndPoint PeerPoint { get { return peerPoint; } set { peerPoint = value; } }
+            public UserDescription RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }
+        }
+
+        public const ushort Id = (ushort)ClientCommand.ConnectToPeer;
+    }
+
+    class ClientConnectToP2PServiceCommand :
+        BaseClientCommand,
+        IClientAPICommand
+    {
+        public void Run(ClientCommandArgs args)
+        {
+            MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+
+            if (receivedContent.ServicePoint == null)
+                throw new ArgumentNullException("ServicePoint");
+
+            PeerConnection connection = args.API.Client.CreatePeerConnection();
+
+            connection.ConnectToService(receivedContent.ServicePoint, receivedContent.ServiceConnectId, receivedContent.Type);
+        }
+
+        [Serializable]
+        public class MessageContent
+        {
+            IPEndPoint servicePoint;
+            ConnectionType type;
+            int serviceConnectId;
+
+            public IPEndPoint ServicePoint { get { return servicePoint; } set { servicePoint = value; } }
+            public ConnectionType Type { get { return type; } set { type = value; } }
+            public int ServiceConnectId { get { return serviceConnectId; } set { serviceConnectId = value; } }
+        }
+
+        public const ushort Id = (ushort)ClientCommand.ConnectToP2PService;
     }
 
     class ClientPingResponceCommand : IClientAPICommand

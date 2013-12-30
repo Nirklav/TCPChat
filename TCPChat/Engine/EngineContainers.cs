@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
+using TCPChat.Engine.Connections;
 
 namespace TCPChat.Engine
 {
@@ -20,6 +23,11 @@ namespace TCPChat.Engine
         /// Поток для сохранения файла.
         /// </summary>
         public FileStream WriteStream { get; set; }
+
+        /// <summary>
+        /// Полное имя файла.
+        /// </summary>
+        public string FullName { get; set; }
 
         bool disposed = false;
 
@@ -78,7 +86,7 @@ namespace TCPChat.Engine
     /// <summary>
     /// Класс описывающий ожидающее отркытого ключа приватное сообщение.
     /// </summary>
-    public class AwaitingPrivateMessage
+    public class WaitingPrivateMessage
     {
         /// <summary>
         /// Получатель сообщения.
@@ -89,5 +97,76 @@ namespace TCPChat.Engine
         /// Сообщение.
         /// </summary>
         public string Message { get; set; }
+    }
+
+    /// <summary>
+    /// Команды ожидающие прямого подключения к клиенту.
+    /// </summary>
+    public class WaitingCommand
+    {
+        /// <summary>
+        /// Создает экземпляр класса.
+        /// </summary>
+        /// <param name="info">Пользователь которому необходимо послать команду.</param>
+        /// <param name="id">Индетификатор команды.</param>
+        /// <param name="content">Параметр команды.</param>
+        public WaitingCommand(UserDescription info, ushort id, object content)
+        {
+            Info = info;
+            CommandId = id;
+            MessageContent = content;
+        }
+
+        /// <summary>
+        /// Пользователь которому необходимо послать команду, после подключения.
+        /// </summary>
+        public UserDescription Info { get; set; }
+
+        /// <summary>
+        /// Индетификатор команды.
+        /// </summary>
+        public ushort CommandId { get; set; }
+
+        /// <summary>
+        /// Параметр команды.
+        /// </summary>
+        public object MessageContent { get; set; }
+    }
+
+    /// <summary>
+    /// Класс хранящий соединения.
+    /// </summary>
+    public class ConnectionsContainer
+    {
+        /// <summary>
+        /// Создает класс хранящий соединения.
+        /// </summary>
+        /// <param name="requestConnection">Соединение которое получит ответ.</param>
+        /// <param name="sendedConnection">Соединение которое прислало запрос.</param>
+        public ConnectionsContainer(ServerConnection requestConnection, ServerConnection senderConnection)
+        {
+            RequestConnection = requestConnection;
+            SenderConnection = senderConnection;
+        }
+
+        /// <summary>
+        /// Соединение у которого запрашивают прямое соединение.
+        /// </summary>
+        public ServerConnection RequestConnection { get; set; }
+
+        /// <summary>
+        /// Соединение запрашивающее прямое соединение.
+        /// </summary>
+        public ServerConnection SenderConnection { get; set; }
+
+        /// <summary>
+        /// Точка принимающая прямое соединение. У пользователя к которому хотят подключится.
+        /// </summary>
+        public IPEndPoint RequestPeerPoint { get; set; }
+
+        /// <summary>
+        /// Точка принимающая прямое соединение. У пользователя который запрашивает подключение.
+        /// </summary>
+        public IPEndPoint SenderPeerPoint { get; set; }
     }
 }

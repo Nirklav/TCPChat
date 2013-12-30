@@ -34,6 +34,9 @@ namespace TCPChat
 
         public override bool Equals(object obj)
         {
+            if (obj == null)
+                return false;
+
             if (!(obj is UserContainer))
                 return false;
 
@@ -42,6 +45,9 @@ namespace TCPChat
 
         public bool Equals(UserContainer user)
         {
+            if (user == null)
+                return false;
+
             return user.Info.Equals(Info);
         }
 

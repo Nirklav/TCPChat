@@ -101,15 +101,21 @@ namespace TCPChat
 
         public override bool Equals(object obj)
         {
+            if (obj == null)
+                return false;
+
             if (!(obj is RoomContainer))
                 return false;
 
             return Equals((RoomContainer)obj);
         }
 
-        public bool Equals(RoomContainer user)
+        public bool Equals(RoomContainer room)
         {
-            return user.RoomName.Equals(RoomName);
+            if (room == null)
+                return false;
+
+            return room.RoomName.Equals(RoomName);
         }
 
         public override int GetHashCode()

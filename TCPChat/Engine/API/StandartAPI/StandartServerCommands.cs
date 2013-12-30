@@ -1,13 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
-using System.Text;
-using System.Drawing;
-using TCPChat.Engine;
 using TCPChat.Engine.Connections;
-using System.Collections.Generic;
 
 namespace TCPChat.Engine.API.StandartAPI
 {
@@ -33,8 +31,9 @@ namespace TCPChat.Engine.API.StandartAPI
 
     //00 50: Добавить файл на раздачу комнаты
     //00 51: Удалить файл с раздачи комнаты
-    //00 52: Запрос части файла
-    //00 53: Отправить часть файла
+
+    //00 60: Запрос прямого соединения
+    //00 61: Ответ, говорящий о готовности принять входное содеинение
 
     //7F FF: Пустая команда
 
@@ -60,8 +59,9 @@ namespace TCPChat.Engine.API.StandartAPI
 
         AddFileToRoom = 0x0050,
         RemoveFileFromRoom = 0x0051,
-        FilePartRequest = 0x0052,
-        FilePartResponce = 0x0053,
+
+        P2PConnectRequest = 0x0060,
+        P2PConnectResponce = 0x0061,
 
         Empty = 0x7FFF
     }
@@ -93,12 +93,14 @@ namespace TCPChat.Engine.API.StandartAPI
         /// <returns>Возвращает ложь если комнаты не существует.</returns>
         protected static bool RoomExists(string roomName, ServerCommandArgs args)
         {
-            bool result = !args.API.Server.Rooms.ContainsKey(roomName);
+            bool result;
+            lock (args.API.Server.Rooms)
+                result = args.API.Server.Rooms.ContainsKey(roomName);
 
-            if (result)
+            if (!result)
             {
                 ClientRoomClosedCommand.MessageContent closeRoomContent = new ClientRoomClosedCommand.MessageContent() { Room = new RoomDescription(null, roomName) };
-                args.UserConnection.SendAsync(ClientRoomClosedCommand.Id, closeRoomContent);
+                args.UserConnection.SendMessage(ClientRoomClosedCommand.Id, closeRoomContent);
                 args.API.SendSystemMessage(args.UserConnection, "На свервере нет комнаты с таким именем.");
             }
 
@@ -118,37 +120,46 @@ namespace TCPChat.Engine.API.StandartAPI
                 throw new ArgumentNullException("User == null");
 
             bool newUserExist = false;
-            foreach (var ServerConnection in args.API.Server.Connections)
+            lock (args.API.Server.Connections)
             {
-                if (!ServerConnection.IsRegistered)
-                    continue;
-
-                if (receivedContent.User.Equals(ServerConnection.Info))
+                foreach (var ServerConnection in args.API.Server.Connections)
                 {
-                    newUserExist = true;
-                    break;
+                    if (!ServerConnection.IsRegistered)
+                        continue;
+
+                    if (receivedContent.User.Equals(ServerConnection.Info))
+                    {
+                        newUserExist = true;
+                        break;
+                    }
                 }
             }
 
             if (!newUserExist)
             {
-                args.API.Server.Rooms[AsyncServer.MainRoomName].Users.Add(receivedContent.User);
+                RoomDescription room = args.API.Server.Rooms[AsyncServer.MainRoomName];
+
+                lock (room.Users)
+                    room.Users.Add(receivedContent.User);
 
                 args.UserConnection.Register(receivedContent.User.Nick);
                 args.UserConnection.OpenKey = receivedContent.OpenKey;
                 args.UserConnection.Info.NickColor = receivedContent.User.NickColor;
 
-                args.UserConnection.SendAsync(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand.MessageContent() { Registered = !newUserExist });
+                args.UserConnection.SendMessage(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand.MessageContent() { Registered = !newUserExist });
 
-                foreach (ServerConnection connection in args.API.Server.Connections)
+                lock (args.API.Server.Connections)
                 {
-                    ClientRoomRefreshedCommand.MessageContent sendingContent = new ClientRoomRefreshedCommand.MessageContent() { Room = args.API.Server.Rooms[AsyncServer.MainRoomName] };
-                    connection.SendAsync(ClientRoomRefreshedCommand.Id, sendingContent);
+                    foreach (ServerConnection connection in args.API.Server.Connections)
+                    {
+                        ClientRoomRefreshedCommand.MessageContent sendingContent = new ClientRoomRefreshedCommand.MessageContent() { Room = args.API.Server.Rooms[AsyncServer.MainRoomName] };
+                        connection.SendMessage(ClientRoomRefreshedCommand.Id, sendingContent);
+                    }
                 }
             }
             else
             {
-                args.UserConnection.SendAsync(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand.MessageContent() { Registered = !newUserExist });
+                args.UserConnection.SendMessage(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand.MessageContent() { Registered = !newUserExist });
                 args.API.CloseConnection(args.UserConnection);
             }
         }
@@ -195,24 +206,29 @@ namespace TCPChat.Engine.API.StandartAPI
             sendingContent.RoomName = receivedContent.RoomName;
             sendingContent.Sender = args.UserConnection.Info.Nick;
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
 
-            if (!args.API.Server.Rooms[receivedContent.RoomName].Users.Contains(args.UserConnection.Info))
+            RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
+
+            lock (room.Users)
             {
-                args.API.SendSystemMessage(args.UserConnection, "Вы не можете отправить сообщение, т.к. не входите в состав этой комнаты.");
-                return;
-            }
+                if (!room.Users.Contains(args.UserConnection.Info))
+                {
+                    args.API.SendSystemMessage(args.UserConnection, "Вы не можете отправить сообщение, т.к. не входите в состав этой комнаты.");
+                    return;
+                }
 
-            foreach (UserDescription user in args.API.Server.Rooms[receivedContent.RoomName].Users)
-            {
-                if (user == null)
-                    continue;
+                foreach (UserDescription user in room.Users)
+                {
+                    if (user == null)
+                        continue;
 
-                ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
+                    ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
 
-                if (userConnection.IsRegistered)
-                    userConnection.SendAsync(ClientOutRoomMessageCommand.Id, sendingContent);
+                    if (userConnection.IsRegistered)
+                        userConnection.SendMessage(ClientOutRoomMessageCommand.Id, sendingContent);
+                }
             }
         }
 
@@ -246,13 +262,22 @@ namespace TCPChat.Engine.API.StandartAPI
             if (string.IsNullOrEmpty(receivedContent.Receiver))
                 throw new ArgumentException("Receiver");
 
-            ServerConnection ReceiverConnection = args.API.Server.Connections.Find((connection) => string.Equals(receivedContent.Receiver, connection.Info.Nick));
-            ClientOutPrivateMessageCommand.MessageContent SendingContent = new ClientOutPrivateMessageCommand.MessageContent();
-            SendingContent.Key = receivedContent.Key;
-            SendingContent.Message = receivedContent.Message;
-            SendingContent.Sender = args.UserConnection.Info.Nick;
+            ServerConnection receiverConnection;
+            lock (args.API.Server.Connections)
+                receiverConnection = args.API.Server.Connections.FirstOrDefault((connection) => string.Equals(receivedContent.Receiver, connection.Info.Nick));
 
-            ReceiverConnection.SendAsync(ClientOutPrivateMessageCommand.Id, SendingContent);
+            if (receiverConnection == null)
+            {
+                args.API.SendSystemMessage(args.UserConnection, "Данного пользователя нет в сети.");
+                return;
+            }
+
+            ClientOutPrivateMessageCommand.MessageContent sendingContent = new ClientOutPrivateMessageCommand.MessageContent();
+            sendingContent.Key = receivedContent.Key;
+            sendingContent.Message = receivedContent.Message;
+            sendingContent.Sender = args.UserConnection.Info.Nick;
+
+            receiverConnection.SendMessage(ClientOutPrivateMessageCommand.Id, sendingContent);
         }
 
         [Serializable]
@@ -281,10 +306,20 @@ namespace TCPChat.Engine.API.StandartAPI
             if (string.IsNullOrEmpty(receivedContent.Nick))
                 throw new ArgumentException("Nick");
 
+            ServerConnection requestConnection;
+            lock (args.API.Server.Connections)
+                requestConnection = args.API.Server.Connections.FirstOrDefault((connection) => string.Equals(receivedContent.Nick, connection.Info.Nick));
+
+            if (requestConnection == null)
+            {
+                args.API.SendSystemMessage(args.UserConnection, "Данного пользователя нет в сети.");
+                return;
+            }
+
             ClientReceiveUserOpenKeyCommand.MessageContent sendingContent = new ClientReceiveUserOpenKeyCommand.MessageContent();
             sendingContent.Nick = receivedContent.Nick;
-            sendingContent.OpenKey = args.API.Server.Connections.Find((connection) => string.Equals(receivedContent.Nick, connection.Info.Nick)).OpenKey;
-            args.UserConnection.SendAsync(ClientReceiveUserOpenKeyCommand.Id, sendingContent);
+            sendingContent.OpenKey = requestConnection.OpenKey;
+            args.UserConnection.SendMessage(ClientReceiveUserOpenKeyCommand.Id, sendingContent);
         }
 
         [Serializable]
@@ -309,16 +344,22 @@ namespace TCPChat.Engine.API.StandartAPI
             if (string.IsNullOrEmpty(receivedContent.RoomName))
                 throw new ArgumentNullException("RoomName");
 
-            if (args.API.Server.Rooms.ContainsKey(receivedContent.RoomName))
+            RoomDescription creatingRoom = null;
+            lock (args.API.Server.Rooms)
             {
-                args.API.SendSystemMessage(args.UserConnection, "Комната с таким именем уже создана, выберите другое имя.");
-                return;
+                if (args.API.Server.Rooms.ContainsKey(receivedContent.RoomName))
+                {
+                    args.API.SendSystemMessage(args.UserConnection, "Комната с таким именем уже создана, выберите другое имя.");
+                    return;
+                }
+
+                creatingRoom = new RoomDescription(args.UserConnection.Info, receivedContent.RoomName);
+                args.API.Server.Rooms.Add(receivedContent.RoomName, creatingRoom);
             }
 
             ClientRoomOpenedCommand.MessageContent sendingContent = new ClientRoomOpenedCommand.MessageContent();
-            sendingContent.Room = new RoomDescription(args.UserConnection.Info, receivedContent.RoomName);
-            args.API.Server.Rooms.Add(receivedContent.RoomName, sendingContent.Room);
-            args.UserConnection.SendAsync(ClientRoomOpenedCommand.Id, sendingContent);
+            sendingContent.Room = creatingRoom;
+            args.UserConnection.SendMessage(ClientRoomOpenedCommand.Id, sendingContent);
         }
 
         [Serializable]
@@ -349,7 +390,7 @@ namespace TCPChat.Engine.API.StandartAPI
                 return;
             }
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
 
             RoomDescription deletingRoom = args.API.Server.Rooms[receivedContent.RoomName];
@@ -360,13 +401,18 @@ namespace TCPChat.Engine.API.StandartAPI
                 return;
             }
 
-            args.API.Server.Rooms.Remove(deletingRoom.Name);
+            lock (args.API.Server.Rooms)
+                args.API.Server.Rooms.Remove(deletingRoom.Name);
+
             ClientRoomClosedCommand.MessageContent sendingContent = new ClientRoomClosedCommand.MessageContent() { Room = deletingRoom };
 
-            foreach (UserDescription user in deletingRoom.Users)
-            {                  
-                ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
-                userConnection.SendAsync(ClientRoomClosedCommand.Id, sendingContent);
+            lock (deletingRoom.Users)
+            {
+                foreach (UserDescription user in deletingRoom.Users)
+                {
+                    ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
+                    userConnection.SendMessage(ClientRoomClosedCommand.Id, sendingContent);
+                }
             }
         }
 
@@ -401,7 +447,7 @@ namespace TCPChat.Engine.API.StandartAPI
                 return;
             }
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
 
             RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
@@ -424,16 +470,19 @@ namespace TCPChat.Engine.API.StandartAPI
                 invitedUsers.Add(user);
             }
 
-            foreach (UserDescription user in room.Users)
+            lock (room.Users)
             {
-                ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
-
-                if (invitedUsers.Contains(user))
-                    userConnection.SendAsync(ClientRoomOpenedCommand.Id, sendingContent);
-                else
+                foreach (UserDescription user in room.Users)
                 {
-                    ClientRoomRefreshedCommand.MessageContent roomRefreshContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
-                    userConnection.SendAsync(ClientRoomRefreshedCommand.Id, roomRefreshContent);
+                    ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
+
+                    if (invitedUsers.Contains(user))
+                        userConnection.SendMessage(ClientRoomOpenedCommand.Id, sendingContent);
+                    else
+                    {
+                        ClientRoomRefreshedCommand.MessageContent roomRefreshContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
+                        userConnection.SendMessage(ClientRoomRefreshedCommand.Id, roomRefreshContent);
+                    }
                 }
             }
         }
@@ -471,7 +520,7 @@ namespace TCPChat.Engine.API.StandartAPI
                 return;
             }
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
 
             RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
@@ -486,8 +535,9 @@ namespace TCPChat.Engine.API.StandartAPI
 
             foreach (UserDescription user in receivedContent.Users)
             {
-                if (!room.Users.Contains(user))
-                    continue;
+                lock (room.Users)
+                    if (!room.Users.Contains(user))
+                        continue;
 
                 if (user.Equals(room.Admin))
                 {
@@ -495,17 +545,21 @@ namespace TCPChat.Engine.API.StandartAPI
                     continue;
                 }
 
-                args.API.Server.Rooms[receivedContent.RoomName].Users.Remove(user);
+                lock (room.Users)
+                    room.Users.Remove(user);
 
                 ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
-                userConnection.SendAsync(ClientRoomClosedCommand.Id, sendingContent);
+                userConnection.SendMessage(ClientRoomClosedCommand.Id, sendingContent);
             }
 
-            foreach (UserDescription user in room.Users)
+            lock (room.Users)
             {
-                ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
-                ClientRoomRefreshedCommand.MessageContent roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
-                userConnection.SendAsync(ClientRoomRefreshedCommand.Id, roomRefreshedContent);
+                foreach (UserDescription user in room.Users)
+                {
+                    ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
+                    ClientRoomRefreshedCommand.MessageContent roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
+                    userConnection.SendMessage(ClientRoomRefreshedCommand.Id, roomRefreshedContent);
+                }
             }
         }
 
@@ -539,23 +593,28 @@ namespace TCPChat.Engine.API.StandartAPI
                 return;
             }
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
 
             RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
 
-            if (!room.Users.Contains(args.UserConnection.Info))
+            lock (room.Users)
             {
-                args.API.SendSystemMessage(args.UserConnection, "Вы и так не входите в состав этой комнаты.");
-                return;
+                if (!room.Users.Contains(args.UserConnection.Info))
+                {
+                    args.API.SendSystemMessage(args.UserConnection, "Вы и так не входите в состав этой комнаты.");
+                    return;
+                }
+
+                room.Users.Remove(args.UserConnection.Info);
             }
 
-            room.Users.Remove(args.UserConnection.Info);
-            args.UserConnection.SendAsync(ClientRoomClosedCommand.Id, new ClientRoomClosedCommand.MessageContent() { Room = room });
+            args.UserConnection.SendMessage(ClientRoomClosedCommand.Id, new ClientRoomClosedCommand.MessageContent() { Room = room });
 
             if (room.Admin.Equals(args.UserConnection.Info))
             {
-                room.Admin = room.Users.FirstOrDefault();
+                lock (room.Users)
+                    room.Admin = room.Users.FirstOrDefault();
 
                 if (room.Admin != null)
                 {
@@ -564,11 +623,14 @@ namespace TCPChat.Engine.API.StandartAPI
                 }
             }
 
-            foreach (UserDescription user in room.Users)
+            lock (room.Users)
             {
-                ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
-                ClientRoomRefreshedCommand.MessageContent roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
-                userConnection.SendAsync(ClientRoomRefreshedCommand.Id, roomRefreshedContent);
+                foreach (UserDescription user in room.Users)
+                {
+                    ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
+                    ClientRoomRefreshedCommand.MessageContent roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
+                    userConnection.SendMessage(ClientRoomRefreshedCommand.Id, roomRefreshedContent);
+                }
             }
         }
 
@@ -597,19 +659,22 @@ namespace TCPChat.Engine.API.StandartAPI
             if (string.Equals(receivedContent.RoomName, AsyncServer.MainRoomName))
                 return;
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
 
             RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
 
-            if (!room.Users.Contains(args.UserConnection.Info))
+            lock (room.Users)
             {
-                args.API.SendSystemMessage(args.UserConnection, "Вы не входите в состав этой комнаты.");
-                return;
+                if (!room.Users.Contains(args.UserConnection.Info))
+                {
+                    args.API.SendSystemMessage(args.UserConnection, "Вы не входите в состав этой комнаты.");
+                    return;
+                }
             }
 
             ClientRoomRefreshedCommand.MessageContent roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
-            args.UserConnection.SendAsync(ClientRoomRefreshedCommand.Id, roomRefreshedContent);
+            args.UserConnection.SendMessage(ClientRoomRefreshedCommand.Id, roomRefreshedContent);
         }
 
         [Serializable]
@@ -643,7 +708,7 @@ namespace TCPChat.Engine.API.StandartAPI
                 return;
             }
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
 
             RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
@@ -687,32 +752,38 @@ namespace TCPChat.Engine.API.StandartAPI
             if (string.IsNullOrEmpty(receivedContent.RoomName))
                 throw new ArgumentException("RoomName");
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
 
             RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
 
-            if (!room.Users.Contains(args.UserConnection.Info))
+            lock (room.Users)
             {
-                args.API.SendSystemMessage(args.UserConnection, "Вы не входите в состав этой комнаты.");
-                return;
+                if (!room.Users.Contains(args.UserConnection.Info))
+                {
+                    args.API.SendSystemMessage(args.UserConnection, "Вы не входите в состав этой комнаты.");
+                    return;
+                }
             }
 
-            if (args.API.Server.Rooms[receivedContent.RoomName].Files.FirstOrDefault((file) => file.Equals(receivedContent.File)) != null)
+            lock (room.Files)
             {
-                args.API.SendSystemMessage(args.UserConnection, "Пользователь уже раздает данный файл.");
-                return;
+                if (room.Files.FirstOrDefault((file) => file.Equals(receivedContent.File)) == null)
+                {
+                    room.Files.Add(receivedContent.File);
+                }
             }
 
-            room.Files.Add(receivedContent.File);
-
-            foreach (UserDescription user in room.Users)
+            lock (room.Users)
             {
-                ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
-                ClientOutFileMessageCommand.MessageContent sendingContent = new ClientOutFileMessageCommand.MessageContent();
-                sendingContent.File = receivedContent.File;
-                sendingContent.RoomName = receivedContent.RoomName;
-                userConnection.SendAsync(ClientOutFileMessageCommand.Id, sendingContent);
+                foreach (UserDescription user in room.Users)
+                {
+                    ServerConnection userConnection = args.API.Server.Connections.Find((conn) => user.Equals(conn.Info));
+                    ClientFilePostedCommand.MessageContent sendingContent = new ClientFilePostedCommand.MessageContent();
+                    sendingContent.File = receivedContent.File;
+                    sendingContent.RoomName = receivedContent.RoomName;
+                    userConnection.SendMessage(ClientFilePostedCommand.Id, sendingContent);
+                }
             }
         }
 
@@ -743,21 +814,22 @@ namespace TCPChat.Engine.API.StandartAPI
             if (string.IsNullOrEmpty(receivedContent.RoomName))
                 throw new ArgumentException("RoomName");
 
-            if (RoomExists(receivedContent.RoomName, args))
+            if (!RoomExists(receivedContent.RoomName, args))
                 return;
-
-            if (args.API.Server.Rooms[receivedContent.RoomName].Files.FirstOrDefault((file) => file.Equals(receivedContent.File)) == null)
-            {
-                args.API.SendSystemMessage(args.UserConnection, "Пользователь не раздает данный файл.");
-                return;
-            }
 
             RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
 
-            if (!room.Users.Contains(args.UserConnection.Info))
+            lock (room.Files)
+                if (!room.Files.Exists((file) => file.Equals(receivedContent.File)))
+                    return;
+
+            lock (room.Users)
             {
-                args.API.SendSystemMessage(args.UserConnection, "Вы не входите в состав этой комнаты.");
-                return;
+                if (!room.Users.Contains(args.UserConnection.Info))
+                {
+                    args.API.SendSystemMessage(args.UserConnection, "Вы не входите в состав этой комнаты.");
+                    return;
+                }
             }
 
             bool access = false;
@@ -770,17 +842,21 @@ namespace TCPChat.Engine.API.StandartAPI
                 return;
             }
 
-            room.Files.Remove(receivedContent.File);
+            lock(room.Files)
+                room.Files.Remove(receivedContent.File);
 
             args.API.SendSystemMessage(args.UserConnection, string.Format("Файл \"{0}\" удален с раздачи.", receivedContent.File.Name));
 
-            foreach (UserDescription current in room.Users)
+            lock (room.Users)
             {
-                ServerConnection connection = args.API.Server.Connections.First((conn) => conn.Info.Equals(current));
-                ClientPostedFileDeletedCommand.MessageContent postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent();
-                postedFileDeletedContent.File = receivedContent.File;
-                postedFileDeletedContent.RoomName = room.Name;
-                connection.SendAsync(ClientPostedFileDeletedCommand.Id, postedFileDeletedContent);
+                foreach (UserDescription current in room.Users)
+                {
+                    ServerConnection connection = args.API.Server.Connections.First((conn) => conn.Info.Equals(current));
+                    ClientPostedFileDeletedCommand.MessageContent postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent();
+                    postedFileDeletedContent.File = receivedContent.File;
+                    postedFileDeletedContent.RoomName = room.Name;
+                    connection.SendMessage(ClientPostedFileDeletedCommand.Id, postedFileDeletedContent);
+                }
             }
         }
 
@@ -797,99 +873,51 @@ namespace TCPChat.Engine.API.StandartAPI
         public const ushort Id = (ushort)ServerCommand.RemoveFileFromRoom;
     }
 
-    class ServerFilePartRequestCommand :
+    class ServerP2PConnectRequestCommand :
         BaseServerCommand,
         IServerAPICommand
     {
-        private void CancelDownloading(string roomName, FileDescription file, ServerCommandArgs args)
-        {
-            ClientCancelDownloadingCommand.MessageContent content = new ClientCancelDownloadingCommand.MessageContent();
-            content.File = file;
-            content.RoomName = roomName;
-            args.UserConnection.SendAsync(ClientCancelDownloadingCommand.Id, content);
-        }
-
         public void Run(ServerCommandArgs args)
         {
             MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
 
-            if (receivedContent.File == null)
-                throw new ArgumentNullException("File");
+            if (receivedContent.Info == null)
+                throw new ArgumentNullException("Info");
 
-            if (receivedContent.Length <= 0)
-                throw new ArgumentException("Length <= 0");
+            ServerConnection requestConnection;
+            lock (args.API.Server.Connections)
+                requestConnection = args.API.Server.Connections.FirstOrDefault((conn) => conn.Info.Equals(receivedContent.Info));
 
-            if (string.IsNullOrEmpty(receivedContent.RoomName))
-                throw new ArgumentException("RoomName");
-
-            if (receivedContent.StartPartPosition < 0)
-                throw new ArgumentException("StartFilePosition < 0");
-
-            if (RoomExists(receivedContent.RoomName, args))
-                return;
-
-            if (args.API.Server.Rooms[receivedContent.RoomName].Files.FirstOrDefault((file) => file.Equals(receivedContent.File)) == null)
+            if (requestConnection == null)
             {
-                args.API.SendSystemMessage(args.UserConnection, "Пользователь уже не раздает данный файл. Загрузка прекращена.");
-                CancelDownloading(receivedContent.RoomName, receivedContent.File, args);
+                args.API.SendSystemMessage(args.UserConnection, "Данного пользователя не существует.");
                 return;
             }
 
-            RoomDescription room = args.API.Server.Rooms[receivedContent.RoomName];
+            int id = args.API.Server.P2PService.WaitConnection(requestConnection, args.UserConnection);
 
-            if (!room.Users.Contains(args.UserConnection.Info))
-            {
-                args.API.SendSystemMessage(args.UserConnection, "Вы не входите в состав этой комнаты. Загрузка прекращена.");
-                CancelDownloading(receivedContent.RoomName, receivedContent.File, args);
-                return;
-            }
+            ClientConnectToP2PServiceCommand.MessageContent sendingContent = new ClientConnectToP2PServiceCommand.MessageContent();
+            sendingContent.ServicePoint = new IPEndPoint(Connection.GetIPAddress(requestConnection.RemotePoint.AddressFamily), args.API.Server.P2PService.Port);
+            sendingContent.ServiceConnectId = id;
+            sendingContent.Type = ConnectionType.Request;
+            requestConnection.SendMessage(ClientConnectToP2PServiceCommand.Id, sendingContent);
 
-            int requestID = 0;
-            StandartServerAPI serverAPI = (StandartServerAPI)args.API;
-            lock (serverAPI.FilePartRequests)
-            {
-                while (serverAPI.FilePartRequests.ContainsKey(requestID))
-                    requestID++;
-
-                serverAPI.FilePartRequests.Add(requestID, args.UserConnection);
-            }
-
-            ClientReadFilePartCommand.MessageContent sendingContent = new ClientReadFilePartCommand.MessageContent();
-            sendingContent.File = receivedContent.File;
-            sendingContent.Length = receivedContent.Length;
-            sendingContent.StartPartPosition = receivedContent.StartPartPosition;
-            sendingContent.RequestID = requestID;
-            sendingContent.RoomName = receivedContent.RoomName;
-
-            ServerConnection fileOwnerConnection = args.API.Server.Connections.FirstOrDefault((conn) => conn.Info.Equals(receivedContent.File.Owner));
-            if (fileOwnerConnection == null)
-            {
-                args.API.SendSystemMessage(args.UserConnection, "Владелец файла не в сети. Загрузка прекращена.");
-                CancelDownloading(receivedContent.RoomName, receivedContent.File, args);
-                return;
-            }
-
-            fileOwnerConnection.SendAsync(ClientReadFilePartCommand.Id, sendingContent);
+            sendingContent.Type = ConnectionType.Sender;
+            args.UserConnection.SendMessage(ClientConnectToP2PServiceCommand.Id, sendingContent);
         }
 
         [Serializable]
         public class MessageContent
         {
-            long length;
-            long startPartPosition;
-            string roomName;
-            FileDescription file;
+            UserDescription info;
 
-            public string RoomName { get { return roomName; } set { roomName = value; } }
-            public FileDescription File { get { return file; } set { file = value; } }
-            public long Length { get { return length; } set { length = value; } }
-            public long StartPartPosition { get { return startPartPosition; } set { startPartPosition = value; } }
+            public UserDescription Info { get { return info; } set { info = value; } }
         }
 
-        public const ushort Id = (ushort)ServerCommand.FilePartRequest;
+        public const ushort Id = (ushort)ServerCommand.P2PConnectRequest;
     }
 
-    class ServerFilePartResponceCommand :
+    class ServerP2PConnectResponceCommand :
         BaseServerCommand,
         IServerAPICommand
     {
@@ -897,52 +925,51 @@ namespace TCPChat.Engine.API.StandartAPI
         {
             MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
 
-            if (receivedContent.File == null)
-                throw new ArgumentNullException("File");
+            if (receivedContent.RemoteInfo == null)
+                throw new ArgumentNullException("Info");
 
-            if (receivedContent.Part == null)
-                throw new ArgumentNullException("Part");
+            if (receivedContent.PeerPoint == null)
+                throw new ArgumentNullException("PeerPoint");
 
-            if (receivedContent.StartPartPosition < 0)
-                throw new ArgumentException("StartFilePosition < 0");
+            ServerConnection receiverConnection;
+            lock(args.API.Server.Connections)
+                receiverConnection = args.API.Server.Connections.FirstOrDefault((conn) => string.Equals(conn.Info.Nick, receivedContent.ReceiverNick));
 
-            StandartServerAPI serverAPI = (StandartServerAPI)args.API;
-            ServerConnection receiver = serverAPI.FilePartRequests[receivedContent.RequestID];
-            lock (serverAPI.FilePartRequests)
-                serverAPI.FilePartRequests.Remove(receivedContent.RequestID);
+            if (receiverConnection == null)
+            {
+                args.API.SendSystemMessage(args.UserConnection, "Данного пользователя не существует.");
+                return;
+            }
 
-            ClientWriteFilePartCommand.MessageContent sendingContent = new ClientWriteFilePartCommand.MessageContent();
-            sendingContent.File = receivedContent.File;
-            sendingContent.Part = receivedContent.Part;
-            sendingContent.RoomName = receivedContent.RoomName;
-            sendingContent.StartPartPosition = receivedContent.StartPartPosition;
-            receiver.SendAsync(ClientWriteFilePartCommand.Id, sendingContent);
+            ClientConnectToPeerCommand.MessageContent connectContent = new ClientConnectToPeerCommand.MessageContent();
+            connectContent.PeerPoint = receivedContent.PeerPoint;
+            connectContent.RemoteInfo = receivedContent.RemoteInfo;
+            connectContent.ServiceConnectId = receivedContent.ServiceConnectId;
+            receiverConnection.SendMessage(ClientConnectToPeerCommand.Id, connectContent);
         }
 
         [Serializable]
         public class MessageContent
         {
-            int requestID;
-            long startPartPosition;
-            byte[] part;
-            string roomName;
-            FileDescription file;
+            int serviceConnectId;
+            string receiverNick;
+            IPEndPoint peerPoint;
+            UserDescription remoteInfo;
 
-            public long StartPartPosition { get { return startPartPosition; } set { startPartPosition = value; } }
-            public string RoomName { get { return roomName; } set { roomName = value; } }
-            public byte[] Part { get { return part; } set { part = value; } }
-            public FileDescription File { get { return file; } set { file = value; } }
-            public int RequestID { get { return requestID; } set { requestID = value; } }
+            public int ServiceConnectId { get { return serviceConnectId; } set { serviceConnectId = value; } }
+            public string ReceiverNick { get { return receiverNick; } set { receiverNick = value; } }
+            public IPEndPoint PeerPoint { get { return peerPoint; } set { peerPoint = value; } }
+            public UserDescription RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }
         }
 
-        public const ushort Id = (ushort)ServerCommand.FilePartResponce;
+        public const ushort Id = (ushort)ServerCommand.P2PConnectResponce;
     }
 
     class ServerPingRequest : IServerAPICommand
     {
         public void Run(ServerCommandArgs args)
         {
-            args.UserConnection.SendAsync(ClientPingResponceCommand.Id, null);
+            args.UserConnection.SendMessage(ClientPingResponceCommand.Id, null);
         }
 
         public const ushort Id = (ushort)ServerCommand.PingRequest;

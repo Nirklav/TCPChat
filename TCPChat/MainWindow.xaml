@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="TCP Chat"
-        MinHeight="400"
-        MinWidth="350"
-        Height="400" 
-        Width="350" 
+        MinHeight="470"
+        MinWidth="380"
+        Height="470" 
+        Width="380" 
         Closed="Window_Closed" 
         Icon="chat.ico"
         WindowStartupLocation="CenterScreen">
@@ -74,7 +74,7 @@
                         </TextBlock.Foreground>
                     </TextBlock>
 
-                    <TextBlock Text=" to: "
+                    <TextBlock Text=" : "
                                FontWeight="Bold"                           
                                TextWrapping="Wrap"
                                Foreground="#FF00AA00"
@@ -243,11 +243,6 @@
                             </Style>
                         </ContextMenu.Resources>
 
-                        <MenuItem Header="Написать ЛС"
-                                  Tag="{Binding Path=Nick}"
-                                  Click="SendPM_Click"
-                                  Style="{StaticResource ResourceKey=TriggerMenuStyle}"/>
-
                         <MenuItem Header="Назначить администратором"
                                   Tag="{Binding Path=Nick}"
                                   Click="SetRoomAdmin_Click"
@@ -305,9 +300,9 @@
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="4*" MinHeight="200"/>
+                    <RowDefinition Height="3*" MinHeight="200"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="1*" MinHeight="50"/>
+                    <RowDefinition Height="1*" MinHeight="80"/>
                 </Grid.RowDefinitions>
 
                 <Border Margin="5, 5, 0, 0"
@@ -353,8 +348,28 @@
                               Grid.Row="1" 
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"
-                              Height="5"
+                              Height="Auto"
                               Background="Transparent"/>
+                
+                <StackPanel Grid.Column="0"
+                            Grid.Row="1"
+                            Orientation="Horizontal">
+                    
+                    <Label Content="Получатель:"
+                           Margin="5"
+                           Padding="0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"/>              
+                
+                    <ComboBox x:Name="ReceiverField"
+                              Margin="5"
+                              MinWidth="100"
+                              SelectedIndex="0"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Center"
+                              Loaded="ReceiverField_Loaded"/>
+                    
+                </StackPanel>
 
                 <Border Margin="5, 0, 5, 5"
                         Grid.Column="0"
@@ -438,6 +453,9 @@
                           Header="Оповещения"
                           IsCheckable="True"
                           IsChecked="True"/>
+                <MenuItem x:Name="AboutProgram"
+                          Header="О программе"
+                          Click="AboutProgram_Click"/>
             </MenuItem>
         </Menu>
 

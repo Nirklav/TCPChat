@@ -6,6 +6,7 @@
         MinWidth="300"
         Icon="/TCPChat;component/chat.ico"
         SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
 
     <Window.Resources>
@@ -40,6 +41,7 @@
                 Content="Ок"
                 Grid.Row="1"
                 MinWidth="100"
+                MinHeight="25"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 Margin="10, 5, 10, 10"

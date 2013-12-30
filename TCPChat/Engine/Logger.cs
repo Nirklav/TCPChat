@@ -3,7 +3,7 @@ using System.IO;
 
 namespace TCPChat.Engine
 {
-    class Logger
+    public class Logger
     {
         static readonly object syncObj = new object();
 

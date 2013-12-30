@@ -1,14 +1,15 @@
 ﻿using System;
 using System.IO;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Drawing;
-using System.Net;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace TCPChat.Engine.Connections
 {
+    /// <summary>
+    /// Базовый класс соединения, реализовывает прием и передачу данных.
+    /// </summary>
     public abstract class Connection : IDisposable
     {
         private const int bufferSize = 1024 * 2;
@@ -30,7 +31,7 @@ namespace TCPChat.Engine.Connections
             if (!Handler.Connected)
                 throw new ArgumentException("Сокет должен быть соединен.");
 
-            if (MaxReceivedDataSize < 0)
+            if (MaxReceivedDataSize <= 0)
                 throw new ArgumentException("MaxReceivedDataSize должно быть больше 0.");
 
             handler = Handler;
@@ -43,41 +44,60 @@ namespace TCPChat.Engine.Connections
         #endregion
 
         #region properties
-        public UserDescription Info
+        /// <summary>
+        /// Информация о соединении.
+        /// </summary>
+        public virtual UserDescription Info
         {
             get { return info; }
             set { info = value; }
         }
 
-        public IPEndPoint RemotePoint
+        /// <summary>
+        /// Удаленная точка.
+        /// </summary>
+        public virtual IPEndPoint RemotePoint
         {
             get { return (IPEndPoint)handler.RemoteEndPoint; }
+        }
+
+        /// <summary>
+        /// Локальная точка.
+        /// </summary>
+        public virtual IPEndPoint LocalPoint
+        {
+            get { return (IPEndPoint)handler.LocalEndPoint; }
         }
         #endregion
 
         #region public methods
-        public void SendAsync(ushort Id, object MessageContent)
+        /// <summary>
+        /// Отправляет команду.
+        /// </summary>
+        /// <param name="id">Индетификатор команды.</param>
+        /// <param name="messageContent">Параметр команды.</param>
+        public virtual void SendMessage(ushort id, object messageContent)
         {
             if (!handler.Connected)
                 return;
 
             try
             {
-                MemoryStream MessageStream = new MemoryStream();
+                MemoryStream messageStream = new MemoryStream();
 
-                MessageStream.Write(BitConverter.GetBytes(0), 0, sizeof(int));
-                MessageStream.Write(BitConverter.GetBytes(Id), 0, sizeof(ushort));
+                messageStream.Write(BitConverter.GetBytes(0), 0, sizeof(int));
+                messageStream.Write(BitConverter.GetBytes(id), 0, sizeof(ushort));
 
-                if (MessageContent != null)
+                if (messageContent != null)
                 {
-                    BinaryFormatter Formatter = new BinaryFormatter();
-                    Formatter.Serialize(MessageStream, MessageContent);
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    formatter.Serialize(messageStream, messageContent);
                 }
 
-                byte[] MessageToSend = MessageStream.ToArray();
-                int MessageToSendSize = (int)MessageStream.Length;
-                Buffer.BlockCopy(BitConverter.GetBytes(MessageToSendSize), 0, MessageToSend, 0, sizeof(int));
-                handler.BeginSend(MessageToSend, 0, MessageToSend.Length, SocketFlags.None, SendCallback, null);
+                byte[] messageToSend = messageStream.ToArray();
+                int messageToSendSize = (int)messageStream.Length;
+                Buffer.BlockCopy(BitConverter.GetBytes(messageToSendSize), 0, messageToSend, 0, sizeof(int));
+                handler.BeginSend(messageToSend, 0, messageToSend.Length, SocketFlags.None, SendCallback, null);
             }
             catch (SocketException se)
             {
@@ -151,7 +171,7 @@ namespace TCPChat.Engine.Connections
         /// <summary>
         /// Происходит когда получено полное сообщение.
         /// </summary>
-        /// <param name="args">Инормаци о данных, и данные.</param>
+        /// <param name="args">Инормация о данных, и данные.</param>
         protected abstract void OnDataReceived(DataReceivedEventArgs args);
 
         /// <summary>
@@ -225,18 +245,18 @@ namespace TCPChat.Engine.Connections
             return DataSize;
         }
 
-        protected void SendAsync(byte[] data)
+        protected virtual void SendMessage(byte[] data)
         {
             try
             {
-                MemoryStream MessageStream = new MemoryStream();
-                MessageStream.Write(BitConverter.GetBytes(data.Length + sizeof(int)), 0, sizeof(int));
-                MessageStream.Write(data, 0, data.Length);
+                MemoryStream messageStream = new MemoryStream();
+                messageStream.Write(BitConverter.GetBytes(data.Length + sizeof(int)), 0, sizeof(int));
+                messageStream.Write(data, 0, data.Length);
 
-                byte[] Message = MessageStream.ToArray();
-                MessageStream.Dispose();
+                byte[] message = messageStream.ToArray();
+                messageStream.Dispose();
 
-                handler.BeginSend(Message, 0, Message.Length, SocketFlags.None, SendCallback, null);
+                handler.BeginSend(message, 0, message.Length, SocketFlags.None, SendCallback, null);
             }
             catch (SocketException se)
             {
@@ -251,12 +271,16 @@ namespace TCPChat.Engine.Connections
 
         protected virtual void ReleaseResource()
         {
-            if (disposed) return;
+            if (disposed) 
+                return;
 
             disposed = true;
 
             if (handler != null)
             {
+                if (handler.Connected)
+                    handler.Disconnect(false);
+
                 handler.Close();
             }
 
@@ -267,6 +291,72 @@ namespace TCPChat.Engine.Connections
         public void Dispose()
         {
             ReleaseResource();
+        }
+        #endregion
+
+        #region utils
+        /// <summary>
+        /// Ищет свободный TCP порт.
+        /// </summary>
+        /// <param name="startPort">Начальное значения для поиска.</param>
+        /// <param name="endPort">Конечное значение поиска.</param>
+        /// <returns>Свободный порт.</returns>
+        public static int GetAvailableTCPPort(int startPort, int endPort)
+        {
+            int port = startPort;
+
+            while(!TCPPortIsAvailable(port))
+            {
+                port++;
+                if (port > endPort)
+                    throw new FreePortDontFindException();
+            }
+
+            return port;
+        }
+
+        /// <summary>
+        /// Проверяет TCP порт на занятость.
+        /// </summary>
+        /// <param name="port">Порт который необходимо проверить.</param>
+        /// <returns>Возвращает true если порт свободный.</returns>
+        public static bool TCPPortIsAvailable(int port)
+        {
+            if (port < 0 || port > ushort.MaxValue)
+                return false;
+
+            IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+            TcpConnectionInformation[] tcpConnectionsInfo = ipGlobalProperties.GetActiveTcpConnections();
+            IPEndPoint[] listenersPoints = ipGlobalProperties.GetActiveTcpListeners();
+
+            foreach (TcpConnectionInformation tcpi in tcpConnectionsInfo)
+            {
+                if (tcpi.LocalEndPoint.Port == port)
+                    return false;
+            }
+
+            foreach (IPEndPoint ep in listenersPoints)
+            {
+                if (ep.Port == port)
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Узнает IP адрес данного компьютера.
+        /// </summary>
+        /// <param name="type">Тип адреса.</param>
+        /// <returns>IP адрес данного компьютера.</returns>
+        public static IPAddress GetIPAddress(AddressFamily type)
+        {
+            IPAddress address = null;
+            foreach (IPAddress ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+                if (ip.AddressFamily == type)
+                    address = ip;
+
+            return address;
         }
         #endregion
     }

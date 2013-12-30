@@ -61,7 +61,7 @@ namespace TCPChat.Dialogs
         private void RemoveFile_Click(object sender, RoutedEventArgs e)
         {
             PostedFile postedFile = (PostedFile)((Button)sender).Tag;
-            client.RemoveFileFromRoomAsyc(postedFile.RoomName, postedFile.File);
+            client.RemoveFileFromRoom(postedFile.RoomName, postedFile.File);
 
             RefreshFiles();
         }

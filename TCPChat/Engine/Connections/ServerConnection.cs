@@ -6,7 +6,10 @@ using System.Threading;
 
 namespace TCPChat.Engine.Connections
 {
-    sealed class ServerConnection :
+    /// <summary>
+    /// Серверное соединение с клиентом.
+    /// </summary>
+    public sealed class ServerConnection :
         Connection
     {
         #region public const
@@ -27,7 +30,7 @@ namespace TCPChat.Engine.Connections
         private DateTime lastActivity;
         private DateTime createTime;
         private Logger logger;
-        private Action<ServerConnection, DataReceivedEventArgs> dataReceivedCallback;
+        private EventHandler<DataReceivedEventArgs> dataReceivedCallback;
         #endregion
 
         #region constructors
@@ -38,7 +41,7 @@ namespace TCPChat.Engine.Connections
         /// <param name="MaxReceivedDataSize">Максимальныйц размер сообщения получаемый от пользователя.</param>
         /// <param name="ConnectionLogger">Логгер.</param>
         /// <param name="DataReceivedCallback">Функция оповещающая о полученнии сообщения, данным соединением.</param>
-        public ServerConnection(Socket handler, int MaxReceivedDataSize, Logger ConnectionLogger, Action<ServerConnection, DataReceivedEventArgs> DataReceivedCallback)
+        public ServerConnection(Socket handler, int MaxReceivedDataSize, Logger ConnectionLogger, EventHandler<DataReceivedEventArgs> DataReceivedCallback)
         {
             Construct(handler, MaxReceivedDataSize);
 
@@ -100,11 +103,9 @@ namespace TCPChat.Engine.Connections
         /// <param name="APIName">Название API.</param>
         public void SendAPIName(string APIName)
         {
-            SendAsync(Encoding.Unicode.GetBytes(APIName));
+            SendMessage(Encoding.Unicode.GetBytes(APIName));
         }
-        #endregion
 
-        #region override methods
         /// <summary>
         /// Регистрирует данное соединение.
         /// </summary>
@@ -114,7 +115,9 @@ namespace TCPChat.Engine.Connections
             info = new UserDescription(nick);
             isRegistered = true;
         }
+        #endregion
 
+        #region override methods
         protected override void OnPackageReceive()
         {
             lastActivity = DateTime.Now;
@@ -123,9 +126,19 @@ namespace TCPChat.Engine.Connections
         protected override void OnDataReceived(DataReceivedEventArgs args)
         {
             if (args.Error != null)
-                logger.Write(args.Error);
+            {
+                if (args.Error is SocketException)
+                {
+                    SocketException se = (SocketException)args.Error;
+                    if (se.SocketErrorCode == SocketError.ConnectionReset)
+                        return;
+                }
 
-            Action<ServerConnection, DataReceivedEventArgs> temp = Interlocked.CompareExchange<Action<ServerConnection, DataReceivedEventArgs>>(ref dataReceivedCallback, null, null);
+                logger.Write(args.Error);
+                return;
+            }
+
+            EventHandler<DataReceivedEventArgs> temp = Interlocked.CompareExchange<EventHandler<DataReceivedEventArgs>>(ref dataReceivedCallback, null, null);
 
             if (temp != null)
                 temp(this, args);
@@ -135,6 +148,8 @@ namespace TCPChat.Engine.Connections
         {
             if (args.Error != null)
                 logger.Write(args.Error);
+
+            lastActivity = DateTime.Now;
         }
         #endregion
     }

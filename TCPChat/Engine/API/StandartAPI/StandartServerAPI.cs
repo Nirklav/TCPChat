@@ -13,7 +13,7 @@ namespace TCPChat.Engine.API.StandartAPI
         /// <summary>
         /// Версия и имя данного API.
         /// </summary>
-        public const string API = "StandartAPI v1.2";
+        public const string API = "StandartAPI v1.3";
 
         /// <summary>
         /// Сервер являющийся хозяином данного API.
@@ -82,7 +82,7 @@ namespace TCPChat.Engine.API.StandartAPI
         public void SendSystemMessage(ServerConnection receiveConnection, string message)
         {
             ClientOutSystemMessageCommand.MessageContent sendingContent = new ClientOutSystemMessageCommand.MessageContent() { Message = message };
-            receiveConnection.SendAsync(ClientOutSystemMessageCommand.Id, sendingContent);
+            receiveConnection.SendMessage(ClientOutSystemMessageCommand.Id, sendingContent);
         }
 
         /// <summary>
@@ -109,23 +109,26 @@ namespace TCPChat.Engine.API.StandartAPI
             {
                 Server.Connections.Remove(connection);
 
-                foreach (string roomName in Server.Rooms.Keys)
+                lock (Server.Rooms)
                 {
-                    RoomDescription room = Server.Rooms[roomName];
-
-                    if (!room.Users.Contains(connection.Info))
-                        continue;
-
-                    room.Users.Remove(connection.Info);
-
-                    foreach (UserDescription user in room.Users)
+                    foreach (string roomName in Server.Rooms.Keys)
                     {
-                        if (user == null)
+                        RoomDescription room = Server.Rooms[roomName];
+
+                        if (!room.Users.Contains(connection.Info))
                             continue;
 
-                        ServerConnection userConnection = Server.Connections.Find((conn) => user.Equals(conn.Info));
-                        ClientRoomRefreshedCommand.MessageContent sendingContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
-                        userConnection.SendAsync(ClientRoomRefreshedCommand.Id, sendingContent);
+                        room.Users.Remove(connection.Info);
+
+                        foreach (UserDescription user in room.Users)
+                        {
+                            if (user == null)
+                                continue;
+
+                            ServerConnection userConnection = Server.Connections.Find((conn) => user.Equals(conn.Info));
+                            ClientRoomRefreshedCommand.MessageContent sendingContent = new ClientRoomRefreshedCommand.MessageContent() { Room = room };
+                            userConnection.SendMessage(ClientRoomRefreshedCommand.Id, sendingContent);
+                        }
                     }
                 }
             }

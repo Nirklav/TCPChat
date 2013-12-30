@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using TCPChat.Engine;
 
@@ -10,6 +7,14 @@ namespace TCPChat
 {
     public class MessageContainer : INotifyPropertyChanged
     {
+        private const string From = "[{0}] от: ";
+        private const string PMForm = "[{0}] ЛС от: ";
+        private const string TimeFormat = "HH:mm:ss";
+        private const string SizeFormat = " ({0:#,##0.0} {1})";
+        private const string ByteStr = "байт";
+        private const string KByteStr = "Кб";
+        private const string MByteStr = "Мб";
+
         int progress;
         FileDescription file;
 
@@ -26,30 +31,30 @@ namespace TCPChat
             Sender = sender;
             File = fileDescription;
             Progress = 0;
-            Title = string.Format("[{0}] from: ", DateTime.Now.ToString("HH:mm:ss"));
+            Title = string.Format(From, DateTime.Now.ToString(TimeFormat));
 
             string sizeDim = string.Empty;
             float size = 0;
 
             if (fileDescription.Size < 1024)
             {
-                sizeDim = "бaйт";
+                sizeDim = ByteStr;
                 size = fileDescription.Size;
             }
 
             if (fileDescription.Size >= 1024 && fileDescription.Size < 1024 * 1024)
             {
-                sizeDim = "Кб";
+                sizeDim = KByteStr;
                 size = fileDescription.Size / 1024.0f;
             }
 
             if (fileDescription.Size >= 1024 * 1024)
             {
-                sizeDim = "Мб";
+                sizeDim = MByteStr;
                 size = fileDescription.Size / (1024.0f * 1024.0f);
             }
 
-            Message = fileName + string.Format(" ({0:#,##0.0} {1})", size, sizeDim);
+            Message = fileName + string.Format(SizeFormat, size, sizeDim);
             IsFile = true;
             IsPrivate = false;
             IsSystem = false;
@@ -64,9 +69,9 @@ namespace TCPChat
             IsSystem = false;
             IsFile = false;
             if (isPrivate)
-                Title = string.Format("[{0}] PM from: ", DateTime.Now.ToString("HH:mm:ss"));
+                Title = string.Format(PMForm, DateTime.Now.ToString(TimeFormat));
             else
-                Title = string.Format("[{0}] from: ", DateTime.Now.ToString("HH:mm:ss"));
+                Title = string.Format(From, DateTime.Now.ToString(TimeFormat));
         }
 
         public string Title { get; set; }

@@ -44,6 +44,9 @@ namespace TCPChat.Engine
 
         public override bool Equals(object obj)
         {
+            if (obj == null)
+                return false;
+
             if (!(obj is UserDescription))
                 return false;
 
@@ -57,6 +60,9 @@ namespace TCPChat.Engine
 
         public bool Equals(UserDescription user)
         {
+            if (user == null)
+                return false;
+
             return string.Equals(Nick, user.Nick);
         }
     }

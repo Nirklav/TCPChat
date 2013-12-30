@@ -15,6 +15,7 @@ namespace TCPChat.Engine.API.StandartAPI
     class StandartClientAPI : IClientAPI
     {
         private Dictionary<ushort, IClientAPICommand> commandDictionary;
+        private Random idCreator;
 
         /// <summary>
         /// Клинет являющийся хозяином данного API.
@@ -24,7 +25,7 @@ namespace TCPChat.Engine.API.StandartAPI
         /// <summary>
         /// Приватные сообщения которые ожидают открытого ключа, для шифрования.
         /// </summary>
-        public List<AwaitingPrivateMessage> AwaitingPrivateMessages { get; private set; }
+        public List<WaitingPrivateMessage> AwaitingPrivateMessages { get; private set; }
 
         /// <summary>
         /// Создает экземпляр API.
@@ -36,7 +37,8 @@ namespace TCPChat.Engine.API.StandartAPI
                 throw new ArgumentNullException("host");
 
             commandDictionary = new Dictionary<ushort, IClientAPICommand>();
-            AwaitingPrivateMessages = new List<AwaitingPrivateMessage>();
+            AwaitingPrivateMessages = new List<WaitingPrivateMessage>();
+            idCreator = new Random(DateTime.Now.Millisecond);
             Client = host;
         }
 
@@ -50,7 +52,8 @@ namespace TCPChat.Engine.API.StandartAPI
             if (command == null)
                 throw new ArgumentNullException("command");
 
-            commandDictionary.Add(id, command);
+            lock (commandDictionary)
+                commandDictionary.Add(id, command);
         }
 
         /// <summary>
@@ -82,7 +85,7 @@ namespace TCPChat.Engine.API.StandartAPI
         /// Асинхронно отправляет сообщение всем пользователям в комнате. Если клиента нет в комнате, сообщение игнорируется сервером.
         /// </summary>
         /// <param name="message">Сообщение.</param>
-        public void SendMessageAsync(string message, string roomName)
+        public void SendMessage(string message, string roomName)
         {
             if (message == null)
                 throw new ArgumentNullException("message");
@@ -93,7 +96,7 @@ namespace TCPChat.Engine.API.StandartAPI
             ServerSendRoomMessageCommand.MessageContent sendingContent = new ServerSendRoomMessageCommand.MessageContent();
             sendingContent.Message = message;
             sendingContent.RoomName = roomName;
-            Client.SendAsync(ServerSendRoomMessageCommand.Id, sendingContent);
+            Client.SendMessage(ServerSendRoomMessageCommand.Id, sendingContent);
         }
 
         /// <summary>
@@ -101,7 +104,7 @@ namespace TCPChat.Engine.API.StandartAPI
         /// </summary>
         /// <param name="receiver">Ник получателя.</param>
         /// <param name="message">Сообщение.</param>
-        public void SendPrivateMessageAsync(string receiver, string message)
+        public void SendPrivateMessage(string receiver, string message)
         {
             if (message == null)
                 throw new ArgumentNullException("message");
@@ -109,10 +112,12 @@ namespace TCPChat.Engine.API.StandartAPI
             if (string.IsNullOrEmpty(receiver))
                 throw new ArgumentException("receiver");
 
-            AwaitingPrivateMessages.Add(new AwaitingPrivateMessage() { Receiver = receiver, Message = message });
+            lock (AwaitingPrivateMessages)
+                AwaitingPrivateMessages.Add(new WaitingPrivateMessage() { Receiver = receiver, Message = message });
+
             ServerSendUserOpenKeyCommand.MessageContent sendingContent = new ServerSendUserOpenKeyCommand.MessageContent();
             sendingContent.Nick = receiver;
-            Client.SendAsync(ServerSendUserOpenKeyCommand.Id, sendingContent);
+            Client.SendMessage(ServerSendUserOpenKeyCommand.Id, sendingContent);
         }
 
         /// <summary>
@@ -120,7 +125,7 @@ namespace TCPChat.Engine.API.StandartAPI
         /// </summary>
         /// <param name="info">Информация о юзере, по которой будет совершена попытка подключения.</param>
         /// <param name="keyCryptor">Откртый ключ клиента.</param>
-        public void SendRegisterRequestAsync(UserDescription info, RSAParameters openKey)
+        public void SendRegisterRequest(UserDescription info, RSAParameters openKey)
         {
             if (info== null)
                 throw new ArgumentNullException("info");
@@ -128,41 +133,41 @@ namespace TCPChat.Engine.API.StandartAPI
             ServerRegisterCommand.MessageContent sendingContent = new ServerRegisterCommand.MessageContent();
             sendingContent.User = info;
             sendingContent.OpenKey = openKey;
-            Client.SendAsync(ServerRegisterCommand.Id, sendingContent);
+            Client.SendMessage(ServerRegisterCommand.Id, sendingContent);
         }
 
         /// <summary>
         /// Асинхронно посылает запрос для отмены регистрации на сервере.
         /// </summary>
-        public void SendUnregisterRequestAsync()
+        public void SendUnregisterRequest()
         {
-            Client.SendAsync(ServerUnregisterCommand.Id, null);
+            Client.SendMessage(ServerUnregisterCommand.Id, null);
         }
 
         /// <summary>
         /// Создает на сервере комнату.
         /// </summary>
         /// <param name="roomName">Название комнаты для создания.</param>
-        public void CreateRoomAsync(string roomName)
+        public void CreateRoom(string roomName)
         {
             if (string.IsNullOrEmpty(roomName))
                 throw new ArgumentException("roomName");
 
             ServerCreateRoomCommand.MessageContent sendingContent = new ServerCreateRoomCommand.MessageContent() { RoomName = roomName };
-            Client.SendAsync(ServerCreateRoomCommand.Id, sendingContent);
+            Client.SendMessage(ServerCreateRoomCommand.Id, sendingContent);
         }
 
         /// <summary>
         /// Удаляет комнату на сервере. Необходимо являться создателем комнаты.
         /// </summary>
         /// <param name="roomName">Название комнаты.</param>
-        public void DeleteRoomAsync(string roomName)
+        public void DeleteRoom(string roomName)
         {
             if (string.IsNullOrEmpty(roomName))
                 throw new ArgumentException("roomName");
 
             ServerDeleteRoomCommand.MessageContent sendingContent = new ServerDeleteRoomCommand.MessageContent() { RoomName = roomName };
-            Client.SendAsync(ServerDeleteRoomCommand.Id, sendingContent);
+            Client.SendMessage(ServerDeleteRoomCommand.Id, sendingContent);
         }
 
         /// <summary>
@@ -170,7 +175,7 @@ namespace TCPChat.Engine.API.StandartAPI
         /// </summary>
         /// <param name="roomName">Название комнаты.</param>
         /// <param name="users">Перечисление пользователей, которые будут приглашены.</param>
-        public void InviteUsersAsync(string roomName, IEnumerable<UserDescription> users)
+        public void InviteUsers(string roomName, IEnumerable<UserDescription> users)
         {
             if (string.IsNullOrEmpty(roomName))
                 throw new ArgumentException("roomName");
@@ -179,7 +184,7 @@ namespace TCPChat.Engine.API.StandartAPI
                 throw new ArgumentNullException("users");
 
             ServerInviteUsersCommand.MessageContent sendingContent = new ServerInviteUsersCommand.MessageContent() { RoomName = roomName, Users = users };
-            Client.SendAsync(ServerInviteUsersCommand.Id, sendingContent);
+            Client.SendMessage(ServerInviteUsersCommand.Id, sendingContent);
         }
 
         /// <summary>
@@ -187,7 +192,7 @@ namespace TCPChat.Engine.API.StandartAPI
         /// </summary>
         /// <param name="roomName">Название комнаты.</param>
         /// <param name="users">Перечисление пользователей, которые будут удалены из комнаты.</param>
-        public void KickUsersAsync(string roomName, IEnumerable<UserDescription> users)
+        public void KickUsers(string roomName, IEnumerable<UserDescription> users)
         {
             if (string.IsNullOrEmpty(roomName))
                 throw new ArgumentException("roomName");
@@ -196,33 +201,33 @@ namespace TCPChat.Engine.API.StandartAPI
                 throw new ArgumentNullException("users");
 
             ServerKickUsersCommand.MessageContent sendingContent = new ServerKickUsersCommand.MessageContent() { RoomName = roomName, Users = users };
-            Client.SendAsync(ServerKickUsersCommand.Id, sendingContent);
+            Client.SendMessage(ServerKickUsersCommand.Id, sendingContent);
         }
 
         /// <summary>
         /// Осуществляет выход из комнаты пользователя.
         /// </summary>
         /// <param name="roomName">Название комнаты.</param>
-        public void ExitFormRoomAsync(string roomName)
+        public void ExitFormRoom(string roomName)
         {
             if (string.IsNullOrEmpty(roomName))
                 throw new ArgumentException("roomName");
 
             ServerExitFormRoomCommand.MessageContent sendingContent = new ServerExitFormRoomCommand.MessageContent() { RoomName = roomName };
-            Client.SendAsync(ServerExitFormRoomCommand.Id, sendingContent);
+            Client.SendMessage(ServerExitFormRoomCommand.Id, sendingContent);
         }
 
         /// <summary>
         /// Отправляет запрос о необходимости получения списка пользователей комнаты.
         /// </summary>
         /// <param name="roomName">Название комнтаы.</param>
-        public void RefreshRoomAsync(string roomName)
+        public void RefreshRoom(string roomName)
         {
             if (string.IsNullOrEmpty(roomName))
                 throw new ArgumentException("roomName");
 
             ServerRefreshRoomCommand.MessageContent sendingContent = new ServerRefreshRoomCommand.MessageContent() { RoomName = roomName };
-            Client.SendAsync(ServerRefreshRoomCommand.Id, sendingContent);
+            Client.SendMessage(ServerRefreshRoomCommand.Id, sendingContent);
         }
 
         /// <summary>
@@ -239,56 +244,58 @@ namespace TCPChat.Engine.API.StandartAPI
                 throw new ArgumentNullException("newAdmin");
 
             ServerSetRoomAdminCommand.MessageContent sendingContent = new ServerSetRoomAdminCommand.MessageContent() { RoomName = roomName, NewAdmin = newAdmin };
-            Client.SendAsync(ServerSetRoomAdminCommand.Id, sendingContent);
+            Client.SendMessage(ServerSetRoomAdminCommand.Id, sendingContent);
         }
 
         /// <summary>
         /// Добовляет файл на раздачу.
         /// </summary>
         /// <param name="roomName">Название комнаты в которую добавляется файл.</param>
-        /// <param name="fileName">Путь к добовляемому файлу.</param>
-        public void AddFileToRoomAsyc(string roomName, string fileName)
+        /// <param name="path">Путь к добовляемому файлу.</param>
+        public void AddFileToRoom(string roomName, string path)
         {
             if (string.IsNullOrEmpty(roomName))
                 throw new ArgumentException("roomName");
 
-            if (string.IsNullOrEmpty(fileName))
+            if (string.IsNullOrEmpty(path))
                 throw new ArgumentException("fileName");
 
-            FileInfo info = new FileInfo(fileName);
+            FileInfo info = new FileInfo(path);
 
             if (!info.Exists)
                 return;
 
-            bool find = true;
-            int id = 0;
-            while (true)
+            PostedFile postedFile;
+            lock (Client.PostedFiles)
+                postedFile = Client.PostedFiles.FirstOrDefault((posted) => posted.File.Owner.Equals(Client.Info) &&
+                                                                           string.Equals(posted.ReadStream.Name, path) &&
+                                                                           string.Equals(posted.RoomName, roomName));
+
+            if (postedFile != null)
             {
-                find = true;
-
-                foreach (PostedFile current in Client.PostedFiles)
-                {
-                    if (current.File.ID == id)
-                    {
-                        id++;
-                        find = false;
-                        break;
-                    }
-                }
-
-                if (find)
-                    break;
+                ServerAddFileToRoomCommand.MessageContent oldSendingContent = new ServerAddFileToRoomCommand.MessageContent() { RoomName = roomName, File = postedFile.File };
+                Client.SendMessage(ServerAddFileToRoomCommand.Id, oldSendingContent);
+                return;
             }
 
-            FileDescription file = new FileDescription(Client.Info, info.Length, Path.GetFileName(fileName), id);
-            ServerAddFileToRoomCommand.MessageContent sendingContent = new ServerAddFileToRoomCommand.MessageContent() { RoomName = roomName, File = file };
-            Client.SendAsync(ServerAddFileToRoomCommand.Id, sendingContent);
-            Client.PostedFiles.Add(new PostedFile()
+            lock (Client.PostedFiles)
             {
-                File = file,
-                RoomName = roomName,
-                ReadStream = new FileStream(fileName, FileMode.Open, FileAccess.Read)
-            });
+                int id = 0;
+                while (Client.PostedFiles.Exists((postFile) => postFile.File.ID == id))
+                    id = idCreator.Next(int.MinValue, int.MaxValue);
+
+                FileDescription file = new FileDescription(Client.Info, info.Length, Path.GetFileName(path), id);
+
+                Client.PostedFiles.Add(new PostedFile()
+                {
+                    File = file,
+                    RoomName = roomName,
+                    ReadStream = new FileStream(path, FileMode.Open, FileAccess.Read)
+                });
+
+                ServerAddFileToRoomCommand.MessageContent newSendingContent = new ServerAddFileToRoomCommand.MessageContent() { RoomName = roomName, File = file };
+                Client.SendMessage(ServerAddFileToRoomCommand.Id, newSendingContent);
+            }
         }
 
         /// <summary>
@@ -296,7 +303,7 @@ namespace TCPChat.Engine.API.StandartAPI
         /// </summary>
         /// <param name="roomName">Название комнаты из которой удаляется файл.</param>
         /// <param name="file">Описание удаляемого файла.</param>
-        public void RemoveFileFromRoomAsyc(string roomName, FileDescription file)
+        public void RemoveFileFromRoom(string roomName, FileDescription file)
         {
             if (string.IsNullOrEmpty(roomName))
                 throw new ArgumentException("roomName");
@@ -304,14 +311,19 @@ namespace TCPChat.Engine.API.StandartAPI
             if (file == null)
                 throw new ArgumentNullException("file");
 
+            lock (Client.PostedFiles)
+            {
+                PostedFile postedFile = Client.PostedFiles.FirstOrDefault((current) => current.File.Equals(file));
+
+                if (postedFile == null)
+                    return;
+
+                Client.PostedFiles.Remove(postedFile);
+                postedFile.Dispose();
+            }
+
             ServerRemoveFileFormRoomCommand.MessageContent sendingContent = new ServerRemoveFileFormRoomCommand.MessageContent() { RoomName = roomName, File = file };
-            Client.SendAsync(ServerRemoveFileFormRoomCommand.Id, sendingContent);
-
-            PostedFile postedFile = Client.PostedFiles.FirstOrDefault((current) => current.File.Equals(file));
-            if (postedFile == null)
-                return;
-
-            Client.PostedFiles.Remove(postedFile);
+            Client.SendMessage(ServerRemoveFileFormRoomCommand.Id, sendingContent);
         }
 
         /// <summary>
@@ -334,15 +346,22 @@ namespace TCPChat.Engine.API.StandartAPI
             if (File.Exists(path))
                 throw new ArgumentException("Файл уже существует");
 
-            FileStream writeStream = File.Create(path);
-            Client.DownloadingFiles.Add(new DownloadingFile() { File = file, WriteStream = writeStream });
+            if (Client.DownloadingFiles.Exists((dFile) => dFile.File.Equals(file)))
+                throw new FileAlreadyDownloadingException(file);
 
-            ServerFilePartRequestCommand.MessageContent sendingContent = new ServerFilePartRequestCommand.MessageContent();
+            if (Client.Info.Equals(file.Owner))
+                throw new ArgumentException("Нельзя скачивать свой файл.");
+
+            lock (Client.DownloadingFiles)
+                Client.DownloadingFiles.Add(new DownloadingFile() { File = file, FullName = path });
+
+            ClientReadFilePartCommand.MessageContent sendingContent = new ClientReadFilePartCommand.MessageContent();
             sendingContent.File = file;
+            sendingContent.Length = ClientConnection.DefaultFilePartSize;
             sendingContent.RoomName = roomName;
             sendingContent.StartPartPosition = 0;
-            sendingContent.Length = ClientConnection.DefaultFilePartSize;
-            Client.SendAsync(ServerFilePartRequestCommand.Id, sendingContent);
+
+            Client.SendMessage(ClientReadFilePartCommand.Id, sendingContent, file.Owner);
         }
 
         /// <summary>
@@ -355,17 +374,28 @@ namespace TCPChat.Engine.API.StandartAPI
             if (file == null)
                 throw new ArgumentNullException("file");
 
-            if (Client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(file)) == null)
+            DownloadingFile downloadingFile;
+            lock (Client.DownloadingFiles)
+                downloadingFile = Client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(file));
+
+            if (downloadingFile == null)
                 return;
 
-            DownloadingFile downloadingFile = Client.DownloadingFiles.First((current) => current.File.Equals(file));
-            string filePath = downloadingFile.WriteStream.Name;
+            string filePath = downloadingFile.FullName;
             downloadingFile.Dispose();
 
-            Client.DownloadingFiles.Remove(downloadingFile);
+            lock (Client.DownloadingFiles)
+                Client.DownloadingFiles.Remove(downloadingFile);
 
-            if (!leaveLoadedPart)
+            if (File.Exists(filePath) && !leaveLoadedPart)
                 File.Delete(filePath);
+        }
+
+        public void ConnectToPeer(UserDescription info)
+        {
+            ServerP2PConnectRequestCommand.MessageContent sendingContent = new ServerP2PConnectRequestCommand.MessageContent();
+            sendingContent.Info = info;
+            Client.SendMessage(ServerP2PConnectRequestCommand.Id, sendingContent);
         }
     }
 }
