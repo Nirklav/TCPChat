@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<Settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Nick>Nick</Nick>
+  <NickColor>
+    <R>170</R>
+    <G>50</G>
+    <B>50</B>
+  </NickColor>
+  <Address>127.0.0.1</Address>
+  <Port>10021</Port>
+  <StateOfIPv6Protocol>false</StateOfIPv6Protocol>
+  <FormSize>
+    <Width>380</Width>
+    <Height>470</Height>
+  </FormSize>
+  <Alerts>true</Alerts>
+</Settings>

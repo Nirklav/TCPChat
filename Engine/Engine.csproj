@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{AA1F9894-FF1E-4387-A626-0BF33CFD3FF7}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Engine</RootNamespace>
+    <AssemblyName>Engine</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Lidgren.Network">
+      <HintPath>..\Lidgren.Network.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Abstract\IClientAPI.cs" />
+    <Compile Include="Abstract\IClientAPICommand.cs" />
+    <Compile Include="Abstract\IServerAPI.cs" />
+    <Compile Include="Abstract\IServerAPICommand.cs" />
+    <Compile Include="Concrete\API\StandartAPI\StandartClientAPI.cs" />
+    <Compile Include="Concrete\API\StandartAPI\StandartClientCommands.cs" />
+    <Compile Include="Concrete\API\StandartAPI\StandartServerAPI.cs" />
+    <Compile Include="Concrete\API\StandartAPI\StandartServerCommands.cs" />
+    <Compile Include="Concrete\AsyncClient.cs" />
+    <Compile Include="Concrete\AsyncServer.cs" />
+    <Compile Include="Abstract\Connections\Connection.cs" />
+    <Compile Include="Concrete\Connections\PeerConnection.cs" />
+    <Compile Include="Concrete\Connections\ServerConnection.cs" />
+    <Compile Include="Concrete\Containers\DownloadingFile.cs" />
+    <Compile Include="Concrete\Containers\PostedFile.cs" />
+    <Compile Include="Concrete\Containers\WaitingCommandContainer.cs" />
+    <Compile Include="Concrete\Containers\WaitingPrivateMessage.cs" />
+    <Compile Include="Concrete\EventArgs\AsyncErrorEventArgs.cs" />
+    <Compile Include="Concrete\EventArgs\ConnectEventArgs.cs" />
+    <Compile Include="Concrete\EventArgs\DataReceivedEventArgs.cs" />
+    <Compile Include="Concrete\EventArgs\DataSendedEventArgs.cs" />
+    <Compile Include="Concrete\EventArgs\FileDownloadEventArgs.cs" />
+    <Compile Include="Concrete\EventArgs\ReceiveMessageEventArgs.cs" />
+    <Compile Include="Concrete\EventArgs\RegistrationEventArgs.cs" />
+    <Compile Include="Concrete\EventArgs\RoomEventArgs.cs" />
+    <Compile Include="Concrete\Exceptions\APINotSupprtedException.cs" />
+    <Compile Include="Concrete\Exceptions\FileAlreadyDownloadingException.cs" />
+    <Compile Include="Concrete\Exceptions\FreePortDontFindException.cs" />
+    <Compile Include="Concrete\Helpers\Crypter.cs" />
+    <Compile Include="Concrete\Containers\ConnectionsContainer.cs" />
+    <Compile Include="Concrete\EventArgs\AddressReceivedEventArgs.cs" />
+    <Compile Include="Concrete\Exceptions\ReceivedDataException.cs" />
+    <Compile Include="Concrete\Entities\FileDescription.cs" />
+    <Compile Include="Concrete\Helpers\Logger.cs" />
+    <Compile Include="Concrete\P2PService.cs" />
+    <Compile Include="Concrete\Entities\Room.cs" />
+    <Compile Include="Concrete\Entities\User.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
