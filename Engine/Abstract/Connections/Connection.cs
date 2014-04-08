@@ -15,7 +15,7 @@ namespace Engine.Abstract.Connections
   public abstract class Connection : IDisposable
   {
     #region consts
-    private const int bufferSize = 4;
+    private const int bufferSize = 2048;
     #endregion
 
     #region protected fields
