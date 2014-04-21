@@ -148,7 +148,7 @@ namespace Engine.Concrete
       if (!Connection.TCPPortIsAvailable(serverPort))
         throw new ArgumentException("port not available", "serverPort");
 
-      p2pService = new P2PService(API, logger);
+      p2pService = new P2PService(API, logger, usingIPv6);
       systemTimer = new Timer(SystemTimerCallback, null, 0, SystemTimerInterval);
 
       if (usingIPv6)

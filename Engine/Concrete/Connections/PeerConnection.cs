@@ -126,6 +126,9 @@ namespace Engine.Concrete.Connections
 
       NetPeerConfiguration config = new NetPeerConfiguration(NetConfigString);
       config.MaximumConnections = 1;
+      config.Port = 0;
+      if (remotePoint.AddressFamily == AddressFamily.InterNetworkV6)
+        config.LocalAddress = IPAddress.IPv6Any;
 
       handler = new NetPeer(config);
       handler.RegisterReceivedCallback(ServiceDataReceivedCallback);
@@ -157,6 +160,8 @@ namespace Engine.Concrete.Connections
       config.MaximumConnections = 1;
       config.AcceptIncomingConnections = true;
       config.Port = port;
+      if (waitingPoint.AddressFamily == AddressFamily.InterNetworkV6)
+        config.LocalAddress = IPAddress.IPv6Any;
 
       handler = new NetPeer(config);
       handler.RegisterReceivedCallback(PeerDataReceivedCallback);
@@ -184,6 +189,8 @@ namespace Engine.Concrete.Connections
       NetPeerConfiguration config = new NetPeerConfiguration(NetConfigString);
       config.Port = port;
       config.MaximumConnections = 1;
+      if (remotePoint.AddressFamily == AddressFamily.InterNetworkV6)
+        config.LocalAddress = IPAddress.IPv6Any;
 
       handler = new NetPeer(config);
       handler.RegisterReceivedCallback(PeerDataReceivedCallback);

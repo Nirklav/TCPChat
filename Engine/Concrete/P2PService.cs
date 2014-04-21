@@ -8,6 +8,7 @@ using Engine.Concrete.Helpers;
 using Engine.Concrete.Entities;
 using Engine.Concrete.Containers;
 using Engine.Abstract;
+using System.Net;
 
 namespace Engine.Concrete
 {
@@ -32,7 +33,7 @@ namespace Engine.Concrete
     /// <summary>
     /// Создает экземпляр сервиса для функционирования UDP hole punching. Без логирования.
     /// </summary>
-    public P2PService()
+    public P2PService(bool usingIPv6)
     {
       disposed = false;
 
@@ -40,7 +41,11 @@ namespace Engine.Concrete
       waitingsConnections = new Dictionary<int, ConnectionsContainer>();
 
       NetPeerConfiguration config = new NetPeerConfiguration(PeerConnection.NetConfigString);
-      config.MaximumConnections = 100;
+      config.MaximumConnections = 100;    
+      config.Port = 0;
+
+      if (usingIPv6)
+        config.LocalAddress = IPAddress.IPv6Any;
 
       context = new SynchronizationContext();
 
@@ -56,8 +61,8 @@ namespace Engine.Concrete
     /// Создает экземпляр сервиса для функционирования UDP hole punching.
     /// </summary>
     /// <param name="logger">Логгер.</param>
-    public P2PService(Logger logger)
-      : this()
+    public P2PService(Logger logger, bool usingIPv6)
+      : this(usingIPv6)
     {
       this.logger = logger;
     }
@@ -67,8 +72,8 @@ namespace Engine.Concrete
     /// </summary>
     /// <param name="api">API использующиеся для "знакомства" пиров.</param>
     /// <param name="logger">Логгер.</param>
-    public P2PService(IServerAPI api, Logger logger)
-      : this(logger)
+    public P2PService(IServerAPI api, Logger logger, bool usingIPv6)
+      : this(logger, usingIPv6)
     {
       API = api;
     }
