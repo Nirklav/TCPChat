@@ -73,6 +73,7 @@ namespace Engine.Network
       reconnecting = false;
       reconnect = true;
       lastTempId = 0;
+      Id = nick;
     }
     #endregion
 
