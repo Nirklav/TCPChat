@@ -7,16 +7,16 @@ using System.Threading;
 
 namespace UI.ViewModel
 {
-    public class BaseViewModel : INotifyPropertyChanged
+  public class BaseViewModel : INotifyPropertyChanged
+  {
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    protected virtual void OnPropertyChanged(string name)
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+      PropertyChangedEventHandler temp = Interlocked.CompareExchange(ref PropertyChanged, null, null);
 
-        protected virtual void OnPropertyChanged(string name)
-        {
-            PropertyChangedEventHandler temp = Interlocked.CompareExchange(ref PropertyChanged, null, null);
-
-            if (temp != null)
-                temp(this, new PropertyChangedEventArgs(name));
-        }
+      if (temp != null)
+        temp(this, new PropertyChangedEventArgs(name));
     }
+  }
 }

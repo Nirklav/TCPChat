@@ -1,4 +1,5 @@
-﻿using Engine.Concrete.Entities;
+﻿using Engine.Model.Client;
+using Engine.Model.Entities;
 using System.Drawing;
 using System.Net.Sockets;
 using System.Windows.Input;
@@ -24,7 +25,7 @@ namespace UI.ViewModel
       Info = info;
       RoomViewModel = roomViewModel;
 
-      SetRoomAdminCommand = new Command(SetRoomAdmin, Obj => RoomViewModel.MainViewModel.Client != null);
+      SetRoomAdminCommand = new Command(SetRoomAdmin, Obj => ClientModel.Client != null);
       UserClickCommand = new Command(UserClick);
     }
     #endregion
@@ -72,7 +73,7 @@ namespace UI.ViewModel
     {
       try
       {
-        RoomViewModel.MainViewModel.Client.SetRoomAdmin(RoomViewModel.MainViewModel.SelectedRoom.Name, Info);
+        ClientModel.API.SetRoomAdmin(RoomViewModel.MainViewModel.SelectedRoom.Name, Info);
       }
       catch (SocketException se)
       {

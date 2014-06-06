@@ -1,5 +1,6 @@
-﻿using Engine.Concrete;
-using Engine.Concrete.Entities;
+﻿using Engine;
+using Engine.Model.Client;
+using Engine.Model.Entities;
 using System;
 using System.Net.Sockets;
 using System.Windows;
@@ -73,6 +74,9 @@ namespace UI.ViewModel
     public MessageViewModel(UserViewModel sender, string fileName, FileDescription fileDescription, RoomViewModel room)
       : this(room)
     {
+      ClientModel.DownloadProgress += ClientDownloadProgress;
+      ClientModel.PostedFileDeleted += ClientPostedFileDeleted;
+
       Sender = sender;
       File = fileDescription;
       Progress = 0;
@@ -101,12 +105,7 @@ namespace UI.ViewModel
       
       Message = fileName + string.Format(SizeFormat, size, sizeDim);
       Type = MessageType.File;
-      DownloadFileCommand = new Command(DownloadFile, Obj => roomViewModel.MainViewModel.Client != null);
-
-      roomViewModel.MainViewModel.ClientCreated += MainViewModel_ClientCreated;
-
-      if (roomViewModel.MainViewModel.Client != null)
-        RegisterMethods();
+      DownloadFileCommand = new Command(DownloadFile, Obj => ClientModel.Client != null);
     }
 
     public MessageViewModel(UserViewModel sender, UserViewModel receiver, string message, bool isPrivate, RoomViewModel room)
@@ -126,18 +125,7 @@ namespace UI.ViewModel
     #endregion
 
     #region client events
-    private void MainViewModel_ClientCreated(object sender, EventArgs e)
-    {
-      RegisterMethods();
-    }
-
-    private void RegisterMethods()
-    {
-      roomViewModel.MainViewModel.Client.DownloadProgress += Client_DownloadProgress;
-      roomViewModel.MainViewModel.Client.PostedFileDeleted += Client_PostedFileDeleted;
-    }
-
-    private void Client_DownloadProgress(object sender, FileDownloadEventArgs e)
+    private void ClientDownloadProgress(object sender, FileDownloadEventArgs e)
     {
       roomViewModel.MainViewModel.Dispatcher.Invoke(new Action<FileDownloadEventArgs>(args =>
       {
@@ -156,7 +144,7 @@ namespace UI.ViewModel
       }), e);
     }
 
-    private void Client_PostedFileDeleted(object sender, FileDownloadEventArgs e)
+    private void ClientPostedFileDeleted(object sender, FileDownloadEventArgs e)
     {
       roomViewModel.MainViewModel.Dispatcher.Invoke(new Action<FileDownloadEventArgs>(args =>
       {
@@ -180,11 +168,14 @@ namespace UI.ViewModel
 
       try
       {
-        if (roomViewModel.MainViewModel.Client.DownloadingFiles.Exists((dFile) => dFile.File.Equals(File)))
-          throw new FileAlreadyDownloadingException(File);
+        using (var client = ClientModel.Get())
+        {
+          if (client.DownloadingFiles.Exists(dFile => dFile.File.Equals(File)))
+            throw new FileAlreadyDownloadingException(File);
 
-        if (roomViewModel.MainViewModel.Client.Info.Equals(File.Owner))
-          throw new ArgumentException(CantDownloadItsFile);
+          if (client.User.Equals(File.Owner))
+            throw new ArgumentException(CantDownloadItsFile);
+        }
 
         SaveFileDialog saveDialog = new SaveFileDialog();
         saveDialog.OverwritePrompt = false;
@@ -192,13 +183,13 @@ namespace UI.ViewModel
         saveDialog.FileName = File.Name;
 
         if (saveDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-          roomViewModel.MainViewModel.Client.DownloadFile(saveDialog.FileName, roomViewModel.Name, File);
+          ClientModel.API.DownloadFile(saveDialog.FileName, roomViewModel.Name, File);
       }
       catch (FileAlreadyDownloadingException)
       {
         if (MessageBox.Show(CancelDownloadingQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
         {
-          roomViewModel.MainViewModel.Client.CancelDownloading(File, true);
+          ClientModel.API.CancelDownloading(File, true);
           Progress = 0;
         }
       }

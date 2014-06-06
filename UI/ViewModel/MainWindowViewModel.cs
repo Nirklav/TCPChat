@@ -1,16 +1,13 @@
-﻿using Engine.Concrete;
-using Engine.Concrete.Entities;
+﻿using Engine;
+using Engine.API.StandardAPI;
+using Engine.Model.Client;
+using Engine.Model.Entities;
+using Engine.Model.Server;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -34,18 +31,15 @@ namespace UI.ViewModel
     private const string AllInRoom = "Все в комнате";
 
     private const int ClientMaxMessageLength = 100 * 1024;
-    private const string ServerLogFile = "ServerErrors.log";
     #endregion
 
     #region fields
-    private AsyncServer server;
     private MainWindow window;
     private int selectedRoomIndex;
     private RoomViewModel selectedRoom;
     #endregion
 
     #region properties
-    public AsyncClient Client { get; private set; }
     public Dispatcher Dispatcher { get; private set; }
     public bool Alerts
     {
@@ -94,10 +88,6 @@ namespace UI.ViewModel
     public ObservableCollection<UserViewModel> AllUsers { get; private set; }
     #endregion
 
-    #region events
-    public event EventHandler ClientCreated;
-    #endregion
-
     #region commands
     public ICommand EnableServerCommand { get; private set; }
     public ICommand DisableServerCommand { get; private set; }
@@ -115,22 +105,30 @@ namespace UI.ViewModel
     public MainWindowViewModel(MainWindow mainWindow)
     {
       window = mainWindow;
-      window.Closed += window_Closed;
+      window.Closed += WindowClosed;
       Rooms = new ObservableCollection<RoomViewModel>();
       AllUsers = new ObservableCollection<UserViewModel>();
       Dispatcher = Dispatcher.CurrentDispatcher;
 
+      ClientModel.Connected += ClientConnect;
+      ClientModel.ReceiveMessage += ClientReceiveMessage;
+      ClientModel.ReceiveRegistrationResponse += ClientRegistration;
+      ClientModel.RoomRefreshed += ClientRoomRefreshed;
+      ClientModel.AsyncError += ClientAsyncError;
+      ClientModel.RoomClosed += ClientRoomClosed;
+      ClientModel.RoomOpened += ClientRoomOpened;
+
       ClearTabs();
 
-      EnableServerCommand = new Command(EnableServer, Obj => server == null);
-      DisableServerCommand = new Command(DisableServer, Obj => server != null);
-      ConnectCommand = new Command(Connect, Obj => Client == null);
-      DisconnectCommand = new Command(Disconnect, Obj => Client != null);
+      EnableServerCommand = new Command(EnableServer, Obj => ServerModel.Server == null);
+      DisableServerCommand = new Command(DisableServer, Obj => ServerModel.Server != null);
+      ConnectCommand = new Command(Connect, Obj => ClientModel.Client == null);
+      DisconnectCommand = new Command(Disconnect, Obj => ClientModel.Client != null);
       ExitCommand = new Command(Obj => window.Close());
-      CreateRoomCommand = new Command(CreateRoom, Obj => Client != null);
-      DeleteRoomCommand = new Command(DeleteRoom, Obj => Client != null);
-      ExitFromRoomCommand = new Command(ExitFromRoom, Obj => Client != null);
-      OpenFilesDialogCommand = new Command(OpenFilesDialog, Obj => Client != null);
+      CreateRoomCommand = new Command(CreateRoom, Obj => ClientModel.Client != null);
+      DeleteRoomCommand = new Command(DeleteRoom, Obj => ClientModel.Client != null);
+      ExitFromRoomCommand = new Command(ExitFromRoom, Obj => ClientModel.Client != null);
+      OpenFilesDialogCommand = new Command(OpenFilesDialog, Obj => ClientModel.Client != null);
       OpenAboutProgramCommand = new Command(OpenAboutProgram);
     }
     #endregion
@@ -152,28 +150,21 @@ namespace UI.ViewModel
           Settings.Current.Port = dialog.Port;
           Settings.Current.StateOfIPv6Protocol = dialog.UsingIPv6Protocol;
 
-          server = new AsyncServer(ServerLogFile);
-          server.Start(dialog.Port, dialog.UsingIPv6Protocol);
+          ServerModel.Init(new StandardServerAPI());
+          ServerModel.Server.Start(dialog.Port, dialog.UsingIPv6Protocol);
 
-          CreateClient(dialog.Nick);
-          Client.Info.NickColor = dialog.NickColor;
-          Client.Connect(new IPEndPoint((dialog.UsingIPv6Protocol) ? IPAddress.IPv6Loopback : IPAddress.Loopback, dialog.Port));
+          ClientModel.Init(dialog.Nick, dialog.NickColor);
+          ClientModel.Client.Connect(new IPEndPoint((dialog.UsingIPv6Protocol) ? IPAddress.IPv6Loopback : IPAddress.Loopback, dialog.Port));
         }
         catch (ArgumentException)
         {
           SelectedRoom.AddSystemMessage(ParamsError);
 
-          if (server != null)
-          {
-            server.Dispose();
-            server = null;
-          }
+          if (ServerModel.IsInited)
+            ServerModel.Reset();
 
-          if (Client != null)
-          {
-            Client.Dispose();
-            Client = null;
-          }
+          if (ClientModel.IsInited)
+            ClientModel.Reset();
         }
       }
     }
@@ -183,14 +174,10 @@ namespace UI.ViewModel
       if (MessageBox.Show(ServerDisableQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
         return;
 
-      if (Client != null)
-      {
-        Client.Dispose();
-        Client = null;
-      }
+      ServerModel.Reset();
 
-      server.Dispose();
-      server = null;
+      if (ClientModel.IsInited)
+        ClientModel.Reset();
 
       ClearTabs();
     }
@@ -210,9 +197,8 @@ namespace UI.ViewModel
         Settings.Current.Port = dialog.Port;
         Settings.Current.Address = dialog.Address.ToString();
 
-        CreateClient(dialog.Nick);
-        Client.Info.NickColor = dialog.NickColor;
-        Client.Connect(new IPEndPoint(dialog.Address, dialog.Port));
+        ClientModel.Init(dialog.Nick, dialog.NickColor);
+        ClientModel.Client.Connect(new IPEndPoint(dialog.Address, dialog.Port));
       }
     }
 
@@ -220,12 +206,11 @@ namespace UI.ViewModel
     {
       try
       {
-        Client.SendUnregisterRequest();
+        ClientModel.API.Unregister();
       }
       catch (SocketException) { }
 
-      Client.Dispose();
-      Client = null;
+      ClientModel.Reset();
 
       ClearTabs();
     }
@@ -236,7 +221,7 @@ namespace UI.ViewModel
       {
         CreateRoomDialog dialog = new CreateRoomDialog();
         if (dialog.ShowDialog() == true)
-          Client.CreateRoom(dialog.RoomName);
+          ClientModel.API.CreateRoom(dialog.RoomName);
       }
       catch (SocketException se)
       {
@@ -251,7 +236,7 @@ namespace UI.ViewModel
         if (MessageBox.Show(RoomCloseQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
           return;
 
-        Client.DeleteRoom(SelectedRoom.Name);
+        ClientModel.API.DeleteRoom(SelectedRoom.Name);
       }
       catch (SocketException se)
       {
@@ -266,7 +251,7 @@ namespace UI.ViewModel
         if (MessageBox.Show(RoomExitQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
           return;
 
-        Client.ExitFormRoom(SelectedRoom.Name);
+        ClientModel.API.ExitFormRoom(SelectedRoom.Name);
       }
       catch (SocketException se)
       {
@@ -276,7 +261,7 @@ namespace UI.ViewModel
 
     public void OpenFilesDialog(object obj)
     {
-      PostedFilesDialog dialog = new PostedFilesDialog(Client);
+      PostedFilesDialog dialog = new PostedFilesDialog();
       dialog.ShowDialog();
     }
 
@@ -288,87 +273,88 @@ namespace UI.ViewModel
     #endregion
 
     #region client events
-    private void Client_Connect(object sender, ConnectEventArgs e)
+    private void ClientConnect(object sender, ConnectEventArgs e)
     {
       Dispatcher.Invoke(new Action<ConnectEventArgs>(args =>
       {
         if (args.Error != null)
         {
           SelectedRoom.AddSystemMessage(args.Error.Message);
-          Client.Dispose();
-          Client = null;
+          ClientModel.Reset();
           return;
         }
 
-        Client.SendRegisterRequest();
+        ClientModel.API.Register();
       }), e);
     }
 
-    private void Client_Registration(object sender, RegistrationEventArgs e)
+    private void ClientRegistration(object sender, RegistrationEventArgs e)
     {
       Dispatcher.Invoke(new Action<RegistrationEventArgs>(args =>
       {
         if (!args.Registered)
         {
           SelectedRoom.AddSystemMessage(RegFailNickAlreadyExist);
-
-          Client.Dispose();
-          Client = null;
+          ClientModel.Reset();
         }
       }), e);
     }
 
-    private void Client_ReceiveMessage(object sender, ReceiveMessageEventArgs e)
+    private void ClientReceiveMessage(object sender, ReceiveMessageEventArgs e)
     {
       if (e.Type != MessageType.System && e.Type != MessageType.Private)
         return;
 
       Dispatcher.Invoke(new Action<ReceiveMessageEventArgs>(args =>
       {
-        switch (args.Type)
-        {
-          case MessageType.Private:
-            UserViewModel senderUser = AllUsers.Single(uvm => uvm.Info.Nick == args.Sender);
-            UserViewModel receiverUser = AllUsers.Single(uvm => uvm.Info.Equals(Client.Info));
-            SelectedRoom.AddPrivateMessage(senderUser, receiverUser, args.Message);
-            break;
+        using (var client = ClientModel.Get())
+          switch (args.Type)
+          {
+            case MessageType.Private:
+              UserViewModel senderUser = AllUsers.Single(uvm => uvm.Info.Nick == args.Sender);
+              UserViewModel receiverUser = AllUsers.Single(uvm => uvm.Info.Equals(client.User));
+              SelectedRoom.AddPrivateMessage(senderUser, receiverUser, args.Message);
+              break;
 
-          case MessageType.System:
-            SelectedRoom.AddSystemMessage(args.Message);
-            break;
-        }
+            case MessageType.System:
+              SelectedRoom.AddSystemMessage(args.Message);
+              break;
+          }
 
         Alert();
       }), e);
     }
 
-    private void Client_RoomRefreshed(object sender, RoomEventArgs e)
+    private void ClientRoomRefreshed(object sender, RoomEventArgs e)
     {
       Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
       {
-        if (args.Room.Name == AsyncServer.MainRoomName)
+        if (args.Room.Name == ServerModel.MainRoomName)
         {
           AllUsers.Clear();
 
-          foreach (User user in e.Room.Users)
-          {
-            if (user.Equals(Client.Info))
-              AllUsers.Add(new UserViewModel(user, null) { IsClient = true });
-            else
-              AllUsers.Add(new UserViewModel(user, null));
-          }
+          using(var client = ClientModel.Get())
+            foreach (string nick in args.Room.Users)
+            {
+              User user = args.Users.Single(u => u.Equals(nick));
+
+              if (user.Equals(client.User))
+                AllUsers.Add(new UserViewModel(user, null) { IsClient = true });
+              else
+                AllUsers.Add(new UserViewModel(user, null));
+            }
         }
       }), e);
     }
 
-    private void Client_RoomOpened(object sender, RoomEventArgs e)
+    private void ClientRoomOpened(object sender, RoomEventArgs e)
     {
       Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
       {
         if (Rooms.FirstOrDefault(roomVM => roomVM.Name == args.Room.Name) != null)      
           return;
         
-        RoomViewModel roomViewModel = new RoomViewModel(this, args.Room);
+        RoomViewModel roomViewModel = new RoomViewModel(this, args.Room, e.Users);
         roomViewModel.Updated = true;
         Rooms.Add(roomViewModel);
 
@@ -376,7 +362,7 @@ namespace UI.ViewModel
       }), e);
     }
 
-    private void Client_RoomClosed(object sender, RoomEventArgs e)
+    private void ClientRoomClosed(object sender, RoomEventArgs e)
     {
       Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
       {
@@ -390,15 +376,12 @@ namespace UI.ViewModel
       }), e);
     }
 
-    private void Client_AsyncError(object sender, AsyncErrorEventArgs e)
+    private void ClientAsyncError(object sender, AsyncErrorEventArgs e)
     {
       Dispatcher.Invoke(new Action<AsyncErrorEventArgs>(args =>
       {
         if (args.Error.GetType() == typeof(APINotSupprtedException))
-        {
-          Client.Dispose();
-          Client = null;
-        }
+          ClientModel.Reset();
 
         SelectedRoom.AddSystemMessage(args.Error.Message);
       }), e);
@@ -406,31 +389,23 @@ namespace UI.ViewModel
     #endregion
 
     #region helpers methods
-    private void window_Closed(object sender, EventArgs e)
+    private void WindowClosed(object sender, EventArgs e)
     {
-      if (Client != null)
+      if (ClientModel.IsInited)
       {
         try
         {
-          Client.SendUnregisterRequest();
+          ClientModel.API.Unregister();
         }
         catch (SocketException) { }
 
-        Client.Dispose();
+        ClientModel.Reset();
       }
 
-      if (server != null)
-        server.Dispose();
+      if (ServerModel.IsInited)
+        ServerModel.Reset();
 
       Settings.SaveSettings();
-    }
-
-    private void OnClientCreated()
-    {
-      EventHandler temp = Interlocked.CompareExchange(ref ClientCreated, null, null);
-
-      if (temp != null)
-        temp(this, EventArgs.Empty);
     }
 
     public void Alert()
@@ -438,25 +413,11 @@ namespace UI.ViewModel
       window.Alert();
     }
 
-    private void CreateClient(string nick)
-    {
-      Client = new AsyncClient(nick);
-      Client.Connected += Client_Connect;
-      Client.ReceiveMessage += Client_ReceiveMessage;
-      Client.ReceiveRegistrationResponse += Client_Registration;
-      Client.RoomRefreshed += Client_RoomRefreshed;
-      Client.AsyncError += Client_AsyncError;
-      Client.RoomClosed += Client_RoomClosed;
-      Client.RoomOpened += Client_RoomOpened;
-
-      OnClientCreated();
-    }
-
     private void ClearTabs()
     {
       AllUsers.Clear();
       Rooms.Clear();
-      Rooms.Add(new RoomViewModel(this, new Room(null, AsyncServer.MainRoomName)));
+      Rooms.Add(new RoomViewModel(this, new Room(null, ServerModel.MainRoomName), null));
       SelectedRoomIndex = 0;
     }
     #endregion

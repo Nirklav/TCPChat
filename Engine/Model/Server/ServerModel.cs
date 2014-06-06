@@ -1,0 +1,92 @@
+﻿using Engine.API.StandardAPI;
+using Engine.Model.Entities;
+using Engine.Network;
+using Engine.Network.Connections;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+
+namespace Engine.Model.Server
+{
+  public class ServerModel
+  {
+    #region static model
+    private static ServerModel model;
+
+    /// <summary>
+    /// Серверный API
+    /// </summary>
+    public static IServerAPI API { get; private set; }
+
+    /// <summary>
+    /// Сервер
+    /// </summary>
+    public static AsyncServer Server { get; private set; }
+
+    /// <summary>
+    /// Исользовать только с конструкцией using(var context = ClientModel.Get()) { ... }
+    /// </summary>
+    /// <returns>Возвращает и блокирует модель.</returns>
+    public static ServerContext Get()
+    {
+      if (Interlocked.CompareExchange(ref model, null, null) == null)
+        throw new ArgumentException("model do not inited yet");
+
+      return new ServerContext(model);
+    }
+    #endregion
+
+    #region consts
+    public const string MainRoomName = "Main room";
+    #endregion
+
+    #region properties
+    public Dictionary<string, Room> Rooms { get; private set; }
+    public Dictionary<string, User> Users { get; private set; }
+    #endregion
+
+    #region constructor
+    public ServerModel()
+    {
+      Users = new Dictionary<string, User>();
+      Rooms = new Dictionary<string, Room>();
+
+      Rooms.Add(MainRoomName, new Room(null, MainRoomName));
+    }
+    #endregion
+
+    #region static methods
+    public static bool IsInited
+    {
+      get
+      {
+        return Interlocked.CompareExchange(ref model, null, null) != null;
+      }
+    }
+
+    public static void Init(IServerAPI api)
+    {
+      if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
+        throw new InvalidOperationException("model already inited");
+
+      Server = new AsyncServer("ServerErrors.log");
+      API = api;
+    }
+
+    public static void Reset()
+    {
+      if (Interlocked.Exchange(ref model, null) == null)
+        throw new InvalidOperationException("model not yet inited");
+
+      if (Server != null)
+      {
+        Server.Dispose();
+        Server = null;
+      }
+
+      API = null;
+    }
+    #endregion
+  }
+}

@@ -1,5 +1,6 @@
-﻿using Engine.Concrete;
-using Engine.Concrete.Entities;
+﻿using Engine;
+using Engine.Model.Client;
+using Engine.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -110,25 +111,25 @@ namespace UI.ViewModel
     #endregion
 
     #region constructors
-    public RoomViewModel(MainWindowViewModel model, Room room)
+    public RoomViewModel(MainWindowViewModel mainViewModel, Room room, IList<User> users)
     {
       Description = room;
-      MainViewModel = model;
+      MainViewModel = mainViewModel;
       Messages = new ObservableCollection<MessageViewModel>();
-      Users = new ObservableCollection<UserViewModel>(room.Users.Select(user => new UserViewModel(user, this)));
       allInRoom = new UserViewModel(new User("Все в комнате"), this);
+      Users = new ObservableCollection<UserViewModel>(users == null
+        ? Enumerable.Empty<UserViewModel>()
+        : room.Users.Select(user => new UserViewModel(users.Single(u => u.Equals(user)), this)));
 
-      SendMessageCommand = new Command(SendMessage, Obj => MainViewModel.Client != null);
+      SendMessageCommand = new Command(SendMessage, Obj => ClientModel.Client != null);
       PastReturnCommand = new Command(PastReturn);
-      AddFileCommand = new Command(AddFile, Obj => MainViewModel.Client != null);
-      InviteInRoomCommand = new Command(InviteInRoom, Obj => MainViewModel.Client != null);
-      KickFromRoomCommand = new Command(KickFromRoom, Obj => MainViewModel.Client != null);
+      AddFileCommand = new Command(AddFile, Obj => ClientModel.Client != null);
+      InviteInRoomCommand = new Command(InviteInRoom, Obj => ClientModel.Client != null);
+      KickFromRoomCommand = new Command(KickFromRoom, Obj => ClientModel.Client != null);
 
-      MainViewModel.ClientCreated += MainViewModel_ClientCreated;
-      MainViewModel.AllUsers.CollectionChanged += AllUsers_CollectionChanged;
-
-      if (MainViewModel.Client != null)
-        RegisterMethods();
+      MainViewModel.AllUsers.CollectionChanged += AllUsersCollectionChanged;
+      ClientModel.ReceiveMessage += ClientReceiveMessage;
+      ClientModel.RoomRefreshed += ClientRoomRefreshed;
     }
     #endregion
 
@@ -166,13 +167,11 @@ namespace UI.ViewModel
       try
       {
         if (ReferenceEquals(allInRoom, SelectedReceiver))
-        {
-          MainViewModel.Client.SendMessage(Message, Name);
-        }
+          ClientModel.API.SendMessage(Message, Name);
         else
         {
-          MainViewModel.Client.SendPrivateMessage(SelectedReceiver.Nick, Message);
-          AddPrivateMessage(MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(MainViewModel.Client.Info)), SelectedReceiver, Message);
+          ClientModel.API.SendPrivateMessage(SelectedReceiver.Nick, Message);
+          AddPrivateMessage(MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id)), SelectedReceiver, Message);
         }
 
         Message = string.Empty;
@@ -197,7 +196,7 @@ namespace UI.ViewModel
         openDialog.Filter = FileDialogFilter;
 
         if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-          MainViewModel.Client.AddFileToRoom(Name, openDialog.FileName);
+          ClientModel.API.AddFileToRoom(Name, openDialog.FileName);
       }
       catch (SocketException se)
       {
@@ -218,7 +217,7 @@ namespace UI.ViewModel
 
         UsersOperationDialog dialog = new UsersOperationDialog(InviteInRoomTitle, availableUsers);
         if (dialog.ShowDialog() == true)
-          MainViewModel.Client.InviteUsers(Name, dialog.Users);
+          ClientModel.API.InviteUsers(Name, dialog.Users);
       }
       catch (SocketException se)
       {
@@ -232,7 +231,7 @@ namespace UI.ViewModel
       {
         UsersOperationDialog dialog = new UsersOperationDialog(KickFormRoomTitle, Users);
         if (dialog.ShowDialog() == true)
-          MainViewModel.Client.KickUsers(Name, dialog.Users);
+          ClientModel.API.KickUsers(Name, dialog.Users);
       }
       catch (SocketException se)
       {
@@ -242,23 +241,12 @@ namespace UI.ViewModel
     #endregion
 
     #region client methods
-    private void MainViewModel_ClientCreated(object sender, EventArgs e)
-    {
-      RegisterMethods();
-    }
-
-    private void AllUsers_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    private void AllUsersCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
       OnPropertyChanged("Receivers");
     }
 
-    private void RegisterMethods()
-    {
-      MainViewModel.Client.ReceiveMessage += Client_ReceiveMessage;
-      MainViewModel.Client.RoomRefreshed += Client_RoomRefreshed;
-    }
-
-    private void Client_ReceiveMessage(object sender, ReceiveMessageEventArgs e)
+    private void ClientReceiveMessage(object sender, ReceiveMessageEventArgs e)
     {
       if (e.RoomName != Name)
         return;
@@ -285,7 +273,7 @@ namespace UI.ViewModel
       }), e);
     }
 
-    private void Client_RoomRefreshed(object sender, RoomEventArgs e)
+    private void ClientRoomRefreshed(object sender, RoomEventArgs e)
     {
       if (e.Room.Name != Name)
         return;
@@ -295,8 +283,8 @@ namespace UI.ViewModel
         Description = args.Room;
         Users.Clear();
 
-        foreach (User user in Description.Users)
-          Users.Add(new UserViewModel(user, this));
+        foreach (string user in Description.Users)
+          Users.Add(new UserViewModel(args.Users.Find(u => string.Equals(u.Nick, user)), this));
 
         OnPropertyChanged("Name");
         OnPropertyChanged("Admin");

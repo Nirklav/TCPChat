@@ -11,9 +11,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Engine;
-using Engine.Concrete;
-using Engine.Concrete.Entities;
 using UI.ViewModel;
+using Engine.Model.Entities;
 
 namespace UI.Dialogs
 {
