@@ -1,5 +1,6 @@
 # Build Folders (you can keep bin if you'd like, to store dlls and pdbs)
 [Oo]bj/
+[Bb]in/
 
 # mstest test results
 TestResults
@@ -14,6 +15,7 @@ TestResults
 
 # Build results
 [Dd]ebug/
+[Rr]elase/
 x64/
 *_i.c
 *_p.c
@@ -88,6 +90,7 @@ AppPackages/
 
 # Others
 [Oo]bj
+[Bb]in
 sql
 TestResults
 [Tt]est[Rr]esult*

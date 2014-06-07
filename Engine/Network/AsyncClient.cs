@@ -483,13 +483,17 @@ namespace Engine.Network
 
           lock (peers)
           {
-            List<string> keysList = peers.Keys.ToList();
-            foreach(string currentId in keysList)
-              if (peers[currentId].IntervalOfSilence >= PeerConnection.ConnectionTimeOut)
+            string[] keysList = peers.Keys.ToArray();
+            foreach (string currentId in keysList)
+            {
+              PeerConnection connection = peers[currentId];
+
+              if (connection.IntervalOfSilence >= PeerConnection.ConnectionTimeOut)
               {
                 peers.Remove(currentId);
-                peers[currentId].Dispose();
+                connection.Dispose();
               }
+            }
           }
         }
 

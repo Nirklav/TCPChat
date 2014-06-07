@@ -307,14 +307,14 @@ namespace Engine.Network
 
       using(var server = ServerModel.Get())
       {
-        var roomsNames = server.Rooms.Keys.ToList();
-        for (int i = server.Rooms.Count - 1; i >= 0; i--)
+        string[] roomsNames = server.Rooms.Keys.ToArray();
+        foreach(string name in roomsNames)
         {
-          if (string.Equals(roomsNames[i], ServerModel.MainRoomName))
+          if (string.Equals(name, ServerModel.MainRoomName))
             continue;
 
-          if (server.Rooms[roomsNames[i]].Users.Count == 0)
-            server.Rooms.Remove(roomsNames[i]);
+          if (server.Rooms[name].Users.Count == 0)
+            server.Rooms.Remove(name);
         }
       }
     }

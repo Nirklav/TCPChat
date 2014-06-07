@@ -8,7 +8,7 @@
   </NickColor>
   <Address>127.0.0.1</Address>
   <Port>10021</Port>
-  <StateOfIPv6Protocol>false</StateOfIPv6Protocol>
+  <StateOfIPv6Protocol>true</StateOfIPv6Protocol>
   <FormSize>
     <Width>380</Width>
     <Height>470</Height>

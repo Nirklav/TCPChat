@@ -52,11 +52,7 @@ namespace Engine.Network.Connections
     /// </summary>
     public string Id
     {
-      get
-      {
-        ThrowIfDisposed();
-        return id;
-      }
+      get { return id; }
       set
       {
         ThrowIfDisposed();

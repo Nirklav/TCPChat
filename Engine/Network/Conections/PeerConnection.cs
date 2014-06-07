@@ -37,11 +37,7 @@ namespace Engine.Connections
     /// </summary>
     public int IntervalOfSilence
     {
-      get
-      {
-        ThrowIfDisposed();
-        return (int)(DateTime.Now - lastActivity).TotalMilliseconds;
-      }
+      get { return (int)(DateTime.Now - lastActivity).TotalMilliseconds; }
     }
 
     /// <summary>
@@ -51,8 +47,11 @@ namespace Engine.Connections
     {
       get
       {
-        ThrowIfDisposed();
-        return id != null && handler != null && handler.ConnectionsCount > 0;
+        return id != null 
+          && !id.Contains(Connection.TempConnectionPrefix) 
+          && !id.Contains(PeerConnection.ServiceConnectionPrefix) 
+          && handler != null 
+          && handler.ConnectionsCount > 0; 
       }
     }
 
@@ -61,11 +60,7 @@ namespace Engine.Connections
     /// </summary>
     public string Id
     {
-      get
-      {
-        ThrowIfDisposed();
-        return id;
-      }
+      get { return id; }
       set
       {
         ThrowIfDisposed();

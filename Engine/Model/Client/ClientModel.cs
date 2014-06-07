@@ -155,7 +155,7 @@ namespace Engine.Model.Client
     }
     #endregion
 
-    #region methods
+    #region static methods
     public static bool IsInited
     {
       get
