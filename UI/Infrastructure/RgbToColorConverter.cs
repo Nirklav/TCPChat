@@ -6,7 +6,7 @@ using System.Text;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace UI.Dialogs
+namespace UI.Infrastructure
 {
     public class RgbToColorConverter : IMultiValueConverter
     {

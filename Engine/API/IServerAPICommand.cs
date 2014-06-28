@@ -1,5 +1,4 @@
-﻿using Engine.Connections;
-using Engine.Network.Connections;
+﻿using Engine.Network.Connections;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -47,13 +47,14 @@ namespace Engine.API.StandardAPI.ServerCommands
           if (room.Users.Contains(user.Nick))
             continue;
 
-          room.Users.Add(user.Nick);
+          room.Add(user.Nick);
           invitedUsers.Add(user);
         }
 
         var sendingContent = new ClientRoomOpenedCommand.MessageContent
         {
           Room = room,
+          Type = room is VoiceRoom ? RoomType.Voice : RoomType.Chat,
           Users = room.Users.Select(nick => server.Users[nick]).ToList()
         };
 

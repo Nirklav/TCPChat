@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Engine.API.StandardAPI
 {
-  class BaseCommand
+  abstract class BaseCommand
   {
     protected static T GetContentFormMessage<T>(byte[] message)
     {

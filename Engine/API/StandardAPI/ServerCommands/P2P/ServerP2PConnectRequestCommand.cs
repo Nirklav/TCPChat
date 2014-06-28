@@ -26,19 +26,7 @@ namespace Engine.API.StandardAPI.ServerCommands
         return;
       }
 
-      int id = ServerModel.Server.P2PService.WaitConnection(receivedContent.Nick, args.ConnectionId);
-
-      IPAddress serviceAddress = Connection.GetIPAddress(ServerModel.Server.UsingIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork);
-      var sendingContent = new ClientConnectToP2PServiceCommand.MessageContent
-      {
-        ServicePoint = new IPEndPoint(serviceAddress, ServerModel.Server.P2PService.Port),
-        ServiceConnectId = id,
-        Type = ConnectionType.Request,
-      };
-      ServerModel.Server.SendMessage(receivedContent.Nick, ClientConnectToP2PServiceCommand.Id, sendingContent);
-
-      sendingContent.Type = ConnectionType.Sender;
-      ServerModel.Server.SendMessage(args.ConnectionId, ClientConnectToP2PServiceCommand.Id, sendingContent);
+      ServerModel.Server.P2PService.Introduce(args.ConnectionId, receivedContent.Nick);
     }
 
     [Serializable]

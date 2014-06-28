@@ -13,17 +13,23 @@ namespace Engine.Containers
     /// <param name="connectionId">Индетификатор соединениея.</param>
     /// <param name="id">Индетификатор команды.</param>
     /// <param name="content">Параметр команды.</param>
-    public WaitingCommandContainer(string connectionId, ushort id, object content)
-    {
-      ConnectionId = connectionId;
-      CommandId = id;
-      MessageContent = content;
-    }
+    public WaitingCommandContainer(ushort id, object content)
+      : this(id, content, false)
+    { }
 
     /// <summary>
-    /// Индетификатор соединениея.
+    /// Создает экземпляр класса.
     /// </summary>
-    public string ConnectionId { get; set; }
+    /// <param name="connectionId">Индетификатор соединениея.</param>
+    /// <param name="id">Индетификатор команды.</param>
+    /// <param name="content">Параметр команды.</param>
+    /// <param name="unconnected">Небезопасное.</param>
+    public WaitingCommandContainer(ushort id, object content, bool unconnected)
+    {
+      CommandId = id;
+      MessageContent = content;
+      Unconnected = unconnected;
+    }
 
     /// <summary>
     /// Индетификатор команды.
@@ -34,5 +40,10 @@ namespace Engine.Containers
     /// Параметр команды.
     /// </summary>
     public object MessageContent { get; set; }
+
+    /// <summary>
+    /// Передать небезапосное сообщение.
+    /// </summary>
+    public bool Unconnected { get; set; }
   }
 }

@@ -1,4 +1,5 @@
 ﻿using Engine;
+using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
@@ -26,17 +27,27 @@ namespace UI.ViewModel
     private const string CancelDownloadingQuestion = "Вы уже загружаете этот файл. Вы хотите отменить загрузку?";
     private const string FileDialogFilter = "Все файлы|*.*";
 
-    int progress;
-    FileDescription file;
-    RoomViewModel roomViewModel;
+    private int progress;
+    private string message;
+    private FileDescription file;
+    private RoomViewModel roomViewModel;
     #endregion
 
     #region properties
     public string Title { get; set; }
-    public string Message { get; set; }
     public UserViewModel Sender { get; set; }
     public UserViewModel Receiver { get; set; }
     public MessageType Type { get; set; }
+
+    public string Message 
+    {
+      get { return message; }
+      set
+      {
+        message = value;
+        OnPropertyChanged("Message");
+      }
+    }
 
     public FileDescription File
     {
@@ -122,6 +133,14 @@ namespace UI.ViewModel
     {
       roomViewModel = room;
     }
+
+    public override void Dispose()
+    {
+      base.Dispose();
+
+      ClientModel.DownloadProgress -= ClientDownloadProgress;
+      ClientModel.PostedFileDeleted -= ClientPostedFileDeleted;
+    }
     #endregion
 
     #region client events
@@ -171,7 +190,7 @@ namespace UI.ViewModel
         using (var client = ClientModel.Get())
         {
           if (client.DownloadingFiles.Exists(dFile => dFile.File.Equals(File)))
-            throw new FileAlreadyDownloadingException(File);
+            throw new ModelException(ErrorCode.FileAlreadyDownloading, File);
 
           if (client.User.Equals(File.Owner))
             throw new ArgumentException(CantDownloadItsFile);
@@ -182,12 +201,19 @@ namespace UI.ViewModel
         saveDialog.Filter = FileDialogFilter;
         saveDialog.FileName = File.Name;
 
-        if (saveDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        if (saveDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.API != null)
           ClientModel.API.DownloadFile(saveDialog.FileName, roomViewModel.Name, File);
       }
-      catch (FileAlreadyDownloadingException)
+      catch (ModelException me)
       {
-        if (MessageBox.Show(CancelDownloadingQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+        if (me.Code != ErrorCode.FileAlreadyDownloading)
+        {
+          roomViewModel.AddSystemMessage(me.Message);
+          return;
+        }
+
+        bool result = MessageBox.Show(CancelDownloadingQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+        if (result && ClientModel.API != null)
         {
           ClientModel.API.CancelDownloading(File, true);
           Progress = 0;

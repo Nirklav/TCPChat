@@ -54,7 +54,7 @@ namespace Engine.API.StandardAPI.ServerCommands
             continue;
           }
 
-          room.Users.Remove(user.Nick);
+          room.Remove(user.Nick);
 
           ServerModel.Server.SendMessage(user.Nick, ClientRoomClosedCommand.Id, sendingContent);
         }

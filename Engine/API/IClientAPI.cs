@@ -1,5 +1,7 @@
-﻿using Engine.Model.Entities;
+﻿using Engine.Audio;
+using Engine.Model.Entities;
 using Engine.Network;
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
@@ -12,7 +14,7 @@ namespace Engine
     void SendMessage(string message, string roomName);
     void SendPrivateMessage(string receiver, string message);
 
-    void CreateRoom(string roomName);
+    void CreateRoom(string roomName, RoomType type);
     void DeleteRoom(string roomName);
     void InviteUsers(string roomName, IEnumerable<User> users);
     void KickUsers(string roomName, IEnumerable<User> users);
@@ -28,6 +30,6 @@ namespace Engine
     void Register();
     void Unregister();
 
-    void ConnectToPeer(string nick);
+    void ConnectToPeer(string peerId);
   }
 }

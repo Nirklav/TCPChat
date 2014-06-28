@@ -13,19 +13,19 @@ using System.Windows.Shapes;
 
 namespace UI.Dialogs
 {
-    /// <summary>
-    /// Логика взаимодействия для AboutProgram.xaml
-    /// </summary>
-    public partial class AboutProgramDialog : Window
+  /// <summary>
+  /// Логика взаимодействия для AboutProgram.xaml
+  /// </summary>
+  public partial class AboutProgramDialog : Window
+  {
+    public AboutProgramDialog()
     {
-        public AboutProgramDialog()
-        {
-            InitializeComponent();
-        }
-
-        private void Ok_Click(object sender, RoutedEventArgs e)
-        {
-            DialogResult = true;
-        }
+      InitializeComponent();
     }
+
+    private void Ok_Click(object sender, RoutedEventArgs e)
+    {
+      DialogResult = true;
+    }
+  }
 }

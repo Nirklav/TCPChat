@@ -52,7 +52,9 @@ namespace UI.Dialogs
     private void RemoveFile_Click(object sender, RoutedEventArgs e)
     {
       PostedFile postedFile = (PostedFile)((Button)sender).Tag;
-      ClientModel.API.RemoveFileFromRoom(postedFile.RoomName, postedFile.File);
+
+      if (ClientModel.API != null)
+        ClientModel.API.RemoveFileFromRoom(postedFile.RoomName, postedFile.File);
 
       RefreshFiles();
     }

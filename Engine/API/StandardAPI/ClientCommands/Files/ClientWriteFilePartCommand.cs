@@ -67,7 +67,7 @@ namespace Engine.API.StandardAPI.ClientCommands
             StartPartPosition = downloadingFile.WriteStream.Position,
           };
 
-          ClientModel.Client.SendMessage(args.PeerConnectionId, ClientReadFilePartCommand.Id, sendingContent);
+          ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientReadFilePartCommand.Id, sendingContent);
           downloadEventArgs.Progress = (int)((downloadingFile.WriteStream.Position * 100) / receivedContent.File.Size);
         }
       }

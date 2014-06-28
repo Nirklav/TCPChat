@@ -13,34 +13,34 @@ using System.Windows.Shapes;
 
 namespace UI.Dialogs
 {
-    /// <summary>
-    /// Логика взаимодействия для CreateRoomDialog.xaml
-    /// </summary>
-    public partial class CreateRoomDialog : Window
+  /// <summary>
+  /// Логика взаимодействия для CreateRoomDialog.xaml
+  /// </summary>
+  public partial class CreateRoomDialog : Window
+  {
+    public string RoomName { get; set; }
+
+    public CreateRoomDialog()
     {
-        public string RoomName { get; set; }
-
-        public CreateRoomDialog()
-        {
-            InitializeComponent();
-        }
-
-        private void Accept_Click(object sender, RoutedEventArgs e)
-        {
-            RoomName = RoomNameTextBox.Text;
-
-            if (string.IsNullOrEmpty(RoomName))
-            {
-                MessageBox.Show(this, "Проверьте правильность заполнения всех полей.", "TCP Chat");
-                return;
-            }
-
-            DialogResult = true;
-        }
-
-        private void Cancel_Click(object sender, RoutedEventArgs e)
-        {
-            DialogResult = false;
-        }
+      InitializeComponent();
     }
+
+    private void Accept_Click(object sender, RoutedEventArgs e)
+    {
+      RoomName = RoomNameTextBox.Text;
+
+      if (string.IsNullOrEmpty(RoomName))
+      {
+        MessageBox.Show(this, "Проверьте правильность заполнения всех полей.", "TCP Chat");
+        return;
+      }
+
+      DialogResult = true;
+    }
+
+    private void Cancel_Click(object sender, RoutedEventArgs e)
+    {
+      DialogResult = false;
+    }
+  }
 }

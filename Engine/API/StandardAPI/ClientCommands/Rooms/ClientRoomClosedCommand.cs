@@ -16,6 +16,9 @@ namespace Engine.API.StandardAPI.ClientCommands
         throw new ArgumentNullException("room");
 
       ClientModel.OnRoomClosed(this, new RoomEventArgs { Room = receivedContent.Room });
+
+      using (var client = ClientModel.Get())
+        client.Rooms.Remove(receivedContent.Room.Name);
     }
 
     [Serializable]

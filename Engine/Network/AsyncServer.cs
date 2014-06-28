@@ -25,10 +25,12 @@ namespace Engine.Network
     private Dictionary<string, ServerConnection> connections;
     private Socket listener;
     private P2PService p2pService;
-    private Timer systemTimer;
     private Logger logger;
     private bool isServerRunning;
     private long lastTempId;
+
+    private object timerSync = new object();
+    private Timer systemTimer;
     #endregion
 
     #region properties and events
@@ -105,7 +107,7 @@ namespace Engine.Network
         throw new ArgumentException("port not available", "serverPort");
 
       p2pService = new P2PService(logger, usingIPv6);
-      systemTimer = new Timer(SystemTimerCallback, null, 0, SystemTimerInterval);
+      systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
 
       if (usingIPv6)
       {
@@ -144,6 +146,7 @@ namespace Engine.Network
     /// <param name="id">Id cоединения, которое будет закрыто.</param>
     public void CloseConnection(string id)
     {
+      P2PService.RemoveEndPoint(id);
       lock (connections)
       {
         ServerConnection connection;
@@ -253,6 +256,9 @@ namespace Engine.Network
         if (e.Error != null)
           throw e.Error;
 
+        if (!isServerRunning)
+          return;
+
         IServerAPICommand command = ServerModel.API.GetCommand(e.ReceivedData);
         ServerCommandArgs args = new ServerCommandArgs
         {
@@ -313,10 +319,14 @@ namespace Engine.Network
           if (string.Equals(name, ServerModel.MainRoomName))
             continue;
 
-          if (server.Rooms[name].Users.Count == 0)
+          if (server.Rooms[name].Count == 0)
             server.Rooms.Remove(name);
         }
       }
+
+      lock (timerSync)
+        if (systemTimer != null)
+          systemTimer.Change(SystemTimerInterval, -1);
     }
     #endregion
 
@@ -336,6 +346,14 @@ namespace Engine.Network
 
       isServerRunning = false;
 
+      lock (timerSync)
+      {
+        if (systemTimer != null)
+          systemTimer.Dispose();
+
+        systemTimer = null;
+      }
+
       lock (connections)
       {
         foreach (var id in connections.Keys)
@@ -349,9 +367,6 @@ namespace Engine.Network
 
       if (p2pService != null)
         p2pService.Dispose();
-
-      if (systemTimer != null)
-        systemTimer.Dispose();
 
       disposed = true;
     }

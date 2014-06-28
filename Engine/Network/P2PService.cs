@@ -1,4 +1,4 @@
-﻿using Engine.Connections;
+﻿using Engine.API.StandardAPI.ClientCommands;
 using Engine.Containers;
 using Engine.Helpers;
 using Engine.Model.Server;
@@ -8,24 +8,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 
 namespace Engine.Network
 {
-  public enum ConnectionType : byte
-  {
-    Sender = 0,
-    Request = 1
-  }
-
   public sealed class P2PService : IDisposable
   {
     #region fields
-    Dictionary<int, ConnectionsContainer> waitingsConnections;
+    Dictionary<string, IPEndPoint> clientsEndPoints;
+    List<RequestPair> requests;
+
     SynchronizationContext context;
     NetServer server;
     Logger logger;
-    Random idCreator;
     bool disposed;
     #endregion
 
@@ -37,10 +33,10 @@ namespace Engine.Network
     {
       disposed = false;
 
-      idCreator = new Random();
-      waitingsConnections = new Dictionary<int, ConnectionsContainer>();
+      requests = new List<RequestPair>();
+      clientsEndPoints = new Dictionary<string, IPEndPoint>();
 
-      NetPeerConfiguration config = new NetPeerConfiguration(PeerConnection.NetConfigString);
+      NetPeerConfiguration config = new NetPeerConfiguration(AsyncPeer.NetConfigString);
       config.MaximumConnections = 100;    
       config.Port = 0;
 
@@ -84,15 +80,11 @@ namespace Engine.Network
 
     #region public methods
     /// <summary>
-    /// Начинает ожидать соединение.
+    /// Соединяет напрямую двух пользователей.
     /// </summary>
-    /// <param name="request">Соединение получащее ответ.</param>
-    /// <param name="sender">Соединение которое прислало запрос.</param>
-    /// <returns>Вовзращает индетификатор который следуюет отправить подключениям, для опознания.
-    /// Пользователю запрашивающему подключение вторым параметром следуюет отправить ConnectionType.Sender.
-    /// Пользователю у которого запрашивают соединение вторым параметром следует ConnectionType.Request.
-    /// </returns>
-    public int WaitConnection(string requestId, string senderId)
+    /// <param name="senderId">Соединение которое прислало запрос.</param>
+    /// <param name="requestId">Соединение получащее ответ.</param>
+    public void Introduce(string senderId, string requestId)
     {
       ThrowIfDisposed();
 
@@ -105,17 +97,32 @@ namespace Engine.Network
       if (senderId == null)
         throw new ArgumentNullException("sender");
 
-      int id = 0;
+      if (TryDoneRequest(senderId, requestId))
+        return;
 
-      lock (waitingsConnections)
+      lock (requests)
+        requests.Add(new RequestPair(requestId, senderId));
+
+      AddressFamily addressFamily = ServerModel.Server.UsingIPv6 
+        ? AddressFamily.InterNetworkV6 
+        : AddressFamily.InterNetwork;
+
+      var sendingContent = new ClientConnectToP2PServiceCommand.MessageContent
       {
-        while (waitingsConnections.Keys.Contains(id))
-          id = idCreator.Next(int.MinValue, int.MaxValue);
+        ServicePoint = new IPEndPoint(Connection.GetIPAddress(addressFamily), Port)
+      };
 
-        waitingsConnections.Add(id, new ConnectionsContainer(id, requestId, senderId));
-      }
+      if (!clientsEndPoints.ContainsKey(senderId))
+        ServerModel.Server.SendMessage(senderId, ClientConnectToP2PServiceCommand.Id, sendingContent);
 
-      return id;
+      if (!clientsEndPoints.ContainsKey(requestId))
+        ServerModel.Server.SendMessage(requestId, ClientConnectToP2PServiceCommand.Id, sendingContent);
+    }
+
+    internal void RemoveEndPoint(string id)
+    {
+      lock (clientsEndPoints)
+        clientsEndPoints.Remove(id);
     }
     #endregion
 
@@ -140,28 +147,67 @@ namespace Engine.Network
             if (status != NetConnectionStatus.Connected)
               break;
 
-            int id = message.SenderConnection.RemoteHailMessage.ReadInt32();
-            ConnectionType type = (ConnectionType)message.SenderConnection.RemoteHailMessage.ReadByte();
+            string id = message.SenderConnection.RemoteHailMessage.ReadString();
 
-            ConnectionsContainer container;
-            lock (waitingsConnections)
-              container = waitingsConnections[id];
+            lock(clientsEndPoints)
+              clientsEndPoints.Add(id, message.SenderEndPoint);
 
-            if (type == ConnectionType.Sender)
-              container.SenderPeerPoint = message.SenderEndPoint;
-            else
-              container.RequestPeerPoint = message.SenderEndPoint;
-
-            if (container.RequestPeerPoint != null && container.SenderPeerPoint != null)
-            {
-              lock (waitingsConnections)
-                waitingsConnections.Remove(id);
-
-              ServerModel.API.IntroduceConnections(container);
-            }
+            TryDoneAllRequest();
             break;
         }
       }
+    }
+
+    private bool TryGetRequest(string senderId, string requestId, out IPEndPoint senderPoint, out IPEndPoint requestPoint)
+    {
+      bool received = true;
+
+      IPEndPoint senderTemp;
+      IPEndPoint requestTemp;
+
+      lock (clientsEndPoints)
+      {
+        received &= clientsEndPoints.TryGetValue(senderId, out senderTemp);
+        received &= clientsEndPoints.TryGetValue(requestId, out requestTemp);
+      }
+
+      senderPoint = received ? senderTemp : null;
+      requestPoint = received ? requestTemp : null;
+      
+      return received;
+    }
+
+    private bool TryDoneRequest(string senderId, string requestId)
+    {
+      bool received;
+      IPEndPoint senderEndPoint;
+      IPEndPoint requestEndPoint;
+
+      if (received = TryGetRequest(senderId, requestId, out senderEndPoint, out requestEndPoint))
+      {
+        lock(requests)
+          requests.RemoveAll(p => string.Equals(p.SenderId, senderId) && string.Equals(p.RequestId, requests));
+
+        ServerModel.API.IntroduceConnections(senderId, senderEndPoint, requestId, requestEndPoint);
+      }
+
+      return received;
+    }
+
+    private void TryDoneAllRequest()
+    {
+      lock (requests)
+        for (int i = requests.Count - 1; i >= 0; i--)
+        {
+          IPEndPoint senderEndPoint;
+          IPEndPoint requestEndPoint;
+
+          if (TryGetRequest(requests[i].SenderId, requests[i].RequestId, out senderEndPoint, out requestEndPoint))
+          {
+            ServerModel.API.IntroduceConnections(requests[i].SenderId, senderEndPoint, requests[i].RequestId, requestEndPoint);
+            requests.RemoveAt(i);
+          }
+        }
     }
 
     private void AsyncErrorCallback(object sender, AsyncErrorEventArgs e)
@@ -187,8 +233,8 @@ namespace Engine.Network
 
       server.Shutdown(string.Empty);
 
-      lock (waitingsConnections)
-        waitingsConnections.Clear();
+      lock (requests)
+        requests.Clear();
     }
     #endregion
   }

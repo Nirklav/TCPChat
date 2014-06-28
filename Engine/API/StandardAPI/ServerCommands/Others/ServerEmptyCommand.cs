@@ -2,6 +2,11 @@
 {
   class ServerEmptyCommand : IServerAPICommand
   {
+    protected ServerEmptyCommand()
+    {
+
+    }
+
     public void Run(ServerCommandArgs args)
     {
 

@@ -1,4 +1,6 @@
-﻿using Engine.Model.Entities;
+﻿using Engine.Audio;
+using Engine.Audio.OpenAL;
+using Engine.Model.Entities;
 using Engine.Network;
 using System;
 using System.Collections.Generic;
@@ -18,13 +20,29 @@ namespace Engine.Model.Client
     public static IClientAPI API { get; set; }
 
     /// <summary>
-    /// Клиентское соединение
+    /// Клиент
     /// </summary>
     public static AsyncClient Client { get; private set; }
 
     /// <summary>
-    /// Исользовать только с конструкцией using(var context = ClientModel.Get()) { ... }
+    /// Пир 
     /// </summary>
+    public static AsyncPeer Peer { get; private set; }
+
+    /// <summary>
+    /// Интерфейс для воспроизведения голоса.
+    /// </summary>
+    public static IPlayer Player { get; private set; }
+
+    /// <summary>
+    /// Интерфейс для записи голоса с микрофона.
+    /// </summary>
+    public static IRecorder Recorder { get; private set; }
+
+    /// <summary>
+    /// Исользовать только с конструкцией using
+    /// </summary>
+    /// <example>using (var client = ClientModel.Get()) { ... }</example>
     /// <returns>Возвращает и блокирует модель.</returns>
     public static ClientContext Get()
     {
@@ -143,6 +161,7 @@ namespace Engine.Model.Client
 
     #region properties
     public User User { get; private set; }
+    public Dictionary<string, Room> Rooms { get; private set; }
     public List<DownloadingFile> DownloadingFiles { get; private set; }
     public List<PostedFile> PostedFiles { get; private set; }
     #endregion
@@ -150,6 +169,7 @@ namespace Engine.Model.Client
     #region conctructor
     public ClientModel()
     {
+      Rooms = new Dictionary<string, Room>();
       DownloadingFiles = new List<DownloadingFile>();
       PostedFiles = new List<PostedFile>();
     }
@@ -158,10 +178,7 @@ namespace Engine.Model.Client
     #region static methods
     public static bool IsInited
     {
-      get
-      {
-        return Interlocked.CompareExchange(ref model, null, null) != null;
-      }
+      get { return Interlocked.CompareExchange(ref model, null, null) != null; }
     }
 
     public static void Init(string nick, Color nickColor)
@@ -177,6 +194,9 @@ namespace Engine.Model.Client
 
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
       Client = new AsyncClient(nick);
+      Peer = new AsyncPeer();
+      Player = new OpenALPlayer();
+      Recorder = new OpenALRecorder(1, 16, 22050, 4096);
     }
 
     public static void Reset()
@@ -184,13 +204,24 @@ namespace Engine.Model.Client
       if (Interlocked.Exchange(ref model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
-      if (Client != null)
-      {
-        Client.Dispose();
-        Client = null;
-      }
+      Dispose(Client);
+      Dispose(Peer);
+      Dispose(Recorder);
+      Dispose(Player);
 
+      Client = null;
+      Peer = null;
+      Recorder = null;
+      Player = null;
       API = null;
+    }
+
+    private static void Dispose(IDisposable disposable)
+    {
+      if (disposable == null)
+        return;
+
+      disposable.Dispose();
     }
     #endregion
   }

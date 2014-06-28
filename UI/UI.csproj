@@ -105,7 +105,7 @@
     <Compile Include="Dialogs\ServerDialog.xaml.cs">
       <DependentUpon>ServerDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialogs\RgbToColorConverter.cs" />
+    <Compile Include="Infrastructure\RgbToColorConverter.cs" />
     <Page Include="Dialogs\AboutProgramDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

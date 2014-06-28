@@ -21,10 +21,23 @@ namespace UI
       {
         base.OnStartup(e);
 
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+
         MainWindow window = new MainWindow();
         MainWindowViewModel viewModel = new MainWindowViewModel(window);
         window.DataContext = viewModel;
         window.Show();
+      }
+
+      private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+      {
+        Exception error = e.ExceptionObject as Exception;
+
+        if (error == null)
+          return;
+
+        Logger logger = new Logger(AppDomain.CurrentDomain.BaseDirectory + "/UnhandledError.log");
+        logger.Write(error);
       }
     }
 }

@@ -25,8 +25,9 @@ namespace Engine.Model.Server
     public static AsyncServer Server { get; private set; }
 
     /// <summary>
-    /// Исользовать только с конструкцией using(var context = ClientModel.Get()) { ... }
+    /// Исользовать только с конструкцией using
     /// </summary>
+    /// <example>using (var server = SeeverModel.Get()) { ... }</example>
     /// <returns>Возвращает и блокирует модель.</returns>
     public static ServerContext Get()
     {
@@ -59,10 +60,7 @@ namespace Engine.Model.Server
     #region static methods
     public static bool IsInited
     {
-      get
-      {
-        return Interlocked.CompareExchange(ref model, null, null) != null;
-      }
+      get { return Interlocked.CompareExchange(ref model, null, null) != null; }
     }
 
     public static void Init(IServerAPI api)

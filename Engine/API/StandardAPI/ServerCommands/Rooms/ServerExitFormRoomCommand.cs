@@ -37,7 +37,7 @@ namespace Engine.API.StandardAPI.ServerCommands
           return;
         }
 
-        room.Users.Remove(args.ConnectionId);
+        room.Remove(args.ConnectionId);
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { Room = room };
         ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomClosedCommand.Id, closeRoomContent);
 

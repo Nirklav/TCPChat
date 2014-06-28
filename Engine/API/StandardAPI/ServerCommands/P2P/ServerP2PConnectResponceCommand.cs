@@ -34,7 +34,6 @@ namespace Engine.API.StandardAPI.ServerCommands
       {
         PeerPoint = receivedContent.PeerPoint,
         RemoteInfo = receivedContent.RemoteInfo,
-        ServiceConnectId = receivedContent.ServiceConnectId,
       };
       ServerModel.Server.SendMessage(receivedContent.ReceiverNick, ClientConnectToPeerCommand.Id, connectContent);
     }
@@ -42,12 +41,10 @@ namespace Engine.API.StandardAPI.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      int serviceConnectId;
       string receiverNick;
       IPEndPoint peerPoint;
       User remoteInfo;
 
-      public int ServiceConnectId { get { return serviceConnectId; } set { serviceConnectId = value; } }
       public string ReceiverNick { get { return receiverNick; } set { receiverNick = value; } }
       public IPEndPoint PeerPoint { get { return peerPoint; } set { peerPoint = value; } }
       public User RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }

@@ -30,7 +30,7 @@ namespace Engine.API.StandardAPI.ServerCommands
         if (!room.Files.Exists(file => file.Equals(receivedContent.File)))
           return;
 
-        if (!room.Users.Contains(args.ConnectionId))
+        if (!room.Contains(args.ConnectionId))
         {
           ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
           return;

@@ -8,6 +8,7 @@ using Engine.Network.Connections;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Net;
 
 namespace Engine.API.StandardAPI
 {
@@ -19,14 +20,14 @@ namespace Engine.API.StandardAPI
     /// <summary>
     /// Версия и имя данного API.
     /// </summary>
-    public const string API = "StandartAPI v1.4";
+    public const string API = "StandartAPI v2.0";
 
     private Dictionary<ushort, IServerAPICommand> commandDictionary = new Dictionary<ushort, IServerAPICommand>();
 
     /// <summary>
     /// Список поданых запросов ожидающих ответа от клиентов.
     /// </summary>
-    public Dictionary<int, ServerConnection> FilePartRequests { get; private set; }
+    internal Dictionary<int, ServerConnection> FilePartRequests { get; private set; }
 
     /// <summary>
     /// Создает экземпляр API.
@@ -72,33 +73,29 @@ namespace Engine.API.StandardAPI
     {
       ushort id = BitConverter.ToUInt16(message, 0);
 
-      try
-      {
-        return commandDictionary[id];
-      }
-      catch (KeyNotFoundException)
-      {
-        return ServerEmptyCommand.Empty;
-      }
+      IServerAPICommand command;
+      if (commandDictionary.TryGetValue(id, out command))
+        return command;
+
+      return ServerEmptyCommand.Empty;
     }
 
     /// <summary>
     /// Напрямую соединяет пользователей.
     /// </summary>
     /// <param name="container"></param>
-    public void IntroduceConnections(ConnectionsContainer container)
+    public void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint)
     {
       using (var context = ServerModel.Get())
       {
         var content = new ClientWaitPeerConnectionCommand.MessageContent
         {
-          RequestPoint = container.RequestPeerPoint,
-          SenderPoint = container.SenderPeerPoint,
-          RemoteInfo = context.Users[container.SenderId],
-          ServiceConnectId = container.Id,
+          RequestPoint = requestPoint,
+          SenderPoint = senderPoint,
+          RemoteInfo = context.Users[senderId],
         };
 
-        ServerModel.Server.SendMessage(container.RequestId, ClientWaitPeerConnectionCommand.Id, content);
+        ServerModel.Server.SendMessage(requestId, ClientWaitPeerConnectionCommand.Id, content);
       }
     }
 
@@ -130,7 +127,7 @@ namespace Engine.API.StandardAPI
           if (!room.Users.Contains(nick))
             continue;
 
-          room.Users.Remove(nick);
+          room.Remove(nick);
           server.Users.Remove(nick);
 
           foreach (string user in room.Users)

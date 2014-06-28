@@ -1,7 +1,7 @@
 ﻿<Window x:Class="UI.Dialogs.ConnectDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:TCPChat.Dialogs="clr-namespace:UI.Dialogs"
+        xmlns:Infrastructure="clr-namespace:UI.Infrastructure"
         Title="Соединение"       
         ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
@@ -9,7 +9,7 @@
         Icon="/TCPChat;component/chat.ico">
 
     <Window.Resources>
-        <TCPChat.Dialogs:RgbToColorConverter x:Key="RgbConverter" />
+        <Infrastructure:RgbToColorConverter x:Key="RgbConverter" />
     </Window.Resources>
 
     <Grid>

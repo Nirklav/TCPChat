@@ -11,15 +11,15 @@ namespace Engine.Model.Entities
   [Serializable]
   public class Room
   {
-    private string name;
-    private string admin;
-    private List<string> users;
-    private List<FileDescription> files;
+    protected string name;
+    protected string admin;
+    protected List<string> users;
+    protected List<FileDescription> files;
 
     /// <summary>
     /// Создает комнату.
     /// </summary>
-    /// <param name="adminNick">Ник администратора комнаты.</param>
+    /// <param name="admin">Ник администратора комнаты.</param>
     /// <param name="name">Название комнаты.</param>
     public Room(string admin, string name)
     {
@@ -36,9 +36,9 @@ namespace Engine.Model.Entities
     /// <summary>
     /// Создает комнату.
     /// </summary>
-    /// <param name="adminNick">Ник администратора комнаты.</param>
+    /// <param name="admin">Ник администратора комнаты.</param>
     /// <param name="name">Название комнаты.</param>
-    /// <param name="users">Начальный список пользователей комнаты. Уже существуюшие пользователе повторно добавлены не будут.</param>
+    /// <param name="initialUsers">Начальный список пользователей комнаты. Уже существуюшие пользователе повторно добавлены не будут.</param>
     public Room(string admin, string name, IEnumerable<User> initialUsers)
       : this(admin, name)
     {
@@ -65,9 +65,17 @@ namespace Engine.Model.Entities
     /// <summary>
     /// Список пользователей комнаты, включая администратора.
     /// </summary>
-    public List<string> Users
+    public IEnumerable<string> Users
     {
       get { return users; }
+    }
+
+    /// <summary>
+    /// Количество пользователей.
+    /// </summary>
+    public int Count
+    {
+      get { return users.Count; }
     }
 
     /// <summary>
@@ -76,6 +84,33 @@ namespace Engine.Model.Entities
     public List<FileDescription> Files
     {
       get { return files; }
+    }
+
+    /// <summary>
+    /// Добавляет пользователя в комнату.
+    /// </summary>
+    /// <param name="nick">Ник пользователя.</param>
+    public virtual void Add(string nick)
+    {
+      users.Add(nick);
+    }
+
+    /// <summary>
+    /// Удаляет пользователя из комнаты.
+    /// </summary>
+    /// <param name="nick">Ник пользователя.</param>
+    public virtual void Remove(string nick)
+    {
+      users.Remove(nick);
+    }
+
+    /// <summary>
+    /// Есть ли пользователь в комнате.
+    /// </summary>
+    /// <param name="nick">Ник пользователя</param>
+    public bool Contains(string nick)
+    {
+      return users.Contains(nick);
     }
 
     /// <summary>

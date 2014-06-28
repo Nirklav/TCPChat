@@ -31,6 +31,8 @@ namespace Engine.API.StandardAPI.ServerCommands
   //00 60: Запрос прямого соединения
   //00 61: Ответ, говорящий о готовности принять входное содеинение
 
+  //00 70: Создать голосовую комнату
+
   //7F FF: Пустая команда
 
   enum ServerCommand : ushort
@@ -58,6 +60,8 @@ namespace Engine.API.StandardAPI.ServerCommands
 
     P2PConnectRequest = 0x0060,
     P2PConnectResponce = 0x0061,
+
+    CreateVoiceRoom = 0x0070,
 
     Empty = 0x7FFF
   }

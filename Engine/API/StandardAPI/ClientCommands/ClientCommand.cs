@@ -22,12 +22,15 @@ namespace Engine.API.StandardAPI.ClientCommands
 
   //80 40: Опубликовать файл
   //80 41: Файл больше не раздается
-  //80 42: Прочитать часть файла.
-  //80 43: Записать часть файла.
+  //80 42: Прочитать часть файла
+  //80 43: Записать часть файла
 
   //80 50: Ожидать прямое соединение
   //80 51: Выполнить прямое соединение
   //80 52: Подключится к сервису P2P
+
+  //80 60: Воспроизвести голос
+  //80 61: Открыта голосовая комната
 
   //80 FF: Пинг ответ
 
@@ -55,6 +58,9 @@ namespace Engine.API.StandardAPI.ClientCommands
     WaitPeerConnection = 0x8050,
     ConnectToPeer = 0x8051,
     ConnectToP2PService = 0x8052,
+
+    PlayVoice = 0x8060,
+    VoiceRoomOpened = 0x8061,
 
     PingResponce = 0x80FF,
 

@@ -128,8 +128,26 @@ namespace UI.ViewModel
       KickFromRoomCommand = new Command(KickFromRoom, Obj => ClientModel.Client != null);
 
       MainViewModel.AllUsers.CollectionChanged += AllUsersCollectionChanged;
+
       ClientModel.ReceiveMessage += ClientReceiveMessage;
       ClientModel.RoomRefreshed += ClientRoomRefreshed;
+    }
+
+    public override void Dispose()
+    {
+      base.Dispose();
+
+      foreach (UserViewModel user in Users)
+        user.Dispose();
+
+      foreach (MessageViewModel message in Messages)
+        message.Dispose();
+
+      Users.Clear();
+      Messages.Clear();
+
+      ClientModel.ReceiveMessage -= ClientReceiveMessage;
+      ClientModel.RoomRefreshed -= ClientRoomRefreshed;
     }
     #endregion
 
@@ -166,12 +184,15 @@ namespace UI.ViewModel
 
       try
       {
-        if (ReferenceEquals(allInRoom, SelectedReceiver))
-          ClientModel.API.SendMessage(Message, Name);
-        else
+        if (ClientModel.API != null)
         {
-          ClientModel.API.SendPrivateMessage(SelectedReceiver.Nick, Message);
-          AddPrivateMessage(MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id)), SelectedReceiver, Message);
+          if (ReferenceEquals(allInRoom, SelectedReceiver))
+            ClientModel.API.SendMessage(Message, Name);
+          else
+          {
+            ClientModel.API.SendPrivateMessage(SelectedReceiver.Nick, Message);
+            AddPrivateMessage(MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id)), SelectedReceiver, Message);
+          }
         }
 
         Message = string.Empty;
@@ -195,7 +216,7 @@ namespace UI.ViewModel
         OpenFileDialog openDialog = new OpenFileDialog();
         openDialog.Filter = FileDialogFilter;
 
-        if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.API != null)
           ClientModel.API.AddFileToRoom(Name, openDialog.FileName);
       }
       catch (SocketException se)
@@ -216,7 +237,7 @@ namespace UI.ViewModel
         }
 
         UsersOperationDialog dialog = new UsersOperationDialog(InviteInRoomTitle, availableUsers);
-        if (dialog.ShowDialog() == true)
+        if (dialog.ShowDialog() == true && ClientModel.API != null)
           ClientModel.API.InviteUsers(Name, dialog.Users);
       }
       catch (SocketException se)
@@ -230,7 +251,7 @@ namespace UI.ViewModel
       try
       {
         UsersOperationDialog dialog = new UsersOperationDialog(KickFormRoomTitle, Users);
-        if (dialog.ShowDialog() == true)
+        if (dialog.ShowDialog() == true && ClientModel.API != null)
           ClientModel.API.KickUsers(Name, dialog.Users);
       }
       catch (SocketException se)
@@ -281,6 +302,10 @@ namespace UI.ViewModel
       MainViewModel.Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
       {
         Description = args.Room;
+
+        foreach (UserViewModel user in Users)
+          user.Dispose();
+
         Users.Clear();
 
         foreach (string user in Description.Users)

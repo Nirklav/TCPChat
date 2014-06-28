@@ -7,8 +7,12 @@ using System.Threading;
 
 namespace UI.ViewModel
 {
-  public class BaseViewModel : INotifyPropertyChanged
+  public abstract class BaseViewModel : 
+    INotifyPropertyChanged,
+    IDisposable
   {
+    private bool disposed = false;
+
     public event PropertyChangedEventHandler PropertyChanged;
 
     protected virtual void OnPropertyChanged(string name)
@@ -17,6 +21,14 @@ namespace UI.ViewModel
 
       if (temp != null)
         temp(this, new PropertyChangedEventArgs(name));
+    }
+
+    public virtual void Dispose()
+    {
+      if (disposed)
+        return;
+
+      disposed = true;
     }
   }
 }

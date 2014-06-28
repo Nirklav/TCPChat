@@ -20,26 +20,26 @@ namespace Engine.API.StandardAPI.ServerCommands
       if (receivedContent.User == null)
         throw new ArgumentNullException("User");
 
-      bool newUserExist = false;
-      foreach (var connectionId in ServerModel.Server.GetConnetionsIds())
-        if (string.Equals(receivedContent.User.Nick, connectionId))
-        {
-          newUserExist = true;
-          break;
-        }
-
-      if (!newUserExist)
+      using (var server = ServerModel.Get())
       {
-        using (var server = ServerModel.Get())
-        {
-          Room room = server.Rooms[ServerModel.MainRoomName];
+        Room room = server.Rooms[ServerModel.MainRoomName];
 
+        bool userExist = false;
+        foreach (var nick in room.Users)
+          if (string.Equals(receivedContent.User.Nick, nick))
+          {
+            userExist = true;
+            break;
+          }
+
+        if (!userExist)
+        {
           ServerModel.Server.RegisterConnection(args.ConnectionId, receivedContent.User.Nick, receivedContent.OpenKey);
 
           server.Users.Add(receivedContent.User.Nick, receivedContent.User);
-          room.Users.Add(receivedContent.User.Nick);
+          room.Add(receivedContent.User.Nick);
 
-          var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = !newUserExist };
+          var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = !userExist };
           ServerModel.Server.SendMessage(args.ConnectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
 
           foreach (var connectionId in ServerModel.Server.GetConnetionsIds())
@@ -52,12 +52,12 @@ namespace Engine.API.StandardAPI.ServerCommands
             ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.Id, sendingContent);
           }
         }
-      }
-      else
-      {
-        var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = !newUserExist };
-        ServerModel.Server.SendMessage(args.ConnectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
-        ServerModel.API.CloseConnection(args.ConnectionId);
+        else
+        {
+          var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = !userExist };
+          ServerModel.Server.SendMessage(args.ConnectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
+          ServerModel.API.CloseConnection(args.ConnectionId);
+        }
       }
     }
 

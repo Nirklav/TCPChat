@@ -1,13 +1,19 @@
 ﻿using Engine.API.StandardAPI.ClientCommands;
+using Engine.API.StandardAPI.ClientCommands.Voice;
 using Engine.API.StandardAPI.ServerCommands;
+using Engine.Audio;
+using Engine.Audio.OpenAL;
 using Engine.Containers;
+using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using Engine.Network;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace Engine.API.StandardAPI
 {
@@ -18,11 +24,12 @@ namespace Engine.API.StandardAPI
   {
     private Dictionary<ushort, IClientAPICommand> commandDictionary;
     private Random idCreator;
+    private long lastSendedNumber;
 
     /// <summary>
     /// Приватные сообщения которые ожидают открытого ключа, для шифрования.
     /// </summary>
-    public List<WaitingPrivateMessage> WaitingPrivateMessages { get; private set; }
+    internal List<WaitingPrivateMessage> WaitingPrivateMessages { get; private set; }
 
     /// <summary>
     /// Создает экземпляр API.
@@ -33,6 +40,8 @@ namespace Engine.API.StandardAPI
       commandDictionary = new Dictionary<ushort, IClientAPICommand>();
       WaitingPrivateMessages = new List<WaitingPrivateMessage>();
       idCreator = new Random(DateTime.Now.Millisecond);
+
+      ClientModel.Recorder.Recorded += OnRecorded;
 
       commandDictionary.Add(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand());
       commandDictionary.Add(ClientRoomRefreshedCommand.Id, new ClientRoomRefreshedCommand());
@@ -50,6 +59,43 @@ namespace Engine.API.StandardAPI
       commandDictionary.Add(ClientConnectToPeerCommand.Id, new ClientConnectToPeerCommand());
       commandDictionary.Add(ClientWaitPeerConnectionCommand.Id, new ClientWaitPeerConnectionCommand());
       commandDictionary.Add(ClientConnectToP2PServiceCommand.Id, new ClientConnectToP2PServiceCommand());
+      commandDictionary.Add(ClientPlayVoiceCommand.Id, new ClientPlayVoiceCommand());
+    }
+
+    private void OnRecorded(object sender, RecordedEventArgs e)
+    {
+      if (!ClientModel.IsInited)
+        return;
+
+      byte[] data = new byte[e.DataSize];
+      Buffer.BlockCopy(e.Data, 0, data, 0, data.Length);
+
+      ClientPlayVoiceCommand.MessageContent content = new ClientPlayVoiceCommand.MessageContent
+      {
+        Pack = new SoundPack
+        {
+          Data = data,
+          Channels = e.Channels,
+          BitPerChannel = e.BitPerChannel,
+          Frequency = e.Frequency
+        },
+        Number = Interlocked.Increment(ref lastSendedNumber)
+      };
+
+      using (var client = ClientModel.Get())
+      {
+        IEnumerable<string> users = Enumerable.Empty<string>();
+        List<string> receivers = client.Rooms.Values
+          .OfType<VoiceRoom>()
+          .Select(r => r.Users)
+          .Aggregate(users, (acc, u) => acc.Concat(u))
+          .Distinct()
+          .ToList();
+
+        receivers.Remove(client.User.Nick);
+
+        ClientModel.Peer.SendMessageIfConnected(receivers, ClientPlayVoiceCommand.Id, content, true);
+      }
     }
 
     /// <summary>
@@ -67,20 +113,18 @@ namespace Engine.API.StandardAPI
 
       ushort id = BitConverter.ToUInt16(message, 0);
 
-      try
-      {
-        return commandDictionary[id];
-      }
-      catch (KeyNotFoundException)
-      {
-        return ClientEmptyCommand.Empty;
-      }
+      IClientAPICommand command;
+      if (commandDictionary.TryGetValue(id, out command))
+        return command;
+
+      return ClientEmptyCommand.Empty;
     }
 
     /// <summary>
     /// Асинхронно отправляет сообщение всем пользователям в комнате. Если клиента нет в комнате, сообщение игнорируется сервером.
     /// </summary>
     /// <param name="message">Сообщение.</param>
+    /// <param name="roomName">Название комнаты.</param>
     public void SendMessage(string message, string roomName)
     {
       if (message == null)
@@ -107,7 +151,7 @@ namespace Engine.API.StandardAPI
         throw new ArgumentException("receiver");
 
       lock (WaitingPrivateMessages)
-        WaitingPrivateMessages.Add(new WaitingPrivateMessage() { Receiver = receiver, Message = message });
+        WaitingPrivateMessages.Add(new WaitingPrivateMessage { Receiver = receiver, Message = message });
 
       var sendingContent = new ServerSendUserOpenKeyCommand.MessageContent { Nick = receiver };
       ClientModel.Client.SendMessage(ServerSendUserOpenKeyCommand.Id, sendingContent);
@@ -116,8 +160,6 @@ namespace Engine.API.StandardAPI
     /// <summary>
     /// Асинхронно послыает запрос для регистрации на сервере.
     /// </summary>
-    /// <param name="info">Информация о юзере, по которой будет совершена попытка подключения.</param>
-    /// <param name="keyCryptor">Откртый ключ клиента.</param>
     public void Register()
     {
       using (var client = ClientModel.Get())
@@ -139,12 +181,13 @@ namespace Engine.API.StandardAPI
     /// Создает на сервере комнату.
     /// </summary>
     /// <param name="roomName">Название комнаты для создания.</param>
-    public void CreateRoom(string roomName)
+    /// <param name="type">Тип комнаты.</param>
+    public void CreateRoom(string roomName, RoomType type)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
-      var sendingContent = new ServerCreateRoomCommand.MessageContent() { RoomName = roomName };
+      var sendingContent = new ServerCreateRoomCommand.MessageContent { RoomName = roomName, Type = type };
       ClientModel.Client.SendMessage(ServerCreateRoomCommand.Id, sendingContent);
     }
 
@@ -157,7 +200,7 @@ namespace Engine.API.StandardAPI
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
-      var sendingContent = new ServerDeleteRoomCommand.MessageContent() { RoomName = roomName };
+      var sendingContent = new ServerDeleteRoomCommand.MessageContent { RoomName = roomName };
       ClientModel.Client.SendMessage(ServerDeleteRoomCommand.Id, sendingContent);
     }
 
@@ -174,7 +217,7 @@ namespace Engine.API.StandardAPI
       if (users == null)
         throw new ArgumentNullException("users");
 
-      var sendingContent = new ServerInviteUsersCommand.MessageContent() { RoomName = roomName, Users = users };
+      var sendingContent = new ServerInviteUsersCommand.MessageContent { RoomName = roomName, Users = users };
       ClientModel.Client.SendMessage(ServerInviteUsersCommand.Id, sendingContent);
     }
 
@@ -191,7 +234,7 @@ namespace Engine.API.StandardAPI
       if (users == null)
         throw new ArgumentNullException("users");
 
-      var sendingContent = new ServerKickUsersCommand.MessageContent() { RoomName = roomName, Users = users };
+      var sendingContent = new ServerKickUsersCommand.MessageContent { RoomName = roomName, Users = users };
       ClientModel.Client.SendMessage(ServerKickUsersCommand.Id, sendingContent);
     }
 
@@ -204,7 +247,7 @@ namespace Engine.API.StandardAPI
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
-      var sendingContent = new ServerExitFormRoomCommand.MessageContent() { RoomName = roomName };
+      var sendingContent = new ServerExitFormRoomCommand.MessageContent { RoomName = roomName };
       ClientModel.Client.SendMessage(ServerExitFormRoomCommand.Id, sendingContent);
     }
 
@@ -217,7 +260,7 @@ namespace Engine.API.StandardAPI
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
-      var sendingContent = new ServerRefreshRoomCommand.MessageContent() { RoomName = roomName };
+      var sendingContent = new ServerRefreshRoomCommand.MessageContent { RoomName = roomName };
       ClientModel.Client.SendMessage(ServerRefreshRoomCommand.Id, sendingContent);
     }
 
@@ -234,7 +277,7 @@ namespace Engine.API.StandardAPI
       if (newAdmin == null)
         throw new ArgumentNullException("newAdmin");
 
-      var sendingContent = new ServerSetRoomAdminCommand.MessageContent() { RoomName = roomName, NewAdmin = newAdmin };
+      var sendingContent = new ServerSetRoomAdminCommand.MessageContent { RoomName = roomName, NewAdmin = newAdmin };
       ClientModel.Client.SendMessage(ServerSetRoomAdminCommand.Id, sendingContent);
     }
 
@@ -259,7 +302,7 @@ namespace Engine.API.StandardAPI
       using (var client = ClientModel.Get())
       {
         PostedFile postedFile;
-        postedFile = client.PostedFiles.FirstOrDefault((posted) =>
+        postedFile = client.PostedFiles.FirstOrDefault(posted =>
           posted.File.Owner.Equals(client.User)
           && string.Equals(posted.ReadStream.Name, path)
           && string.Equals(posted.RoomName, roomName));
@@ -267,13 +310,13 @@ namespace Engine.API.StandardAPI
 
         if (postedFile != null)
         {
-          var oldSendingContent = new ServerAddFileToRoomCommand.MessageContent() { RoomName = roomName, File = postedFile.File };
+          var oldSendingContent = new ServerAddFileToRoomCommand.MessageContent { RoomName = roomName, File = postedFile.File };
           ClientModel.Client.SendMessage(ServerAddFileToRoomCommand.Id, oldSendingContent);
           return;
         }
 
         int id = 0;
-        while (client.PostedFiles.Exists((postFile) => postFile.File.ID == id))
+        while (client.PostedFiles.Exists(postFile => postFile.File.ID == id))
           id = idCreator.Next(int.MinValue, int.MaxValue);
 
         FileDescription file = new FileDescription(client.User, info.Length, Path.GetFileName(path), id);
@@ -285,7 +328,7 @@ namespace Engine.API.StandardAPI
           ReadStream = new FileStream(path, FileMode.Open, FileAccess.Read)
         });
 
-        var newSendingContent = new ServerAddFileToRoomCommand.MessageContent() { RoomName = roomName, File = file };
+        var newSendingContent = new ServerAddFileToRoomCommand.MessageContent { RoomName = roomName, File = file };
         ClientModel.Client.SendMessage(ServerAddFileToRoomCommand.Id, newSendingContent);
       }
     }
@@ -305,7 +348,7 @@ namespace Engine.API.StandardAPI
 
       using (var client = ClientModel.Get())
       {
-        PostedFile postedFile = client.PostedFiles.FirstOrDefault((current) => current.File.Equals(file));
+        PostedFile postedFile = client.PostedFiles.FirstOrDefault(current => current.File.Equals(file));
 
         if (postedFile == null)
           return;
@@ -314,7 +357,7 @@ namespace Engine.API.StandardAPI
         postedFile.Dispose();
       }
 
-      var sendingContent = new ServerRemoveFileFormRoomCommand.MessageContent() { RoomName = roomName, File = file };
+      var sendingContent = new ServerRemoveFileFormRoomCommand.MessageContent { RoomName = roomName, File = file };
       ClientModel.Client.SendMessage(ServerRemoveFileFormRoomCommand.Id, sendingContent);
     }
 
@@ -340,8 +383,8 @@ namespace Engine.API.StandardAPI
 
       using (var client = ClientModel.Get())
       {
-        if (client.DownloadingFiles.Exists((dFile) => dFile.File.Equals(file)))
-          throw new FileAlreadyDownloadingException(file);
+        if (client.DownloadingFiles.Exists(dFile => dFile.File.Equals(file)))
+          throw new ModelException(ErrorCode.FileAlreadyDownloading, file);
 
         if (client.User.Equals(file.Owner))
           throw new ArgumentException("Нельзя скачивать свой файл.");
@@ -357,7 +400,7 @@ namespace Engine.API.StandardAPI
         StartPartPosition = 0,
       };
 
-      ClientModel.Client.SendMessage(file.Owner.Nick, ClientReadFilePartCommand.Id, sendingContent);
+      ClientModel.Peer.SendMessage(file.Owner.Nick, ClientReadFilePartCommand.Id, sendingContent);
     }
 
     /// <summary>
@@ -393,6 +436,9 @@ namespace Engine.API.StandardAPI
     /// <param name="nick">Ник клиента к которму будет инцированно соединение.</param>
     public void ConnectToPeer(string nick)
     {
+      if (ClientModel.Peer.IsConnected(nick))
+        return;
+
       var sendingContent = new ServerP2PConnectRequestCommand.MessageContent { Nick = nick };
       ClientModel.Client.SendMessage(ServerP2PConnectRequestCommand.Id, sendingContent);
     }

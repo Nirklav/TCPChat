@@ -38,6 +38,9 @@
     </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="OpenAL">
+      <HintPath>..\OpenAL.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -51,6 +54,7 @@
     <Compile Include="API\IClientAPICommand.cs" />
     <Compile Include="API\IServerAPI.cs" />
     <Compile Include="API\IServerAPICommand.cs" />
+    <Compile Include="API\StandardAPI\ClientCommands\Voice\ClientPlayVoiceCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\BaseServerCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Files\ServerAddFileToRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\ServerCommand.cs" />
@@ -92,13 +96,23 @@
     <Compile Include="API\StandardAPI\ClientCommands\P2P\ClientWaitPeerConnectionCommand.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\Files\ClientWriteFilePartCommand.cs" />
     <Compile Include="API\StandardAPI\StandardServerAPI.cs" />
+    <Compile Include="Audio\IPlayer.cs" />
+    <Compile Include="Audio\IRecorder.cs" />
+    <Compile Include="Audio\OpenAL\OpenALPlayer.cs" />
+    <Compile Include="Audio\OpenAL\OpenALRecorder.cs" />
+    <Compile Include="Model\Entities\SoundPack.cs" />
+    <Compile Include="EventArgs\RecordedEventArgs.cs" />
+    <Compile Include="Exceptions\ErrorCode.cs" />
+    <Compile Include="Exceptions\ModelException.cs" />
     <Compile Include="Model\Client\ClientContext.cs" />
+    <Compile Include="Model\Entities\RoomType.cs" />
+    <Compile Include="Model\Entities\VoiceRoom.cs" />
     <Compile Include="Model\Server\ServerContext.cs" />
     <Compile Include="Network\AsyncClient.cs" />
     <Compile Include="Network\AsyncServer.cs" />
     <Compile Include="Network\Conections\Connection.cs" />
     <Compile Include="Network\Conections\IConnection.cs" />
-    <Compile Include="Network\Conections\PeerConnection.cs" />
+    <Compile Include="Network\AsyncPeer.cs" />
     <Compile Include="Network\Conections\ServerConnection.cs" />
     <Compile Include="Model\Client\ClientModel.cs" />
     <Compile Include="Model\Entities\DownloadingFile.cs" />
@@ -115,13 +129,9 @@
     <Compile Include="EventArgs\ReceiveMessageEventArgs.cs" />
     <Compile Include="EventArgs\RegistrationEventArgs.cs" />
     <Compile Include="EventArgs\RoomEventArgs.cs" />
-    <Compile Include="Exceptions\APINotSupprtedException.cs" />
-    <Compile Include="Exceptions\FileAlreadyDownloadingException.cs" />
-    <Compile Include="Exceptions\FreePortDontFindException.cs" />
     <Compile Include="Helpers\Crypter.cs" />
-    <Compile Include="Containers\ConnectionsContainer.cs" />
+    <Compile Include="Containers\RequestPair.cs" />
     <Compile Include="EventArgs\AddressReceivedEventArgs.cs" />
-    <Compile Include="Exceptions\ReceivedDataException.cs" />
     <Compile Include="Model\Entities\FileDescription.cs" />
     <Compile Include="Helpers\Logger.cs" />
     <Compile Include="Network\P2PService.cs" />

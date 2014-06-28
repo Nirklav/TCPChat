@@ -25,12 +25,16 @@ namespace Engine.API.StandardAPI.ServerCommands
           return;
         }
 
-        Room creatingRoom = new Room(args.ConnectionId, receivedContent.RoomName);
+        Room creatingRoom = receivedContent.Type == RoomType.Chat
+          ? new Room(args.ConnectionId, receivedContent.RoomName)
+          : new VoiceRoom(args.ConnectionId, receivedContent.RoomName);
+
         server.Rooms.Add(receivedContent.RoomName, creatingRoom);
 
         var sendingContent = new ClientRoomOpenedCommand.MessageContent 
         {
-          Room = creatingRoom, 
+          Room = creatingRoom,
+          Type = receivedContent.Type,
           Users = creatingRoom.Users.Select(nick => server.Users[nick]).ToList()
         };
 
@@ -42,8 +46,10 @@ namespace Engine.API.StandardAPI.ServerCommands
     public class MessageContent
     {
       string roomName;
+      RoomType type;
 
       public string RoomName { get { return roomName; } set { roomName = value; } }
+      public RoomType Type { get { return type; } set { type = value; } }
     }
 
     public const ushort Id = (ushort)ServerCommand.CreateRoom;

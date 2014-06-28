@@ -67,7 +67,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         sendingFileStream.Read(sendingContent.Part, 0, sendingContent.Part.Length);
       }
 
-      ClientModel.Client.SendMessage(args.PeerConnectionId, ClientWriteFilePartCommand.Id, sendingContent);
+      ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientWriteFilePartCommand.Id, sendingContent);
     }
 
     [Serializable]

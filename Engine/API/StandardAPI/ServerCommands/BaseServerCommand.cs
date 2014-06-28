@@ -5,7 +5,7 @@ using Engine.Network.Connections;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
-  class BaseServerCommand : BaseCommand
+  abstract class BaseServerCommand : BaseCommand
   {
     /// <summary>
     /// Проверяет существует ли комната. Если нет отправляет вызвавщему команду соединению сообщение об ошибке. 

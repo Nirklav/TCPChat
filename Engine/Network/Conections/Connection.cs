@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Engine.Exceptions;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -156,7 +157,7 @@ namespace Engine.Network.Connections
             OnDataReceived(new DataReceivedEventArgs { ReceivedData = GetData(), Error = null });
           else
             if (GetSizeReceivingData() > maxReceivedDataSize)
-              throw new ReceivedDataException();
+              throw new ModelException(ErrorCode.LargeReceivedData);
         }
 
         handler.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, ReceiveCallback, null);

@@ -1,5 +1,4 @@
 ﻿using Engine.API.StandardAPI.ServerCommands;
-using Engine.Connections;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
@@ -24,8 +23,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (receivedContent.SenderPoint == null)
         throw new ArgumentNullException("sender point");
 
-      string connectionId = PeerConnection.FromServiceConnectId(receivedContent.ServiceConnectId);
-      ClientModel.Client.RegisterAndWait(connectionId, receivedContent.RemoteInfo.Nick, receivedContent.SenderPoint);
+      ClientModel.Peer.WaitConnection(receivedContent.SenderPoint);
 
       using (var client = ClientModel.Get())
       {
@@ -34,7 +32,6 @@ namespace Engine.API.StandardAPI.ClientCommands
           PeerPoint = receivedContent.RequestPoint,
           ReceiverNick = receivedContent.RemoteInfo.Nick,
           RemoteInfo = client.User,
-          ServiceConnectId = receivedContent.ServiceConnectId,
         };
 
         ClientModel.Client.SendMessage(ServerP2PConnectResponceCommand.Id, sendingContent);
@@ -47,12 +44,10 @@ namespace Engine.API.StandardAPI.ClientCommands
       User remoteInfo;
       IPEndPoint senderPoint;
       IPEndPoint requestPoint;
-      int serviceConnectId;
 
       public User RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }
       public IPEndPoint SenderPoint { get { return senderPoint; } set { senderPoint = value; } }
       public IPEndPoint RequestPoint { get { return requestPoint; } set { requestPoint = value; } }
-      public int ServiceConnectId { get { return serviceConnectId; } set { serviceConnectId = value; } }
     }
 
     public const ushort Id = (ushort)ClientCommand.WaitPeerConnection;

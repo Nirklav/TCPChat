@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Engine.API.StandardAPI.ClientCommands
@@ -15,6 +16,9 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       if (receivedContent.Room == null)
         throw new ArgumentNullException("room");
+
+      using (var client = ClientModel.Get())
+        client.Rooms[receivedContent.Room.Name] = receivedContent.Room;
 
       ClientModel.OnRoomRefreshed(this, new RoomEventArgs { Room = receivedContent.Room, Users = receivedContent.Users });
     }

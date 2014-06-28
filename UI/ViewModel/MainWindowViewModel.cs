@@ -1,5 +1,6 @@
 ﻿using Engine;
 using Engine.API.StandardAPI;
+using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using Engine.Model.Server;
@@ -15,6 +16,8 @@ using UI.Dialogs;
 using UI.Infrastructure;
 using UI.View;
 
+using Keys = System.Windows.Forms.Keys;
+
 namespace UI.ViewModel
 {
   public class MainWindowViewModel : BaseViewModel
@@ -23,6 +26,7 @@ namespace UI.ViewModel
     private const string ProgramName = "TCPChat";
     private const string ParamsError = "Ошибка входных данных.";
     private const string ClientNotCreated = "Клинет не соединен ни с каким сервером. Установите соединение.";
+    private const string APINotSupported = "Приложение не поддерживает эту версию API ({0}). Соединение разорвано.";
     private const string RegFailNickAlreadyExist = "Ник уже занят. Вы не зарегистрированны.";
     private const string RoomExitQuestion = "Вы действительно хотите выйти из комнаты?";
     private const string RoomCloseQuestion = "Вы точно хотите закрыть комнату?";
@@ -31,12 +35,14 @@ namespace UI.ViewModel
     private const string AllInRoom = "Все в комнате";
 
     private const int ClientMaxMessageLength = 100 * 1024;
+    private const Keys RecorderKey = Keys.E;
     #endregion
 
     #region fields
     private MainWindow window;
     private int selectedRoomIndex;
     private RoomViewModel selectedRoom;
+    private volatile bool keyPressed;
     #endregion
 
     #region properties
@@ -110,26 +116,42 @@ namespace UI.ViewModel
       AllUsers = new ObservableCollection<UserViewModel>();
       Dispatcher = Dispatcher.CurrentDispatcher;
 
+      mainWindow.KeyDown += OnKeyDown;
+      mainWindow.KeyUp += OnKeyUp;
+
       ClientModel.Connected += ClientConnect;
       ClientModel.ReceiveMessage += ClientReceiveMessage;
       ClientModel.ReceiveRegistrationResponse += ClientRegistration;
       ClientModel.RoomRefreshed += ClientRoomRefreshed;
-      ClientModel.AsyncError += ClientAsyncError;
       ClientModel.RoomClosed += ClientRoomClosed;
       ClientModel.RoomOpened += ClientRoomOpened;
+      ClientModel.AsyncError += ClientAsyncError;
 
       ClearTabs();
 
-      EnableServerCommand = new Command(EnableServer, Obj => ServerModel.Server == null);
-      DisableServerCommand = new Command(DisableServer, Obj => ServerModel.Server != null);
-      ConnectCommand = new Command(Connect, Obj => ClientModel.Client == null);
-      DisconnectCommand = new Command(Disconnect, Obj => ClientModel.Client != null);
-      ExitCommand = new Command(Obj => window.Close());
-      CreateRoomCommand = new Command(CreateRoom, Obj => ClientModel.Client != null);
-      DeleteRoomCommand = new Command(DeleteRoom, Obj => ClientModel.Client != null);
-      ExitFromRoomCommand = new Command(ExitFromRoom, Obj => ClientModel.Client != null);
-      OpenFilesDialogCommand = new Command(OpenFilesDialog, Obj => ClientModel.Client != null);
+      EnableServerCommand = new Command(EnableServer, obj => ServerModel.Server == null);
+      DisableServerCommand = new Command(DisableServer, obj => ServerModel.Server != null);
+      ConnectCommand = new Command(Connect, obj => ClientModel.Client == null);
+      DisconnectCommand = new Command(Disconnect, obj => ClientModel.Client != null);
+      ExitCommand = new Command(obj => window.Close());
+      CreateRoomCommand = new Command(CreateRoom, obj => ClientModel.Client != null);
+      DeleteRoomCommand = new Command(DeleteRoom, obj => ClientModel.Client != null);
+      ExitFromRoomCommand = new Command(ExitFromRoom, obj => ClientModel.Client != null);
+      OpenFilesDialogCommand = new Command(OpenFilesDialog, obj => ClientModel.Client != null);
       OpenAboutProgramCommand = new Command(OpenAboutProgram);
+    }
+
+    public override void Dispose()
+    {
+      base.Dispose();
+
+      ClientModel.Connected -= ClientConnect;
+      ClientModel.ReceiveMessage -= ClientReceiveMessage;
+      ClientModel.ReceiveRegistrationResponse -= ClientRegistration;
+      ClientModel.RoomRefreshed -= ClientRoomRefreshed;
+      ClientModel.RoomClosed -= ClientRoomClosed;
+      ClientModel.RoomOpened -= ClientRoomOpened;
+      ClientModel.AsyncError -= ClientAsyncError;
     }
     #endregion
 
@@ -160,11 +182,11 @@ namespace UI.ViewModel
         {
           SelectedRoom.AddSystemMessage(ParamsError);
 
-          if (ServerModel.IsInited)
-            ServerModel.Reset();
-
           if (ClientModel.IsInited)
             ClientModel.Reset();
+
+          if (ServerModel.IsInited)
+            ServerModel.Reset();
         }
       }
     }
@@ -174,10 +196,11 @@ namespace UI.ViewModel
       if (MessageBox.Show(ServerDisableQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
         return;
 
-      ServerModel.Reset();
-
       if (ClientModel.IsInited)
         ClientModel.Reset();
+
+      if (ServerModel.IsInited)
+        ServerModel.Reset();
 
       ClearTabs();
     }
@@ -206,11 +229,13 @@ namespace UI.ViewModel
     {
       try
       {
-        ClientModel.API.Unregister();
+        if (ClientModel.API != null)
+          ClientModel.API.Unregister();
       }
-      catch (SocketException) { }
+      catch (Exception) { }
 
-      ClientModel.Reset();
+      if (ClientModel.IsInited)
+        ClientModel.Reset();
 
       ClearTabs();
     }
@@ -220,8 +245,8 @@ namespace UI.ViewModel
       try
       {
         CreateRoomDialog dialog = new CreateRoomDialog();
-        if (dialog.ShowDialog() == true)
-          ClientModel.API.CreateRoom(dialog.RoomName);
+        if (dialog.ShowDialog() == true && ClientModel.API != null)
+          ClientModel.API.CreateRoom(dialog.RoomName, RoomType.Voice);
       }
       catch (SocketException se)
       {
@@ -236,7 +261,8 @@ namespace UI.ViewModel
         if (MessageBox.Show(RoomCloseQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
           return;
 
-        ClientModel.API.DeleteRoom(SelectedRoom.Name);
+        if (ClientModel.API != null)
+          ClientModel.API.DeleteRoom(SelectedRoom.Name);
       }
       catch (SocketException se)
       {
@@ -251,7 +277,8 @@ namespace UI.ViewModel
         if (MessageBox.Show(RoomExitQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
           return;
 
-        ClientModel.API.ExitFormRoom(SelectedRoom.Name);
+        if (ClientModel.API != null)
+          ClientModel.API.ExitFormRoom(SelectedRoom.Name);
       }
       catch (SocketException se)
       {
@@ -280,11 +307,15 @@ namespace UI.ViewModel
         if (args.Error != null)
         {
           SelectedRoom.AddSystemMessage(args.Error.Message);
-          ClientModel.Reset();
+
+          if (ClientModel.IsInited)
+            ClientModel.Reset();
+
           return;
         }
 
-        ClientModel.API.Register();
+        if (ClientModel.API != null)
+          ClientModel.API.Register();
       }), e);
     }
 
@@ -295,7 +326,9 @@ namespace UI.ViewModel
         if (!args.Registered)
         {
           SelectedRoom.AddSystemMessage(RegFailNickAlreadyExist);
-          ClientModel.Reset();
+
+          if (ClientModel.IsInited)
+            ClientModel.Reset();
         }
       }), e);
     }
@@ -372,6 +405,8 @@ namespace UI.ViewModel
           return;
 
         Rooms.Remove(roomViewModel);
+        roomViewModel.Dispose();
+
         window.Alert();
       }), e);
     }
@@ -380,8 +415,16 @@ namespace UI.ViewModel
     {
       Dispatcher.Invoke(new Action<AsyncErrorEventArgs>(args =>
       {
-        if (args.Error.GetType() == typeof(APINotSupprtedException))
-          ClientModel.Reset();
+        ModelException modelException = e.Error as ModelException;
+
+        if (modelException != null)
+          switch (modelException.Code)
+          {
+            case ErrorCode.APINotSupported:
+              ClientModel.Reset();
+              SelectedRoom.AddSystemMessage(string.Format(APINotSupported, modelException.State));
+              return;
+          }
 
         SelectedRoom.AddSystemMessage(args.Error.Message);
       }), e);
@@ -395,7 +438,8 @@ namespace UI.ViewModel
       {
         try
         {
-          ClientModel.API.Unregister();
+          if (ClientModel.API != null)
+            ClientModel.API.Unregister();
         }
         catch (SocketException) { }
 
@@ -416,9 +460,35 @@ namespace UI.ViewModel
     private void ClearTabs()
     {
       AllUsers.Clear();
+
+      foreach (RoomViewModel room in Rooms)
+        room.Dispose();
+
       Rooms.Clear();
       Rooms.Add(new RoomViewModel(this, new Room(null, ServerModel.MainRoomName), null));
       SelectedRoomIndex = 0;
+    }
+    #endregion
+
+    #region record hot key
+    private void OnKeyUp(Keys keys)
+    {
+      if ((keys & RecorderKey) == RecorderKey && keyPressed)
+      {
+        keyPressed = false;
+        if (ClientModel.Recorder != null)
+          ClientModel.Recorder.Stop();
+      }
+    }
+
+    private void OnKeyDown(Keys keys)
+    {
+      if ((keys & RecorderKey) == RecorderKey && !keyPressed)
+      {
+        keyPressed = true;
+        if (ClientModel.Recorder != null)
+          ClientModel.Recorder.Start();
+      }
     }
     #endregion
   }
