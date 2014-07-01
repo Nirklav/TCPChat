@@ -181,11 +181,15 @@ namespace Engine.Network
         if (se.SocketErrorCode == SocketError.ConnectionRefused)
           reconnecting = true;
         else
+        {
           ClientModel.OnConnected(this, new ConnectEventArgs { Error = se });
+          ClientModel.Logger.Write(se);
+        }
       }
       catch (Exception e)
       {
         ClientModel.OnConnected(this, new ConnectEventArgs { Error = e });
+        ClientModel.Logger.Write(e);
       }
     }
 
@@ -224,6 +228,7 @@ namespace Engine.Network
       catch (Exception exc)
       {
         ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = exc });
+        ClientModel.Logger.Write(exc);
       }
     }
 
@@ -244,8 +249,11 @@ namespace Engine.Network
 
     protected override void OnDataSended(DataSendedEventArgs args)
     {
-      if (args.Error != null)
-        ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = args.Error });
+      if (args.Error == null)
+        return;
+
+      ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = args.Error });
+      ClientModel.Logger.Write(args.Error);
     }
 
     protected override bool HandleSocketException(SocketException se)

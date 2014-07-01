@@ -18,10 +18,8 @@ namespace Engine.Network
     #region fields
     Dictionary<string, IPEndPoint> clientsEndPoints;
     List<RequestPair> requests;
-
     SynchronizationContext context;
     NetServer server;
-    Logger logger;
     bool disposed;
     #endregion
 
@@ -51,16 +49,6 @@ namespace Engine.Network
       server = new NetServer(config);
       server.RegisterReceivedCallback(DataReceivedCallback);
       server.Start();
-    }
-
-    /// <summary>
-    /// Создает экземпляр сервиса для функционирования UDP hole punching.
-    /// </summary>
-    /// <param name="logger">Логгер.</param>
-    public P2PService(Logger logger, bool usingIPv6)
-      : this(usingIPv6)
-    {
-      this.logger = logger;
     }
     #endregion
 
@@ -137,8 +125,7 @@ namespace Engine.Network
         {
           case NetIncomingMessageType.ErrorMessage:
           case NetIncomingMessageType.WarningMessage:
-            if (logger != null)
-              logger.Write(new NetException(message.ReadString()));
+            ServerModel.Logger.Write(new NetException(message.ReadString()));
             break;
 
           case NetIncomingMessageType.StatusChanged:
@@ -186,7 +173,7 @@ namespace Engine.Network
       if (received = TryGetRequest(senderId, requestId, out senderEndPoint, out requestEndPoint))
       {
         lock(requests)
-          requests.RemoveAll(p => string.Equals(p.SenderId, senderId) && string.Equals(p.RequestId, requests));
+          requests.RemoveAll(p => string.Equals(p.SenderId, senderId) && string.Equals(p.RequestId, requestId));
 
         ServerModel.API.IntroduceConnections(senderId, senderEndPoint, requestId, requestEndPoint);
       }
@@ -208,12 +195,6 @@ namespace Engine.Network
             requests.RemoveAt(i);
           }
         }
-    }
-
-    private void AsyncErrorCallback(object sender, AsyncErrorEventArgs e)
-    {
-      if (logger != null)
-        logger.Write(e.Error);
     }
     #endregion
 

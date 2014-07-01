@@ -11,7 +11,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   //00 01: Запрос выхода (из всех комнат)
 
   //00 10: Отправка сообщения всем клиентам в комнате
-  //00 11: Отправка сообщения конкретному юзеру
+  //00 11: Отправка личного сообщения конкретному юзеру
 
   //00 20: Запрос открытого пароля пользователя
 
@@ -31,8 +31,6 @@ namespace Engine.API.StandardAPI.ServerCommands
   //00 60: Запрос прямого соединения
   //00 61: Ответ, говорящий о готовности принять входное содеинение
 
-  //00 70: Создать голосовую комнату
-
   //7F FF: Пустая команда
 
   enum ServerCommand : ushort
@@ -41,9 +39,9 @@ namespace Engine.API.StandardAPI.ServerCommands
     Unregister = 0x0001,
 
     SendRoomMessage = 0x0010,
-    SendOneUser = 0x0011,
+    SendPrivateMessage = 0x0011,
 
-    UserOpenKeyRequest = 0x0020,
+    GetUserOpenKeyRequest = 0x0020,
 
     CreateRoom = 0x0030,
     DeleteRoom = 0x0031,
@@ -59,9 +57,7 @@ namespace Engine.API.StandardAPI.ServerCommands
     RemoveFileFromRoom = 0x0051,
 
     P2PConnectRequest = 0x0060,
-    P2PConnectResponce = 0x0061,
-
-    CreateVoiceRoom = 0x0070,
+    P2PReadyAccept = 0x0061,
 
     Empty = 0x7FFF
   }

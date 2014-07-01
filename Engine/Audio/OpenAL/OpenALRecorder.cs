@@ -26,7 +26,7 @@ namespace Engine.Audio.OpenAL
     #region constructor
     public OpenALRecorder(int channels, int bitPerChannel, int frequency, int samplesSize)
     {
-      if (capture != null && capture.IsRunning)
+      if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
         return;
 
       if (channels != 2 && channels != 1)
@@ -64,7 +64,7 @@ namespace Engine.Audio.OpenAL
     #region methods
     public void Start()
     {
-      if (capture != null && capture.IsRunning)
+      if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
         return;
 
       lock (syncObj)
@@ -83,7 +83,7 @@ namespace Engine.Audio.OpenAL
     {
       lock(syncObj)
       {
-        if (capture == null || !capture.IsRunning)
+        if (capture == null || !capture.IsRunning || string.Equals(AudioCapture.DefaultDevice, string.Empty))
           return;
 
         int availableSamples = capture.AvailableSamples;
@@ -108,7 +108,7 @@ namespace Engine.Audio.OpenAL
 
     public void Stop()
     {
-      if (capture == null || !capture.IsRunning)
+      if (capture == null || !capture.IsRunning || string.Equals(AudioCapture.DefaultDevice, string.Empty))
         return;
 
       lock (syncObj)

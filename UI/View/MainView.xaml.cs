@@ -106,9 +106,6 @@ namespace UI.View
     [DllImport("user32.dll")]
     public static extern bool UnhookWindowsHookEx(IntPtr hookHandle);
 
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-    public static extern IntPtr GetModuleHandle(string moduleName);
-
     [StructLayout(LayoutKind.Sequential)]
     struct KeyboardDescription
     {

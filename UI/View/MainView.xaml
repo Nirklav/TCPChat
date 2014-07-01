@@ -5,13 +5,13 @@
         xmlns:View="clr-namespace:UI.View"
         xmlns:ViewModel="clr-namespace:UI.ViewModel"
         xmlns:Infrastructure="clr-namespace:UI.Infrastructure"
+        WindowStartupLocation="CenterScreen"
         Title="TCP Chat"
         MinHeight="470"
         MinWidth="380"
         Height="470" 
         Width="380"
-        WindowStartupLocation="CenterScreen"
-        Icon="/TCPChat;component/chat.ico">
+        Icon="/TCPChat;component/Images/chat.ico">
 
     <Window.Resources>
 
@@ -30,7 +30,7 @@
                                TextWrapping="Wrap">
 
                         <TextBlock.Foreground>
-                            <SolidColorBrush Color="{Binding Path=Sender.NickColor}"/>
+                            <SolidColorBrush x:Name="commonColorBrush" Color="{Binding Path=Sender.NickColor}"/>
                         </TextBlock.Foreground>
 
                     </TextBlock>
@@ -73,7 +73,7 @@
                                Margin="0, 2.5, 0, 2.5">
 
                         <TextBlock.Foreground>
-                            <SolidColorBrush Color="{Binding Path=Sender.NickColor}"/>
+                            <SolidColorBrush x:Name="privateSenderColorBrush" Color="{Binding Path=Sender.NickColor}"/>
                         </TextBlock.Foreground>
                     </TextBlock>
 
@@ -89,7 +89,7 @@
                                Margin="0, 2.5, 5, 2.5">
 
                         <TextBlock.Foreground>
-                            <SolidColorBrush Color="{Binding Path=Receiver.NickColor}"/>
+                            <SolidColorBrush x:Name="privateReceiverColorBrush" Color="{Binding Path=Receiver.NickColor}"/>
                         </TextBlock.Foreground>
 
                     </TextBlock>
@@ -120,7 +120,7 @@
                                TextWrapping="Wrap">
 
                         <TextBlock.Foreground>
-                            <SolidColorBrush Color="{Binding Path=Sender.NickColor}"/>
+                            <SolidColorBrush x:Name="FileColorBrush" Color="{Binding Path=Sender.NickColor}"/>
                         </TextBlock.Foreground>
 
                     </TextBlock>
@@ -447,6 +447,8 @@
                 <MenuItem Header="Оповещения"
                           IsCheckable="True"
                           IsChecked="{Binding Path=Alerts, Mode=TwoWay}"/>
+                <MenuItem Header="Настройки"
+                          Command="{Binding Path=OpenSettingsCommand}"/>
                 <MenuItem Header="О программе"
                           Command="{Binding Path=OpenAboutProgramCommand}"/>
             </MenuItem>

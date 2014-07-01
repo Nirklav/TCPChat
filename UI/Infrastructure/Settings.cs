@@ -26,9 +26,8 @@ namespace UI.Infrastructure
           if (current == null)
           {         
             XmlSerializer serializer = new XmlSerializer(typeof(Settings));
-            FileStream stream = File.Open(FileName, FileMode.Open);
-            current = (Settings)serializer.Deserialize(stream);
-            stream.Dispose();
+            using (FileStream stream = File.Open(FileName, FileMode.Open))
+              current = (Settings)serializer.Deserialize(stream);
           }
         }
 
@@ -53,11 +52,19 @@ namespace UI.Infrastructure
     #region properties
     public string Nick { get; set; }
     public SavedColor NickColor { get; set; }
+
+    public Size FormSize { get; set; }
+    public bool Alerts { get; set; }
+
     public string Address { get; set; }
     public int Port { get; set; }
     public bool StateOfIPv6Protocol { get; set; }
-    public Size FormSize { get; set; }
-    public bool Alerts { get; set; }
+
+    public string OutputAudioDevice { get; set; }
+    public string InputAudioDevice { get; set; }
+    public int Channels { get; set; }
+    public int Frequency { get; set; }
+    public int BitForChannel { get; set; }
     #endregion
 
     public class SavedColor

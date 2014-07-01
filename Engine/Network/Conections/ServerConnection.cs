@@ -1,4 +1,5 @@
 ﻿using Engine.Helpers;
+using Engine.Model.Server;
 using System;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -29,7 +30,6 @@ namespace Engine.Network.Connections
     private RSAParameters openKey;
     private DateTime lastActivity;
     private DateTime createTime;
-    private Logger logger;
     private EventHandler<DataReceivedEventArgs> dataReceivedCallback;
     #endregion
 
@@ -38,21 +38,17 @@ namespace Engine.Network.Connections
     /// Создает серверное подключение.
     /// </summary>
     /// <param name="handler">Подключенный к клиенту сокет.</param>
-    /// <param name="MaxReceivedDataSize">Максимальныйц размер сообщения получаемый от пользователя.</param>
+    /// <param name="maxReceivedDataSize">Максимальныйц размер сообщения получаемый от пользователя.</param>
     /// <param name="ConnectionLogger">Логгер.</param>
-    /// <param name="DataReceivedCallback">Функция оповещающая о полученнии сообщения, данным соединением.</param>
-    public ServerConnection(Socket handler, int MaxReceivedDataSize, Logger ConnectionLogger, EventHandler<DataReceivedEventArgs> DataReceivedCallback)
+    /// <param name="receivedCallback">Функция оповещающая о полученнии сообщения, данным соединением.</param>
+    public ServerConnection(Socket handler, int maxReceivedDataSize, EventHandler<DataReceivedEventArgs> receivedCallback)
     {
-      Construct(handler, MaxReceivedDataSize);
+      Construct(handler, maxReceivedDataSize);
 
-      if (ConnectionLogger == null)
+      if (receivedCallback == null)
         throw new ArgumentNullException();
 
-      if (DataReceivedCallback == null)
-        throw new ArgumentNullException();
-
-      logger = ConnectionLogger;
-      dataReceivedCallback = DataReceivedCallback;
+      dataReceivedCallback = receivedCallback;
 
       lastActivity = DateTime.Now;
       createTime = DateTime.Now;
@@ -147,7 +143,7 @@ namespace Engine.Network.Connections
         if (se != null && se.SocketErrorCode == SocketError.ConnectionReset)
             return;
 
-        logger.Write(args.Error);
+        ServerModel.Logger.Write(args.Error);
         return;
       }
 
@@ -160,7 +156,7 @@ namespace Engine.Network.Connections
     protected override void OnDataSended(DataSendedEventArgs args)
     {
       if (args.Error != null)
-        logger.Write(args.Error);
+        ServerModel.Logger.Write(args.Error);
 
       lastActivity = DateTime.Now;
     }

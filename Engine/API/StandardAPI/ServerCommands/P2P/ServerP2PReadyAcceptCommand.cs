@@ -7,7 +7,7 @@ using System.Net;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
-  class ServerP2PConnectResponceCommand :
+  class ServerP2PReadyAcceptCommand :
       BaseServerCommand,
       IServerAPICommand
   {
@@ -50,6 +50,6 @@ namespace Engine.API.StandardAPI.ServerCommands
       public User RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }
     }
 
-    public const ushort Id = (ushort)ServerCommand.P2PConnectResponce;
+    public const ushort Id = (ushort)ServerCommand.P2PReadyAccept;
   }
 }

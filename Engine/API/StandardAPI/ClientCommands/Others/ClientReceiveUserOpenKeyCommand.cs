@@ -32,7 +32,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         API.WaitingPrivateMessages.Remove(waitingMessage);
       }
 
-      var sendingContent = new ServerSendOneUserCommand.MessageContent { Receiver = receivedContent.Nick };
+      var sendingContent = new ServerSendPrivateMessageCommand.MessageContent { Receiver = receivedContent.Nick };
       AesCryptoServiceProvider provider = new AesCryptoServiceProvider
       {
         Padding = PaddingMode.Zeros,
@@ -56,7 +56,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         }
       }
 
-      ClientModel.Client.SendMessage(ServerSendOneUserCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerSendPrivateMessageCommand.Id, sendingContent);
     }
 
     [Serializable]

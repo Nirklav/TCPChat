@@ -1,4 +1,5 @@
 ﻿using Engine.API.StandardAPI;
+using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Network;
 using Engine.Network.Connections;
@@ -13,6 +14,9 @@ namespace Engine.Model.Server
   {
     #region static model
     private static ServerModel model;
+    private static Logger logger = new Logger("Server.log");
+
+    public static Logger Logger { get { return logger; } }
 
     /// <summary>
     /// Серверный API
@@ -68,7 +72,7 @@ namespace Engine.Model.Server
       if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 
-      Server = new AsyncServer("ServerErrors.log");
+      Server = new AsyncServer();
       API = api;
     }
 

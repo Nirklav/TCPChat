@@ -6,7 +6,7 @@
         SizeToContent="WidthAndHeight"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Icon="/TCPChat;component/chat.ico">
+        Icon="/TCPChat;component/Images/chat.ico">
     
     <Window.Resources>
         <Infrastructure:RgbToColorConverter x:Key="RgbConverter" />

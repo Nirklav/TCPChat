@@ -25,7 +25,6 @@ namespace Engine.Network
     private Dictionary<string, ServerConnection> connections;
     private Socket listener;
     private P2PService p2pService;
-    private Logger logger;
     private bool isServerRunning;
     private long lastTempId;
 
@@ -71,22 +70,10 @@ namespace Engine.Network
     /// <summary>
     /// Констуктор сервера cо стандартным API, без файла для логирования.
     /// </summary>
-    public AsyncServer() : this(null) { }
-
-    /// <summary>
-    /// Констуктор сервера c устанавливаемым API и файлом для логирования.
-    /// </summary>
-    /// <param name="api">API который следует использовать серверу.</param>
-    /// <param name="logFile">Путь к файлу для логирования.</param>
-    public AsyncServer(string logFile)
+    public AsyncServer()
     {
       connections = new Dictionary<string, ServerConnection>();
       isServerRunning = false;
-
-      if (!string.IsNullOrEmpty(logFile))
-        logger = new Logger(logFile);
-      else
-        logger = null;
     }
     #endregion
 
@@ -106,7 +93,7 @@ namespace Engine.Network
       if (!Connection.TCPPortIsAvailable(serverPort))
         throw new ArgumentException("port not available", "serverPort");
 
-      p2pService = new P2PService(logger, usingIPv6);
+      p2pService = new P2PService(usingIPv6);
       systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
 
       if (usingIPv6)
@@ -233,7 +220,7 @@ namespace Engine.Network
         listener.BeginAccept(AcceptCallback, null);
 
         Socket handler = listener.EndAccept(result);
-        ServerConnection connection = new ServerConnection(handler, MaxDataSize, logger, DataReceivedCallBack);
+        ServerConnection connection = new ServerConnection(handler, MaxDataSize, DataReceivedCallBack);
         connection.SendAPIName(ServerModel.API.Name);
 
         lock (connections)
@@ -244,8 +231,7 @@ namespace Engine.Network
       }
       catch (Exception e)
       {
-        if (logger != null)
-          logger.Write(e);
+        ServerModel.Logger.Write(e);
       }
     }
 
@@ -270,8 +256,7 @@ namespace Engine.Network
       }
       catch (Exception exc)
       {
-        if (logger != null)
-          logger.Write(exc);
+        ServerModel.Logger.Write(exc);
       }
     }
 
@@ -290,23 +275,22 @@ namespace Engine.Network
               continue;
             }
 
+#if !DEBUG
             if (connections[id].IntervalOfSilence >= ServerConnection.ConnectionTimeOut)
             {
               CloseConnection(id);
               continue;
             }
+#endif
           }
           catch (SocketException se)
           {
-            if (logger != null)
-              logger.Write(se);
-
+            ServerModel.Logger.Write(se);
             CloseConnection(id);
           }
           catch (Exception e)
           {
-            if (logger != null)
-              logger.Write(e);
+            ServerModel.Logger.Write(e);
           }
         }
       }

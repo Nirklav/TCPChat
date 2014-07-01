@@ -10,8 +10,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("39-80")]
 [assembly: AssemblyProduct("TCP Chat Engine")]
-[assembly: AssemblyCopyright("Copyright © 39-80 2013")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCopyright("Copyright © 39-80 2013-2014")]
+[assembly: AssemblyTrademark("ThirtyNineEighty")]
 [assembly: AssemblyCulture("")]
 
 // Параметр ComVisible со значением FALSE делает типы в сборке невидимыми 

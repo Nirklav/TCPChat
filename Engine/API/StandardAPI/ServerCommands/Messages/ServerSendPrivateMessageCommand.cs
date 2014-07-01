@@ -5,7 +5,7 @@ using System;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
-  class ServerSendOneUserCommand :
+  class ServerSendPrivateMessageCommand :
       BaseServerCommand,
       IServerAPICommand
   {
@@ -50,6 +50,6 @@ namespace Engine.API.StandardAPI.ServerCommands
       public byte[] Message { get { return message; } set { message = value; } }
     }
 
-    public const ushort Id = (ushort)ServerCommand.SendOneUser;
+    public const ushort Id = (ushort)ServerCommand.SendPrivateMessage;
   }
 }

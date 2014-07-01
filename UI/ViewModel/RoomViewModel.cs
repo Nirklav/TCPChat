@@ -43,7 +43,7 @@ namespace UI.ViewModel
     #region properties
     public Room Description { get; private set; }
     public UserViewModel SelectedReceiver { get; set; }
-    public MainWindowViewModel MainViewModel { get; private set; }
+    public MainViewModel MainViewModel { get; private set; }
 
     public bool MessagesAutoScroll
     {
@@ -111,7 +111,7 @@ namespace UI.ViewModel
     #endregion
 
     #region constructors
-    public RoomViewModel(MainWindowViewModel mainViewModel, Room room, IList<User> users)
+    public RoomViewModel(MainViewModel mainViewModel, Room room, IList<User> users)
     {
       Description = room;
       MainViewModel = mainViewModel;

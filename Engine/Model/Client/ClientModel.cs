@@ -1,5 +1,6 @@
 ﻿using Engine.Audio;
 using Engine.Audio.OpenAL;
+using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Network;
 using System;
@@ -13,6 +14,9 @@ namespace Engine.Model.Client
   {
     #region static model
     private static ClientModel model;
+    private static Logger logger = new Logger("Client.log");
+
+    public static Logger Logger { get { return logger; } }
 
     /// <summary>
     /// Клиентский API

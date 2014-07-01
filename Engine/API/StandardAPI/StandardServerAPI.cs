@@ -20,14 +20,9 @@ namespace Engine.API.StandardAPI
     /// <summary>
     /// Версия и имя данного API.
     /// </summary>
-    public const string API = "StandartAPI v2.0";
+    public const string API = "StandartAPI v2.1";
 
     private Dictionary<ushort, IServerAPICommand> commandDictionary = new Dictionary<ushort, IServerAPICommand>();
-
-    /// <summary>
-    /// Список поданых запросов ожидающих ответа от клиентов.
-    /// </summary>
-    internal Dictionary<int, ServerConnection> FilePartRequests { get; private set; }
 
     /// <summary>
     /// Создает экземпляр API.
@@ -35,13 +30,11 @@ namespace Engine.API.StandardAPI
     /// <param name="host">Сервер которому будет принадлежать данный API.</param>
     public StandardServerAPI()
     {
-      FilePartRequests = new Dictionary<int, ServerConnection>();
-
       commandDictionary.Add(ServerRegisterCommand.Id, new ServerRegisterCommand());
       commandDictionary.Add(ServerUnregisterCommand.Id, new ServerUnregisterCommand());
       commandDictionary.Add(ServerSendRoomMessageCommand.Id, new ServerSendRoomMessageCommand());
-      commandDictionary.Add(ServerSendOneUserCommand.Id, new ServerSendOneUserCommand());
-      commandDictionary.Add(ServerSendUserOpenKeyCommand.Id, new ServerSendUserOpenKeyCommand());
+      commandDictionary.Add(ServerSendPrivateMessageCommand.Id, new ServerSendPrivateMessageCommand());
+      commandDictionary.Add(ServerGetUserOpenKeyCommand.Id, new ServerGetUserOpenKeyCommand());
       commandDictionary.Add(ServerCreateRoomCommand.Id, new ServerCreateRoomCommand());
       commandDictionary.Add(ServerDeleteRoomCommand.Id, new ServerDeleteRoomCommand());
       commandDictionary.Add(ServerInviteUsersCommand.Id, new ServerInviteUsersCommand());
@@ -52,7 +45,7 @@ namespace Engine.API.StandardAPI
       commandDictionary.Add(ServerAddFileToRoomCommand.Id, new ServerAddFileToRoomCommand());
       commandDictionary.Add(ServerRemoveFileFormRoomCommand.Id, new ServerRemoveFileFormRoomCommand());
       commandDictionary.Add(ServerP2PConnectRequestCommand.Id, new ServerP2PConnectRequestCommand());
-      commandDictionary.Add(ServerP2PConnectResponceCommand.Id, new ServerP2PConnectResponceCommand());
+      commandDictionary.Add(ServerP2PReadyAcceptCommand.Id, new ServerP2PReadyAcceptCommand());
       commandDictionary.Add(ServerPingRequestCommand.Id, new ServerPingRequestCommand());
     }
 
@@ -130,16 +123,17 @@ namespace Engine.API.StandardAPI
           room.Remove(nick);
           server.Users.Remove(nick);
 
+          var sendingContent = new ClientRoomRefreshedCommand.MessageContent
+          {
+            Room = room,
+            Users = room.Users.Select(n => server.Users[n]).ToList()
+          };
+
           foreach (string user in room.Users)
           {
             if (user == null)
               continue;
 
-            var sendingContent = new ClientRoomRefreshedCommand.MessageContent
-            {
-              Room = room,
-              Users = room.Users.Select(n => server.Users[n]).ToList()
-            };
             ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.Id, sendingContent);
           }
         }

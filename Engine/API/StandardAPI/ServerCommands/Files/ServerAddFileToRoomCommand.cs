@@ -37,15 +37,14 @@ namespace Engine.API.StandardAPI.ServerCommands
         if (room.Files.FirstOrDefault(file => file.Equals(receivedContent.File)) == null)
           room.Files.Add(receivedContent.File);
 
-        foreach (string user in room.Users)
+        var sendingContent = new ClientFilePostedCommand.MessageContent
         {
-          var sendingContent = new ClientFilePostedCommand.MessageContent 
-          { 
-            File = receivedContent.File, 
-            RoomName = receivedContent.RoomName 
-          };
+          File = receivedContent.File,
+          RoomName = receivedContent.RoomName
+        };
+
+        foreach (string user in room.Users)
           ServerModel.Server.SendMessage(user, ClientFilePostedCommand.Id, sendingContent);
-        }
       }
     }
 

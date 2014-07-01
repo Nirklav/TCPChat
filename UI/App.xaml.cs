@@ -24,7 +24,7 @@ namespace UI
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
         MainWindow window = new MainWindow();
-        MainWindowViewModel viewModel = new MainWindowViewModel(window);
+        MainViewModel viewModel = new MainViewModel(window);
         window.DataContext = viewModel;
         window.Show();
       }

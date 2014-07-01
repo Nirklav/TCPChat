@@ -6,7 +6,7 @@
         MinWidth="220"
         ResizeMode="NoResize"     
         SizeToContent="WidthAndHeight"
-        Icon="/TCPChat;component/chat.ico"
+        Icon="/TCPChat;component/Images/chat.ico"
         WindowStartupLocation="CenterScreen">
     
     <Grid>

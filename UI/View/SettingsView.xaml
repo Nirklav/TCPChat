@@ -1,0 +1,35 @@
+﻿<Window x:Class="UI.View.SettingsView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройки"
+        Height="300" 
+        Width="400"
+        Icon="/TCPChat;component/Images/chat.ico">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <ListView Grid.Column="0"
+                  Grid.Row="0"
+                  Margin="10, 10, 5, 5"/>
+        
+        <Control Grid.Column="1"
+                 Grid.Row="0"
+                 Margin="5, 10, 10, 5"/>
+        
+        <Button Grid.Column="1"
+                Grid.Row="1"
+                Margin="5, 5, 10, 10"
+                Padding="10, 2, 10, 2"
+                Content="Готово"
+                HorizontalAlignment="Right"
+                Command="{Binding Path=CloseSettingsCommand}"/>
+    </Grid>
+</Window>

@@ -21,13 +21,23 @@ namespace Engine.Helpers
     {
       string message = CreateLogMessage(e, 0);
 
+      Write(message);
+    }
+
+    public void WriteDebug(string message, params object[] args)
+    {
+#if DEBUG
+      Write("Debug message: " + message, args);
+#endif
+    }
+
+    private void Write(string message, params object[] args)
+    {
       lock (syncObj)
       {
         using (FileStream logFile = new FileStream(logFileName, FileMode.Append, FileAccess.Write))
         using (StreamWriter logWriter = new StreamWriter(logFile))
-        {
-          logWriter.WriteLine(message);
-        }
+          logWriter.WriteLine(string.Format(message, args));
       }
     }
 

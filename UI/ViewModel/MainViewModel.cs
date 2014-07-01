@@ -20,7 +20,7 @@ using Keys = System.Windows.Forms.Keys;
 
 namespace UI.ViewModel
 {
-  public class MainWindowViewModel : BaseViewModel
+  public class MainViewModel : BaseViewModel
   {
     #region consts
     private const string ProgramName = "TCPChat";
@@ -105,10 +105,11 @@ namespace UI.ViewModel
     public ICommand ExitFromRoomCommand { get; private set; }
     public ICommand OpenFilesDialogCommand { get; private set; }
     public ICommand OpenAboutProgramCommand { get; private set; }
+    public ICommand OpenSettingsCommand { get; private set; }
     #endregion
 
     #region constructors
-    public MainWindowViewModel(MainWindow mainWindow)
+    public MainViewModel(MainWindow mainWindow)
     {
       window = mainWindow;
       window.Closed += WindowClosed;
@@ -139,6 +140,7 @@ namespace UI.ViewModel
       ExitFromRoomCommand = new Command(ExitFromRoom, obj => ClientModel.Client != null);
       OpenFilesDialogCommand = new Command(OpenFilesDialog, obj => ClientModel.Client != null);
       OpenAboutProgramCommand = new Command(OpenAboutProgram);
+      OpenSettingsCommand = new Command(OpenSettings);
     }
 
     public override void Dispose()
@@ -296,6 +298,13 @@ namespace UI.ViewModel
     {
       AboutProgramDialog dialog = new AboutProgramDialog();
       dialog.ShowDialog();
+    }
+
+    private void OpenSettings(object obj)
+    {
+      SettingsView settings = new SettingsView();
+      settings.DataContext = new SettingsViewModel(settings);
+      settings.ShowDialog();
     }
     #endregion
 

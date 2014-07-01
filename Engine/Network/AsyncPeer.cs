@@ -96,6 +96,8 @@ namespace Engine.Network
         hailMessage.Write(client.User.Nick);
 
       handler.Connect(remotePoint, hailMessage);
+
+      ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToService({0})", remotePoint);
     }
 
     /// <summary>
@@ -119,6 +121,8 @@ namespace Engine.Network
       NetOutgoingMessage holePunchMessage = handler.CreateMessage();
       holePunchMessage.Write((byte)0);
       handler.SendUnconnectedMessage(holePunchMessage, waitingPoint);
+
+      ClientModel.Logger.WriteDebug("AsyncPeer.WaitConnection({0})", waitingPoint);
     }
 
     /// <summary>
@@ -149,6 +153,8 @@ namespace Engine.Network
         hailMessage.Write(client.User.Nick);
 
       handler.Connect(remotePoint, hailMessage);
+
+      ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToPeer({0}, {1})", peerId, remotePoint);
     }
 
     /// <summary>
@@ -182,26 +188,26 @@ namespace Engine.Network
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
     /// <param name="commandId">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
-    /// <param name="unconnected">Отправить ненадежное сообщение. (быстрее)</param>
-    public void SendMessage(string peerId, ushort commandId, object messageContent, bool unconnected)
+    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    public void SendMessage(string peerId, ushort commandId, object messageContent, bool unreliable)
     {
       ThrowIfDisposed();
 
       if (handler == null || handler.Status != NetPeerStatus.Running)
       {
-        SaveCommandAndConnect(peerId, commandId, messageContent, unconnected);
+        SaveCommandAndConnect(peerId, commandId, messageContent, unreliable);
         return;
       }
 
       NetConnection connection = handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId));
       if (connection == null)
       {
-        SaveCommandAndConnect(peerId, commandId, messageContent, unconnected);
+        SaveCommandAndConnect(peerId, commandId, messageContent, unreliable);
         return;
       }
 
       NetOutgoingMessage message = CreateMessage(commandId, messageContent);
-      handler.SendMessage(message, connection, unconnected ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
+      handler.SendMessage(message, connection, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
     }
 
     /// <summary>
@@ -222,9 +228,9 @@ namespace Engine.Network
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
     /// <param name="commandId">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
-    /// <param name="unconnected">Отправить ненадежное сообщение. (быстрее)</param>
+    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
-    public bool SendMessageIfConnected(string peerId, ushort commandId, object messageContent, bool unconnected)
+    public bool SendMessageIfConnected(string peerId, ushort commandId, object messageContent, bool unreliable)
     {
       ThrowIfDisposed();
 
@@ -236,7 +242,7 @@ namespace Engine.Network
         return false;
 
       NetOutgoingMessage message = CreateMessage(commandId, messageContent);
-      handler.SendMessage(message, connection, unconnected ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
+      handler.SendMessage(message, connection, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
 
       return true;
     }
@@ -247,9 +253,9 @@ namespace Engine.Network
     /// <param name="peerIds">Идентификаторы соединения, которым отправляется команда.</param>
     /// <param name="commandId">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
-    /// <param name="unconnected">Отправить ненадежное сообщение. (быстрее)</param>
+    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
-    public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, object messageContent, bool unconnected)
+    public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, object messageContent, bool unreliable)
     {
       ThrowIfDisposed();
 
@@ -262,7 +268,7 @@ namespace Engine.Network
       if (connections.Count <= 0)
         return;
 
-      handler.SendMessage(message, connections, unconnected ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
+      handler.SendMessage(message, connections, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
     }
     #endregion
 
@@ -282,7 +288,7 @@ namespace Engine.Network
       return message;
     }
 
-    private void SaveCommandAndConnect(string peerId, ushort commandId, object messageContent, bool unconnected)
+    private void SaveCommandAndConnect(string peerId, ushort commandId, object messageContent, bool unreliable)
     {
       lock (waitingCommands)
       {
@@ -294,7 +300,7 @@ namespace Engine.Network
           waitingCommands.Add(peerId, commands);
         }
 
-        commands.Add(new WaitingCommandContainer(commandId, messageContent, unconnected));
+        commands.Add(new WaitingCommandContainer(commandId, messageContent, unreliable));
       }
 
       ClientModel.API.ConnectToPeer(peerId);
@@ -322,6 +328,9 @@ namespace Engine.Network
             NetConnectionStatus status = (NetConnectionStatus)message.ReadByte();
             if (status == NetConnectionStatus.Connected && state == (int)PeerState.ConnectedToPeers)
               PeerConnected(message);
+
+            if (status == NetConnectionStatus.Connected && state == (int)PeerState.ConnectedToService)
+              ClientModel.Logger.WriteDebug("AsyncPeer.ServiceConnect()");
 
             if (status == NetConnectionStatus.Disconnecting || status == NetConnectionStatus.Disconnected)
               message.SenderConnection.Tag = null;
@@ -353,11 +362,13 @@ namespace Engine.Network
         if (waitingCommands.TryGetValue(connectionId, out commands))
         {
           foreach (WaitingCommandContainer command in commands)
-            SendMessage(connectionId, command.CommandId, command.MessageContent, command.Unconnected);
+            SendMessage(connectionId, command.CommandId, command.MessageContent, command.Unreliable);
 
           waitingCommands.Remove(connectionId);
         }
       }
+
+      ClientModel.Logger.WriteDebug("AsyncPeer.PeerConnected({0})", connectionId);
     }
 
     private void DataReceived(NetIncomingMessage message)
@@ -370,7 +381,7 @@ namespace Engine.Network
         ClientCommandArgs args = new ClientCommandArgs
         {
           Message = message.Data,
-          PeerConnectionId = (string)message.SenderConnection.Tag //TODO: if unconnected message - null exception?
+          PeerConnectionId = (string)message.SenderConnection.Tag
         };
 
         command.Run(args);
@@ -378,6 +389,7 @@ namespace Engine.Network
       catch (Exception exc)
       {
         ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = exc });
+        ClientModel.Logger.Write(exc);
       }
     }
     #endregion

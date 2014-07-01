@@ -5,7 +5,7 @@
         MinWidth="230"
         MinHeight="300"
         ResizeMode="NoResize"
-        Icon="/TCPChat;component/chat.ico" 
+        Icon="/TCPChat;component/Images/chat.ico"
         WindowStartupLocation="CenterScreen" 
         Grid.IsSharedSizeScope="True" 
         SizeToContent="WidthAndHeight">

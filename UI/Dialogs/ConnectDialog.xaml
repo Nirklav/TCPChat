@@ -5,8 +5,8 @@
         Title="Соединение"       
         ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
-        WindowStartupLocation="CenterScreen" 
-        Icon="/TCPChat;component/chat.ico">
+        WindowStartupLocation="CenterScreen"
+        Icon="/TCPChat;component/Images/chat.ico">
 
     <Window.Resources>
         <Infrastructure:RgbToColorConverter x:Key="RgbConverter" />

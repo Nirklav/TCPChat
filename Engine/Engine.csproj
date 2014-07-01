@@ -65,14 +65,14 @@
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerInviteUsersCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerKickUsersCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\P2P\ServerP2PConnectRequestCommand.cs" />
-    <Compile Include="API\StandardAPI\ServerCommands\P2P\ServerP2PConnectResponceCommand.cs" />
+    <Compile Include="API\StandardAPI\ServerCommands\P2P\ServerP2PReadyAcceptCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Others\ServerPingRequestCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerRefreshRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Registrations\ServerRegisterCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Files\ServerRemoveFileFormRoomCommand.cs" />
-    <Compile Include="API\StandardAPI\ServerCommands\Messages\ServerSendOneUserCommand.cs" />
+    <Compile Include="API\StandardAPI\ServerCommands\Messages\ServerSendPrivateMessageCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Messages\ServerSendRoomMessageCommand.cs" />
-    <Compile Include="API\StandardAPI\ServerCommands\Others\ServerSendUserOpenKeyCommand.cs" />
+    <Compile Include="API\StandardAPI\ServerCommands\Others\ServerGetUserOpenKeyCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerSetRoomAdminCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Registrations\ServerUnregisterCommand.cs" />
     <Compile Include="API\StandardAPI\StandardClientAPI.cs" />

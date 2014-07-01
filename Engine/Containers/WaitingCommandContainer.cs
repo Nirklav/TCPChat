@@ -23,12 +23,12 @@ namespace Engine.Containers
     /// <param name="connectionId">Индетификатор соединениея.</param>
     /// <param name="id">Индетификатор команды.</param>
     /// <param name="content">Параметр команды.</param>
-    /// <param name="unconnected">Небезопасное.</param>
-    public WaitingCommandContainer(ushort id, object content, bool unconnected)
+    /// <param name="unreliable">Небезопасное.</param>
+    public WaitingCommandContainer(ushort id, object content, bool unreliable)
     {
       CommandId = id;
       MessageContent = content;
-      Unconnected = unconnected;
+      Unreliable = unreliable;
     }
 
     /// <summary>
@@ -44,6 +44,6 @@ namespace Engine.Containers
     /// <summary>
     /// Передать небезапосное сообщение.
     /// </summary>
-    public bool Unconnected { get; set; }
+    public bool Unreliable { get; set; }
   }
 }

@@ -4,7 +4,7 @@
         Title="Раздающиеся файлы"
         MinHeight="300"
         MinWidth="300"
-        Icon="/TCPChat;component/chat.ico"
+        Icon="/TCPChat;component/Images/chat.ico"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">

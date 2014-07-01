@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="О программе"
         SizeToContent="WidthAndHeight"
-        Icon="/TCPChat;component/chat.ico"
+        Icon="/TCPChat;component/Images/chat.ico"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
     <Grid>

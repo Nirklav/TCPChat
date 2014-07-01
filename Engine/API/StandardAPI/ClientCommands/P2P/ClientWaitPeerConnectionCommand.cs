@@ -25,17 +25,16 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       ClientModel.Peer.WaitConnection(receivedContent.SenderPoint);
 
-      using (var client = ClientModel.Get())
+      var sendingContent = new ServerP2PReadyAcceptCommand.MessageContent
       {
-        var sendingContent = new ServerP2PConnectResponceCommand.MessageContent
-        {
-          PeerPoint = receivedContent.RequestPoint,
-          ReceiverNick = receivedContent.RemoteInfo.Nick,
-          RemoteInfo = client.User,
-        };
+        PeerPoint = receivedContent.RequestPoint,
+        ReceiverNick = receivedContent.RemoteInfo.Nick
+      };
 
-        ClientModel.Client.SendMessage(ServerP2PConnectResponceCommand.Id, sendingContent);
-      }
+      using (var client = ClientModel.Get())
+        sendingContent.RemoteInfo = client.User;
+
+      ClientModel.Client.SendMessage(ServerP2PReadyAcceptCommand.Id, sendingContent);
     }
 
     [Serializable]

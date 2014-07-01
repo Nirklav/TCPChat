@@ -30,7 +30,6 @@ namespace Engine.API.StandardAPI.ClientCommands
   //80 52: Подключится к сервису P2P
 
   //80 60: Воспроизвести голос
-  //80 61: Открыта голосовая комната
 
   //80 FF: Пинг ответ
 
@@ -60,7 +59,6 @@ namespace Engine.API.StandardAPI.ClientCommands
     ConnectToP2PService = 0x8052,
 
     PlayVoice = 0x8060,
-    VoiceRoomOpened = 0x8061,
 
     PingResponce = 0x80FF,
 

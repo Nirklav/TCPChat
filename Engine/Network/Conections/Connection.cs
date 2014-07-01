@@ -11,7 +11,7 @@ namespace Engine.Network.Connections
   /// <summary>
   /// Базовый класс соединения, реализовывает прием и передачу данных.
   /// </summary>
-  public abstract class Connection : IConnection, IDisposable
+  public abstract class Connection : IConnection
   {
     #region consts
     private const int bufferSize = 4096;

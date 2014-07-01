@@ -153,8 +153,8 @@ namespace Engine.API.StandardAPI
       lock (WaitingPrivateMessages)
         WaitingPrivateMessages.Add(new WaitingPrivateMessage { Receiver = receiver, Message = message });
 
-      var sendingContent = new ServerSendUserOpenKeyCommand.MessageContent { Nick = receiver };
-      ClientModel.Client.SendMessage(ServerSendUserOpenKeyCommand.Id, sendingContent);
+      var sendingContent = new ServerGetUserOpenKeyCommand.MessageContent { Nick = receiver };
+      ClientModel.Client.SendMessage(ServerGetUserOpenKeyCommand.Id, sendingContent);
     }
 
     /// <summary>
@@ -431,7 +431,7 @@ namespace Engine.API.StandardAPI
     }
 
     /// <summary>
-    /// Иницирует соединение к другому клиенту.
+    /// Иницирует соединение к другому клиенту. Если уже соединен, то повторно соединение иницированно не будет.
     /// </summary>
     /// <param name="nick">Ник клиента к которму будет инцированно соединение.</param>
     public void ConnectToPeer(string nick)

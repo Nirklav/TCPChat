@@ -5,7 +5,7 @@ using System;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
-  class ServerSendUserOpenKeyCommand :
+  class ServerGetUserOpenKeyCommand :
       BaseServerCommand,
       IServerAPICommand
   {
@@ -39,6 +39,6 @@ namespace Engine.API.StandardAPI.ServerCommands
       public string Nick { get { return nick; } set { nick = value; } }
     }
 
-    public const ushort Id = (ushort)ServerCommand.UserOpenKeyRequest;
+    public const ushort Id = (ushort)ServerCommand.GetUserOpenKeyRequest;
   }
 }
