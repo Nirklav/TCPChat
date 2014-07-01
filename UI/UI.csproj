@@ -52,7 +52,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>chat.ico</ApplicationIcon>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
@@ -205,9 +206,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\chat.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="chat.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
