@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Windows.Input;
@@ -12,10 +13,21 @@ namespace UI.ViewModel
   {
     #region fields
     private SettingsView window;
+    private string selectedTab;
     #endregion
 
     #region properties
+    public string[] SettingItems { get; private set; }
 
+    public string SelectedTab
+    {
+      get { return selectedTab; }
+      set
+      {
+        selectedTab = value;
+        OnPropertyChanged("SelectedTab");
+      }
+    }
     #endregion
 
     #region commands
@@ -27,6 +39,8 @@ namespace UI.ViewModel
     {
       window = view;
       CloseSettingsCommand = new Command(CloseSettings);
+
+      SettingItems = new[] { "Основные", "Звук", "Пользовательские" };
     }
 
     public override void Dispose()
