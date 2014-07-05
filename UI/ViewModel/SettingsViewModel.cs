@@ -13,13 +13,13 @@ namespace UI.ViewModel
   {
     #region fields
     private SettingsView window;
-    private string selectedTab;
+    private SettingsTabViewModel selectedTab;
     #endregion
 
     #region properties
-    public string[] SettingItems { get; private set; }
+    public SettingsTabViewModel[] Tabs { get; private set; }
 
-    public string SelectedTab
+    public SettingsTabViewModel SelectedTab
     {
       get { return selectedTab; }
       set
@@ -40,20 +40,24 @@ namespace UI.ViewModel
       window = view;
       CloseSettingsCommand = new Command(CloseSettings);
 
-      SettingItems = new[] { "Основные", "Звук", "Пользовательские" };
-    }
-
-    public override void Dispose()
-    {
-      base.Dispose();
-
-
+      Tabs = new[] 
+      {
+        new SettingsTabViewModel("Основные"),
+        new AudioTabViewModel("Звук"),
+        new SettingsTabViewModel("Пользовательские"),
+      };
     }
     #endregion
 
     #region methods
     private void CloseSettings(object obj)
     {
+      foreach (var tab in Tabs)
+      {
+        tab.SaveSettings();
+        tab.Dispose();
+      }
+
       window.Close();
     }
     #endregion
