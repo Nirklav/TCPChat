@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Windows.Threading;
 
 namespace UI.ViewModel
 {
@@ -21,6 +22,12 @@ namespace UI.ViewModel
 
       if (temp != null)
         temp(this, new PropertyChangedEventArgs(name));
+    }
+
+    protected void SetValue<T>(T value, string propertyName, Action<T> setter)
+    {
+      setter(value);
+      OnPropertyChanged(propertyName);
     }
 
     public virtual void Dispose()

@@ -29,6 +29,13 @@ namespace Engine.Audio.OpenAL
       if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
         return;
 
+      Initialize(channels, bitPerChannel, frequency, samplesSize);
+    }
+    #endregion
+
+    #region methods
+    private void Initialize(int channels, int bitPerChannel, int frequency, int samplesSize)
+    {
       if (channels != 2 && channels != 1)
         throw new ArgumentException("channels");
 
@@ -59,9 +66,7 @@ namespace Engine.Audio.OpenAL
         capture = new AudioCapture(AudioCapture.DefaultDevice, frequency, format, samplesSize * 2);
       }
     }
-    #endregion
 
-    #region methods
     public void Start()
     {
       if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
@@ -76,7 +81,13 @@ namespace Engine.Audio.OpenAL
 
     public void SetOptions(int channels, int bitPerChannel, int frequency, int samplesSize)
     {
-      throw new NotSupportedException("in this version - method do not support");
+      if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
+        throw new ArgumentException("recorder should be stopped");
+
+      if (capture != null)
+        capture.Dispose();
+
+      Initialize(channels, bitPerChannel, frequency, samplesSize);
     }
 
     private void RecordingCallback(object state)

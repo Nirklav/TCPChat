@@ -61,11 +61,7 @@ namespace UI.ViewModel
     public bool Updated
     {
       get { return updated; }
-      set
-      {
-        updated = value;
-        OnPropertyChanged("Updated");
-      }
+      set { SetValue(value, "Updated", v => updated = v); }
     }
 
     public string Name
@@ -76,21 +72,13 @@ namespace UI.ViewModel
     public string Message
     {
       get { return message; }
-      set
-      {
-        message = value;
-        OnPropertyChanged("Message");
-      }
+      set { SetValue(value, "Message", v => message = v); }
     }
 
     public int MessageCaretIndex
     {
       get { return messageCaretIndex; }
-      set
-      {
-        messageCaretIndex = value;
-        OnPropertyChanged("MessageCaretIndex");
-      }
+      set { SetValue(value, "MessageCaretIndex", v => messageCaretIndex = v); }
     }
 
     public IEnumerable<UserViewModel> Receivers

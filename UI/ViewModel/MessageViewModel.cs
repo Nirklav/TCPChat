@@ -42,31 +42,19 @@ namespace UI.ViewModel
     public string Message 
     {
       get { return message; }
-      set
-      {
-        message = value;
-        OnPropertyChanged("Message");
-      }
+      set { SetValue(value, "Message", v => message = v); }
     }
 
     public FileDescription File
     {
       get { return file; }
-      set
-      {
-        file = value;
-        OnPropertyChanged("File");
-      }
+      set { SetValue(value, "File", v => file = v); }
     }
 
     public int Progress
     {
       get { return progress; }
-      set
-      {
-        progress = value;
-        OnPropertyChanged("Progress");
-      }
+      set { SetValue(value, "Progress", v => progress = v); }
     }
     #endregion
 

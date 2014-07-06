@@ -30,5 +30,5 @@ namespace Engine.Model.Entities
     /// Частота.
     /// </summary>
     public int Frequency { get; set; }
-  }
+  } 
 }

@@ -15,30 +15,27 @@ namespace Engine.Audio.OpenAL
     #region nested types
     private class SourceDescription
     {
-      public SourceDescription(int soueceId, int channels, int bitPerChannel, int frequency)
+      public int Id { get; private set; }
+      public long LastPlayedNumber { get; set; }
+
+      public SourceDescription(int soueceId)
       {
-        if (channels != 2 && channels != 1)
-          throw new ArgumentException("channels");
-
-        if (bitPerChannel != 8 && bitPerChannel != 16)
-          throw new ArgumentException("bitPerChannel");
-
-        if (frequency <= 0)
-          throw new ArgumentException("frequency");
-
-        if (channels == 1)
-          Format = bitPerChannel == 8 ? ALFormat.Mono8 : ALFormat.Mono16;
-        else
-          Format = bitPerChannel == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16;
-
         Id = soueceId;
-        Frequency = frequency;
       }
 
-      public int Id { get; private set; }
-      public ALFormat Format { get; private set; }
-      public int Frequency { get; private set; }
-      public long LastPlayedNumber { get; set; }
+      public ALFormat GetFormat(SoundPack pack)
+      {
+        if (pack.Channels != 2 && pack.Channels != 1)
+          throw new ArgumentException("channels");
+
+        if (pack.BitPerChannel != 8 && pack.BitPerChannel != 16)
+          throw new ArgumentException("bitPerChannel");
+
+        if (pack.Channels == 1)
+          return pack.BitPerChannel == 8 ? ALFormat.Mono8 : ALFormat.Mono16;
+        else
+          return pack.BitPerChannel == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16;
+      }
     }
     #endregion
 
@@ -62,7 +59,7 @@ namespace Engine.Audio.OpenAL
         if (!sources.TryGetValue(id, out source))
         {
           int sourceId = AL.GenSource();
-          source = new SourceDescription(sourceId, pack.Channels, pack.BitPerChannel, pack.Frequency);
+          source = new SourceDescription(sourceId);
           sources.Add(id, source);
         }
 
@@ -72,7 +69,7 @@ namespace Engine.Audio.OpenAL
         source.LastPlayedNumber = packNumber;
 
         int bufferId = AL.GenBuffer();
-        AL.BufferData(bufferId, source.Format, pack.Data, pack.Data.Length, source.Frequency);
+        AL.BufferData(bufferId, source.GetFormat(pack), pack.Data, pack.Data.Length, pack.Frequency);
         AL.SourceQueueBuffer(source.Id, bufferId);
 
         if (AL.GetSourceState(source.Id) != ALSourceState.Playing)

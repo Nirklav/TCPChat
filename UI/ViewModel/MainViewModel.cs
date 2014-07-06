@@ -47,6 +47,7 @@ namespace UI.ViewModel
 
     #region properties
     public Dispatcher Dispatcher { get; private set; }
+
     public bool Alerts
     {
       get { return Settings.Current.Alerts; }
@@ -115,7 +116,7 @@ namespace UI.ViewModel
       window.Closed += WindowClosed;
       Rooms = new ObservableCollection<RoomViewModel>();
       AllUsers = new ObservableCollection<UserViewModel>();
-      Dispatcher = Dispatcher.CurrentDispatcher;
+      Dispatcher = mainWindow.Dispatcher;
 
       mainWindow.KeyDown += OnKeyDown;
       mainWindow.KeyUp += OnKeyUp;

@@ -44,7 +44,7 @@
                           SelectedItem="{Binding ElementName=MainWindow, 
                                                  Path=DataContext.SelectedTab.SelectedInput}"
                           SelectedIndex="{Binding ElementName=MainWindow,
-                                                  Path=DataContext.SelectedTab.SelectdInputIndex,
+                                                  Path=DataContext.SelectedTab.SelectedInputIndex,
                                                   Mode=TwoWay,
                                                   UpdateSourceTrigger=PropertyChanged}"
                           ItemsSource="{Binding ElementName=MainWindow, 
@@ -64,7 +64,7 @@
                           SelectedItem="{Binding ElementName=MainWindow, 
                                                  Path=DataContext.SelectedTab.SelectedConfig}"
                           SelectedIndex="{Binding ElementName=MainWindow,
-                                                  Path=DataContext.SelectedTab.SelectdConfigIndex,
+                                                  Path=DataContext.SelectedTab.SelectedConfigIndex,
                                                   Mode=TwoWay,
                                                   UpdateSourceTrigger=PropertyChanged}"
                           ItemsSource="{Binding ElementName=MainWindow,
@@ -83,7 +83,7 @@
                           SelectedItem="{Binding ElementName=MainWindow, 
                                                  Path=DataContext.SelectedTab.SelectedOutput}"
                           SelectedIndex="{Binding ElementName=MainWindow,
-                                                  Path=DataContext.SelectedTab.SelectdOutputIndex,
+                                                  Path=DataContext.SelectedTab.SelectedOutputIndex,
                                                   Mode=TwoWay,
                                                   UpdateSourceTrigger=PropertyChanged}"
                           ItemsSource="{Binding ElementName=MainWindow, 

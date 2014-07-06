@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Windows.Input;
+using System.Windows.Threading;
 using UI.Infrastructure;
 using UI.View;
 
@@ -22,11 +23,7 @@ namespace UI.ViewModel
     public SettingsTabViewModel SelectedTab
     {
       get { return selectedTab; }
-      set
-      {
-        selectedTab = value;
-        OnPropertyChanged("SelectedTab");
-      }
+      set { SetValue(value, "SelectedTab", v => selectedTab = v); }
     }
     #endregion
 
@@ -42,9 +39,9 @@ namespace UI.ViewModel
 
       Tabs = new[] 
       {
-        new SettingsTabViewModel("Основные"),
-        new AudioTabViewModel("Звук"),
-        new SettingsTabViewModel("Пользовательские"),
+        new SettingsTabViewModel("Основные", view.Dispatcher),
+        new AudioTabViewModel("Звук", view.Dispatcher),
+        new SettingsTabViewModel("Пользовательские", view.Dispatcher),
       };
     }
     #endregion
