@@ -10,7 +10,6 @@ namespace UI.ViewModel
   {
     #region fields
     private string name;
-    protected Dispatcher dispatcher;
     #endregion
 
     #region properties
@@ -25,10 +24,9 @@ namespace UI.ViewModel
     }
     #endregion
 
-    public SettingsTabViewModel(string tabName, Dispatcher dispatcher)
+    public SettingsTabViewModel(string tabName)
     {
       Name = tabName;
-      this.dispatcher = dispatcher;
     }
 
     public virtual void SaveSettings() { }  

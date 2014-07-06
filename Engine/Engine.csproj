@@ -118,6 +118,7 @@
     <Compile Include="Audio\IRecorder.cs" />
     <Compile Include="Audio\OpenAL\OpenALPlayer.cs" />
     <Compile Include="Audio\OpenAL\OpenALRecorder.cs" />
+    <Compile Include="Model\Entities\AudioQuality.cs" />
     <Compile Include="Model\Entities\SoundPack.cs" />
     <Compile Include="EventArgs\RecordedEventArgs.cs" />
     <Compile Include="Exceptions\ErrorCode.cs" />

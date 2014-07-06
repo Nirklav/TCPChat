@@ -17,7 +17,7 @@ namespace Engine.API.StandardAPI.ClientCommands
     public void Run(ClientCommandArgs args)
     {
       StandardClientAPI API = (StandardClientAPI)ClientModel.API;
-      MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.Nick))
         throw new ArgumentException("Nick");
@@ -25,7 +25,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       WaitingPrivateMessage waitingMessage;
       lock (API.WaitingPrivateMessages)
       {
-        waitingMessage = API.WaitingPrivateMessages.Find((message) => message.Receiver.Equals(receivedContent.Nick));
+        waitingMessage = API.WaitingPrivateMessages.Find(m => m.Receiver.Equals(receivedContent.Nick));
         if (waitingMessage == null)
           return;
 
@@ -41,11 +41,11 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       using (Crypter messageCrypter = new Crypter(provider))
       {
-        byte[] SymmetricKey = messageCrypter.GenerateKey();
+        byte[] symmetricKey = messageCrypter.GenerateKey();
 
         RSACryptoServiceProvider keyCryptor = new RSACryptoServiceProvider(AsyncClient.CryptorKeySize);
         keyCryptor.ImportParameters(receivedContent.OpenKey);
-        sendingContent.Key = keyCryptor.Encrypt(SymmetricKey, false);
+        sendingContent.Key = keyCryptor.Encrypt(symmetricKey, false);
         keyCryptor.Clear();
 
         using (MemoryStream encryptedMessageStream = new MemoryStream(),

@@ -266,7 +266,7 @@ namespace Engine.Network.Connections
         receivedData.Write(memoryStreamBuffer, sizeOfReceivingData, restDataSize);
 
       if (DataIsReceived())
-        OnDataReceived(new DataReceivedEventArgs() { ReceivedData = GetData(), Error = null });
+        OnDataReceived(new DataReceivedEventArgs { ReceivedData = GetData(), Error = null });
 
       return resultData;
     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Engine.Model.Entities;
+using System;
 
 namespace Engine.Audio
 {
@@ -10,13 +11,11 @@ namespace Engine.Audio
     event EventHandler<RecordedEventArgs> Recorded;
 
     /// <summary>
-    /// Устанавливает настройки качества записи.
+    /// Устанавливает настройки качества записи. И устройство записывающее звук.
     /// </summary>
-    /// <param name="channels">Колисчество каналов.</param>
-    /// <param name="bitPerChannel">Количество бит на канал.</param>
-    /// <param name="frequency">Частота записи.</param>
-    /// <param name="samplesSize">Размер буффера в семплах.</param>
-    void SetOptions(int channels, int bitPerChannel, int frequency, int samplesSize);
+    /// <param name="deviceName">Имя устройства.</param>
+    /// <param name="quality">Количество записи.</param>
+    void SetOptions(string deviceName, AudioQuality quality);
 
     /// <summary>
     /// Запускает запись с микрофона.

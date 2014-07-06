@@ -11,7 +11,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
 
       if (receivedContent.Key == null)
         throw new ArgumentNullException("Key");

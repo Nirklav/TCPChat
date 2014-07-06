@@ -9,7 +9,7 @@ namespace Engine.API.StandardAPI.ClientCommands
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.Sender))
         throw new ArgumentException("sender");

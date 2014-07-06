@@ -16,7 +16,7 @@ namespace Engine.API.StandardAPI.ClientCommands.Voice
       if (args.PeerConnectionId == null)
         return;
 
-      MessageContent receivedContent = GetContentFormMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
       ClientModel.Player.Enqueue(args.PeerConnectionId, receivedContent.Number, receivedContent.Pack);
     }
 

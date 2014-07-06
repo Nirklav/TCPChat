@@ -199,8 +199,9 @@ namespace Engine.Model.Client
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
       Client = new AsyncClient(nick);
       Peer = new AsyncPeer();
+
       Player = new OpenALPlayer();
-      Recorder = new OpenALRecorder(1, 16, 22050, 4096);
+      Recorder = new OpenALRecorder();
     }
 
     public static void Reset()

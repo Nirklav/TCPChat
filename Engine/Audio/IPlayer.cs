@@ -6,6 +6,12 @@ namespace Engine.Audio
   public interface IPlayer : IDisposable
   {
     /// <summary>
+    /// Устанавливает устройство воспроизводящее звук.
+    /// </summary>
+    /// <param name="deviceName">Имя устройства.</param>
+    void SetOptions(string deviceName);
+
+    /// <summary>
     /// Ставит в очередь на воспроизведение массив звуковых данных, для пользователя.
     /// </summary>
     /// <param name="id">Id пользователя.</param>

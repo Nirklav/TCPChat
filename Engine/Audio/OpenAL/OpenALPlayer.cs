@@ -40,14 +40,40 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region constructor
-    public OpenALPlayer()
+    public OpenALPlayer(string deviceName = null)
     {
+      if (string.Equals(deviceName, string.Empty))
+        return;
+
       sources = new Dictionary<string, SourceDescription>();
-      context = new AudioContext(AudioContext.DefaultDevice);
+
+      Initialize(deviceName);
     }
     #endregion
 
     #region methods
+    private void Initialize(string deviceName)
+    {
+      if (deviceName == null)
+        return;
+
+      if (!AudioContext.AvailableDevices.Contains(deviceName))
+        throw new ArgumentException("deviceName");
+
+      context = new AudioContext(deviceName);
+    }
+
+    public void SetOptions(string deviceName)
+    {
+      if (context != null)
+      {
+        Stop();
+        context.Dispose();
+      }
+
+      Initialize(deviceName);
+    }
+
     public void Enqueue(string id, long packNumber, SoundPack pack)
     {
       if (string.IsNullOrEmpty(id))
@@ -88,6 +114,7 @@ namespace Engine.Audio.OpenAL
           return;
 
         Stop(source);
+        sources.Remove(id);
       }
     }
 
@@ -97,6 +124,8 @@ namespace Engine.Audio.OpenAL
       {
         foreach (SourceDescription source in sources.Values)
           Stop(source);
+
+        sources.Clear();
       }
     }
 
@@ -151,9 +180,11 @@ namespace Engine.Audio.OpenAL
 
       disposed = true;
 
-      Stop();
-
-      context.Dispose();
+      if (context != null)
+      {
+        Stop();
+        context.Dispose();
+      }
     }
     #endregion
   }

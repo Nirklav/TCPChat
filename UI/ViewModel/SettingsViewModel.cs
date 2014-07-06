@@ -39,9 +39,9 @@ namespace UI.ViewModel
 
       Tabs = new[] 
       {
-        new SettingsTabViewModel("Основные", view.Dispatcher),
-        new AudioTabViewModel("Звук", view.Dispatcher),
-        new SettingsTabViewModel("Пользовательские", view.Dispatcher),
+        new SettingsTabViewModel("Основные"),
+        new AudioTabViewModel("Звук"),
+        new SettingsTabViewModel("Пользовательские"),
       };
     }
     #endregion

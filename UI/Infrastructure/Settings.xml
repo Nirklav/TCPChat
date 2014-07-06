@@ -6,12 +6,14 @@
     <G>50</G>
     <B>50</B>
   </NickColor>
-  <Address>127.0.0.1</Address>
-  <Port>10021</Port>
-  <StateOfIPv6Protocol>false</StateOfIPv6Protocol>
   <FormSize>
     <Width>380</Width>
     <Height>470</Height>
   </FormSize>
   <Alerts>true</Alerts>
+  <Address>127.0.0.1</Address>
+  <Port>10021</Port>
+  <StateOfIPv6Protocol>false</StateOfIPv6Protocol>
+  <Frequency>44100</Frequency>
+  <Bits>16</Bits>
 </Settings>

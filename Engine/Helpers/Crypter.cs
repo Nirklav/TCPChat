@@ -42,7 +42,7 @@ namespace Engine.Helpers
 
     #region Constructors
     /// <summary>
-    /// Создает экемпляр класса FileCrypter.
+    /// Создает экемпляр класса Crypter.
     /// </summary>
     public Crypter(SymmetricAlgorithm symmetricAlg)
     {

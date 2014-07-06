@@ -1,4 +1,5 @@
-﻿using OpenAL;
+﻿using Engine.Model.Entities;
+using OpenAL;
 using System;
 using System.Threading;
 
@@ -6,6 +7,10 @@ namespace Engine.Audio.OpenAL
 {
   public class OpenALRecorder : IRecorder
   {
+    #region consts
+    private const int DefaultBufferSize = 4096;
+    #endregion
+
     #region fields
     private object syncObj = new object();
 
@@ -13,9 +18,7 @@ namespace Engine.Audio.OpenAL
     private AudioCapture capture;
     private byte[] buffer;
 
-    private int channels;
-    private int bitPerChannel;
-    private int frequency;
+    private AudioQuality quality;
     private int samplesSize;
     #endregion
 
@@ -24,46 +27,38 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region constructor
-    public OpenALRecorder(int channels, int bitPerChannel, int frequency, int samplesSize)
+    public OpenALRecorder(string deviceName = null)
     {
-      if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
+      if (string.IsNullOrEmpty(deviceName))
         return;
 
-      Initialize(channels, bitPerChannel, frequency, samplesSize);
+      if (!AudioCapture.AvailableDevices.Contains(deviceName))
+        throw new ArgumentException("deviceName");
+
+      if ((capture != null && capture.IsRunning) || string.Equals(deviceName, string.Empty))
+        return;
+
+      Initialize(deviceName, new AudioQuality(1, 16, 44100));
     }
     #endregion
 
     #region methods
-    private void Initialize(int channels, int bitPerChannel, int frequency, int samplesSize)
+    private void Initialize(string deviceName, AudioQuality quality)
     {
-      if (channels != 2 && channels != 1)
-        throw new ArgumentException("channels");
-
-      if (bitPerChannel != 8 && bitPerChannel != 16)
-        throw new ArgumentException("bitPerChannel");
-
-      if (frequency <= 0)
-        throw new ArgumentException("frequency");
-
-      if (samplesSize <= 0)
-        throw new ArgumentException("samplesBufferSize");
-
-      this.channels = channels;
-      this.bitPerChannel = bitPerChannel;
-      this.frequency = frequency;
-      this.samplesSize = samplesSize;
+      this.quality = quality;
+      this.samplesSize = DefaultBufferSize;
 
       ALFormat format;
 
-      if (channels == 1)
-        format = bitPerChannel == 8 ? ALFormat.Mono8 : ALFormat.Mono16;
+      if (quality.Channels == 1)
+        format = quality.Bits == 8 ? ALFormat.Mono8 : ALFormat.Mono16;
       else
-        format = bitPerChannel == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16;
+        format = quality.Bits == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16;
 
       lock (syncObj)
       {
-        buffer = new byte[channels * (bitPerChannel / 8) * samplesSize * 2];
-        capture = new AudioCapture(AudioCapture.DefaultDevice, frequency, format, samplesSize * 2);
+        buffer = new byte[quality.Channels * (quality.Bits / 8) * samplesSize * 2];
+        capture = new AudioCapture(AudioCapture.DefaultDevice, quality.Frequency, format, samplesSize * 2);
       }
     }
 
@@ -79,7 +74,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
-    public void SetOptions(int channels, int bitPerChannel, int frequency, int samplesSize)
+    public void SetOptions(string deviceName, AudioQuality quality)
     {
       if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
         throw new ArgumentException("recorder should be stopped");
@@ -87,7 +82,7 @@ namespace Engine.Audio.OpenAL
       if (capture != null)
         capture.Dispose();
 
-      Initialize(channels, bitPerChannel, frequency, samplesSize);
+      Initialize(deviceName, quality);
     }
 
     private void RecordingCallback(object state)
@@ -101,7 +96,7 @@ namespace Engine.Audio.OpenAL
 
         if (availableSamples > 0)
         {
-          int availableDataSize = availableSamples * channels * (bitPerChannel / 8);
+          int availableDataSize = availableSamples * quality.Channels * (quality.Bits / 8);
           if (availableDataSize > buffer.Length)
             buffer = new byte[availableDataSize * 2];
 
@@ -109,7 +104,7 @@ namespace Engine.Audio.OpenAL
 
           var temp = Interlocked.CompareExchange(ref Recorded, null, null);
           if (temp != null)
-            temp(this, new RecordedEventArgs(buffer, availableSamples, channels, bitPerChannel, frequency));
+            temp(this, new RecordedEventArgs(buffer, availableSamples, quality.Channels, quality.Bits, quality.Frequency));
         }
 
         if (systemTimer != null && capture.IsRunning)
@@ -134,7 +129,7 @@ namespace Engine.Audio.OpenAL
 
     private int GetTimerTimeOut()
     {
-      double timeToBufferFilled = samplesSize / (frequency * 1000d);
+      double timeToBufferFilled = samplesSize / (quality.Frequency * 1000d);
       return (int)(timeToBufferFilled / 2);
     }
     #endregion

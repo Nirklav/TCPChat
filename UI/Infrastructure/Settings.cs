@@ -62,9 +62,8 @@ namespace UI.Infrastructure
 
     public string OutputAudioDevice { get; set; }
     public string InputAudioDevice { get; set; }
-    public int Channels { get; set; }
     public int Frequency { get; set; }
-    public int BitForChannel { get; set; }
+    public int Bits { get; set; }
     #endregion
 
     public class SavedColor
@@ -82,7 +81,7 @@ namespace UI.Infrastructure
 
       public static implicit operator SavedColor(Color color)
       {
-        return new SavedColor() { R = color.R, G = color.G, B = color.B };
+        return new SavedColor { R = color.R, G = color.G, B = color.B };
       }
     }
   }

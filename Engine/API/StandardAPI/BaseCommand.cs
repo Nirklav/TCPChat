@@ -9,7 +9,7 @@ namespace Engine.API.StandardAPI
 {
   abstract class BaseCommand
   {
-    protected static T GetContentFormMessage<T>(byte[] message)
+    protected static T GetContentFromMessage<T>(byte[] message)
     {
       using (MemoryStream messageStream = new MemoryStream(message))
       {

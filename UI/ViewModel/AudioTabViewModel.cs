@@ -1,9 +1,12 @@
-﻿using OpenAL;
+﻿using Engine.Model.Client;
+using Engine.Model.Entities;
+using OpenAL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Threading;
+using UI.Infrastructure;
 
 namespace UI.ViewModel
 {
@@ -12,7 +15,7 @@ namespace UI.ViewModel
     #region fields
     private IList<string> outputDevices;
     private IList<string> inputDevices;
-    private IList<string> inputConfigs;
+    private IList<AudioQuality> inputConfigs;
     private int selectedInputIndex;
     private int selectedOutputIndex;
     private int selectedConfigIndex;
@@ -31,7 +34,7 @@ namespace UI.ViewModel
       set { SetValue(value, "InputDevices", v => inputDevices = v); }
     }
 
-    public IList<string> InputConfigs
+    public IList<AudioQuality> InputConfigs
     {
       get { return inputConfigs; }
       set { SetValue(value, "InputConfigs", v => inputConfigs = v); }
@@ -60,16 +63,16 @@ namespace UI.ViewModel
     public string SelectedConfig { get; set; }
     #endregion
 
-    public AudioTabViewModel(string name, Dispatcher dispatcher) : base(name, dispatcher)
+    public AudioTabViewModel(string name) : base(name)
     {
       OutputDevices = AudioContext.AvailableDevices;
       InputDevices = AudioCapture.AvailableDevices;
       InputConfigs = new[]
       {
-        "8 бит / 22050 Гц",
-        "16 бит / 22050 Гц",
-        "8 бит / 44100 Гц",
-        "16 бит / 44100 Гц"
+        new AudioQuality(1, 8, 22050),
+        new AudioQuality(1, 16, 22050),
+        new AudioQuality(1, 8, 44100),
+        new AudioQuality(1, 16, 44100)
       };
 
       SelectedOutputIndex = 0;
@@ -79,7 +82,17 @@ namespace UI.ViewModel
 
     public override void SaveSettings()
     {
-      
+      Settings.Current.Frequency = InputConfigs[SelectedConfigIndex].Frequency;
+      Settings.Current.Bits = InputConfigs[SelectedConfigIndex].Bits;
+      Settings.Current.OutputAudioDevice = OutputDevices[SelectedOutputIndex];
+      Settings.Current.InputAudioDevice = InputDevices[selectedInputIndex];
+
+      if (ClientModel.IsInited)
+      {
+        AudioQuality quality = new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency);
+        ClientModel.Recorder.SetOptions(Settings.Current.InputAudioDevice, quality);
+        ClientModel.Player.SetOptions(Settings.Current.OutputAudioDevice);
+      }
     }
   }
 }

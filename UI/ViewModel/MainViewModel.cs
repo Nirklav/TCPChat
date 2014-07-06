@@ -4,6 +4,7 @@ using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using Engine.Model.Server;
+using OpenAL;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -15,7 +16,6 @@ using System.Windows.Threading;
 using UI.Dialogs;
 using UI.Infrastructure;
 using UI.View;
-
 using Keys = System.Windows.Forms.Keys;
 
 namespace UI.ViewModel
@@ -161,7 +161,8 @@ namespace UI.ViewModel
     #region command methods
     public void EnableServer(object obj)
     {
-      ServerDialog dialog = new ServerDialog(Settings.Current.Nick, 
+      ServerDialog dialog = new ServerDialog(
+        Settings.Current.Nick, 
         Settings.Current.NickColor, 
         Settings.Current.Port, 
         Settings.Current.StateOfIPv6Protocol);
@@ -178,8 +179,21 @@ namespace UI.ViewModel
           ServerModel.Init(new StandardServerAPI());
           ServerModel.Server.Start(dialog.Port, dialog.UsingIPv6Protocol);
 
+          IPAddress address = dialog.UsingIPv6Protocol ? IPAddress.IPv6Loopback : IPAddress.Loopback;
+
           ClientModel.Init(dialog.Nick, dialog.NickColor);
-          ClientModel.Client.Connect(new IPEndPoint((dialog.UsingIPv6Protocol) ? IPAddress.IPv6Loopback : IPAddress.Loopback, dialog.Port));
+
+          string outputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
+            ? AudioContext.DefaultDevice
+            : Settings.Current.OutputAudioDevice;
+
+          string inputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
+            ? AudioCapture.DefaultDevice
+            : Settings.Current.InputAudioDevice;
+
+          ClientModel.Player.SetOptions(outputDevice);
+          ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
+          ClientModel.Client.Connect(new IPEndPoint(address, dialog.Port));
         }
         catch (ArgumentException)
         {
@@ -224,6 +238,17 @@ namespace UI.ViewModel
         Settings.Current.Address = dialog.Address.ToString();
 
         ClientModel.Init(dialog.Nick, dialog.NickColor);
+
+        string outputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
+          ? AudioContext.DefaultDevice
+          : Settings.Current.OutputAudioDevice;
+
+        string inputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice) 
+          ? AudioCapture.DefaultDevice 
+          : Settings.Current.InputAudioDevice;
+
+        ClientModel.Player.SetOptions(outputDevice);
+        ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
         ClientModel.Client.Connect(new IPEndPoint(dialog.Address, dialog.Port));
       }
     }
