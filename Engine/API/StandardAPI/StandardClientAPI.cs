@@ -242,13 +242,13 @@ namespace Engine.API.StandardAPI
     /// Осуществляет выход из комнаты пользователя.
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
-    public void ExitFormRoom(string roomName)
+    public void ExitFromRoom(string roomName)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
-      var sendingContent = new ServerExitFormRoomCommand.MessageContent { RoomName = roomName };
-      ClientModel.Client.SendMessage(ServerExitFormRoomCommand.Id, sendingContent);
+      var sendingContent = new ServerExitFromRoomCommand.MessageContent { RoomName = roomName };
+      ClientModel.Client.SendMessage(ServerExitFromRoomCommand.Id, sendingContent);
     }
 
     /// <summary>
@@ -357,8 +357,8 @@ namespace Engine.API.StandardAPI
         postedFile.Dispose();
       }
 
-      var sendingContent = new ServerRemoveFileFormRoomCommand.MessageContent { RoomName = roomName, File = file };
-      ClientModel.Client.SendMessage(ServerRemoveFileFormRoomCommand.Id, sendingContent);
+      var sendingContent = new ServerRemoveFileFromRoomCommand.MessageContent { RoomName = roomName, File = file };
+      ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.Id, sendingContent);
     }
 
     /// <summary>

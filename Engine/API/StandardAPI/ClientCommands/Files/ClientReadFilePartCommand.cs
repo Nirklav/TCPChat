@@ -34,13 +34,13 @@ namespace Engine.API.StandardAPI.ClientCommands
       {
         if (!client.PostedFiles.Exists((current) => current.File.Equals(receivedContent.File)))
         {
-          var fileNotPostContent = new ServerRemoveFileFormRoomCommand.MessageContent
+          var fileNotPostContent = new ServerRemoveFileFromRoomCommand.MessageContent
           {
             File = receivedContent.File,
             RoomName = receivedContent.RoomName,
           };
 
-          ClientModel.Client.SendMessage(ServerRemoveFileFormRoomCommand.Id, fileNotPostContent);
+          ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.Id, fileNotPostContent);
           return;
         }
       }

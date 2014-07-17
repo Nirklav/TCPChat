@@ -35,7 +35,6 @@ namespace UI.ViewModel
     private const string AllInRoom = "Все в комнате";
 
     private const int ClientMaxMessageLength = 100 * 1024;
-    private const Keys RecorderKey = Keys.E;
     #endregion
 
     #region fields
@@ -177,23 +176,9 @@ namespace UI.ViewModel
           Settings.Current.StateOfIPv6Protocol = dialog.UsingIPv6Protocol;
 
           ServerModel.Init(new StandardServerAPI());
-          ServerModel.Server.Start(dialog.Port, dialog.UsingIPv6Protocol);
+          ServerModel.Server.Start(dialog.Port, Settings.Current.ServicePort, dialog.UsingIPv6Protocol);
 
-          IPAddress address = dialog.UsingIPv6Protocol ? IPAddress.IPv6Loopback : IPAddress.Loopback;
-
-          ClientModel.Init(dialog.Nick, dialog.NickColor);
-
-          string outputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
-            ? AudioContext.DefaultDevice
-            : Settings.Current.OutputAudioDevice;
-
-          string inputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
-            ? AudioCapture.DefaultDevice
-            : Settings.Current.InputAudioDevice;
-
-          ClientModel.Player.SetOptions(outputDevice);
-          ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
-          ClientModel.Client.Connect(new IPEndPoint(address, dialog.Port));
+          InitializeClient(true);
         }
         catch (ArgumentException)
         {
@@ -237,19 +222,7 @@ namespace UI.ViewModel
         Settings.Current.Port = dialog.Port;
         Settings.Current.Address = dialog.Address.ToString();
 
-        ClientModel.Init(dialog.Nick, dialog.NickColor);
-
-        string outputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
-          ? AudioContext.DefaultDevice
-          : Settings.Current.OutputAudioDevice;
-
-        string inputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice) 
-          ? AudioCapture.DefaultDevice 
-          : Settings.Current.InputAudioDevice;
-
-        ClientModel.Player.SetOptions(outputDevice);
-        ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
-        ClientModel.Client.Connect(new IPEndPoint(dialog.Address, dialog.Port));
+        InitializeClient(false);
       }
     }
 
@@ -306,7 +279,7 @@ namespace UI.ViewModel
           return;
 
         if (ClientModel.API != null)
-          ClientModel.API.ExitFormRoom(SelectedRoom.Name);
+          ClientModel.API.ExitFromRoom(SelectedRoom.Name);
       }
       catch (SocketException se)
       {
@@ -379,8 +352,8 @@ namespace UI.ViewModel
           switch (args.Type)
           {
             case MessageType.Private:
-              UserViewModel senderUser = AllUsers.Single(uvm => uvm.Info.Nick == args.Sender);
-              UserViewModel receiverUser = AllUsers.Single(uvm => uvm.Info.Equals(client.User));
+              UserViewModel senderUser = AllUsers.Single(uvm => string.Equals(uvm.Info.Nick, args.Sender));
+              UserViewModel receiverUser = AllUsers.Single(uvm => string.Equals(uvm.Info.Nick, client.User.Nick));
               SelectedRoom.AddPrivateMessage(senderUser, receiverUser, args.Message);
               break;
 
@@ -467,6 +440,28 @@ namespace UI.ViewModel
     #endregion
 
     #region helpers methods
+    private void InitializeClient(bool loopback)
+    {
+      ClientModel.Init(Settings.Current.Nick, Settings.Current.NickColor);
+
+      string outputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
+        ? AudioContext.DefaultDevice
+        : Settings.Current.OutputAudioDevice;
+
+      string inputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
+        ? AudioCapture.DefaultDevice
+        : Settings.Current.InputAudioDevice;
+
+      ClientModel.Player.SetOptions(outputDevice);
+      ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
+
+      IPAddress address = loopback
+        ? Settings.Current.StateOfIPv6Protocol ? IPAddress.IPv6Loopback : IPAddress.Loopback
+        : IPAddress.Parse(Settings.Current.Address);
+
+      ClientModel.Client.Connect(new IPEndPoint(address, Settings.Current.Port));
+    }
+
     private void WindowClosed(object sender, EventArgs e)
     {
       if (ClientModel.IsInited)
@@ -506,23 +501,27 @@ namespace UI.ViewModel
     #endregion
 
     #region record hot key
-    private void OnKeyUp(Keys keys)
-    {
-      if ((keys & RecorderKey) == RecorderKey && keyPressed)
-      {
-        keyPressed = false;
-        if (ClientModel.Recorder != null)
-          ClientModel.Recorder.Stop();
-      }
-    }
-
     private void OnKeyDown(Keys keys)
     {
-      if ((keys & RecorderKey) == RecorderKey && !keyPressed)
+      Keys recorderKey = Settings.Current.RecorderKey;
+
+      if ((keys & recorderKey) == recorderKey && !keyPressed)
       {
         keyPressed = true;
         if (ClientModel.Recorder != null)
           ClientModel.Recorder.Start();
+      }
+    }
+
+    private void OnKeyUp(Keys keys)
+    {
+      Keys recorderKey = Settings.Current.RecorderKey;
+
+      if ((keys & recorderKey) == recorderKey && keyPressed)
+      {
+        keyPressed = false;
+        if (ClientModel.Recorder != null)
+          ClientModel.Recorder.Stop();
       }
     }
     #endregion

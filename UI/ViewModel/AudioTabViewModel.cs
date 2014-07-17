@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Threading;
 using UI.Infrastructure;
+using Keys = System.Windows.Forms.Keys;
 
 namespace UI.ViewModel
 {
@@ -58,9 +59,7 @@ namespace UI.ViewModel
       set { SetValue(value, "SelectedOutputIndex", v => selectedOutputIndex = v); }
     }
 
-    public string SelectedOutput { get; set; }
-    public string SelectedInput { get; set; }
-    public string SelectedConfig { get; set; }
+    public string SelectedKey { get; set; }
     #endregion
 
     public AudioTabViewModel(string name) : base(name)
@@ -75,9 +74,20 @@ namespace UI.ViewModel
         new AudioQuality(1, 16, 44100)
       };
 
-      SelectedOutputIndex = 0;
-      SelectedInputIndex = 0;
-      SelectedConfigIndex = 0;
+      SelectedOutputIndex = OutputDevices.IndexOf(Settings.Current.OutputAudioDevice);
+      SelectedInputIndex = InputDevices.IndexOf(Settings.Current.InputAudioDevice);
+      SelectedConfigIndex = InputConfigs.IndexOf(new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
+
+      if (SelectedOutputIndex == -1)
+        SelectedOutputIndex = 0;
+
+      if (SelectedInputIndex == -1)
+        SelectedInputIndex = 0;
+
+      if (SelectedConfigIndex == -1)
+        SelectedConfigIndex = 0;
+
+      SelectedKey = Settings.Current.RecorderKey.ToString();
     }
 
     public override void SaveSettings()
@@ -86,6 +96,7 @@ namespace UI.ViewModel
       Settings.Current.Bits = InputConfigs[SelectedConfigIndex].Bits;
       Settings.Current.OutputAudioDevice = OutputDevices[SelectedOutputIndex];
       Settings.Current.InputAudioDevice = InputDevices[selectedInputIndex];
+      Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectedKey);
 
       if (ClientModel.IsInited)
       {

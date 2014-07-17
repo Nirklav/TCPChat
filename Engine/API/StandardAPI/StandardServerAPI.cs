@@ -39,11 +39,11 @@ namespace Engine.API.StandardAPI
       commandDictionary.Add(ServerDeleteRoomCommand.Id, new ServerDeleteRoomCommand());
       commandDictionary.Add(ServerInviteUsersCommand.Id, new ServerInviteUsersCommand());
       commandDictionary.Add(ServerKickUsersCommand.Id, new ServerKickUsersCommand());
-      commandDictionary.Add(ServerExitFormRoomCommand.Id, new ServerExitFormRoomCommand());
+      commandDictionary.Add(ServerExitFromRoomCommand.Id, new ServerExitFromRoomCommand());
       commandDictionary.Add(ServerRefreshRoomCommand.Id, new ServerRefreshRoomCommand());
       commandDictionary.Add(ServerSetRoomAdminCommand.Id, new ServerSetRoomAdminCommand());
       commandDictionary.Add(ServerAddFileToRoomCommand.Id, new ServerAddFileToRoomCommand());
-      commandDictionary.Add(ServerRemoveFileFormRoomCommand.Id, new ServerRemoveFileFormRoomCommand());
+      commandDictionary.Add(ServerRemoveFileFromRoomCommand.Id, new ServerRemoveFileFromRoomCommand());
       commandDictionary.Add(ServerP2PConnectRequestCommand.Id, new ServerP2PConnectRequestCommand());
       commandDictionary.Add(ServerP2PReadyAcceptCommand.Id, new ServerP2PReadyAcceptCommand());
       commandDictionary.Add(ServerPingRequestCommand.Id, new ServerPingRequestCommand());

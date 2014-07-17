@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
+using Keys = System.Windows.Forms.Keys;
 
 namespace UI.Infrastructure
 {
@@ -26,7 +27,7 @@ namespace UI.Infrastructure
           if (current == null)
           {         
             XmlSerializer serializer = new XmlSerializer(typeof(Settings));
-            using (FileStream stream = File.Open(FileName, FileMode.Open))
+            using (FileStream stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + FileName, FileMode.Open))
               current = (Settings)serializer.Deserialize(stream);
           }
         }
@@ -43,9 +44,8 @@ namespace UI.Infrastructure
       lock (syncObj)
       {
         XmlSerializer serializer = new XmlSerializer(typeof(Settings));
-        FileStream stream = File.Create(FileName);
-        serializer.Serialize(stream, current);
-        stream.Dispose();
+        using (FileStream stream = File.Create(AppDomain.CurrentDomain.BaseDirectory + FileName))
+          serializer.Serialize(stream, current);
       }
     }
 
@@ -58,8 +58,10 @@ namespace UI.Infrastructure
 
     public string Address { get; set; }
     public int Port { get; set; }
+    public int ServicePort { get; set; }
     public bool StateOfIPv6Protocol { get; set; }
 
+    public Keys RecorderKey { get; set; }
     public string OutputAudioDevice { get; set; }
     public string InputAudioDevice { get; set; }
     public int Frequency { get; set; }

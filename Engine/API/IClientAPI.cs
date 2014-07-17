@@ -18,7 +18,7 @@ namespace Engine
     void DeleteRoom(string roomName);
     void InviteUsers(string roomName, IEnumerable<User> users);
     void KickUsers(string roomName, IEnumerable<User> users);
-    void ExitFormRoom(string roomName);
+    void ExitFromRoom(string roomName);
     void RefreshRoom(string roomName);
     void SetRoomAdmin(string roomName, User newAdmin);
 

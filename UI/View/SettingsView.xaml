@@ -14,13 +14,56 @@
         
         <DataTemplate x:Key="CommonTemplate">
             <Grid>
-                
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="12*"/>
+                    <ColumnDefinition Width="20*"/>
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0"
+                       Grid.Row="0"
+                       Padding="0"
+                       Margin="10, 5, 5, 5"
+                       Content="Порт сервера"
+                       VerticalAlignment="Center"/>
+
+                <TextBox Grid.Column="1"
+                         Grid.Row="0"
+                         Margin="5, 5, 10, 5"
+                         Text="{Binding ElementName=MainWindow,
+                                        Path=DataContext.SelectedTab.ServerPort,
+                                        Mode=TwoWay,
+                                        UpdateSourceTrigger=PropertyChanged}"/>
+
+                <Label Grid.Column="0"
+                       Grid.Row="1"
+                       Padding="0"
+                       Margin="10, 5, 5, 5"
+                       Content="Порт P2P сервиса"
+                       VerticalAlignment="Center"/>
+
+                <TextBox Grid.Column="1"
+                         Grid.Row="1"
+                         Margin="5, 5, 10, 5"
+                         Text="{Binding ElementName=MainWindow,
+                                        Path=DataContext.SelectedTab.ServicePort,
+                                        Mode=TwoWay,
+                                        UpdateSourceTrigger=PropertyChanged}"/>
             </Grid>
         </DataTemplate>
 
         <DataTemplate x:Key="AudioTemplate">
             <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -34,15 +77,13 @@
                 <Label Grid.Column="0"
                        Grid.Row="0"
                        Padding="0"
-                       Margin="10, 10, 10, 5"
+                       Margin="10, 10, 5, 5"
                        Content="Микрофон"
                        VerticalAlignment="Center"/>
                 
                 <ComboBox Grid.Column="1"
                           Grid.Row="0"
-                          Margin="10, 10, 10, 5"
-                          SelectedItem="{Binding ElementName=MainWindow, 
-                                                 Path=DataContext.SelectedTab.SelectedInput}"
+                          Margin="5, 10, 10, 5"
                           SelectedIndex="{Binding ElementName=MainWindow,
                                                   Path=DataContext.SelectedTab.SelectedInputIndex,
                                                   Mode=TwoWay,
@@ -50,38 +91,51 @@
                           ItemsSource="{Binding ElementName=MainWindow, 
                                                 Path=DataContext.SelectedTab.InputDevices}"/>
 
-
                 <Label Grid.Column="0"
                        Grid.Row="1"
                        Padding="0"
-                       Margin="10, 5, 10, 5"
+                       Margin="10, 5, 5, 5"
                        Content="Качество записи"
                        VerticalAlignment="Center"/>
 
                 <ComboBox Grid.Column="1"
                           Grid.Row="1"
-                          Margin="10, 5, 10, 5"
-                          SelectedItem="{Binding ElementName=MainWindow, 
-                                                 Path=DataContext.SelectedTab.SelectedConfig}"
+                          Margin="5, 5, 10, 5"
                           SelectedIndex="{Binding ElementName=MainWindow,
                                                   Path=DataContext.SelectedTab.SelectedConfigIndex,
                                                   Mode=TwoWay,
                                                   UpdateSourceTrigger=PropertyChanged}"
                           ItemsSource="{Binding ElementName=MainWindow,
                                                 Path=DataContext.SelectedTab.InputConfigs}"/>
-
+                
                 <Label Grid.Column="0"
                        Grid.Row="2"
                        Padding="0"
-                       Margin="10, 5, 10, 5"
+                       Margin="10, 5, 5, 5"
+                       Content="Активация"
+                       VerticalAlignment="Center"/>
+
+                <TextBox Grid.Column="1"
+                         Grid.Row="2"
+                         Margin="5, 5, 10, 5"
+                         Text="{Binding ElementName=MainWindow,
+                                        Path=DataContext.SelectedTab.SelectedKey,
+                                        Mode=OneWay}"/>
+
+                <Separator Grid.Column="0"
+                           Grid.ColumnSpan="2"
+                           Grid.Row="3"/>
+                
+                <Label Grid.Column="0"
+                       Grid.Row="4"
+                       Padding="0"
+                       Margin="10, 5, 5, 5"
                        Content="Динамики"
                        VerticalAlignment="Center"/>
 
                 <ComboBox Grid.Column="1"
-                          Grid.Row="2"
-                          Margin="10, 5, 10, 10"
-                          SelectedItem="{Binding ElementName=MainWindow, 
-                                                 Path=DataContext.SelectedTab.SelectedOutput}"
+                          Grid.Row="4"
+                          Margin="5, 5, 10, 10"
                           SelectedIndex="{Binding ElementName=MainWindow,
                                                   Path=DataContext.SelectedTab.SelectedOutputIndex,
                                                   Mode=TwoWay,

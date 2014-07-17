@@ -72,6 +72,7 @@
     <Compile Include="API\IClientAPICommand.cs" />
     <Compile Include="API\IServerAPI.cs" />
     <Compile Include="API\IServerAPICommand.cs" />
+    <Compile Include="API\StandardAPI\ClientCommands\Files\ServerRemoveFileFromRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\Voice\ClientPlayVoiceCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\BaseServerCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Files\ServerAddFileToRoomCommand.cs" />
@@ -79,7 +80,7 @@
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerCreateRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerDeleteRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Others\ServerEmptyCommand.cs" />
-    <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerExitFormRoomCommand.cs" />
+    <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerExitFromRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerInviteUsersCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerKickUsersCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\P2P\ServerP2PConnectRequestCommand.cs" />
@@ -87,7 +88,7 @@
     <Compile Include="API\StandardAPI\ServerCommands\Others\ServerPingRequestCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerRefreshRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Registrations\ServerRegisterCommand.cs" />
-    <Compile Include="API\StandardAPI\ServerCommands\Files\ServerRemoveFileFormRoomCommand.cs" />
+    <Compile Include="API\StandardAPI\ServerCommands\Files\ServerRemoveFileFromRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Messages\ServerSendPrivateMessageCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Messages\ServerSendRoomMessageCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Others\ServerGetUserOpenKeyCommand.cs" />
@@ -150,7 +151,6 @@
     <Compile Include="EventArgs\RoomEventArgs.cs" />
     <Compile Include="Helpers\Crypter.cs" />
     <Compile Include="Containers\RequestPair.cs" />
-    <Compile Include="EventArgs\AddressReceivedEventArgs.cs" />
     <Compile Include="Model\Entities\FileDescription.cs" />
     <Compile Include="Helpers\Logger.cs" />
     <Compile Include="Network\P2PService.cs" />

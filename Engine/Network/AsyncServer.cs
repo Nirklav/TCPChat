@@ -84,7 +84,7 @@ namespace Engine.Network
     /// <param name="serverPort">Порт для соединение с сервером.</param>
     /// <param name="usingIPv6">Использовать ли IPv6, при ложном значении будет использован IPv4.</param>
     /// <exception cref="System.ArgumentException"/>
-    public void Start(int serverPort, bool usingIPv6)
+    public void Start(int serverPort, int p2pServicePort, bool usingIPv6)
     {
       ThrowIfDisposed();
 
@@ -93,7 +93,7 @@ namespace Engine.Network
       if (!Connection.TCPPortIsAvailable(serverPort))
         throw new ArgumentException("port not available", "serverPort");
 
-      p2pService = new P2PService(usingIPv6);
+      p2pService = new P2PService(p2pServicePort, usingIPv6);
       systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
 
       if (usingIPv6)

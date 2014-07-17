@@ -39,7 +39,7 @@ namespace UI.ViewModel
 
       Tabs = new[] 
       {
-        new SettingsTabViewModel("Основные"),
+        new CommonTabViewModel("Основные"),
         new AudioTabViewModel("Звук"),
         new SettingsTabViewModel("Пользовательские"),
       };

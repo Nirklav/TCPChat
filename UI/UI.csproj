@@ -125,6 +125,7 @@
     <Compile Include="Infrastructure\AttachedHelper.cs" />
     <Compile Include="Infrastructure\Settings.cs" />
     <Compile Include="ViewModel\AudioTabViewModel.cs" />
+    <Compile Include="ViewModel\CommonTabViewModel.cs" />
     <Compile Include="ViewModel\MessageViewModel.cs" />
     <Compile Include="Dialogs\ServerDialog.xaml.cs">
       <DependentUpon>ServerDialog.xaml</DependentUpon>

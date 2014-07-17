@@ -6,7 +6,7 @@ using System;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
-  class ServerRemoveFileFormRoomCommand :
+  class ServerRemoveFileFromRoomCommand :
       BaseServerCommand,
       IServerAPICommand
   {

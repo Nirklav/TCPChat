@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
-  class ServerExitFormRoomCommand :
+  class ServerExitFromRoomCommand :
       BaseServerCommand,
       IServerAPICommand
   {
@@ -72,6 +72,6 @@ namespace Engine.API.StandardAPI.ServerCommands
       public string RoomName { get { return roomName; } set { roomName = value; } }
     }
 
-    public const ushort Id = (ushort)ServerCommand.ExitFormRoom;
+    public const ushort Id = (ushort)ServerCommand.ExitFromRoom;
   }
 }

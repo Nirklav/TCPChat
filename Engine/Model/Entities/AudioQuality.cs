@@ -32,5 +32,24 @@ namespace Engine.Model.Entities
     {
       return string.Format("{0} бит / {1} Гц", Bits, Frequency);
     }
+
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(obj, null))
+        return false;
+
+      if (!(obj is AudioQuality))
+        return false;
+
+      return obj.GetHashCode() == GetHashCode();
+    }
+
+    public override int GetHashCode()
+    {
+      int hashCode = Channels;
+      hashCode = (hashCode ^ 397) * Bits;
+      hashCode = (hashCode ^ 397) * Frequency;
+      return hashCode;
+    }
   }
 }

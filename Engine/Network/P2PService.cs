@@ -27,7 +27,7 @@ namespace Engine.Network
     /// <summary>
     /// Создает экземпляр сервиса для функционирования UDP hole punching. Без логирования.
     /// </summary>
-    public P2PService(bool usingIPv6)
+    public P2PService(int port, bool usingIPv6)
     {
       disposed = false;
 
@@ -35,8 +35,8 @@ namespace Engine.Network
       clientsEndPoints = new Dictionary<string, IPEndPoint>();
 
       NetPeerConfiguration config = new NetPeerConfiguration(AsyncPeer.NetConfigString);
-      config.MaximumConnections = 100;    
-      config.Port = 0;
+      config.MaximumConnections = 100;
+      config.Port = port;
 
       if (usingIPv6)
         config.LocalAddress = IPAddress.IPv6Any;

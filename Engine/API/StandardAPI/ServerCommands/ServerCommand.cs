@@ -47,7 +47,7 @@ namespace Engine.API.StandardAPI.ServerCommands
     DeleteRoom = 0x0031,
     InvateUsers = 0x0032,
     KickUsers = 0x0033,
-    ExitFormRoom = 0x0034,
+    ExitFromRoom = 0x0034,
     RefreshRoom = 0x0035,
     SetRoomAdmin = 0x0036,
 
