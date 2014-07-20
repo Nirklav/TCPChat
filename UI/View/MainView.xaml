@@ -470,7 +470,7 @@
         </ToolBar>
 
         <TabControl x:Name="ChatRooms"
-                    BorderThickness="0"
+                    BorderThickness="1"
                     Grid.Column="0"
                     Grid.Row="2" 
                     Padding="0"

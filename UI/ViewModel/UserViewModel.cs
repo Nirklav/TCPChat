@@ -39,11 +39,7 @@ namespace UI.ViewModel
     public WPFColor NickColor
     {
       get { return WPFColor.FromRgb(Info.NickColor.R, Info.NickColor.G, Info.NickColor.B); }
-      set
-      {
-        Info.NickColor = Color.FromArgb(value.R, value.G, value.G);
-        OnPropertyChanged("NickColor");
-      }
+      set { SetValue(value, "NickColor", v => Info.NickColor = Color.FromArgb(v.R, v.G, v.G)); }
     }
 
     public string Nick
@@ -54,11 +50,7 @@ namespace UI.ViewModel
     public bool IsClient
     {
       get { return isClient; }
-      set
-      {
-        isClient = value;
-        OnPropertyChanged("IsClient");
-      }
+      set { SetValue(value, "IsClient", v => isClient = v); }
     }
     #endregion
 

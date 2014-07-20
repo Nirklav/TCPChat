@@ -27,7 +27,6 @@ namespace UI.ViewModel
     private const string ParamsError = "Ошибка входных данных.";
     private const string ClientNotCreated = "Клинет не соединен ни с каким сервером. Установите соединение.";
     private const string APINotSupported = "Приложение не поддерживает эту версию API ({0}). Соединение разорвано.";
-    private const string RegFailNickAlreadyExist = "Ник уже занят. Вы не зарегистрированны.";
     private const string RoomExitQuestion = "Вы действительно хотите выйти из комнаты?";
     private const string RoomCloseQuestion = "Вы точно хотите закрыть комнату?";
     private const string ServerDisableQuestion = "Вы точно хотите выключить сервер?";
@@ -117,8 +116,8 @@ namespace UI.ViewModel
       AllUsers = new ObservableCollection<UserViewModel>();
       Dispatcher = mainWindow.Dispatcher;
 
-      mainWindow.KeyDown += OnKeyDown;
-      mainWindow.KeyUp += OnKeyUp;
+      KeyBoard.KeyDown += OnKeyDown;
+      KeyBoard.KeyUp += OnKeyUp;
 
       ClientModel.Connected += ClientConnect;
       ClientModel.ReceiveMessage += ClientReceiveMessage;
@@ -146,6 +145,9 @@ namespace UI.ViewModel
     public override void Dispose()
     {
       base.Dispose();
+
+      KeyBoard.KeyDown -= OnKeyDown;
+      KeyBoard.KeyUp -= OnKeyUp;
 
       ClientModel.Connected -= ClientConnect;
       ClientModel.ReceiveMessage -= ClientReceiveMessage;
@@ -333,7 +335,7 @@ namespace UI.ViewModel
       {
         if (!args.Registered)
         {
-          SelectedRoom.AddSystemMessage(RegFailNickAlreadyExist);
+          SelectedRoom.AddSystemMessage(args.Message);
 
           if (ClientModel.IsInited)
             ClientModel.Reset();

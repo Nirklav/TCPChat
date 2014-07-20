@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Input;
 using System.Windows.Threading;
 using UI.Infrastructure;
 using Keys = System.Windows.Forms.Keys;
@@ -20,6 +21,9 @@ namespace UI.ViewModel
     private int selectedInputIndex;
     private int selectedOutputIndex;
     private int selectedConfigIndex;
+    private string selectButtonName;
+
+    private volatile bool selectingKey;
     #endregion
 
     #region properties
@@ -59,7 +63,17 @@ namespace UI.ViewModel
       set { SetValue(value, "SelectedOutputIndex", v => selectedOutputIndex = v); }
     }
 
-    public string SelectedKey { get; set; }
+    public string SelectButtonName
+    {
+      get { return selectButtonName; }
+      set { SetValue(value, "SelectButtonName", v => selectButtonName = v); }
+    }
+    #endregion
+
+    #region commands
+
+    public ICommand SelectKeyCommand { get; private set; }
+
     #endregion
 
     public AudioTabViewModel(string name) : base(name)
@@ -87,7 +101,31 @@ namespace UI.ViewModel
       if (SelectedConfigIndex == -1)
         SelectedConfigIndex = 0;
 
-      SelectedKey = Settings.Current.RecorderKey.ToString();
+      SelectButtonName = Settings.Current.RecorderKey.ToString();
+
+      SelectKeyCommand = new Command(SelectKey);
+    }
+
+    private void SelectKey(object obj)
+    {
+      if (selectingKey == true)
+        return;
+
+      selectingKey = true;
+
+      KeyBoard.KeyDown += KeyDown;
+    }
+
+    private void KeyDown(Keys key)
+    {
+      if (!selectingKey)
+      {
+        KeyBoard.KeyDown -= KeyDown;
+        return;
+      }
+
+      selectingKey = false;
+      SelectButtonName = key.ToString();
     }
 
     public override void SaveSettings()
@@ -96,12 +134,11 @@ namespace UI.ViewModel
       Settings.Current.Bits = InputConfigs[SelectedConfigIndex].Bits;
       Settings.Current.OutputAudioDevice = OutputDevices[SelectedOutputIndex];
       Settings.Current.InputAudioDevice = InputDevices[selectedInputIndex];
-      Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectedKey);
+      Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectButtonName);
 
       if (ClientModel.IsInited)
       {
-        AudioQuality quality = new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency);
-        ClientModel.Recorder.SetOptions(Settings.Current.InputAudioDevice, quality);
+        ClientModel.Recorder.SetOptions(Settings.Current.InputAudioDevice, InputConfigs[SelectedConfigIndex]);
         ClientModel.Player.SetOptions(Settings.Current.OutputAudioDevice);
       }
     }

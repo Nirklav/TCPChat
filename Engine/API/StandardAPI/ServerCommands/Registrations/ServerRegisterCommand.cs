@@ -20,45 +20,52 @@ namespace Engine.API.StandardAPI.ServerCommands
       if (receivedContent.User == null)
         throw new ArgumentNullException("User");
 
+      if (receivedContent.User.Nick == null)
+        throw new ArgumentNullException("User.Nick");
+
+      if (receivedContent.User.Nick.Contains(Connection.TempConnectionPrefix))
+      {
+        SendFail(args.ConnectionId, "Соединение не может быть зарегистрировано с таким ником. Выберите другой.");
+        return;
+      }
+
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[ServerModel.MainRoomName];
+        Room room = server.Rooms[ServerModel.MainRoomName];    
+        bool userExist = room.Users.Any(nick => string.Equals(receivedContent.User.Nick, nick));
 
-        bool userExist = false;
-        foreach (var nick in room.Users)
-          if (string.Equals(receivedContent.User.Nick, nick))
-          {
-            userExist = true;
-            break;
-          }
-
-        if (!userExist)
+        if (userExist)
+        {
+          SendFail(args.ConnectionId, "Соединение не может быть зарегистрировано с таким ником. Он занят.");
+          return;
+        }
+        else
         {
           ServerModel.Server.RegisterConnection(args.ConnectionId, receivedContent.User.Nick, receivedContent.OpenKey);
 
           server.Users.Add(receivedContent.User.Nick, receivedContent.User);
           room.Add(receivedContent.User.Nick);
 
-          var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = !userExist };
+          var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = true };
           ServerModel.Server.SendMessage(args.ConnectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
 
-          foreach (var connectionId in ServerModel.Server.GetConnetionsIds())
+          var sendingContent = new ClientRoomRefreshedCommand.MessageContent
           {
-            var sendingContent = new ClientRoomRefreshedCommand.MessageContent
-            {
-              Room = room,
-              Users = room.Users.Select(nick => server.Users[nick]).ToList()
-            };
+            Room = room,
+            Users = room.Users.Select(nick => server.Users[nick]).ToList()
+          };
+
+          foreach (var connectionId in ServerModel.Server.GetConnetionsIds())
             ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.Id, sendingContent);
-          }
-        }
-        else
-        {
-          var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = !userExist };
-          ServerModel.Server.SendMessage(args.ConnectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
-          ServerModel.API.CloseConnection(args.ConnectionId);
         }
       }
+    }
+
+    private void SendFail(string connectionId, string message)
+    {
+      var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
+      ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
+      ServerModel.API.CloseConnection(connectionId);
     }
 
     [Serializable]

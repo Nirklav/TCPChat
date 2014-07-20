@@ -10,15 +10,24 @@ namespace Engine.API.StandardAPI.ClientCommands
     public void Run(ClientCommandArgs args)
     {
       MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
-      ClientModel.OnReceiveRegistrationResponse(this, new RegistrationEventArgs { Registered = receivedContent.Registered });
+
+      RegistrationEventArgs eventArgs = new RegistrationEventArgs
+      {
+        Registered = receivedContent.Registered,
+        Message = receivedContent.Message
+      };
+
+      ClientModel.OnReceiveRegistrationResponse(this, eventArgs);
     }
 
     [Serializable]
     public class MessageContent
     {
       bool registered;
+      string message;
 
       public bool Registered { get { return registered; } set { registered = value; } }
+      public string Message { get { return message; } set { message = value; } }
     }
 
     public const ushort Id = (ushort)ClientCommand.RegistrationResponse;

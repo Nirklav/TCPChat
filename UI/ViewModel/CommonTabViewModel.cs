@@ -10,7 +10,8 @@ namespace UI.ViewModel
   {
     #region fields
     private int serverPort;
-    private int srvicePort;
+    private int servicePort;
+    private bool defaultServicePort;
     #endregion
 
     #region properties
@@ -20,10 +21,22 @@ namespace UI.ViewModel
       set { SetValue(value, "ServerPort", v => serverPort = v); }
     }
 
+    public bool DefaultSevicePort
+    {
+      get { return defaultServicePort; }
+      set
+      {
+        SetValue(value, "DefaultSevicePort", v => defaultServicePort = v);
+
+        if (value == true)
+          SetValue(0, "ServicePort", v => servicePort = v);
+      }
+    }
+
     public int ServicePort
     {
-      get { return srvicePort; }
-      set { SetValue(value, "ServicePort", v => srvicePort = v); }
+      get { return servicePort; }
+      set { SetValue(value, "ServicePort", v => servicePort = v); }
     }
     #endregion
 
@@ -31,12 +44,13 @@ namespace UI.ViewModel
     {
       ServerPort = Settings.Current.Port;
       ServicePort = Settings.Current.ServicePort;
+      DefaultSevicePort = Settings.Current.ServicePort == 0;
     }
 
     public override void SaveSettings()
     {
       Settings.Current.Port = ServerPort;
-      Settings.Current.ServicePort = ServicePort;
+      Settings.Current.ServicePort = DefaultSevicePort ? 0 : ServicePort;
     }
   }
 }

@@ -249,7 +249,7 @@ namespace Engine.Network
         ServerCommandArgs args = new ServerCommandArgs
         {
           Message = e.ReceivedData,
-          ConnectionId = ((ServerConnection)sender).Id,
+          ConnectionId = ((IConnection)sender).Id,
         };
 
         command.Run(args);
@@ -340,8 +340,8 @@ namespace Engine.Network
 
       lock (connections)
       {
-        foreach (var id in connections.Keys)
-          connections[id].Dispose();
+        foreach (var connection in connections.Values)
+          connection.Dispose();
 
         connections.Clear();
       }
