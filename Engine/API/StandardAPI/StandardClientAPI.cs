@@ -307,7 +307,7 @@ namespace Engine.API.StandardAPI
           && string.Equals(posted.ReadStream.Name, path)
           && string.Equals(posted.RoomName, roomName));
 
-
+        // Отправляем на сервер уже созданный файл (нет необходимости создавать новый id)
         if (postedFile != null)
         {
           var oldSendingContent = new ServerAddFileToRoomCommand.MessageContent { RoomName = roomName, File = postedFile.File };
@@ -315,6 +315,7 @@ namespace Engine.API.StandardAPI
           return;
         }
 
+        // Создаем новый файл
         int id = 0;
         while (client.PostedFiles.Exists(postFile => postFile.File.ID == id))
           id = idCreator.Next(int.MinValue, int.MaxValue);

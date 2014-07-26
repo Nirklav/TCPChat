@@ -13,9 +13,11 @@
   <Alerts>true</Alerts>
   <Address>127.0.0.1</Address>
   <Port>10021</Port>
+  <ServicePort>10022</ServicePort>
   <StateOfIPv6Protocol>false</StateOfIPv6Protocol>
   <RecorderKey>E</RecorderKey>
-  <RecorderKey>None</RecorderKey>
+  <OutputAudioDevice>Generic Software on Динамики (Realtek High Definition Audio)</OutputAudioDevice>
+  <InputAudioDevice>FrontMic (Realtek High Definiti</InputAudioDevice>
   <Frequency>44100</Frequency>
   <Bits>16</Bits>
 </Settings>

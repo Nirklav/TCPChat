@@ -127,6 +127,7 @@
     <Compile Include="Infrastructure\KeyBoard.cs" />
     <Compile Include="Infrastructure\Settings.cs" />
     <Compile Include="ViewModel\AudioTabViewModel.cs" />
+    <Compile Include="ViewModel\ClientTabViewModel.cs" />
     <Compile Include="ViewModel\CommonTabViewModel.cs" />
     <Compile Include="ViewModel\MessageViewModel.cs" />
     <Compile Include="Dialogs\ServerDialog.xaml.cs">

@@ -286,7 +286,7 @@ namespace Engine.Network.Connections
 
     private int GetSizeReceivingData()
     {
-      if (receivedData.Length < sizeof(int))
+      if (receivedData.Position < sizeof(int))
         return -1;
 
       int DataSize = BitConverter.ToInt32(receivedData.GetBuffer(), 0);

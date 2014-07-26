@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
+using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -14,6 +12,9 @@ namespace UI.Infrastructure
     {
       if (targetType != typeof(Color))
         return null;
+
+      if (values.Any(v => v.GetType().FullName == "MS.Internal.NamedObject"))
+        return Color.FromArgb(255, 170, 50, 50);
 
       byte r = System.Convert.ToByte(values[0]);
       byte g = System.Convert.ToByte(values[1]);

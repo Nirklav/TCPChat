@@ -15,6 +15,7 @@ namespace UI.ViewModel
     #region fields
     private SettingsView window;
     private SettingsTabViewModel selectedTab;
+    private int selectedIndex;
     #endregion
 
     #region properties
@@ -37,12 +38,14 @@ namespace UI.ViewModel
       window = view;
       CloseSettingsCommand = new Command(CloseSettings);
 
-      Tabs = new[] 
+      Tabs = new SettingsTabViewModel[] 
       {
-        new CommonTabViewModel("Основные"),
+        new ClientTabViewModel("Клиент"),
+        new ServerTabViewModel("Сервер"),
         new AudioTabViewModel("Звук"),
-        new SettingsTabViewModel("Пользовательские"),
       };
+
+      SelectedTab = Tabs[0];
     }
     #endregion
 

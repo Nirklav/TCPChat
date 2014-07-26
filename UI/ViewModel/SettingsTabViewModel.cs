@@ -6,7 +6,7 @@ using System.Windows.Threading;
 
 namespace UI.ViewModel
 {
-  public class SettingsTabViewModel : BaseViewModel
+  public abstract class SettingsTabViewModel : BaseViewModel
   {
     #region fields
     private string name;
@@ -16,11 +16,7 @@ namespace UI.ViewModel
     public string Name
     {
       get { return name; }
-      set
-      {
-        name = value;
-        OnPropertyChanged("Name");
-      }
+      set { SetValue(value, "Name", v => name = v); }
     }
     #endregion
 
@@ -29,6 +25,6 @@ namespace UI.ViewModel
       Name = tabName;
     }
 
-    public virtual void SaveSettings() { }  
+    public abstract void SaveSettings();  
   }
 }

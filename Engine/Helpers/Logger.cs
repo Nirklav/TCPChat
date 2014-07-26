@@ -6,9 +6,11 @@ namespace Engine.Helpers
 {
   public class Logger
   {
-    private static readonly object syncObj = new object();
+    private const string DebugMessageTemplate = "Time: {0} DebugMessage: {1}";
     private const string MessageTemplate = "{4}Time: {0};{5}{4}Type: {1};{5}{4}Message: {2};{5}{4}StackTrace:{5}{3}{5}";
     private const string InnerTemplate = "{1}InnerException: {2}{2}{0}{2}";
+
+    private static readonly object syncObj = new object();
 
     string logFileName;
 
@@ -27,7 +29,7 @@ namespace Engine.Helpers
     public void WriteDebug(string message, params object[] args)
     {
 #if DEBUG
-      Write("Debug message: " + message, args);
+      Write(string.Format(DebugMessageTemplate, DateTime.Now, message), args);
 #endif
     }
 
@@ -48,12 +50,12 @@ namespace Engine.Helpers
         tabs.Append("  ");
 
       StringBuilder stackTrace = new StringBuilder(e.StackTrace);
-      stackTrace.Replace("  ", "  " + tabs.ToString());
+      stackTrace.Replace("  ", "  " + tabs);
 
       StringBuilder builder = new StringBuilder(200);
       builder.AppendFormat(MessageTemplate, 
-        DateTime.Now.ToString(), 
-        e.GetType().ToString(), 
+        DateTime.Now, 
+        e.GetType(), 
         e.Message,
         stackTrace, 
         tabs, 

@@ -22,7 +22,6 @@ namespace UI.ViewModel
     private int selectedOutputIndex;
     private int selectedConfigIndex;
     private string selectButtonName;
-
     private volatile bool selectingKey;
     #endregion
 
@@ -112,7 +111,7 @@ namespace UI.ViewModel
         return;
 
       selectingKey = true;
-
+      SelectButtonName = "Нажмите на клавишу";
       KeyBoard.KeyDown += KeyDown;
     }
 
