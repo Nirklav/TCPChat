@@ -88,7 +88,8 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (isServerRunning) return;
+      if (isServerRunning) 
+        return;
 
       if (!Connection.TCPPortIsAvailable(serverPort))
         throw new ArgumentException("port not available", "serverPort");
@@ -96,17 +97,11 @@ namespace Engine.Network
       p2pService = new P2PService(p2pServicePort, usingIPv6);
       systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
 
-      if (usingIPv6)
-      {
-        listener = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
-        listener.Bind(new IPEndPoint(IPAddress.IPv6Any, serverPort));
-      }
-      else
-      {
-        listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        listener.Bind(new IPEndPoint(IPAddress.Any, serverPort));
-      }
+      AddressFamily addressFamily = usingIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork;
+      IPAddress address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;
 
+      listener = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+      listener.Bind(new IPEndPoint(address, serverPort));
       listener.Listen(ListenConnections);
       listener.BeginAccept(AcceptCallback, null);
 
@@ -278,7 +273,7 @@ namespace Engine.Network
 #if !DEBUG
             if (connections[id].IntervalOfSilence >= ServerConnection.ConnectionTimeOut)
             {
-              CloseConnection(id);
+              ServerModel.API.RemoveUser(id);
               continue;
             }
 #endif

@@ -107,7 +107,7 @@ namespace Engine.API.StandardAPI
     /// Закрывает соединение.
     /// </summary>
     /// <param name="nick">Ник пользователя, соединение котрого будет закрыто.</param>
-    public void CloseConnection(string nick)
+    public void RemoveUser(string nick)
     {
       ServerModel.Server.CloseConnection(nick);
 
@@ -122,6 +122,17 @@ namespace Engine.API.StandardAPI
 
           room.Remove(nick);
           server.Users.Remove(nick);
+
+          if (string.Equals(room.Admin, nick))
+          {
+            room.Admin = room.Users.FirstOrDefault();
+
+            if (room.Admin != null)
+            {
+              string message = string.Format("Вы назначены администратором комнаты {0}.", room.Name);
+              ServerModel.API.SendSystemMessage(room.Admin, message);
+            }
+          }
 
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent
           {

@@ -2,22 +2,20 @@
 <Settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Nick>Anklav</Nick>
   <NickColor>
-    <R>159</R>
-    <G>147</G>
-    <B>98</B>
+    <R>170</R>
+    <G>50</G>
+    <B>50</B>
   </NickColor>
   <FormSize>
     <Width>380</Width>
     <Height>470</Height>
   </FormSize>
   <Alerts>true</Alerts>
-  <Address>127.0.0.1</Address>
+  <Address>134.249.137.203</Address>
   <Port>10021</Port>
   <ServicePort>10022</ServicePort>
   <StateOfIPv6Protocol>false</StateOfIPv6Protocol>
   <RecorderKey>E</RecorderKey>
-  <OutputAudioDevice>Generic Software on Динамики (Realtek High Definition Audio)</OutputAudioDevice>
-  <InputAudioDevice>FrontMic (Realtek High Definiti</InputAudioDevice>
   <Frequency>44100</Frequency>
   <Bits>16</Bits>
 </Settings>

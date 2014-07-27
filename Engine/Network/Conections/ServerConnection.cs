@@ -157,8 +157,8 @@ namespace Engine.Network.Connections
     {
       if (args.Error != null)
         ServerModel.Logger.Write(args.Error);
-
-      lastActivity = DateTime.Now;
+      else
+        lastActivity = DateTime.Now;
     }
     #endregion
   }

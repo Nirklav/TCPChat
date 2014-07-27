@@ -249,7 +249,7 @@ namespace UI.ViewModel
       {
         CreateRoomDialog dialog = new CreateRoomDialog();
         if (dialog.ShowDialog() == true && ClientModel.API != null)
-          ClientModel.API.CreateRoom(dialog.RoomName, RoomType.Voice);
+          ClientModel.API.CreateRoom(dialog.Name, dialog.Type);
       }
       catch (SocketException se)
       {
@@ -446,13 +446,15 @@ namespace UI.ViewModel
     {
       ClientModel.Init(Settings.Current.Nick, Settings.Current.NickColor);
 
-      string outputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
-        ? AudioContext.DefaultDevice
-        : Settings.Current.OutputAudioDevice;
+      string outputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice) 
+        || !AudioContext.AvailableDevices.Contains(Settings.Current.InputAudioDevice)
+          ? AudioContext.DefaultDevice
+          : Settings.Current.OutputAudioDevice;
 
       string inputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
-        ? AudioCapture.DefaultDevice
-        : Settings.Current.InputAudioDevice;
+        || !AudioCapture.AvailableDevices.Contains(Settings.Current.InputAudioDevice)
+          ? AudioCapture.DefaultDevice
+          : Settings.Current.InputAudioDevice;
 
       ClientModel.Player.SetOptions(outputDevice);
       ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
@@ -462,6 +464,11 @@ namespace UI.ViewModel
         : IPAddress.Parse(Settings.Current.Address);
 
       ClientModel.Client.Connect(new IPEndPoint(address, Settings.Current.Port));
+    }
+
+    private void InitializeAudio(string outputDevice, string inputDevice)
+    {
+
     }
 
     private void WindowClosed(object sender, EventArgs e)

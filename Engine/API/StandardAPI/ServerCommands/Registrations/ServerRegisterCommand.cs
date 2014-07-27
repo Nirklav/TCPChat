@@ -28,7 +28,7 @@ namespace Engine.API.StandardAPI.ServerCommands
         SendFail(args.ConnectionId, "Соединение не может быть зарегистрировано с таким ником. Выберите другой.");
         return;
       }
-
+      
       using (var server = ServerModel.Get())
       {
         Room room = server.Rooms[ServerModel.MainRoomName];    
@@ -65,7 +65,7 @@ namespace Engine.API.StandardAPI.ServerCommands
     {
       var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
       ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
-      ServerModel.API.CloseConnection(connectionId);
+      ServerModel.API.RemoveUser(connectionId);
     }
 
     [Serializable]

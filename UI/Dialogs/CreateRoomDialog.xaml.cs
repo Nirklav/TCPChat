@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Engine.Model.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,8 @@ namespace UI.Dialogs
   /// </summary>
   public partial class CreateRoomDialog : Window
   {
-    public string RoomName { get; set; }
+    public string Name { get; set; }
+    public RoomType Type { get; set; }
 
     public CreateRoomDialog()
     {
@@ -27,9 +29,10 @@ namespace UI.Dialogs
 
     private void Accept_Click(object sender, RoutedEventArgs e)
     {
-      RoomName = RoomNameTextBox.Text;
+      Name = RoomNameTextBox.Text;
+      Type = VoiceRoomCheckBox.IsChecked == true ? RoomType.Voice : RoomType.Chat;
 
-      if (string.IsNullOrEmpty(RoomName))
+      if (string.IsNullOrEmpty(Name))
       {
         MessageBox.Show(this, "Проверьте правильность заполнения всех полей.", "TCP Chat");
         return;

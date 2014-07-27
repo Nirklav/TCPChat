@@ -14,6 +14,6 @@ namespace Engine
 
     void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint);
     void SendSystemMessage(string nick, string message);
-    void CloseConnection(string nick);
+    void RemoveUser(string nick);
   }
 }

@@ -6,7 +6,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      ServerModel.API.CloseConnection(args.ConnectionId);
+      ServerModel.API.RemoveUser(args.ConnectionId);
     }
 
     public const ushort Id = (ushort)ServerCommand.Unregister;

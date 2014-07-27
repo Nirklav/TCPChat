@@ -234,12 +234,12 @@ namespace Engine.Network
 
     public override void Dispose()
     {
-      base.Dispose();
-
-      keyCryptor.Clear();
-
       lock (timerSync)
       {
+        base.Dispose();
+
+        keyCryptor.Clear();
+
         if (systemTimer != null)
           systemTimer.Dispose();
 
