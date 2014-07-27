@@ -14,6 +14,8 @@ namespace UI.ViewModel
 {
   public class AudioTabViewModel : SettingsTabViewModel
   {
+    const string PressTheKey = "Нажмите на клавишу";
+
     #region fields
     private IList<string> outputDevices;
     private IList<string> inputDevices;
@@ -111,7 +113,7 @@ namespace UI.ViewModel
         return;
 
       selectingKey = true;
-      SelectButtonName = "Нажмите на клавишу";
+      SelectButtonName = PressTheKey;
       KeyBoard.KeyDown += KeyDown;
     }
 
@@ -133,7 +135,9 @@ namespace UI.ViewModel
       Settings.Current.Bits = InputConfigs[SelectedConfigIndex].Bits;
       Settings.Current.OutputAudioDevice = OutputDevices[SelectedOutputIndex];
       Settings.Current.InputAudioDevice = InputDevices[selectedInputIndex];
-      Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectButtonName);
+
+      if (!string.Equals(PressTheKey, SelectButtonName))
+        Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectButtonName);
 
       if (ClientModel.IsInited)
       {
