@@ -450,25 +450,23 @@ namespace UI.ViewModel
         || !AudioContext.AvailableDevices.Contains(Settings.Current.InputAudioDevice)
           ? AudioContext.DefaultDevice
           : Settings.Current.OutputAudioDevice;
-
+      
       string inputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
         || !AudioCapture.AvailableDevices.Contains(Settings.Current.InputAudioDevice)
           ? AudioCapture.DefaultDevice
           : Settings.Current.InputAudioDevice;
 
-      ClientModel.Player.SetOptions(outputDevice);
-      ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
+      if (!string.IsNullOrEmpty(outputDevice)) //если 
+        ClientModel.Player.SetOptions(outputDevice);
+
+      if (!string.IsNullOrEmpty(inputDevice))
+        ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
 
       IPAddress address = loopback
         ? Settings.Current.StateOfIPv6Protocol ? IPAddress.IPv6Loopback : IPAddress.Loopback
         : IPAddress.Parse(Settings.Current.Address);
 
       ClientModel.Client.Connect(new IPEndPoint(address, Settings.Current.Port));
-    }
-
-    private void InitializeAudio(string outputDevice, string inputDevice)
-    {
-
     }
 
     private void WindowClosed(object sender, EventArgs e)
