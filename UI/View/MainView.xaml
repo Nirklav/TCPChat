@@ -481,21 +481,42 @@
                     SelectedItem="{Binding Path=SelectedRoom,
                                            Mode=OneWayToSource}">
 
-            <TabControl.ItemContainerStyle>
-                <Style>
-                    <Setter Property="TabItem.Header" 
-                            Value="{Binding Path=Name}"/>
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20"
+                               Height="20"
+                               Margin="0, 0, 2.5, 0">
+                            <Image.Style>
+                                <Style>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=Type}" Value="Voice">
+                                            <Setter Property="Image.Source" Value="/TCPChat;component/Images/voiceOn.png"/>
+                                        </DataTrigger>
 
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Path=Updated}" 
-                                     Value="True">
-                            <Setter Property="TabItem.Foreground" 
-                                    Value="Red"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TabControl.ItemContainerStyle>
-
+                                        <DataTrigger Binding="{Binding Path=Type}" Value="Chat">
+                                            <Setter Property="Image.Source" Value="/TCPChat;component/Images/chat.png"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="{Binding Path=Name}"
+                                   VerticalAlignment="Center"
+                                   Margin="2.5, 0, 0, 0">
+                            <TextBlock.Style>
+                                <Style>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=Updated}" Value="True">
+                                            <Setter Property="TextBlock.Foreground" Value="Red"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
         </TabControl>
     </Grid>
 </Window>

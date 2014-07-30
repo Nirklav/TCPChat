@@ -81,6 +81,8 @@ namespace UI.ViewModel
       set { SetValue(value, "MessageCaretIndex", v => messageCaretIndex = v); }
     }
 
+    public RoomType Type { get { return Description is VoiceRoom ? RoomType.Voice : RoomType.Chat; } }
+
     public IEnumerable<UserViewModel> Receivers
     {
       get

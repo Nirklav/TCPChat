@@ -380,11 +380,7 @@ namespace UI.ViewModel
             foreach (string nick in args.Room.Users)
             {
               User user = args.Users.Single(u => u.Equals(nick));
-
-              if (user.Equals(client.User))
-                AllUsers.Add(new UserViewModel(user, null) { IsClient = true });
-              else
-                AllUsers.Add(new UserViewModel(user, null));
+              AllUsers.Add(new UserViewModel(user, null) { IsClient = user.Equals(client.User) });
             }
         }
       }), e);
@@ -456,7 +452,7 @@ namespace UI.ViewModel
           ? AudioCapture.DefaultDevice
           : Settings.Current.InputAudioDevice;
 
-      if (!string.IsNullOrEmpty(outputDevice)) //если 
+      if (!string.IsNullOrEmpty(outputDevice))
         ClientModel.Player.SetOptions(outputDevice);
 
       if (!string.IsNullOrEmpty(inputDevice))

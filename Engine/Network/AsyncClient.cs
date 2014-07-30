@@ -75,14 +75,7 @@ namespace Engine.Network
     /// <summary>
     /// Взвращает значение, характеризующее подключен ли клиент к серверу.
     /// </summary>
-    public bool IsConnected
-    {
-      get
-      {
-        ThrowIfDisposed();
-        return handler.Connected;
-      }
-    }
+    public bool IsConnected { get { return handler == null ? false : handler.Connected; } }
 
     /// <summary>
     /// Открытый ключ данного соединения.

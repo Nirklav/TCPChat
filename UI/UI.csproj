@@ -235,6 +235,12 @@
   <ItemGroup>
     <Resource Include="Images\chat.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\chat.png" />
+    <Resource Include="Images\voiceOff.png" />
+    <Resource Include="Images\voiceOn.png" />
+    <Resource Include="Images\voiceSpeak.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy $(ProjectDir)\Infrastructure\Settings.xml $(TargetDir)\Settings.xml</PostBuildEvent>
