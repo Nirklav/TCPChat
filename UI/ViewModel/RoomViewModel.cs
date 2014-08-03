@@ -136,6 +136,8 @@ namespace UI.ViewModel
       Users.Clear();
       Messages.Clear();
 
+      MainViewModel.AllUsers.CollectionChanged -= AllUsersCollectionChanged;
+
       ClientModel.ReceiveMessage -= ClientReceiveMessage;
       ClientModel.RoomRefreshed -= ClientRoomRefreshed;
     }

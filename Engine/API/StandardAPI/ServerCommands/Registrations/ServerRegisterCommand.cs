@@ -41,13 +41,12 @@ namespace Engine.API.StandardAPI.ServerCommands
         }
         else
         {
-          ServerModel.Server.RegisterConnection(args.ConnectionId, receivedContent.User.Nick, receivedContent.OpenKey);
-
           server.Users.Add(receivedContent.User.Nick, receivedContent.User);
           room.Add(receivedContent.User.Nick);
 
           var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = true };
           ServerModel.Server.SendMessage(args.ConnectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
+          ServerModel.Server.RegisterConnection(args.ConnectionId, receivedContent.User.Nick, receivedContent.OpenKey);
 
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent
           {
@@ -55,7 +54,7 @@ namespace Engine.API.StandardAPI.ServerCommands
             Users = room.Users.Select(nick => server.Users[nick]).ToList()
           };
 
-          foreach (var connectionId in ServerModel.Server.GetConnetionsIds())
+          foreach (var connectionId in room.Users)
             ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.Id, sendingContent);
         }
       }
