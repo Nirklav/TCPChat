@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -7,6 +8,7 @@ namespace Engine.Helpers
   public class Logger
   {
     private const string DebugMessageTemplate = "Time: {0} DebugMessage: {1}";
+    private const string WarningTemplate = "Time: {0} WARNING: {1};{3}StackTrace:{3}{2}{3}";
     private const string MessageTemplate = "{4}Time: {0};{5}{4}Type: {1};{5}{4}Message: {2};{5}{4}StackTrace:{5}{3}{5}";
     private const string InnerTemplate = "{1}InnerException: {2}{2}{0}{2}";
 
@@ -31,6 +33,12 @@ namespace Engine.Helpers
 #if DEBUG
       Write(string.Format(DebugMessageTemplate, DateTime.Now, message), args);
 #endif
+    }
+
+    public void WriteWarning(string message, params object[] args)
+    {
+      StackTrace stackTrace = new StackTrace(true);
+      Write(string.Format(WarningTemplate, DateTime.Now, message, stackTrace, Environment.NewLine, "  "), args);
     }
 
     private void Write(string message, params object[] args)

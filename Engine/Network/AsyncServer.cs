@@ -152,7 +152,10 @@ namespace Engine.Network
       {
         ServerConnection connection;
         if (!connections.TryGetValue(connectionId, out connection))
+        {
+          ServerModel.Logger.WriteWarning("Connection {0} don't finded", connectionId);
           return;
+        }
 
         connection.SendMessage(messageId, messageContent);
       }

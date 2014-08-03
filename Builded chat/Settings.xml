@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <Settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <Nick>123</Nick>
+  <Nick>Anklav</Nick>
   <NickColor>
-    <R>133</R>
-    <G>156</G>
-    <B>156</B>
+    <R>170</R>
+    <G>50</G>
+    <B>50</B>
   </NickColor>
   <FormSize>
     <Width>380</Width>

@@ -22,6 +22,9 @@ namespace UI.ViewModel
     private const string KickFormRoomTitle = "Удалить из комнаты";
     private const string NoBodyToInvite = "Некого пригласить. Все и так в комнате.";
     private const string FileDialogFilter = "Все файлы|*.*";
+
+    private const int MessagesLimit = 200;
+    private const int CountToDelete = 100;
     #endregion
     
     #region fields
@@ -30,6 +33,7 @@ namespace UI.ViewModel
     private string message;
     private int messageCaretIndex;
     private UserViewModel allInRoom;
+    private ObservableCollection<MessageViewModel> messages;
     #endregion
     
     #region commands
@@ -96,8 +100,13 @@ namespace UI.ViewModel
       }
     }
 
+    public ObservableCollection<MessageViewModel> Messages
+    {
+      get { return messages; }
+      set { SetValue(value, "Messages", v => messages = v); }
+    }
+
     public ObservableCollection<UserViewModel> Users { get; private set; }
-    public ObservableCollection<MessageViewModel> Messages { get; private set; }
     #endregion
 
     #region constructors
@@ -148,24 +157,40 @@ namespace UI.ViewModel
     {
       Messages.Add(new MessageViewModel(message, this));
       MessagesAutoScroll = true;
+      TryClearMessages();
     }
 
     public void AddMessage(UserViewModel sender, string message)
     {
       Messages.Add(new MessageViewModel(sender, null, message, false, this));
       MessagesAutoScroll = true;
+      TryClearMessages();
     }
 
     public void AddPrivateMessage(UserViewModel sender, UserViewModel receiver, string message)
     {
       Messages.Add(new MessageViewModel(sender, receiver, message, true, this));
       MessagesAutoScroll = true;
+      TryClearMessages();
     }
 
     public void AddFileMessage(UserViewModel sender, FileDescription file)
     {
       Messages.Add(new MessageViewModel(sender, file.Name, file, this));
       MessagesAutoScroll = true;
+      TryClearMessages();
+    }
+
+    private void TryClearMessages()
+    {
+      if (Messages.Count < MessagesLimit)
+        return;
+
+      for (int i = 0; i < CountToDelete; i++)
+        Messages[i].Dispose();
+
+      IEnumerable<MessageViewModel> leftMessages = Messages.Skip(CountToDelete);
+      Messages = new ObservableCollection<MessageViewModel>(leftMessages);
     }
     #endregion
 
@@ -176,7 +201,7 @@ namespace UI.ViewModel
 
       try
       {
-        if (ClientModel.API != null)
+        if (ClientModel.API != null && ClientModel.Client.IsConnected)
         {
           if (ReferenceEquals(allInRoom, SelectedReceiver))
             ClientModel.API.SendMessage(Message, Name);
