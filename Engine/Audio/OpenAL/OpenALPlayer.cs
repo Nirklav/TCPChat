@@ -2,6 +2,7 @@
 using OpenAL;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Engine.Audio.OpenAL
 {
@@ -52,20 +53,32 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region methods
+    public bool IsInited
+    {
+      get { return Interlocked.CompareExchange(ref context, null, null) != null; }
+    }
+
     private void Initialize(string deviceName)
     {
       if (deviceName == null)
         return;
 
-      if (!AudioContext.AvailableDevices.Contains(deviceName))
-        throw new ArgumentException("deviceName");
+      try
+      {
+        if (!AudioContext.AvailableDevices.Contains(deviceName))
+          throw new ArgumentException("deviceName");
 
-      context = new AudioContext(deviceName);
+        context = new AudioContext(deviceName);
+      }
+      catch(Exception e)
+      {
+        context = null;
+      }
     }
 
     public void SetOptions(string deviceName)
     {
-      if (context != null)
+      if (IsInited)
       {
         Stop();
         context.Dispose();
@@ -78,6 +91,9 @@ namespace Engine.Audio.OpenAL
     {
       if (string.IsNullOrEmpty(id))
         throw new ArgumentException("id");
+
+      if (!IsInited)
+        return;
 
       lock (sources)
       {
@@ -107,6 +123,9 @@ namespace Engine.Audio.OpenAL
 
     public void Stop(string id)
     {
+      if (!IsInited)
+        return;
+
       lock (sources)
       {
         SourceDescription source;
@@ -120,6 +139,9 @@ namespace Engine.Audio.OpenAL
 
     public void Stop()
     {
+      if (!IsInited)
+        return;
+
       lock (sources)
       {
         foreach (SourceDescription source in sources.Values)

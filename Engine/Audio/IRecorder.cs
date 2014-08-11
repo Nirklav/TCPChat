@@ -26,5 +26,10 @@ namespace Engine.Audio
     /// Остонавливает запись с микрофона.
     /// </summary>
     void Stop();
+
+    /// <summary>
+    /// Возвращает заначение говоряеще о том инциализирован ли класс.
+    /// </summary>
+    bool IsInited { get; }
   }
 }

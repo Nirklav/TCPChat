@@ -43,6 +43,11 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region methods
+    public bool IsInited
+    {
+      get { return Interlocked.CompareExchange(ref capture, null, null) != null; }
+    }
+
     private void Initialize(string deviceName, AudioQuality quality)
     {
       this.quality = quality;

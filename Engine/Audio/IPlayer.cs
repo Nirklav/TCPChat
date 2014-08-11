@@ -32,5 +32,10 @@ namespace Engine.Audio
     /// Остановить воспроизведение.
     /// </summary>
     void Stop();
+
+    /// <summary>
+    /// Возвращает заначение говоряеще о том инциализирован ли класс.
+    /// </summary>
+    bool IsInited { get; }
   }
 }
