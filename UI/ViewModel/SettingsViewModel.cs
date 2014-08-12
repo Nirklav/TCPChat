@@ -15,7 +15,6 @@ namespace UI.ViewModel
     #region fields
     private SettingsView window;
     private SettingsTabViewModel selectedTab;
-    private int selectedIndex;
     #endregion
 
     #region properties

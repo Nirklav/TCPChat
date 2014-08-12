@@ -1,5 +1,6 @@
 ﻿using Engine.Model.Entities;
 using System;
+using System.Collections.Generic;
 
 namespace Engine.Audio
 {
@@ -37,5 +38,10 @@ namespace Engine.Audio
     /// Возвращает заначение говоряеще о том инциализирован ли класс.
     /// </summary>
     bool IsInited { get; }
+
+    /// <summary>
+    /// Возвращает список утросйств воспроизводящих звук.
+    /// </summary>
+    IList<string> Devices { get; }
   }
 }

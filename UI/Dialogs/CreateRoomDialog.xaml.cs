@@ -19,7 +19,7 @@ namespace UI.Dialogs
   /// </summary>
   public partial class CreateRoomDialog : Window
   {
-    public string Name { get; set; }
+    public new string Name { get; set; }
     public RoomType Type { get; set; }
 
     public CreateRoomDialog()

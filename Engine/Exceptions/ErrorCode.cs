@@ -11,5 +11,7 @@ namespace Engine.Exceptions
     FileAlreadyDownloading = 2,
     FreePortDontFind = 3,
     LargeReceivedData = 4,
+
+    AudioNotEnabled = 100,
   }
 }

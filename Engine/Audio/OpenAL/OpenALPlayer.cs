@@ -1,4 +1,6 @@
-﻿using Engine.Model.Entities;
+﻿using Engine.Exceptions;
+using Engine.Model.Client;
+using Engine.Model.Entities;
 using OpenAL;
 using System;
 using System.Collections.Generic;
@@ -9,6 +11,8 @@ namespace Engine.Audio.OpenAL
   public class OpenALPlayer : IPlayer
   {
     #region fields
+    private object syncObject = new object();
+
     private AudioContext context;
     private Dictionary<string, SourceDescription> sources;
     #endregion
@@ -43,36 +47,62 @@ namespace Engine.Audio.OpenAL
     #region constructor
     public OpenALPlayer(string deviceName = null)
     {
-      if (string.Equals(deviceName, string.Empty))
+      if (string.IsNullOrEmpty(deviceName) || IsInited)
         return;
-
-      sources = new Dictionary<string, SourceDescription>();
 
       Initialize(deviceName);
     }
     #endregion
 
-    #region methods
+    #region properties
     public bool IsInited
     {
       get { return Interlocked.CompareExchange(ref context, null, null) != null; }
     }
 
+    public IList<string> Devices
+    {
+      get
+      {
+        try
+        {
+          return AudioContext.AvailableDevices;
+        }
+        catch (Exception)
+        {
+          return new List<string>();
+        }
+      }
+    }
+    #endregion
+
+    #region methods
     private void Initialize(string deviceName)
     {
-      if (deviceName == null)
-        return;
-
       try
       {
-        if (!AudioContext.AvailableDevices.Contains(deviceName))
-          throw new ArgumentException("deviceName");
+        lock (syncObject)
+        {
+          sources = new Dictionary<string, SourceDescription>();
 
-        context = new AudioContext(deviceName);
+          if (string.IsNullOrEmpty(deviceName))
+            deviceName = AudioContext.DefaultDevice;
+
+          if (!AudioContext.AvailableDevices.Contains(deviceName))
+            deviceName = AudioContext.DefaultDevice;
+
+          context = new AudioContext(deviceName);
+        }
       }
       catch(Exception e)
       {
+        if (context != null)
+          context.Dispose();
+
         context = null;
+
+        ClientModel.Logger.Write(e);
+        throw new ModelException(ErrorCode.AudioNotEnabled, "Audio player do not initialized.", e, deviceName);
       }
     }
 
@@ -95,7 +125,7 @@ namespace Engine.Audio.OpenAL
       if (!IsInited)
         return;
 
-      lock (sources)
+      lock (syncObject)
       {
         SourceDescription source;
         if (!sources.TryGetValue(id, out source))
@@ -126,7 +156,7 @@ namespace Engine.Audio.OpenAL
       if (!IsInited)
         return;
 
-      lock (sources)
+      lock (syncObject)
       {
         SourceDescription source;
         if (!sources.TryGetValue(id, out source))
@@ -142,7 +172,7 @@ namespace Engine.Audio.OpenAL
       if (!IsInited)
         return;
 
-      lock (sources)
+      lock (syncObject)
       {
         foreach (SourceDescription source in sources.Values)
           Stop(source);

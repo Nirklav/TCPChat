@@ -1,12 +1,8 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Entities;
-using OpenAL;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows.Input;
-using System.Windows.Threading;
 using UI.Infrastructure;
 using Keys = System.Windows.Forms.Keys;
 
@@ -79,8 +75,8 @@ namespace UI.ViewModel
 
     public AudioTabViewModel(string name) : base(name)
     {
-      OutputDevices = AudioContext.AvailableDevices;
-      InputDevices = AudioCapture.AvailableDevices;
+      OutputDevices = ClientModel.Player.Devices;
+      InputDevices = ClientModel.Recorder.Devices;
       InputConfigs = new[]
       {
         new AudioQuality(1, 8, 22050),
@@ -131,10 +127,18 @@ namespace UI.ViewModel
 
     public override void SaveSettings()
     {
-      Settings.Current.Frequency = InputConfigs[SelectedConfigIndex].Frequency;
-      Settings.Current.Bits = InputConfigs[SelectedConfigIndex].Bits;
-      Settings.Current.OutputAudioDevice = OutputDevices[SelectedOutputIndex];
-      Settings.Current.InputAudioDevice = InputDevices[selectedInputIndex];
+      if (InputConfigs.Count > 0 && SelectedConfigIndex >= 0 && SelectedConfigIndex < InputConfigs.Count)
+      {
+        AudioQuality selected = InputConfigs[SelectedConfigIndex];
+        Settings.Current.Frequency = selected.Frequency;
+        Settings.Current.Bits = selected.Bits;
+      }
+
+      if (OutputDevices.Count > 0 && SelectedOutputIndex >= 0 && SelectedOutputIndex < OutputDevices.Count)
+        Settings.Current.OutputAudioDevice = OutputDevices[SelectedOutputIndex];
+
+      if (InputDevices.Count > 0 && SelectedInputIndex >= 0 && SelectedInputIndex < InputDevices.Count)
+        Settings.Current.InputAudioDevice = InputDevices[selectedInputIndex];
 
       if (!string.Equals(PressTheKey, SelectButtonName))
         Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectButtonName);

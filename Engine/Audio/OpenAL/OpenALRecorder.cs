@@ -1,6 +1,9 @@
-﻿using Engine.Model.Entities;
+﻿using Engine.Exceptions;
+using Engine.Model.Client;
+using Engine.Model.Entities;
 using OpenAL;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Engine.Audio.OpenAL
@@ -29,47 +32,78 @@ namespace Engine.Audio.OpenAL
     #region constructor
     public OpenALRecorder(string deviceName = null)
     {
-      if (string.IsNullOrEmpty(deviceName))
-        return;
-
-      if (!AudioCapture.AvailableDevices.Contains(deviceName))
-        throw new ArgumentException("deviceName");
-
-      if ((capture != null && capture.IsRunning) || string.Equals(deviceName, string.Empty))
+      if (string.IsNullOrEmpty(deviceName) || IsInited)
         return;
 
       Initialize(deviceName, new AudioQuality(1, 16, 44100));
     }
     #endregion
 
-    #region methods
+    #region properties
     public bool IsInited
     {
       get { return Interlocked.CompareExchange(ref capture, null, null) != null; }
     }
 
+    public IList<string> Devices
+    {
+      get
+      {
+        try
+        {
+          return AudioCapture.AvailableDevices;
+        }
+        catch(Exception)
+        {
+          return new List<string>();
+        }
+      }
+    }
+    #endregion
+
+    #region methods
     private void Initialize(string deviceName, AudioQuality quality)
     {
-      this.quality = quality;
-      this.samplesSize = DefaultBufferSize;
-
-      ALFormat format;
-
-      if (quality.Channels == 1)
-        format = quality.Bits == 8 ? ALFormat.Mono8 : ALFormat.Mono16;
-      else
-        format = quality.Bits == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16;
-
-      lock (syncObj)
+      try
       {
-        buffer = new byte[quality.Channels * (quality.Bits / 8) * samplesSize * 2];
-        capture = new AudioCapture(AudioCapture.DefaultDevice, quality.Frequency, format, samplesSize * 2);
+        this.quality = quality;
+        this.samplesSize = DefaultBufferSize;
+
+        ALFormat format;
+
+        if (quality.Channels == 1)
+          format = quality.Bits == 8 ? ALFormat.Mono8 : ALFormat.Mono16;
+        else
+          format = quality.Bits == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16;
+
+        lock (syncObj)
+        {
+          buffer = new byte[quality.Channels * (quality.Bits / 8) * samplesSize * 2];
+
+          if (string.IsNullOrEmpty(deviceName))
+            deviceName = AudioCapture.DefaultDevice;
+
+          if (!AudioCapture.AvailableDevices.Contains(deviceName))
+            deviceName = AudioCapture.DefaultDevice;
+
+          capture = new AudioCapture(deviceName, quality.Frequency, format, samplesSize * 2);
+        }
+      }
+      catch(Exception e)
+      {
+        if (capture != null)
+          capture.Dispose();
+
+        capture = null;
+
+        ClientModel.Logger.Write(e);
+        throw new ModelException(ErrorCode.AudioNotEnabled, "Audio recorder do not initialized.", e, deviceName);
       }
     }
 
     public void Start()
     {
-      if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
+      if (capture == null || capture.IsRunning)
         return;
 
       lock (syncObj)
@@ -81,20 +115,20 @@ namespace Engine.Audio.OpenAL
 
     public void SetOptions(string deviceName, AudioQuality quality)
     {
-      if ((capture != null && capture.IsRunning) || string.Equals(AudioCapture.DefaultDevice, string.Empty))
-        throw new ArgumentException("recorder should be stopped");
-
-      if (capture != null)
+      if (IsInited)
+      {
+        Stop();
         capture.Dispose();
+      }
 
       Initialize(deviceName, quality);
     }
 
     private void RecordingCallback(object state)
     {
-      lock(syncObj)
+      lock (syncObj)
       {
-        if (capture == null || !capture.IsRunning || string.Equals(AudioCapture.DefaultDevice, string.Empty))
+        if (capture == null || !capture.IsRunning)
           return;
 
         int availableSamples = capture.AvailableSamples;
@@ -119,7 +153,7 @@ namespace Engine.Audio.OpenAL
 
     public void Stop()
     {
-      if (capture == null || !capture.IsRunning || string.Equals(AudioCapture.DefaultDevice, string.Empty))
+      if (!IsInited)
         return;
 
       lock (syncObj)

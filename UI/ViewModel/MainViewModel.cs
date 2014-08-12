@@ -4,7 +4,6 @@ using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using Engine.Model.Server;
-using OpenAL;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -32,6 +31,7 @@ namespace UI.ViewModel
     private const string ServerDisableQuestion = "Вы точно хотите выключить сервер?";
     private const string FileMustDontExist = "Необходимо выбрать несуществующий файл.";
     private const string AllInRoom = "Все в комнате";
+    private const string AudioInitializationFailed = "Аудио устройства не инициализированны. Голосовая связь будет не активна.";
 
     private const int ClientMaxMessageLength = 100 * 1024;
     #endregion
@@ -442,21 +442,21 @@ namespace UI.ViewModel
     {
       ClientModel.Init(Settings.Current.Nick, Settings.Current.NickColor);
 
-      string outputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice) 
-        || !AudioContext.AvailableDevices.Contains(Settings.Current.InputAudioDevice)
-          ? AudioContext.DefaultDevice
-          : Settings.Current.OutputAudioDevice;
-      
-      string inputDevice = string.IsNullOrEmpty(Settings.Current.InputAudioDevice)
-        || !AudioCapture.AvailableDevices.Contains(Settings.Current.InputAudioDevice)
-          ? AudioCapture.DefaultDevice
-          : Settings.Current.InputAudioDevice;
+      try
+      {
+        ClientModel.Player.SetOptions(Settings.Current.OutputAudioDevice);
+        ClientModel.Recorder.SetOptions(Settings.Current.InputAudioDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
+      }
+      catch(ModelException me)
+      {
+        ClientModel.Player.Dispose();
+        ClientModel.Recorder.Dispose();
 
-      if (!string.IsNullOrEmpty(outputDevice))
-        ClientModel.Player.SetOptions(outputDevice);
-
-      if (!string.IsNullOrEmpty(inputDevice))
-        ClientModel.Recorder.SetOptions(inputDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
+        if (me.Code == ErrorCode.AudioNotEnabled)
+          MessageBox.Show(AudioInitializationFailed, ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        else
+          throw;
+      }
 
       IPAddress address = loopback
         ? Settings.Current.StateOfIPv6Protocol ? IPAddress.IPv6Loopback : IPAddress.Loopback

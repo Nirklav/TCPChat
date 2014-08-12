@@ -15,6 +15,8 @@ namespace Engine.Model.Client
     #region static model
     private static ClientModel model;
     private static Logger logger = new Logger("Client.log");
+    private static IPlayer player = new OpenALPlayer();
+    private static IRecorder recorder = new OpenALRecorder();
 
     public static Logger Logger { get { return logger; } }
 
@@ -36,12 +38,12 @@ namespace Engine.Model.Client
     /// <summary>
     /// Интерфейс для воспроизведения голоса.
     /// </summary>
-    public static IPlayer Player { get; private set; }
+    public static IPlayer Player { get { return player; } }
 
     /// <summary>
     /// Интерфейс для записи голоса с микрофона.
     /// </summary>
-    public static IRecorder Recorder { get; private set; }
+    public static IRecorder Recorder { get { return recorder; } }
 
     /// <summary>
     /// Исользовать только с конструкцией using
@@ -199,9 +201,6 @@ namespace Engine.Model.Client
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
       Client = new AsyncClient(nick);
       Peer = new AsyncPeer();
-
-      Player = new OpenALPlayer();
-      Recorder = new OpenALRecorder();
     }
 
     public static void Reset()
@@ -216,8 +215,6 @@ namespace Engine.Model.Client
 
       Client = null;
       Peer = null;
-      Recorder = null;
-      Player = null;
       API = null;
     }
 
