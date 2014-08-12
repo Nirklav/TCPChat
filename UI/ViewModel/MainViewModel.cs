@@ -22,16 +22,16 @@ namespace UI.ViewModel
   public class MainViewModel : BaseViewModel
   {
     #region consts
-    private const string ProgramName = "TCPChat";
-    private const string ParamsError = "Ошибка входных данных.";
-    private const string ClientNotCreated = "Клинет не соединен ни с каким сервером. Установите соединение.";
-    private const string APINotSupported = "Приложение не поддерживает эту версию API ({0}). Соединение разорвано.";
-    private const string RoomExitQuestion = "Вы действительно хотите выйти из комнаты?";
-    private const string RoomCloseQuestion = "Вы точно хотите закрыть комнату?";
-    private const string ServerDisableQuestion = "Вы точно хотите выключить сервер?";
-    private const string FileMustDontExist = "Необходимо выбрать несуществующий файл.";
-    private const string AllInRoom = "Все в комнате";
-    private const string AudioInitializationFailed = "Аудио устройства не инициализированны. Голосовая связь будет не активна.";
+    public const string ProgramName = "TCPChat";
+    public const string ParamsError = "Ошибка входных данных.";
+    public const string ClientNotCreated = "Клинет не соединен ни с каким сервером. Установите соединение.";
+    public const string APINotSupported = "Приложение не поддерживает эту версию API ({0}). Соединение разорвано.";
+    public const string RoomExitQuestion = "Вы действительно хотите выйти из комнаты?";
+    public const string RoomCloseQuestion = "Вы точно хотите закрыть комнату?";
+    public const string ServerDisableQuestion = "Вы точно хотите выключить сервер?";
+    public const string FileMustDontExist = "Необходимо выбрать несуществующий файл.";
+    public const string AllInRoom = "Все в комнате";
+    public const string AudioInitializationFailed = "Аудио устройства не инициализированны. Голосовая связь будет не активна.";
 
     private const int ClientMaxMessageLength = 100 * 1024;
     #endregion

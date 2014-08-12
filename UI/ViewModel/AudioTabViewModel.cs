@@ -1,7 +1,9 @@
-﻿using Engine.Model.Client;
+﻿using Engine.Exceptions;
+using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Collections.Generic;
+using System.Windows;
 using System.Windows.Input;
 using UI.Infrastructure;
 using Keys = System.Windows.Forms.Keys;
@@ -143,10 +145,20 @@ namespace UI.ViewModel
       if (!string.Equals(PressTheKey, SelectButtonName))
         Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectButtonName);
 
-      if (ClientModel.IsInited)
+      try
       {
         ClientModel.Recorder.SetOptions(Settings.Current.InputAudioDevice, InputConfigs[SelectedConfigIndex]);
         ClientModel.Player.SetOptions(Settings.Current.OutputAudioDevice);
+      }
+      catch(ModelException me)
+      {
+        ClientModel.Player.Dispose();
+        ClientModel.Recorder.Dispose();
+
+        if (me.Code == ErrorCode.AudioNotEnabled)
+          MessageBox.Show(MainViewModel.AudioInitializationFailed, MainViewModel.ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        else
+          throw;
       }
     }
   }
