@@ -15,8 +15,22 @@ namespace Engine.Network
 {
   public sealed class P2PService : IDisposable
   {
+    #region nested types
+    private class ClientDescription
+    {
+      public ClientDescription(IPEndPoint local, IPEndPoint @public)
+      {
+        LocalPoint = local;
+        PublicPoint = @public;
+      }
+
+      public IPEndPoint LocalPoint { get; private set; }
+      public IPEndPoint PublicPoint { get; private set; }
+    }
+    #endregion
+
     #region fields
-    Dictionary<string, IPEndPoint> clientsEndPoints;
+    Dictionary<string, ClientDescription> clientsEndPoints;
     List<RequestPair> requests;
     SynchronizationContext context;
     NetServer server;
@@ -32,7 +46,7 @@ namespace Engine.Network
       disposed = false;
 
       requests = new List<RequestPair>();
-      clientsEndPoints = new Dictionary<string, IPEndPoint>();
+      clientsEndPoints = new Dictionary<string, ClientDescription>();
 
       NetPeerConfiguration config = new NetPeerConfiguration(AsyncPeer.NetConfigString);
       config.MaximumConnections = 100;
@@ -95,10 +109,7 @@ namespace Engine.Network
         ? AddressFamily.InterNetworkV6 
         : AddressFamily.InterNetwork;
 
-      var sendingContent = new ClientConnectToP2PServiceCommand.MessageContent
-      {
-        ServicePoint = new IPEndPoint(Connection.GetIPAddress(addressFamily), Port)
-      };
+      var sendingContent = new ClientConnectToP2PServiceCommand.MessageContent { Port = Port };
 
       if (!clientsEndPoints.ContainsKey(senderId))
         ServerModel.Server.SendMessage(senderId, ClientConnectToP2PServiceCommand.Id, sendingContent);
@@ -134,10 +145,14 @@ namespace Engine.Network
             if (status != NetConnectionStatus.Connected)
               break;
 
-            string id = message.SenderConnection.RemoteHailMessage.ReadString();
+            NetIncomingMessage hailMessage = message.SenderConnection.RemoteHailMessage;
+
+            string id = hailMessage.ReadString();
+            IPEndPoint localPoint = hailMessage.ReadIPEndPoint();
+            IPEndPoint publicPoint = message.SenderEndPoint;
 
             lock(clientsEndPoints)
-              clientsEndPoints.Add(id, message.SenderEndPoint);
+              clientsEndPoints.Add(id, new ClientDescription(localPoint, publicPoint));
 
             TryDoneAllRequest();
             break;
@@ -149,17 +164,36 @@ namespace Engine.Network
     {
       bool received = true;
 
-      IPEndPoint senderTemp;
-      IPEndPoint requestTemp;
+      ClientDescription senderDescription;
+      ClientDescription requestDescription;
 
       lock (clientsEndPoints)
       {
-        received &= clientsEndPoints.TryGetValue(senderId, out senderTemp);
-        received &= clientsEndPoints.TryGetValue(requestId, out requestTemp);
+        received &= clientsEndPoints.TryGetValue(senderId, out senderDescription);
+        received &= clientsEndPoints.TryGetValue(requestId, out requestDescription);
       }
 
-      senderPoint = received ? senderTemp : null;
-      requestPoint = received ? requestTemp : null;
+      if (received)
+      {
+        IPAddress senderAddress = senderDescription.PublicPoint.Address;
+        IPAddress requestAddress = requestDescription.PublicPoint.Address;
+
+        if (senderAddress.Equals(requestAddress))
+        {
+          senderPoint = senderDescription.LocalPoint;
+          requestPoint = requestDescription.LocalPoint;
+        }
+        else
+        {
+          senderPoint = senderDescription.PublicPoint;
+          requestPoint = requestDescription.PublicPoint;
+        }
+      }
+      else
+      {
+        senderPoint = null;
+        requestPoint = null;
+      }
       
       return received;
     }

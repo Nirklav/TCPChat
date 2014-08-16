@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Net;
 using System.Windows;
+using UI.Infrastructure;
 
 namespace UI.Dialogs
 {
@@ -10,29 +11,19 @@ namespace UI.Dialogs
   /// </summary>
   public partial class ConnectDialog : Window
   {
-    public string Nick { get; set; }
-    public IPAddress Address { get; set; }
-    public Color NickColor { get; set; }
-    public int Port { get; set; }
-
-    public ConnectDialog(string nick, Color nickColor, string address, int port)
+    public ConnectDialog()
     {
       InitializeComponent();
 
-      NickField.Text = nick;
-      AddressField.Text = address;
+      NickField.Text = Settings.Current.Nick;
+      AddressField.Text = Settings.Current.Address;
 
       Random colorRandom = new Random();
+      RedColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.R;
+      GreenColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.G;
+      BlueColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.B;
 
-      bool random = false;
-      if (Color.Equals(nickColor, Color.FromArgb(170, 50, 50)))
-        random = true;
-
-      RedColorSlider.Value = random ? colorRandom.Next(30, 170) : nickColor.R;
-      GreenColorSlider.Value = random ? colorRandom.Next(30, 170) : nickColor.G;
-      BlueColorSlider.Value = random ? colorRandom.Next(30, 170) : nickColor.B;
-
-      PortField.Text = port.ToString();
+      PortField.Text = Settings.Current.Port.ToString();
     }
 
     private void Accept_Click(object sender, RoutedEventArgs e)
@@ -43,16 +34,20 @@ namespace UI.Dialogs
         return;
       }
 
-      Nick = NickField.Text;
-      NickColor = Color.FromArgb((int)RedColorSlider.Value, (int)GreenColorSlider.Value, (int)BlueColorSlider.Value);
+      Settings.Current.Nick = NickField.Text;
+      Settings.Current.NickColor = Color.FromArgb((int)RedColorSlider.Value, (int)GreenColorSlider.Value, (int)BlueColorSlider.Value);
+      Settings.Current.RandomColor = false;
 
       try
       {
-        Address = IPAddress.Parse(AddressField.Text);
-        Port = int.Parse(PortField.Text);
+        IPAddress.Parse(AddressField.Text); // Валидация
+        int port = int.Parse(PortField.Text);
 
-        if (Port > ushort.MaxValue)
+        if (port > ushort.MaxValue)
           throw new FormatException();
+
+        Settings.Current.Address = AddressField.Text;
+        Settings.Current.Port = port;
       }
       catch (FormatException)
       {

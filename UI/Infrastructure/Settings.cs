@@ -52,6 +52,7 @@ namespace UI.Infrastructure
     #region properties
     public string Nick { get; set; }
     public SavedColor NickColor { get; set; }
+    public bool RandomColor { get; set; }
 
     public Size FormSize { get; set; }
     public bool Alerts { get; set; }

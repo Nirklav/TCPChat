@@ -6,6 +6,7 @@
     <G>50</G>
     <B>50</B>
   </NickColor>
+  <RandomColor>true</RandomColor>
   <FormSize>
     <Width>380</Width>
     <Height>470</Height>

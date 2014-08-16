@@ -204,7 +204,7 @@ namespace Engine.Network
               break;
           }
           
-          if (ClientModel.IsInited)
+          if (ClientModel.API != null)
           {
             ClientModel.OnConnected(this, new ConnectEventArgs { Error = null });
             waitingAPIName = false;

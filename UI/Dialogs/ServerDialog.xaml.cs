@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows;
+using UI.Infrastructure;
 
 namespace UI.Dialogs
 {
@@ -9,31 +10,21 @@ namespace UI.Dialogs
   /// </summary>
   public partial class ServerDialog : Window
   {
-    public bool UsingIPv6Protocol { get; set; }
-    public string Nick { get; set; }
-    public Color NickColor { get; set; }
-    public int Port { get; set; }
-
-    public ServerDialog(string nick, Color nickColor, int port, bool usingIPv6)
+    public ServerDialog()
     {
       InitializeComponent();
 
-      NickField.Text = nick;
+      NickField.Text = Settings.Current.Nick;
 
       Random colorRandom = new Random();
+      RedColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.R;
+      GreenColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.G;
+      BlueColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.B;
 
-      bool random = false;
-      if (Color.Equals(nickColor, Color.FromArgb(170, 50, 50)))
-        random = true;
+      PortField.Text = Settings.Current.Port.ToString();
 
-      RedColorSlider.Value = random ? colorRandom.Next(30, 170) : nickColor.R;
-      GreenColorSlider.Value = random ? colorRandom.Next(30, 170) : nickColor.G;
-      BlueColorSlider.Value = random ? colorRandom.Next(30, 170) : nickColor.B;
-
-      PortField.Text = port.ToString();
-
-      UsingIPv6RadBtn.IsChecked = usingIPv6;
-      UsingIPv4RadBtn.IsChecked = !usingIPv6;
+      UsingIPv6RadBtn.IsChecked = Settings.Current.StateOfIPv6Protocol;
+      UsingIPv4RadBtn.IsChecked = !Settings.Current.StateOfIPv6Protocol;
     }
 
     private void Accept_Click(object sender, RoutedEventArgs e)
@@ -44,20 +35,19 @@ namespace UI.Dialogs
         return;
       }
 
-      Nick = NickField.Text;
-      NickColor = Color.FromArgb((int)RedColorSlider.Value, (int)GreenColorSlider.Value, (int)BlueColorSlider.Value);
-
-      if (UsingIPv6RadBtn.IsChecked != null && UsingIPv6RadBtn.IsChecked != false)
-        UsingIPv6Protocol = true;
-      else
-        UsingIPv6Protocol = false;
+      Settings.Current.Nick = NickField.Text;
+      Settings.Current.NickColor = Color.FromArgb((int)RedColorSlider.Value, (int)GreenColorSlider.Value, (int)BlueColorSlider.Value);
+      Settings.Current.StateOfIPv6Protocol = UsingIPv6RadBtn.IsChecked == true;
+      Settings.Current.RandomColor = false;
 
       try
       {
-        Port = int.Parse(PortField.Text);
+        int port = int.Parse(PortField.Text);
 
-        if (Port > ushort.MaxValue)
+        if (port > ushort.MaxValue)
           throw new FormatException();
+
+        Settings.Current.Port = port;
       }
       catch (FormatException)
       {

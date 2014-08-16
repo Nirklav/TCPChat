@@ -162,23 +162,14 @@ namespace UI.ViewModel
     #region command methods
     public void EnableServer(object obj)
     {
-      ServerDialog dialog = new ServerDialog(
-        Settings.Current.Nick, 
-        Settings.Current.NickColor, 
-        Settings.Current.Port, 
-        Settings.Current.StateOfIPv6Protocol);
+      ServerDialog dialog = new ServerDialog();
 
       if (dialog.ShowDialog() == true)
       {
         try
         {
-          Settings.Current.Nick = dialog.Nick;
-          Settings.Current.NickColor = dialog.NickColor;
-          Settings.Current.Port = dialog.Port;
-          Settings.Current.StateOfIPv6Protocol = dialog.UsingIPv6Protocol;
-
           ServerModel.Init(new StandardServerAPI());
-          ServerModel.Server.Start(dialog.Port, Settings.Current.ServicePort, dialog.UsingIPv6Protocol);
+          ServerModel.Server.Start(Settings.Current.Port, Settings.Current.ServicePort, Settings.Current.StateOfIPv6Protocol);
 
           InitializeClient(true);
         }
@@ -211,21 +202,10 @@ namespace UI.ViewModel
 
     public void Connect(object obj)
     {
-      ConnectDialog dialog = new ConnectDialog(
-        Settings.Current.Nick, 
-        Settings.Current.NickColor, 
-        Settings.Current.Address, 
-        Settings.Current.Port);
+      ConnectDialog dialog = new ConnectDialog();
 
       if (dialog.ShowDialog() == true)
-      {
-        Settings.Current.Nick = dialog.Nick;
-        Settings.Current.NickColor = dialog.NickColor;
-        Settings.Current.Port = dialog.Port;
-        Settings.Current.Address = dialog.Address.ToString();
-
         InitializeClient(false);
-      }
     }
 
     public void Disconnect(object obj)
@@ -428,11 +408,9 @@ namespace UI.ViewModel
           {
             case ErrorCode.APINotSupported:
               ClientModel.Reset();
-              SelectedRoom.AddSystemMessage(string.Format(APINotSupported, modelException.State));
+              SelectedRoom.AddSystemMessage(string.Format(APINotSupported, modelException.Message));
               return;
           }
-
-        SelectedRoom.AddSystemMessage(args.Error.Message);
       }), e);
     }
     #endregion

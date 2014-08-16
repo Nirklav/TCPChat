@@ -16,18 +16,18 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
 
-      if (receivedContent.ServicePoint == null)
-        throw new ArgumentNullException("ServicePoint");
+      IPAddress address = ClientModel.Client.RemotePoint.Address;
+      IPEndPoint endPoint = new IPEndPoint(address, receivedContent.Port);
 
-      ClientModel.Peer.ConnectToService(receivedContent.ServicePoint);
+      ClientModel.Peer.ConnectToService(endPoint);
     }
 
     [Serializable]
     public class MessageContent
     {
-      IPEndPoint servicePoint;
+      int port;
 
-      public IPEndPoint ServicePoint { get { return servicePoint; } set { servicePoint = value; } }
+      public int Port { get { return port; } set { port = value; } }
     }
 
     public const ushort Id = (ushort)ClientCommand.ConnectToP2PService;

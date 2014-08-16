@@ -25,7 +25,6 @@ namespace Engine.Network
   {
     #region consts
     public const string NetConfigString = "Peer TCPChat";
-    public const string ServiceConnectionPrefix = "serviceId_";
 
     /// <summary>
     /// Время неактивности соединения, после прошествия которого соединение будет закрыто.
@@ -36,6 +35,8 @@ namespace Engine.Network
     #region private fields
     private Dictionary<string, List<WaitingCommandContainer>> waitingCommands;
     private Dictionary<IPEndPoint, string> connectingTo;
+
+    private NetConnection serviceConnection;
 
     private NetPeer handler;
     private DateTime lastActivity;
@@ -92,10 +93,15 @@ namespace Engine.Network
       handler.Start();
 
       NetOutgoingMessage hailMessage = handler.CreateMessage();
-      using(var client = ClientModel.Get())   
-        hailMessage.Write(client.User.Nick);
+      using (var client = ClientModel.Get())
+      {
+        IPEndPoint localPoint = new IPEndPoint(Connection.GetIPAddress(remotePoint.AddressFamily), handler.Port);
 
-      handler.Connect(remotePoint, hailMessage);
+        hailMessage.Write(client.User.Nick);
+        hailMessage.Write(localPoint);
+      }
+
+      serviceConnection = handler.Connect(remotePoint, hailMessage);
 
       ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToService({0})", remotePoint);
     }
@@ -121,6 +127,8 @@ namespace Engine.Network
       NetOutgoingMessage holePunchMessage = handler.CreateMessage();
       holePunchMessage.Write((byte)0);
       handler.SendUnconnectedMessage(holePunchMessage, waitingPoint);
+
+      DisconnectFromService();
 
       ClientModel.Logger.WriteDebug("AsyncPeer.WaitConnection({0})", waitingPoint);
     }
@@ -153,6 +161,8 @@ namespace Engine.Network
         hailMessage.Write(client.User.Nick);
 
       handler.Connect(remotePoint, hailMessage);
+
+      DisconnectFromService();
 
       ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToPeer({0}, {1})", peerId, remotePoint);
     }
@@ -285,6 +295,7 @@ namespace Engine.Network
           formatter.Serialize(messageStream, messageContent);
           message.Write(messageStream.ToArray());
         }
+
       return message;
     }
 
@@ -305,15 +316,21 @@ namespace Engine.Network
 
       ClientModel.API.ConnectToPeer(peerId);
     }
+
+    private void DisconnectFromService()
+    {
+      if (serviceConnection != null)
+        serviceConnection.Disconnect(string.Empty);
+    }
     #endregion
 
     #region callback method
     private void HandlerCallback(object obj)
     {
-      NetIncomingMessage message;
-
       if (handler == null || handler.Status != NetPeerStatus.Running)
         return;
+
+      NetIncomingMessage message;
 
       while ((message = handler.ReadMessage()) != null)
       {
@@ -348,8 +365,11 @@ namespace Engine.Network
     private void PeerConnected(NetIncomingMessage message)
     {
       string connectionId;
-      if (connectingTo.TryGetValue(message.SenderEndPoint, out connectionId))
-        connectingTo.Remove(message.SenderEndPoint);
+      lock (connectingTo)
+      {
+        if (connectingTo.TryGetValue(message.SenderEndPoint, out connectionId))
+          connectingTo.Remove(message.SenderEndPoint);
+      }
 
       if (connectionId == null)
         connectionId = message.SenderConnection.RemoteHailMessage.ReadString();
