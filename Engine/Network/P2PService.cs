@@ -27,6 +27,18 @@ namespace Engine.Network
       public IPEndPoint LocalPoint { get; private set; }
       public IPEndPoint PublicPoint { get; private set; }
     }
+
+    private class RequestPair
+    {
+      public RequestPair(string requestId, string senderId)
+      {
+        RequestId = requestId;
+        SenderId = senderId;
+      }
+
+      public string RequestId { get; set; }
+      public string SenderId { get; set; }
+    }
     #endregion
 
     #region fields
@@ -109,13 +121,11 @@ namespace Engine.Network
         ? AddressFamily.InterNetworkV6 
         : AddressFamily.InterNetwork;
 
-      var sendingContent = new ClientConnectToP2PServiceCommand.MessageContent { Port = Port };
-
       if (!clientsEndPoints.ContainsKey(senderId))
-        ServerModel.Server.SendMessage(senderId, ClientConnectToP2PServiceCommand.Id, sendingContent);
+        ServerModel.API.SendP2PConnectRequest(senderId, Port);
 
       if (!clientsEndPoints.ContainsKey(requestId))
-        ServerModel.Server.SendMessage(requestId, ClientConnectToP2PServiceCommand.Id, sendingContent);
+        ServerModel.API.SendP2PConnectRequest(requestId, Port);
     }
 
     internal void RemoveEndPoint(string id)

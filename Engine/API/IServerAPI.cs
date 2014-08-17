@@ -12,6 +12,7 @@ namespace Engine
 
     IServerAPICommand GetCommand(byte[] message);
 
+    void SendP2PConnectRequest(string nick, int port);
     void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint);
     void SendSystemMessage(string nick, string message);
     void RemoveUser(string nick);

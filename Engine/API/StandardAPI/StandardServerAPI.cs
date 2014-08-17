@@ -104,6 +104,16 @@ namespace Engine.API.StandardAPI
     }
 
     /// <summary>
+    /// Посылает клиенту запрос на подключение к P2PService
+    /// </summary>
+    /// <param name="nick">Пользователь получащий запрос.</param>
+    public void SendP2PConnectRequest(string nick, int servicePort)
+    {
+      var sendingContent = new ClientConnectToP2PServiceCommand.MessageContent { Port = servicePort };
+      ServerModel.Server.SendMessage(nick, ClientConnectToP2PServiceCommand.Id, sendingContent);
+    }
+
+    /// <summary>
     /// Закрывает соединение.
     /// </summary>
     /// <param name="nick">Ник пользователя, соединение котрого будет закрыто.</param>

@@ -138,7 +138,6 @@
     <Compile Include="Model\Entities\DownloadingFile.cs" />
     <Compile Include="Model\Common\ModelContext.cs" />
     <Compile Include="Model\Entities\PostedFile.cs" />
-    <Compile Include="Containers\WaitingCommandContainer.cs" />
     <Compile Include="Containers\WaitingPrivateMessage.cs" />
     <Compile Include="Model\Server\ServerModel.cs" />
     <Compile Include="EventArgs\AsyncErrorEventArgs.cs" />
@@ -150,7 +149,6 @@
     <Compile Include="EventArgs\RegistrationEventArgs.cs" />
     <Compile Include="EventArgs\RoomEventArgs.cs" />
     <Compile Include="Helpers\Crypter.cs" />
-    <Compile Include="Containers\RequestPair.cs" />
     <Compile Include="Model\Entities\FileDescription.cs" />
     <Compile Include="Helpers\Logger.cs" />
     <Compile Include="Network\P2PService.cs" />

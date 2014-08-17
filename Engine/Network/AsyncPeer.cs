@@ -23,6 +23,28 @@ namespace Engine.Network
 
   public class AsyncPeer : IDisposable
   {
+    #region nested types
+
+    private class WaitingCommandContainer
+    {
+      public WaitingCommandContainer(ushort id, object content)
+        : this(id, content, false)
+      { }
+
+      public WaitingCommandContainer(ushort id, object content, bool unreliable)
+      {
+        CommandId = id;
+        MessageContent = content;
+        Unreliable = unreliable;
+      }
+
+      public ushort CommandId { get; set; }
+      public object MessageContent { get; set; }
+      public bool Unreliable { get; set; }
+    }
+
+    #endregion
+
     #region consts
     public const string NetConfigString = "Peer TCPChat";
 

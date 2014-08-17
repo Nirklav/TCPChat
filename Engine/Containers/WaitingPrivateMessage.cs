@@ -6,7 +6,7 @@ using System.Text;
 namespace Engine.Containers
 {
   /// <summary>
-  /// Класс описывающий ожидающее отркытого ключа приватное сообщение.
+  /// Ожидающее отркытого ключа приватное сообщение.
   /// </summary>
   public class WaitingPrivateMessage
   {

@@ -41,7 +41,6 @@ namespace Engine.Network
     private IPEndPoint hostAddress;
 
     private RSACryptoServiceProvider keyCryptor;
-    private SynchronizationContext GUIContext;
 
     private bool waitingAPIName;
     private string serverAPIVersion;
@@ -62,7 +61,6 @@ namespace Engine.Network
     public AsyncClient(string nick)
     {
       keyCryptor = new RSACryptoServiceProvider(CryptorKeySize);
-      GUIContext = SynchronizationContext.Current;
 
       waitingAPIName = false;
       reconnecting = false;
@@ -146,20 +144,20 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (handler != null)
-        if (handler.Connected == true)
-          throw new SocketException((int)SocketError.IsConnected);
+      if (handler != null && handler.Connected)
+        throw new SocketException((int)SocketError.IsConnected);
 
       waitingAPIName = true;
       hostAddress = serverAddress;
       systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
+
       Socket connectingHandler = new Socket(serverAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-      connectingHandler.BeginConnect(serverAddress, ConnectCallback, connectingHandler);
+      connectingHandler.BeginConnect(serverAddress, OnConnected, connectingHandler);
     }
     #endregion
 
     #region private/protected override methods
-    private void ConnectCallback(IAsyncResult result)
+    private void OnConnected(IAsyncResult result)
     {
       try
       {
@@ -193,27 +191,8 @@ namespace Engine.Network
         if (e.Error != null)
           throw e.Error;
 
-        if (waitingAPIName)
-        {
-          serverAPIVersion = Encoding.Unicode.GetString(e.ReceivedData);
-
-          switch (serverAPIVersion)
-          {
-            case StandardServerAPI.API:
-              ClientModel.API = new StandardClientAPI();
-              break;
-          }
-          
-          if (ClientModel.API != null)
-          {
-            ClientModel.OnConnected(this, new ConnectEventArgs { Error = null });
-            waitingAPIName = false;
-          }
-          else
-            throw new ModelException(ErrorCode.APINotSupported, serverAPIVersion);
-
+        if (TrySetAPI(e))
           return;
-        }
 
         IClientAPICommand command = ClientModel.API.GetCommand(e.ReceivedData);
         command.Run(new ClientCommandArgs { Message = e.ReceivedData });
@@ -225,19 +204,29 @@ namespace Engine.Network
       }
     }
 
-    public override void Dispose()
+    private bool TrySetAPI(DataReceivedEventArgs e)
     {
-      lock (timerSync)
+      if (!waitingAPIName)
+        return false;
+
+      serverAPIVersion = Encoding.Unicode.GetString(e.ReceivedData);
+
+      switch (serverAPIVersion)
       {
-        base.Dispose();
-
-        keyCryptor.Clear();
-
-        if (systemTimer != null)
-          systemTimer.Dispose();
-
-        systemTimer = null;
+        case StandardServerAPI.API:
+          ClientModel.API = new StandardClientAPI();
+          break;
       }
+
+      if (ClientModel.API != null)
+      {
+        ClientModel.OnConnected(this, new ConnectEventArgs { Error = null });
+        waitingAPIName = false;
+      }
+      else
+        throw new ModelException(ErrorCode.APINotSupported, serverAPIVersion);
+
+      return true;
     }
 
     protected override void OnDataSended(DataSendedEventArgs args)
@@ -293,6 +282,25 @@ namespace Engine.Network
         if (systemTimer != null)
           systemTimer.Change(SystemTimerInterval, -1);
     }
+    #endregion
+
+    #region IDisposable
+
+    public override void Dispose()
+    {
+      lock (timerSync)
+      {
+        base.Dispose();
+
+        keyCryptor.Clear();
+
+        if (systemTimer != null)
+          systemTimer.Dispose();
+
+        systemTimer = null;
+      }
+    }
+
     #endregion
   }
 }
