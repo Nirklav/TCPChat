@@ -41,6 +41,8 @@ namespace Engine.API.StandardAPI.ServerCommands
         }
         else
         {
+          ServerModel.Logger.WriteInfo("User login: {0}", receivedContent.User.Nick);
+
           server.Users.Add(receivedContent.User.Nick, receivedContent.User);
           room.Add(receivedContent.User.Nick);
 

@@ -83,14 +83,14 @@ namespace UI.Infrastructure
     }
 
     [Flags]
-    private enum KeyboardFlags : int
+    private enum KeyboardFlags
     {
       Extended = 0x01,
       Injected = 0x10,
       AltDown = 0x20,
     }
 
-    private enum HookType : int
+    private enum HookType
     {
       JournalRecord = 0,
       JournalPlayback = 1,

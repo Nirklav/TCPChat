@@ -9,6 +9,7 @@ namespace Engine.Helpers
   {
     private const string DebugMessageTemplate = "Time: {0} DebugMessage: {1}";
     private const string WarningTemplate = "Time: {0} WARNING: {1};{3}StackTrace:{3}{2}{3}";
+    private const string InfoTemplate = "Time: {0} INFO: {1}";
     private const string MessageTemplate = "{4}Time: {0};{5}{4}Type: {1};{5}{4}Message: {2};{5}{4}StackTrace:{5}{3}{5}";
     private const string InnerTemplate = "{1}InnerException: {2}{2}{0}{2}";
 
@@ -19,6 +20,11 @@ namespace Engine.Helpers
     public Logger(string FileName)
     {
       logFileName = FileName;
+    }
+
+    public void WriteInfo(string message, params object[] param)
+    {
+      Write(string.Format(InfoTemplate, DateTime.Now, message), param);
     }
 
     public void Write(Exception e)
