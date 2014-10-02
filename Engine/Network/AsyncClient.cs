@@ -88,7 +88,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Асинхронный алгоритм шифрования, данного соединения.
+    /// Ассиметричный алгоритм шифрования, данного соединения.
     /// </summary>
     public RSACryptoServiceProvider KeyCryptor
     {
@@ -257,7 +257,7 @@ namespace Engine.Network
       {
         if ((DateTime.Now - lastPingRequest).TotalMilliseconds >= PingInterval)
         {
-          SendMessage(ServerPingRequestCommand.Id, null);
+          SendMessage(ServerPingRequestCommand.Id, null); // TODO: this should be moved in API
 
           lastPingRequest = DateTime.Now;
         }
