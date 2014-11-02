@@ -44,7 +44,6 @@ namespace Engine.Network
     #region fields
     Dictionary<string, ClientDescription> clientsEndPoints;
     List<RequestPair> requests;
-    SynchronizationContext context;
     NetServer server;
     bool disposed;
     #endregion
@@ -67,13 +66,17 @@ namespace Engine.Network
       if (usingIPv6)
         config.LocalAddress = IPAddress.IPv6Any;
 
-      context = new SynchronizationContext();
-
-      if (SynchronizationContext.Current == null)
-        SynchronizationContext.SetSynchronizationContext(context);
-
       server = new NetServer(config);
-      server.RegisterReceivedCallback(DataReceivedCallback);
+
+      if (SynchronizationContext.Current != null)
+        server.RegisterReceivedCallback(ReceivedCallback);
+      else
+      {
+        SynchronizationContext.SetSynchronizationContext(new EngineSyncContext());
+        server.RegisterReceivedCallback(ReceivedCallback);
+        SynchronizationContext.SetSynchronizationContext(null);
+      }
+
       server.Start();
     }
     #endregion
@@ -136,36 +139,45 @@ namespace Engine.Network
     #endregion
 
     #region private methods
-    private void DataReceivedCallback(object obj)
+    private void ReceivedCallback(object obj)
     {
       NetIncomingMessage message;
 
       while ((message = server.ReadMessage()) != null)
       {
-        switch (message.MessageType)
+        try
         {
-          case NetIncomingMessageType.ErrorMessage:
-          case NetIncomingMessageType.WarningMessage:
-            ServerModel.Logger.Write(new NetException(message.ReadString()));
-            break;
-
-          case NetIncomingMessageType.StatusChanged:
-            NetConnectionStatus status = (NetConnectionStatus)message.ReadByte();
-
-            if (status != NetConnectionStatus.Connected)
+          switch (message.MessageType)
+          {
+            case NetIncomingMessageType.ErrorMessage:
+            case NetIncomingMessageType.WarningMessage:
+              ServerModel.Logger.Write(new NetException(message.ReadString()));
               break;
 
-            NetIncomingMessage hailMessage = message.SenderConnection.RemoteHailMessage;
+            case NetIncomingMessageType.StatusChanged:
+              var status = (NetConnectionStatus)message.ReadByte();
 
-            string id = hailMessage.ReadString();
-            IPEndPoint localPoint = hailMessage.ReadIPEndPoint();
-            IPEndPoint publicPoint = message.SenderEndPoint;
+              if (status != NetConnectionStatus.Connected)
+                break;
 
-            lock(clientsEndPoints)
-              clientsEndPoints.Add(id, new ClientDescription(localPoint, publicPoint));
+              var hailMessage = message.SenderConnection.RemoteHailMessage;
+              if (hailMessage == null)
+                continue;
 
-            TryDoneAllRequest();
-            break;
+              var id = hailMessage.ReadString();
+              var localPoint = hailMessage.ReadIPEndPoint();
+              var publicPoint = message.SenderEndPoint;
+
+              lock (clientsEndPoints)
+                clientsEndPoints.Add(id, new ClientDescription(localPoint, publicPoint));
+
+              TryDoneAllRequest();
+              break;
+          }
+        }
+        catch(Exception e)
+        {
+          ServerModel.Logger.Write(e);
         }
       }
     }

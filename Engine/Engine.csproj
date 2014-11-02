@@ -72,7 +72,6 @@
     <Compile Include="API\IClientAPICommand.cs" />
     <Compile Include="API\IServerAPI.cs" />
     <Compile Include="API\IServerAPICommand.cs" />
-    <Compile Include="API\StandardAPI\ClientCommands\Files\ServerRemoveFileFromRoomCommand.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\Voice\ClientPlayVoiceCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\BaseServerCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Files\ServerAddFileToRoomCommand.cs" />
@@ -119,6 +118,7 @@
     <Compile Include="Audio\IRecorder.cs" />
     <Compile Include="Audio\OpenAL\OpenALPlayer.cs" />
     <Compile Include="Audio\OpenAL\OpenALRecorder.cs" />
+    <Compile Include="Helpers\EngineSyncContext.cs" />
     <Compile Include="Model\Entities\AudioQuality.cs" />
     <Compile Include="Model\Entities\SoundPack.cs" />
     <Compile Include="EventArgs\RecordedEventArgs.cs" />

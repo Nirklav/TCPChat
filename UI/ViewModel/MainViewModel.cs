@@ -168,7 +168,7 @@ namespace UI.ViewModel
       {
         try
         {
-          ServerModel.Init(new StandardServerAPI());
+          ServerModel.Init();
           ServerModel.Server.Start(Settings.Current.Port, Settings.Current.ServicePort, Settings.Current.StateOfIPv6Protocol);
 
           InitializeClient(true);

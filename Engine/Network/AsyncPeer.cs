@@ -11,6 +11,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Collections.Generic;
 using Engine.Containers;
+using Engine.Helpers;
 
 namespace Engine.Network
 {
@@ -62,7 +63,6 @@ namespace Engine.Network
 
     private NetPeer handler;
     private DateTime lastActivity;
-    private SynchronizationContext context;
     private int state; //PeerState
     #endregion
 
@@ -81,7 +81,6 @@ namespace Engine.Network
     {
       waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
       connectingTo = new Dictionary<IPEndPoint, string>();
-      context = SynchronizationContext.Current ?? new SynchronizationContext();
     }
     #endregion
 
@@ -100,9 +99,6 @@ namespace Engine.Network
       if (handler != null && handler.Status == NetPeerStatus.Running)
         throw new ArgumentException("уже запущен");
 
-      if (SynchronizationContext.Current == null)
-        SynchronizationContext.SetSynchronizationContext(context);
-
       NetPeerConfiguration config = new NetPeerConfiguration(NetConfigString);
       config.Port = 0;
       config.AcceptIncomingConnections = true;
@@ -111,7 +107,16 @@ namespace Engine.Network
         config.LocalAddress = IPAddress.IPv6Any;
 
       handler = new NetPeer(config);
-      handler.RegisterReceivedCallback(HandlerCallback);
+
+      if (SynchronizationContext.Current != null)
+        handler.RegisterReceivedCallback(ReceivedCallback);
+      else
+      {
+        SynchronizationContext.SetSynchronizationContext(new EngineSyncContext());
+        handler.RegisterReceivedCallback(ReceivedCallback);
+        SynchronizationContext.SetSynchronizationContext(null);
+      }
+
       handler.Start();
 
       NetOutgoingMessage hailMessage = handler.CreateMessage();
@@ -141,9 +146,6 @@ namespace Engine.Network
       if (oldState == (int)PeerState.NotConnected)
         throw new InvalidOperationException("Пир имеет неправильное состояние.");
 
-      if (SynchronizationContext.Current == null)
-        SynchronizationContext.SetSynchronizationContext(context);
-
       // Создания и отправка сообщения для пробивания NAT,
       // и возможности принять входящее соединение
       NetOutgoingMessage holePunchMessage = handler.CreateMessage();
@@ -171,9 +173,6 @@ namespace Engine.Network
 
       if (handler == null)
         throw new InvalidOperationException("обработчик не создан");
-
-      if (SynchronizationContext.Current == null)
-        SynchronizationContext.SetSynchronizationContext(context);
 
       lock (connectingTo)
         connectingTo.Add(remotePoint, peerId);
@@ -347,7 +346,7 @@ namespace Engine.Network
     #endregion
 
     #region callback method
-    private void HandlerCallback(object obj)
+    private void ReceivedCallback(object obj)
     {
       if (handler == null || handler.Status != NetPeerStatus.Running)
         return;
@@ -394,7 +393,18 @@ namespace Engine.Network
       }
 
       if (connectionId == null)
+      {
+        if (message.SenderConnection.RemoteHailMessage == null)
+          return;
+
         connectionId = message.SenderConnection.RemoteHailMessage.ReadString();
+      }
+
+      if (connectionId == null)
+      {
+        ClientModel.Logger.WriteWarning("ConnectionId is null [Message: {0}]", message.ToString());
+        return;
+      }
 
       message.SenderConnection.Tag = connectionId;
 

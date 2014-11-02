@@ -30,6 +30,8 @@ namespace Engine
     void Register();
     void Unregister();
 
+    void PingRequest();
+
     void ConnectToPeer(string peerId);
   }
 }

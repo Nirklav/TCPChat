@@ -257,8 +257,7 @@ namespace Engine.Network
       {
         if ((DateTime.Now - lastPingRequest).TotalMilliseconds >= PingInterval)
         {
-          SendMessage(ServerPingRequestCommand.Id, null); // TODO: this should be moved in API
-
+          ClientModel.API.PingRequest();
           lastPingRequest = DateTime.Now;
         }
       }

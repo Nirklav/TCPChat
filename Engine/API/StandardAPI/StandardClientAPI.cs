@@ -443,5 +443,10 @@ namespace Engine.API.StandardAPI
       var sendingContent = new ServerP2PConnectRequestCommand.MessageContent { Nick = nick };
       ClientModel.Client.SendMessage(ServerP2PConnectRequestCommand.Id, sendingContent);
     }
+
+    public void PingRequest()
+    {
+      ClientModel.Client.SendMessage(ServerPingRequestCommand.Id, null);
+    }
   }
 }

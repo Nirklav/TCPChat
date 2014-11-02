@@ -67,13 +67,13 @@ namespace Engine.Model.Server
       get { return Interlocked.CompareExchange(ref model, null, null) != null; }
     }
 
-    public static void Init(IServerAPI api)
+    public static void Init()
     {
       if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 
       Server = new AsyncServer();
-      API = api;
+      API = new StandardServerAPI();
     }
 
     public static void Reset()
