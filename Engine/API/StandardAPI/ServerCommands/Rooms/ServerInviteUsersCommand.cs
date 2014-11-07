@@ -1,10 +1,10 @@
 ﻿using Engine.API.StandardAPI.ClientCommands;
+using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
-using Engine.Network.Connections;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
@@ -14,7 +14,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("RoomName");

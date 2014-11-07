@@ -3,16 +3,16 @@ using Engine.Model.Entities;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Engine.Helpers;
 
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientRoomRefreshedCommand :
-      BaseCommand,
       IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.Room == null)
         throw new ArgumentNullException("room");

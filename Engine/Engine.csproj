@@ -72,6 +72,7 @@
     <Compile Include="API\IClientCommand.cs" />
     <Compile Include="API\IServerAPI.cs" />
     <Compile Include="API\IServerCommand.cs" />
+    <Compile Include="Helpers\Serializer.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\Voice\ClientPlayVoiceCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\BaseServerCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Files\ServerAddFileToRoomCommand.cs" />
@@ -94,7 +95,6 @@
     <Compile Include="API\StandardAPI\ServerCommands\Rooms\ServerSetRoomAdminCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\Registrations\ServerUnregisterCommand.cs" />
     <Compile Include="API\StandardAPI\StandardClientAPI.cs" />
-    <Compile Include="API\StandardAPI\BaseCommand.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\ClientCommand.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\P2P\ClientConnectToP2PServiceCommand.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\P2P\ClientConnectToPeerCommand.cs" />

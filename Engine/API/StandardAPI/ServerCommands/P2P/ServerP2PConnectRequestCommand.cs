@@ -1,11 +1,6 @@
-﻿using Engine.API.StandardAPI.ClientCommands;
-using Engine.Model.Entities;
+﻿using Engine.Helpers;
 using Engine.Model.Server;
-using Engine.Network;
-using Engine.Network.Connections;
 using System;
-using System.Net;
-using System.Net.Sockets;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
@@ -15,7 +10,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.Nick == null)
         throw new ArgumentNullException("Info");

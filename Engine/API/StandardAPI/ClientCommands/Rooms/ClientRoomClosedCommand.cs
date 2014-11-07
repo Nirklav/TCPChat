@@ -1,16 +1,16 @@
-﻿using Engine.Model.Client;
+﻿using Engine.Helpers;
+using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientRoomClosedCommand :
-      BaseCommand,
       IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.Room == null)
         throw new ArgumentNullException("room");

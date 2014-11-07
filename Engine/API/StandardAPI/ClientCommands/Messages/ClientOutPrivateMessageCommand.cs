@@ -8,12 +8,11 @@ using System.Text;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientOutPrivateMessageCommand :
-      BaseCommand,
       IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.Key == null)
         throw new ArgumentNullException("key");

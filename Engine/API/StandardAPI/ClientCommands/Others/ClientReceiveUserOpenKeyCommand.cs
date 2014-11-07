@@ -11,13 +11,12 @@ using System.Text;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientReceiveUserOpenKeyCommand :
-      BaseCommand,
       IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {
       StandardClientAPI API = (StandardClientAPI)ClientModel.API;
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.Nick))
         throw new ArgumentException("Nick");

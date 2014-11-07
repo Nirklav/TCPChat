@@ -315,10 +315,7 @@ namespace Engine.Network
         messageStream.Write(BitConverter.GetBytes(commandId), 0, sizeof(ushort));
 
         if (messageContent != null)
-        {
-          BinaryFormatter formatter = new BinaryFormatter();
-          formatter.Serialize(messageStream, messageContent);
-        }
+          Serializer.Serialize(messageContent, messageStream);
 
         message.Write(messageStream.ToArray());
       }

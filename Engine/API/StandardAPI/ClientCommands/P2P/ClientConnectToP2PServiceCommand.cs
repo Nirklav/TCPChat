@@ -1,12 +1,11 @@
-﻿using Engine.Model.Client;
-using Engine.Network;
+﻿using Engine.Helpers;
+using Engine.Model.Client;
 using System;
 using System.Net;
 
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientConnectToP2PServiceCommand :
-      BaseCommand,
       IClientCommand
   {
     public void Run(ClientCommandArgs args)
@@ -14,7 +13,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (args.PeerConnectionId != null)
         return;
 
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       IPAddress address = ClientModel.Client.RemotePoint.Address;
       IPEndPoint endPoint = new IPEndPoint(address, receivedContent.Port);

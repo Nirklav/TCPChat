@@ -1,14 +1,11 @@
-﻿using Engine.Model.Client;
+﻿using Engine.Helpers;
+using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Engine.API.StandardAPI.ClientCommands
 {
-  class ClientPlayVoiceCommand : 
-    BaseCommand, 
+  class ClientPlayVoiceCommand :
     IClientCommand
   {
     public void Run(ClientCommandArgs args)
@@ -16,7 +13,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (args.PeerConnectionId == null)
         return;
 
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
       ClientModel.Player.Enqueue(args.PeerConnectionId, receivedContent.Number, receivedContent.Pack);
     }
 

@@ -1,15 +1,15 @@
-﻿using Engine.Model.Client;
+﻿using Engine.Helpers;
+using Engine.Model.Client;
 using System;
 
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientOutRoomMessageCommand :
-      BaseCommand,
       IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.Sender))
         throw new ArgumentException("sender");

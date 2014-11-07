@@ -1,4 +1,5 @@
 ﻿using Engine.Exceptions;
+using Engine.Helpers;
 using System;
 using System.IO;
 using System.Net;
@@ -109,10 +110,7 @@ namespace Engine.Network.Connections
         messageStream.Write(BitConverter.GetBytes(id), 0, sizeof(ushort));
 
         if (messageContent != null)
-        {
-          BinaryFormatter formatter = new BinaryFormatter();
-          formatter.Serialize(messageStream, messageContent);
-        }
+          Serializer.Serialize(messageContent, messageStream);
 
         byte[] messageToSend = messageStream.ToArray();
         int messageToSendSize = (int)messageStream.Length;

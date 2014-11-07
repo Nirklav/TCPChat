@@ -1,4 +1,5 @@
-﻿using Engine.Model.Client;
+﻿using Engine.Helpers;
+using Engine.Model.Client;
 using Engine.Model.Entities;
 using Engine.Network;
 using System;
@@ -8,7 +9,6 @@ using System.Linq;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientWriteFilePartCommand :
-      BaseCommand,
       IClientCommand
   {
     public void Run(ClientCommandArgs args)
@@ -16,7 +16,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (args.PeerConnectionId == null)
         return;
 
-      MessageContent receivedContent = GetContentFromMessage<MessageContent>(args.Message);
+      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.File == null)
         throw new ArgumentNullException("File");
