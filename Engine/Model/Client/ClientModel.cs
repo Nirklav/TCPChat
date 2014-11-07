@@ -167,9 +167,9 @@ namespace Engine.Model.Client
       }
 
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
-      Plugins = new ClientPluginManager(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
       Client = new AsyncClient(nick);
       Peer = new AsyncPeer();
+      Plugins = new ClientPluginManager(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
     }
 
     public static void Reset()

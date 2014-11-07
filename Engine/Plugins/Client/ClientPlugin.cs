@@ -11,13 +11,13 @@ namespace Engine.Plugins.Client
   /// </summary>
   public abstract class ClientPlugin :
     CrossDomainObject,
-    IPlugin
+    IPlugin<ClientModelWrapper>
   {
     public abstract string Name { get; }
     public abstract string MenuCaption { get; }
     public abstract List<ClientPluginCommand> Commands { get; }
 
-    public abstract void Initialize();
+    public abstract void Initialize(ClientModelWrapper model);
     public abstract void InvokeMenuHandler();
   }
 }

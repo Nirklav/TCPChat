@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Engine.Plugins
+namespace Engine.Plugins.Server
 {
-  public interface IPlugin
+  public class ServerModelWrapper : IPluginModelWrapper
   {
-    string Name { get; }
-
-    void Initialize();
   }
 }

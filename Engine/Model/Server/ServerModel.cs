@@ -77,9 +77,9 @@ namespace Engine.Model.Server
       if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 
-      Plugins = new ServerPluginManager(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
       Server = new AsyncServer();
       API = new StandardServerAPI();
+      Plugins = new ServerPluginManager(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
     }
 
     public static void Reset()

@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using Engine.Exceptions;
+using Engine.Model.Client;
+using System;
+using System.Collections.Generic;
 
 namespace Engine.Plugins.Client
 {
-  public class ClientPluginManager : PluginManager<ClientPlugin>
+  public class ClientPluginManager : PluginManager<ClientPlugin, ClientModelWrapper>
   {
     private Dictionary<ushort, ClientPluginCommand> commands;
 
@@ -38,6 +41,11 @@ namespace Engine.Plugins.Client
     {
       foreach (var command in unloading.Plugin.Commands)
         commands.Remove(command.Id);
+    }
+
+    protected override void OnError(string pluginName, Exception e)
+    {
+      ClientModel.Logger.Write(new ModelException(ErrorCode.PluginError, string.Format("Error in plugin: {0}", pluginName), e));
     }
   }
 }

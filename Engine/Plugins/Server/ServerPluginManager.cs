@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using Engine.Exceptions;
+using Engine.Model.Server;
+using System;
+using System.Collections.Generic;
 
 namespace Engine.Plugins.Server
 {
-  public class ServerPluginManager : PluginManager<ServerPlugin>
+  public class ServerPluginManager : PluginManager<ServerPlugin, ServerModelWrapper>
   {
     private Dictionary<ushort, ServerPluginCommand> commands;
 
@@ -38,6 +41,11 @@ namespace Engine.Plugins.Server
     {
       foreach (var command in unloading.Plugin.Commands)
         commands.Remove(command.Id);
+    }
+
+    protected override void OnError(string pluginName, Exception e)
+    {
+      ServerModel.Logger.Write(new ModelException(ErrorCode.PluginError, string.Format("Error in plugin: {0}", pluginName), e));
     }
   }
 }

@@ -6,8 +6,21 @@ using System.Threading;
 
 namespace Engine.Plugins
 {
-  public abstract class PluginManager<TPlugin> : IDisposable
-    where TPlugin : CrossDomainObject, IPlugin
+  public interface IPlugin<TModel>
+    where TModel : IPluginModelWrapper
+  {
+    string Name { get; }
+    void Initialize(TModel model);
+  }
+
+  public interface IPluginModelWrapper
+  {
+
+  }
+
+  public abstract class PluginManager<TPlugin, TModel> : IDisposable
+    where TPlugin : CrossDomainObject, IPlugin<TModel>
+    where TModel : IPluginModelWrapper, new()
   {
     #region Nested types
 
@@ -26,12 +39,16 @@ namespace Engine.Plugins
     #endregion
 
     protected object syncObject = new object();
-    protected Dictionary<string, PluginContainer> plugins = new Dictionary<string, PluginContainer>();
+    protected Dictionary<string, PluginContainer> plugins;
+    protected TModel model;
 
     private Thread processThread;
 
     protected PluginManager(string path)
     {
+      plugins = new Dictionary<string, PluginContainer>();
+      model = new TModel();
+
       var infoLoader = new PluginInfoLoader();
       var libs = FindLibraries(path);
 
@@ -56,25 +73,37 @@ namespace Engine.Plugins
       lock (syncObject)
       {
         var domain = AppDomain.CreateDomain(string.Format("Plugin Domain [{0}]", Path.GetFileNameWithoutExtension(info.AssemblyPath)));
-        var plugin = (TPlugin)domain.CreateInstanceFromAndUnwrap(info.AssemblyPath, info.TypeName);
-
-        if (plugins.ContainsKey(plugin.Name))
+        var pluginName = string.Empty;
+        try
         {
+          var plugin = (TPlugin)domain.CreateInstanceFromAndUnwrap(info.AssemblyPath, info.TypeName);
+          pluginName = plugin.Name;
+
+          if (plugins.ContainsKey(pluginName))
+          {
+            AppDomain.Unload(domain);
+            return;
+          }
+
+          plugin.Initialize(model);
+
+          var container = new PluginContainer(domain, plugin);
+          plugins.Add(pluginName, container);
+
+          OnPluginLoaded(container);
+        }
+        catch (Exception e)
+        {
+          OnError(pluginName, e);
           AppDomain.Unload(domain);
           return;
         }
-
-        plugin.Initialize();
-
-        var container = new PluginContainer(domain, plugin);
-        plugins.Add(plugin.Name, container);
-
-        OnPluginLoaded(container);
       }
     }
 
     protected virtual void OnPluginLoaded(PluginContainer loaded) { }
     protected virtual void OnPluginUnlodaing(PluginContainer unloading) { }
+    protected virtual void OnError(string pluginName, Exception e) { }
 
     protected void UnloadPlugin(string name)
     {

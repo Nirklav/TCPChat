@@ -154,10 +154,13 @@
     <Compile Include="Network\P2PService.cs" />
     <Compile Include="Model\Entities\Room.cs" />
     <Compile Include="Model\Entities\User.cs" />
+    <Compile Include="Plugins\Client\ClientModelWrapper.cs" />
+    <Compile Include="Plugins\Client\ClientAPIWrapper.cs" />
     <Compile Include="Plugins\Client\ClientPlugin.cs" />
     <Compile Include="Plugins\Client\ClientPluginManager.cs" />
+    <Compile Include="Plugins\Client\ClientWrapper.cs" />
     <Compile Include="Plugins\CrossDomainObject.cs" />
-    <Compile Include="Plugins\IPlugin.cs" />
+    <Compile Include="Plugins\Server\ServerModelWrapper.cs" />
     <Compile Include="Plugins\Server\ServerPlugin.cs" />
     <Compile Include="Plugins\Client\ClientPluginCommand.cs" />
     <Compile Include="Plugins\PluginInfoLoader.cs" />

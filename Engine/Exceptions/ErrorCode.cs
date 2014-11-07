@@ -13,5 +13,7 @@ namespace Engine.Exceptions
     LargeReceivedData = 4,
 
     AudioNotEnabled = 100,
+
+    PluginError = 200,
   }
 }
