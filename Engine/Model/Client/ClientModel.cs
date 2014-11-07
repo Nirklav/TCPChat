@@ -3,9 +3,11 @@ using Engine.Audio.OpenAL;
 using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Network;
+using Engine.Plugins.Client;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Threading;
 
 namespace Engine.Model.Client
@@ -44,6 +46,11 @@ namespace Engine.Model.Client
     /// Интерфейс для записи голоса с микрофона.
     /// </summary>
     public static IRecorder Recorder { get { return recorder; } }
+
+    /// <summary>
+    /// Менеджер плагинов.
+    /// </summary>
+    public static ClientPluginManager Plugins { get; private set; }
 
     /// <summary>
     /// Исользовать только с конструкцией using
@@ -149,6 +156,7 @@ namespace Engine.Model.Client
 
     public static void Init(string nick, Color nickColor)
     {
+
       if (Interlocked.CompareExchange(ref model, new ClientModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 
@@ -159,6 +167,7 @@ namespace Engine.Model.Client
       }
 
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
+      Plugins = new ClientPluginManager(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
       Client = new AsyncClient(nick);
       Peer = new AsyncPeer();
     }
@@ -172,10 +181,12 @@ namespace Engine.Model.Client
       Dispose(Peer);
       Dispose(Recorder);
       Dispose(Player);
+      Dispose(Plugins);
 
       Client = null;
       Peer = null;
       API = null;
+      Plugins = null;
     }
 
     private static void Dispose(IDisposable disposable)

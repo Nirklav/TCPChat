@@ -8,7 +8,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerCreateRoomCommand :
       BaseServerCommand,
-      IServerAPICommand
+      IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {

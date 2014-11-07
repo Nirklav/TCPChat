@@ -8,7 +8,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientRoomRefreshedCommand :
       BaseCommand,
-      IClientAPICommand
+      IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

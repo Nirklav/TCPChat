@@ -5,7 +5,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientOutSystemMessageCommand :
       BaseCommand,
-      IClientAPICommand
+      IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

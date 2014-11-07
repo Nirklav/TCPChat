@@ -9,7 +9,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientReadFilePartCommand :
       BaseCommand,
-      IClientAPICommand
+      IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

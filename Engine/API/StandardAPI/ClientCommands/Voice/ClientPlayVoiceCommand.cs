@@ -9,7 +9,7 @@ namespace Engine.API.StandardAPI.ClientCommands.Voice
 {
   class ClientPlayVoiceCommand : 
     BaseCommand, 
-    IClientAPICommand
+    IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

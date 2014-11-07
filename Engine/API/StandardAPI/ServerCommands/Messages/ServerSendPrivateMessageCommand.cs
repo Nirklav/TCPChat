@@ -7,7 +7,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerSendPrivateMessageCommand :
       BaseServerCommand,
-      IServerAPICommand
+      IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {

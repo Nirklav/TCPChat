@@ -7,7 +7,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientConnectToP2PServiceCommand :
       BaseCommand,
-      IClientAPICommand
+      IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

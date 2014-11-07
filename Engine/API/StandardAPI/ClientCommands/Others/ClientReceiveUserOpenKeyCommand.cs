@@ -12,7 +12,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientReceiveUserOpenKeyCommand :
       BaseCommand,
-      IClientAPICommand
+      IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

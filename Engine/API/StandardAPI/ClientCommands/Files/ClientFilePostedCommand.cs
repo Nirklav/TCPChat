@@ -6,7 +6,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientFilePostedCommand :
       BaseCommand,
-      IClientAPICommand
+      IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

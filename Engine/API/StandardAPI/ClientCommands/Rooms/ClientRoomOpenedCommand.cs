@@ -7,7 +7,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientRoomOpenedCommand :
       BaseCommand,
-      IClientAPICommand
+      IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

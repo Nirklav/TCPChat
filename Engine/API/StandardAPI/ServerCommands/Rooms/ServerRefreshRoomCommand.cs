@@ -13,7 +13,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerRefreshRoomCommand :
       BaseServerCommand,
-      IServerAPICommand
+      IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {

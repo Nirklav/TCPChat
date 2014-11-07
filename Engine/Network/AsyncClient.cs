@@ -194,7 +194,7 @@ namespace Engine.Network
         if (TrySetAPI(e))
           return;
 
-        IClientAPICommand command = ClientModel.API.GetCommand(e.ReceivedData);
+        IClientCommand command = ClientModel.API.GetCommand(e.ReceivedData);
         command.Run(new ClientCommandArgs { Message = e.ReceivedData });
       }
       catch (Exception exc)

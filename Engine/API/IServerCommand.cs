@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Engine
 {
-  public interface IServerAPICommand
+  public interface IServerCommand
   {
     void Run(ServerCommandArgs args);
   }

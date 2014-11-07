@@ -9,7 +9,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerAddFileToRoomCommand :
       BaseServerCommand,
-      IServerAPICommand
+      IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {

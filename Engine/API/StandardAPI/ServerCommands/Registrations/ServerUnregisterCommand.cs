@@ -2,7 +2,7 @@
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
-  class ServerUnregisterCommand : IServerAPICommand
+  class ServerUnregisterCommand : IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {

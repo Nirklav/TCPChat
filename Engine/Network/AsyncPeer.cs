@@ -429,7 +429,7 @@ namespace Engine.Network
 
       try
       {
-        IClientAPICommand command = ClientModel.API.GetCommand(message.Data);
+        IClientCommand command = ClientModel.API.GetCommand(message.Data);
         ClientCommandArgs args = new ClientCommandArgs
         {
           Message = message.Data,

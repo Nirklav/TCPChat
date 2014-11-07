@@ -243,7 +243,7 @@ namespace Engine.Network
         if (!isServerRunning)
           return;
 
-        IServerAPICommand command = ServerModel.API.GetCommand(e.ReceivedData);
+        IServerCommand command = ServerModel.API.GetCommand(e.ReceivedData);
         ServerCommandArgs args = new ServerCommandArgs
         {
           Message = e.ReceivedData,

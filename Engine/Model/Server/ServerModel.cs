@@ -2,10 +2,10 @@
 using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Network;
-using Engine.Network.Connections;
+using Engine.Plugins.Server;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Threading;
 
 namespace Engine.Model.Server
@@ -27,6 +27,11 @@ namespace Engine.Model.Server
     /// Сервер
     /// </summary>
     public static AsyncServer Server { get; private set; }
+
+    /// <summary>
+    /// Менеджер плагинов.
+    /// </summary>
+    public static ServerPluginManager Plugins { get; private set; }
 
     /// <summary>
     /// Исользовать только с конструкцией using
@@ -72,6 +77,7 @@ namespace Engine.Model.Server
       if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 
+      Plugins = new ServerPluginManager(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
       Server = new AsyncServer();
       API = new StandardServerAPI();
     }
@@ -81,13 +87,20 @@ namespace Engine.Model.Server
       if (Interlocked.Exchange(ref model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
-      if (Server != null)
-      {
-        Server.Dispose();
-        Server = null;
-      }
+      Dispose(Server);
+      Dispose(Plugins);
 
+      Server = null;
+      Plugins = null;
       API = null;
+    }
+
+    private static void Dispose(IDisposable disposable)
+    {
+      if (disposable == null)
+        return;
+
+      disposable.Dispose();
     }
     #endregion
   }

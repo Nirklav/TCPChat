@@ -9,7 +9,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientOutPrivateMessageCommand :
       BaseCommand,
-      IClientAPICommand
+      IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

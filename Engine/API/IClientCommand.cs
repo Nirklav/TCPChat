@@ -2,7 +2,7 @@
 
 namespace Engine
 {
-  public interface IClientAPICommand
+  public interface IClientCommand
   {
     void Run(ClientCommandArgs args);
   }

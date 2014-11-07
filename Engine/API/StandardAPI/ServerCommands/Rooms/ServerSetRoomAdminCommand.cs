@@ -7,7 +7,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerSetRoomAdminCommand :
       BaseServerCommand,
-      IServerAPICommand
+      IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {

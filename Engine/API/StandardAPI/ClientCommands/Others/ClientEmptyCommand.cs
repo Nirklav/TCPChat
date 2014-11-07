@@ -1,6 +1,6 @@
 ﻿namespace Engine.API.StandardAPI.ClientCommands
 {
-  class ClientEmptyCommand : IClientAPICommand
+  class ClientEmptyCommand : IClientCommand
   {
     public void Run(ClientCommandArgs args)
     {

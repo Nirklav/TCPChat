@@ -10,7 +10,7 @@ namespace Engine
   {
     string Name { get; }
 
-    IServerAPICommand GetCommand(byte[] message);
+    IServerCommand GetCommand(byte[] message);
 
     void SendP2PConnectRequest(string nick, int port);
     void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint);

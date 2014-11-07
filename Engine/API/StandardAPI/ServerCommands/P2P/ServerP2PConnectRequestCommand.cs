@@ -11,7 +11,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerP2PConnectRequestCommand :
       BaseServerCommand,
-      IServerAPICommand
+      IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {

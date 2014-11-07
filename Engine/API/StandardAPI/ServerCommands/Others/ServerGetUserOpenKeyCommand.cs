@@ -7,7 +7,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerGetUserOpenKeyCommand :
       BaseServerCommand,
-      IServerAPICommand
+      IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {

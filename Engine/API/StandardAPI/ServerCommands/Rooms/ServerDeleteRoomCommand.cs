@@ -8,7 +8,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerDeleteRoomCommand :
       BaseServerCommand,
-      IServerAPICommand
+      IServerCommand
   {
     public void Run(ServerCommandArgs args)
     {
