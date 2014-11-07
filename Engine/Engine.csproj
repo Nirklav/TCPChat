@@ -118,6 +118,7 @@
     <Compile Include="Audio\IRecorder.cs" />
     <Compile Include="Audio\OpenAL\OpenALPlayer.cs" />
     <Compile Include="Audio\OpenAL\OpenALRecorder.cs" />
+    <Compile Include="EventArgs\PluginEventArgs.cs" />
     <Compile Include="Helpers\EngineSyncContext.cs" />
     <Compile Include="Model\Entities\AudioQuality.cs" />
     <Compile Include="Model\Entities\SoundPack.cs" />
@@ -160,6 +161,7 @@
     <Compile Include="Plugins\Client\ClientPluginManager.cs" />
     <Compile Include="Plugins\Client\ClientWrapper.cs" />
     <Compile Include="Plugins\CrossDomainObject.cs" />
+    <Compile Include="Plugins\Plugin.cs" />
     <Compile Include="Plugins\Server\ServerModelWrapper.cs" />
     <Compile Include="Plugins\Server\ServerPlugin.cs" />
     <Compile Include="Plugins\Client\ClientPluginCommand.cs" />

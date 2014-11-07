@@ -10,14 +10,11 @@ namespace Engine.Plugins.Client
   /// Представляет базовый класс для реализации плагина.
   /// </summary>
   public abstract class ClientPlugin :
-    CrossDomainObject,
-    IPlugin<ClientModelWrapper>
+    Plugin<ClientModelWrapper>
   {
-    public abstract string Name { get; }
-    public abstract string MenuCaption { get; }
     public abstract List<ClientPluginCommand> Commands { get; }
 
-    public abstract void Initialize(ClientModelWrapper model);
+    public abstract string MenuCaption { get; }
     public abstract void InvokeMenuHandler();
   }
 }

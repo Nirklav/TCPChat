@@ -31,16 +31,32 @@ namespace Engine.Plugins.Client
       return false;
     }
 
+    public ClientPlugin GetPlugin(string name)
+    {
+      lock(syncObject)
+      {
+        PluginContainer container;
+        if (plugins.TryGetValue(name, out container))
+          return container.Plugin;
+
+        return null;
+      }
+    }
+
     protected override void OnPluginLoaded(PluginContainer loaded)
     {
       foreach (var command in loaded.Plugin.Commands)
         commands.Add(command.Id, command);
+
+      ClientModel.OnPluginLoaded(this, new PluginEventArgs(loaded.Plugin));
     }
 
     protected override void OnPluginUnlodaing(PluginContainer unloading)
     {
       foreach (var command in unloading.Plugin.Commands)
         commands.Remove(command.Id);
+
+      ClientModel.OnPluginUnloading(this, new PluginEventArgs(unloading.Plugin));
     }
 
     protected override void OnError(string pluginName, Exception e)

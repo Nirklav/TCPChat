@@ -6,20 +6,8 @@ using System.Threading;
 
 namespace Engine.Plugins
 {
-  public interface IPlugin<TModel>
-    where TModel : IPluginModelWrapper
-  {
-    string Name { get; }
-    void Initialize(TModel model);
-  }
-
-  public interface IPluginModelWrapper
-  {
-
-  }
-
   public abstract class PluginManager<TPlugin, TModel> : IDisposable
-    where TPlugin : CrossDomainObject, IPlugin<TModel>
+    where TPlugin : Plugin<TModel>
     where TModel : IPluginModelWrapper, new()
   {
     #region Nested types

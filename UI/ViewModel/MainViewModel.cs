@@ -91,6 +91,7 @@ namespace UI.ViewModel
 
     public ObservableCollection<RoomViewModel> Rooms { get; private set; }
     public ObservableCollection<UserViewModel> AllUsers { get; private set; }
+    public ObservableCollection<PluginViewModel> Plugins { get; private set; }
     #endregion
 
     #region commands
@@ -114,6 +115,7 @@ namespace UI.ViewModel
       window.Closed += WindowClosed;
       Rooms = new ObservableCollection<RoomViewModel>();
       AllUsers = new ObservableCollection<UserViewModel>();
+      Plugins = new ObservableCollection<PluginViewModel>();
       Dispatcher = mainWindow.Dispatcher;
 
       KeyBoard.KeyDown += OnKeyDown;
@@ -126,6 +128,8 @@ namespace UI.ViewModel
       ClientModel.RoomClosed += ClientRoomClosed;
       ClientModel.RoomOpened += ClientRoomOpened;
       ClientModel.AsyncError += ClientAsyncError;
+      ClientModel.PluginLoaded += ClientPluginLoaded;
+      ClientModel.PluginUnloading += ClientPluginUnloading;
 
       ClearTabs();
 
@@ -156,6 +160,8 @@ namespace UI.ViewModel
       ClientModel.RoomClosed -= ClientRoomClosed;
       ClientModel.RoomOpened -= ClientRoomOpened;
       ClientModel.AsyncError -= ClientAsyncError;
+      ClientModel.PluginLoaded -= ClientPluginLoaded;
+      ClientModel.PluginUnloading -= ClientPluginUnloading;
     }
     #endregion
 
@@ -372,8 +378,8 @@ namespace UI.ViewModel
       {
         if (Rooms.FirstOrDefault(roomVM => roomVM.Name == args.Room.Name) != null)      
           return;
-        
-        RoomViewModel roomViewModel = new RoomViewModel(this, args.Room, e.Users);
+
+        RoomViewModel roomViewModel = new RoomViewModel(this, args.Room, args.Users);
         roomViewModel.Updated = true;
         Rooms.Add(roomViewModel);
 
@@ -401,7 +407,7 @@ namespace UI.ViewModel
     {
       Dispatcher.Invoke(new Action<AsyncErrorEventArgs>(args =>
       {
-        ModelException modelException = e.Error as ModelException;
+        ModelException modelException = args.Error as ModelException;
 
         if (modelException != null)
           switch (modelException.Code)
@@ -413,6 +419,26 @@ namespace UI.ViewModel
           }
       }), e);
     }
+
+    private void ClientPluginLoaded(object sender, PluginEventArgs e)
+    {
+      Dispatcher.Invoke(new Action<PluginEventArgs>(args =>
+      {
+        Plugins.Add(new PluginViewModel(args.Plugin));
+      }), e);
+    }
+
+    private void ClientPluginUnloading(object sender, PluginEventArgs e)
+    {
+      Dispatcher.Invoke(new Action<PluginEventArgs>(args =>
+      {
+        var pluginViewModel = Plugins.FirstOrDefault(pvm => pvm.PluginName == e.Plugin.Name);
+        Plugins.Remove(pluginViewModel);
+
+                pluginViewModel.Dispose();
+      }), e);
+    }
+
     #endregion
 
     #region helpers methods

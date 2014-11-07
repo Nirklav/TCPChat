@@ -10,14 +10,8 @@ namespace Engine.Plugins.Server
   /// Представляет базовый класс для реализации плагина.
   /// </summary>
   public abstract class ServerPlugin :
-    CrossDomainObject,
-    IPlugin<ServerModelWrapper>
+    Plugin<ServerModelWrapper>
   {
-    public abstract string Name { get; }
-    public abstract string MenuCaption { get; }
     public abstract List<ServerPluginCommand> Commands { get; }
-
-    public abstract void Initialize(ServerModelWrapper model);
-    public abstract void InvokeMenuHandler();
   }
 }

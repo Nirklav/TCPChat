@@ -443,6 +443,16 @@
                           Command="{Binding Path=SelectedRoom.AddFileCommand}"/>
             </MenuItem>
 
+            <MenuItem Header="Плагины"
+                      ItemsSource="{Binding Path=Plugins}">
+                <MenuItem.ItemContainerStyle>
+                    <Style TargetType="MenuItem">
+                        <Setter Property="Header" Value="{Binding Path=Header}"/>
+                        <Setter Property="Command" Value="{Binding Path=InvokeCommand}"/>
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+            </MenuItem>
+
             <MenuItem Header="Другое">
                 <MenuItem Header="Оповещения"
                           IsCheckable="True"

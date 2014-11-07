@@ -130,6 +130,7 @@
       <DependentUpon>ServerDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Infrastructure\RgbToColorConverter.cs" />
+    <Compile Include="ViewModel\PluginViewModel.cs" />
     <Compile Include="ViewModel\SettingsTabViewModel.cs" />
     <Compile Include="ViewModel\SettingsViewModel.cs" />
     <Compile Include="View\SettingsView.xaml.cs">

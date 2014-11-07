@@ -3,6 +3,7 @@ using Engine.Audio.OpenAL;
 using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Network;
+using Engine.Plugins;
 using Engine.Plugins.Client;
 using System;
 using System.Collections.Generic;
@@ -121,6 +122,18 @@ namespace Engine.Model.Client
     /// </summary>
     public static event EventHandler<FileDownloadEventArgs> PostedFileDeleted;
     internal static void OnPostedFileDeleted(object sender, FileDownloadEventArgs args) { Raise(ref PostedFileDeleted, sender, args); }
+
+    /// <summary>
+    /// Происходит после успешной загрзуки плагина.
+    /// </summary>
+    public static event EventHandler<PluginEventArgs> PluginLoaded;
+    internal static void OnPluginLoaded(object sender, PluginEventArgs args) { Raise(ref PluginLoaded, sender, args); }
+
+    /// <summary>
+    /// Происходит перед выгрузкой плагина.
+    /// </summary>
+    public static event EventHandler<PluginEventArgs> PluginUnloading;
+    internal static void OnPluginUnloading(object sender, PluginEventArgs args) { Raise(ref PluginUnloading, sender, args); }
 
     private static void Raise<T>(ref EventHandler<T> eventHandler, object sender, T args) where T: EventArgs
     {
