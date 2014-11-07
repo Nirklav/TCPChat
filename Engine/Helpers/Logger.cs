@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Engine.Helpers
 {
-  public class Logger
+  public class Logger : MarshalByRefObject
   {
     private const string DebugMessageTemplate = "Time: {0} DebugMessage: {1}";
     private const string WarningTemplate = "Time: {0} WARNING: {1};{3}StackTrace:{3}{2}{3}";

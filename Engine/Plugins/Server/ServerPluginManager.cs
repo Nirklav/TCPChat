@@ -7,12 +7,9 @@ namespace Engine.Plugins.Server
 {
   public class ServerPluginManager : PluginManager<ServerPlugin, ServerModelWrapper>
   {
-    private Dictionary<ushort, ServerPluginCommand> commands;
+    private Dictionary<ushort, ServerPluginCommand> commands = new Dictionary<ushort, ServerPluginCommand>();
 
-    public ServerPluginManager(string path) : base(path)
-    {
-      commands = new Dictionary<ushort, ServerPluginCommand>();
-    }
+    public ServerPluginManager(string path) : base(path) { }
 
     public bool TryGetCommand(ushort id, out IServerCommand command)
     {

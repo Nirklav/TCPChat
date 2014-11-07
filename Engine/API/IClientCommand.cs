@@ -1,4 +1,5 @@
 ﻿using Engine.Network.Connections;
+using System;
 
 namespace Engine
 {
@@ -7,6 +8,7 @@ namespace Engine
     void Run(ClientCommandArgs args);
   }
 
+  [Serializable]
   public class ClientCommandArgs
   {
     public string PeerConnectionId { get; set; }

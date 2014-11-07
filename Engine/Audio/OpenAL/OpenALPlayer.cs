@@ -8,7 +8,9 @@ using System.Threading;
 
 namespace Engine.Audio.OpenAL
 {
-  public class OpenALPlayer : IPlayer
+  public class OpenALPlayer :
+    MarshalByRefObject,
+    IPlayer
   {
     #region fields
     private object syncObject = new object();

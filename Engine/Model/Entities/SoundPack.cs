@@ -9,7 +9,7 @@ namespace Engine.Model.Entities
   /// Класс описывающий кусок звуковых данных.
   /// </summary>
   [Serializable]
-  public class SoundPack
+  public class SoundPack : MarshalByRefObject
   {
     /// <summary>
     /// Звуковые данные.

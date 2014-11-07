@@ -13,7 +13,9 @@ using System.Threading;
 
 namespace Engine.Network
 {
-  public sealed class AsyncServer : IDisposable
+  public sealed class AsyncServer :
+    MarshalByRefObject,
+    IDisposable
   {
     #region const
     private const int ListenConnections = 100;

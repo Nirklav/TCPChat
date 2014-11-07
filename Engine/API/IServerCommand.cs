@@ -11,6 +11,7 @@ namespace Engine
     void Run(ServerCommandArgs args);
   }
 
+  [Serializable]
   public class ServerCommandArgs
   {
     public string ConnectionId { get; set; }

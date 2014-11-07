@@ -6,7 +6,8 @@ using System.Threading;
 
 namespace Engine.Model
 {
-  public abstract class ModelContext<TModel> : 
+  public abstract class ModelContext<TModel> :
+    MarshalByRefObject,
     IDisposable
   {
     #region consts

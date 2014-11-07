@@ -19,7 +19,9 @@ namespace Engine.API.StandardAPI
   /// <summary>
   /// Класс реализующий стандартный API для клиента.
   /// </summary>
-  class StandardClientAPI : IClientAPI
+  class StandardClientAPI :
+    MarshalByRefObject,
+    IClientAPI
   {
     private Dictionary<ushort, IClientCommand> commandDictionary;
     private Random idCreator;

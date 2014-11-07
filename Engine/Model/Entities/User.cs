@@ -10,7 +10,7 @@ namespace Engine.Model.Entities
   /// Описание пользователя.
   /// </summary>
   [Serializable]
-  public class User
+  public class User : MarshalByRefObject
   {
     private string nick;
     private Color nickColor;

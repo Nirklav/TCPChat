@@ -7,12 +7,9 @@ namespace Engine.Plugins.Client
 {
   public class ClientPluginManager : PluginManager<ClientPlugin, ClientModelWrapper>
   {
-    private Dictionary<ushort, ClientPluginCommand> commands;
+    private Dictionary<ushort, ClientPluginCommand> commands = new Dictionary<ushort, ClientPluginCommand>();
 
-    public ClientPluginManager(string path) : base(path)
-    {
-      commands = new Dictionary<ushort, ClientPluginCommand>();
-    }
+    public ClientPluginManager(string path) : base(path) { }
 
     public bool TryGetCommand(ushort id, out IClientCommand command)
     {

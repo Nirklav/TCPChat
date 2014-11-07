@@ -8,7 +8,9 @@ using System.Threading;
 
 namespace Engine.Audio.OpenAL
 {
-  public class OpenALRecorder : IRecorder
+  public class OpenALRecorder :
+    MarshalByRefObject,
+    IRecorder
   {
     #region consts
     private const int DefaultBufferSize = 4096;

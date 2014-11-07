@@ -15,7 +15,9 @@ namespace Engine.API.StandardAPI
   /// <summary>
   /// Класс реазиующий стандартное серверное API.
   /// </summary>
-  class StandardServerAPI : IServerAPI
+  class StandardServerAPI :
+    MarshalByRefObject,
+    IServerAPI
   {
     /// <summary>
     /// Версия и имя данного API.

@@ -9,7 +9,7 @@ namespace Engine.Model.Entities
   /// Класс описывающий комнату.
   /// </summary>
   [Serializable]
-  public class Room
+  public class Room : MarshalByRefObject
   {
     protected string name;
     protected string admin;

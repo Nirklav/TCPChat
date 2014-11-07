@@ -8,7 +8,7 @@ using System.Text;
 namespace Engine.Plugins.Client
 {
   public class ClientAPIWrapper :
-    CrossDomainObject,
+    MarshalByRefObject,
     IClientAPI
   {
     public IClientCommand GetCommand(byte[] message) { return ClientModel.API.GetCommand(message); }

@@ -1,9 +1,5 @@
 ﻿using Engine.Model.Client;
 using Engine.Plugins.Client;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UI.Infrastructure;
 
 namespace UI.ViewModel
@@ -24,7 +20,8 @@ namespace UI.ViewModel
     public void Invoke(object o)
     {
       var plugin = ClientModel.Plugins.GetPlugin(PluginName);
-      plugin.InvokeMenuHandler();
+      if (plugin != null)
+        plugin.InvokeMenuHandler();
     }
   }
 }

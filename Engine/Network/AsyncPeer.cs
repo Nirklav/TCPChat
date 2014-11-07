@@ -22,7 +22,9 @@ namespace Engine.Network
     ConnectedToPeers = 2,
   }
 
-  public class AsyncPeer : IDisposable
+  public class AsyncPeer :
+    MarshalByRefObject,
+    IDisposable
   {
     #region nested types
 
@@ -308,14 +310,18 @@ namespace Engine.Network
     {
       NetOutgoingMessage message = handler.CreateMessage();
 
-      if (messageContent != null)
-        using (MemoryStream messageStream = new MemoryStream())
+      using (MemoryStream messageStream = new MemoryStream())
+      {
+        messageStream.Write(BitConverter.GetBytes(commandId), 0, sizeof(ushort));
+
+        if (messageContent != null)
         {
-          messageStream.Write(BitConverter.GetBytes(commandId), 0, sizeof(ushort));
           BinaryFormatter formatter = new BinaryFormatter();
           formatter.Serialize(messageStream, messageContent);
-          message.Write(messageStream.ToArray());
         }
+
+        message.Write(messageStream.ToArray());
+      }
 
       return message;
     }
