@@ -27,22 +27,25 @@ namespace Engine.Network.Connections
     protected byte[] buffer;
     protected Socket handler;
     protected MemoryStream receivedData;
+
+    protected volatile bool disposed;
     #endregion
 
     #region constructors
-    protected void Construct(Socket Handler, int MaxReceivedDataSize)
+    protected void Construct(Socket handler, int maxReceivedDataSize)
     {
-      if (Handler == null)
+      if (handler == null)
         throw new ArgumentNullException();
 
-      if (!Handler.Connected)
+      if (!handler.Connected)
         throw new ArgumentException("Сокет должен быть соединен.");
 
-      if (MaxReceivedDataSize <= 0)
+      if (maxReceivedDataSize <= 0)
         throw new ArgumentException("MaxReceivedDataSize должно быть больше 0.");
 
-      handler = Handler;
-      maxReceivedDataSize = MaxReceivedDataSize;
+      this.handler = handler;
+      this.maxReceivedDataSize = maxReceivedDataSize;
+
       buffer = new byte[bufferSize];
       receivedData = new MemoryStream();
 
@@ -94,8 +97,40 @@ namespace Engine.Network.Connections
     /// Отправляет команду.
     /// </summary>
     /// <param name="id">Индетификатор команды.</param>
+    /// <param name="messageContent">Сериализованный параметр команды.</param>
+    public virtual void SendMessage(ushort id, byte[] messageContent)
+    {
+      ThrowIfDisposed();
+
+      if (!handler.Connected)
+        throw new InvalidOperationException("not connected");
+
+      try
+      {
+        var messageToSendSize = sizeof(int) + sizeof(ushort) + (messageContent == null ? 0 : messageContent.Length);
+        var messageToSend = new byte[messageToSendSize];
+
+        Buffer.BlockCopy(BitConverter.GetBytes(messageToSendSize), 0, messageToSend, 0, sizeof(int));
+        Buffer.BlockCopy(BitConverter.GetBytes(id), 0, messageToSend, sizeof(int), sizeof(ushort));
+
+        if (messageContent != null)
+          Buffer.BlockCopy(messageContent, 0, messageToSend, sizeof(int) + sizeof(ushort), messageContent.Length);
+
+        handler.BeginSend(messageToSend, 0, messageToSend.Length, SocketFlags.None, SendCallback, null);
+      }
+      catch (SocketException se)
+      {
+        if (!HandleSocketException(se))
+          throw se;
+      }
+    }
+
+    /// <summary>
+    /// Отправляет команду.
+    /// </summary>
+    /// <param name="id">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
-    public virtual void SendMessage(ushort id, object messageContent) //TODO убрать из метода выделение памяти
+    public virtual void SendMessage(ushort id, object messageContent)
     {
       ThrowIfDisposed();
 
@@ -143,6 +178,9 @@ namespace Engine.Network.Connections
     #region private callback methods
     private void ReceiveCallback(IAsyncResult result)
     {
+      if (disposed)
+        return;
+
       try
       {
         int BytesRead = handler.EndReceive(result);
@@ -176,6 +214,9 @@ namespace Engine.Network.Connections
 
     private void SendCallback(IAsyncResult result)
     {
+      if (disposed)
+        return;
+
       try
       {
         int SendedDataSize = handler.EndSend(result);
@@ -195,17 +236,21 @@ namespace Engine.Network.Connections
 
     private void DisconnectCallback(IAsyncResult result)
     {
+      if (disposed)
+        return;
+
       try
       {
         handler.EndDisconnect(result);
         OnDisconnected();
       }
-      catch(SocketException se)
+      catch (ObjectDisposedException) { return; }
+      catch (SocketException se)
       {
         if (!HandleSocketException(se))
           OnDisconnected(se);
       }
-      catch(Exception e)
+      catch (Exception e)
       {
         OnDisconnected(e);
       }
@@ -316,8 +361,6 @@ namespace Engine.Network.Connections
     #endregion
 
     #region IDisposable
-    private bool disposed = false;
-
     protected void ThrowIfDisposed()
     {
       if (disposed)
@@ -328,6 +371,8 @@ namespace Engine.Network.Connections
     {
       if (disposed)
         return;
+
+      disposed = true;
 
       if (handler != null)
       {
@@ -342,8 +387,6 @@ namespace Engine.Network.Connections
 
       if (receivedData != null)
         receivedData.Dispose();
-
-      disposed = true;
     }
     #endregion
 

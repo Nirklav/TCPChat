@@ -151,22 +151,25 @@ namespace Engine.Network
       hostAddress = serverAddress;
       systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
 
-      Socket connectingHandler = new Socket(serverAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-      connectingHandler.BeginConnect(serverAddress, OnConnected, connectingHandler);
+      handler = new Socket(serverAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+      handler.BeginConnect(serverAddress, OnConnected, null);
     }
     #endregion
 
     #region private/protected override methods
     private void OnConnected(IAsyncResult result)
     {
+      if (disposed)
+        return;
+
       try
       {
-        Socket Handler = (Socket)result.AsyncState;
-        Handler.EndConnect(result);
+        handler.EndConnect(result);
 
-        Construct(Handler, MaxReceivedDataSize);
+        Construct(handler, MaxReceivedDataSize);
         reconnecting = false;
       }
+      catch (ObjectDisposedException) { return; }
       catch (SocketException se)
       {
         if (se.SocketErrorCode == SocketError.ConnectionRefused)

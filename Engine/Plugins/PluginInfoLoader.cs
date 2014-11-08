@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security;
+using System.Security.Permissions;
 using System.Text;
 
 namespace Engine.Plugins
@@ -30,15 +32,28 @@ namespace Engine.Plugins
 
     public List<PluginInfo> LoadFrom(string typeName, string[] inputPluginLibs)
     {
-      // init cross domain variables
-      pluginInfos = new List<PluginInfo>();
-      pluginLibs = inputPluginLibs;
-      fullTypeName = typeName;
+      var domainSetup = new AppDomainSetup();
+      domainSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
+      domainSetup.PrivateBinPath = "plugins;bin";
 
-      var pluginLoader = AppDomain.CreateDomain("Plugin loader"); //TODO: create sandbox
-      pluginLoader.DoCallBack(LoadInfos);
+      var permmisions = new PermissionSet(PermissionState.None);
+      permmisions.AddPermission(new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
+      permmisions.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
+      permmisions.AddPermission(new FileIOPermission(FileIOPermissionAccess.PathDiscovery | FileIOPermissionAccess.Read, inputPluginLibs));
 
-      AppDomain.Unload(pluginLoader);
+      var pluginLoader = AppDomain.CreateDomain("Plugin loader", null, domainSetup, permmisions);
+      try
+      {
+        pluginInfos = new List<PluginInfo>();
+        pluginLibs = inputPluginLibs;
+        fullTypeName = typeName;
+
+        pluginLoader.DoCallBack(LoadInfos);
+      }
+      finally
+      {
+        AppDomain.Unload(pluginLoader);
+      }
 
       return pluginInfos;
     }
@@ -47,26 +62,22 @@ namespace Engine.Plugins
     {
       foreach (var assemblyPath in pluginLibs)
       {
-        try
+        var assembly = Assembly.LoadFile(assemblyPath);
+        foreach (var type in assembly.GetExportedTypes())
         {
-          var assembly = Assembly.LoadFile(assemblyPath);
-          foreach (var type in assembly.GetExportedTypes())
+          if (type.IsAbstract)
+            continue;
+
+          var currentBaseType = type.BaseType;
+          while (currentBaseType != typeof(object))
           {
-            var currentBaseType = type.BaseType;
-            while (currentBaseType != typeof(object))
+            if (string.Compare(currentBaseType.FullName, fullTypeName, StringComparison.OrdinalIgnoreCase) == 0)
             {
-              if (string.Compare(currentBaseType.FullName, fullTypeName, StringComparison.OrdinalIgnoreCase) == 0)
-              {
-                pluginInfos.Add(new PluginInfo(assemblyPath, type.FullName));
-                break;
-              }
-              currentBaseType = currentBaseType.BaseType;
+              pluginInfos.Add(new PluginInfo(assemblyPath, type.FullName));
+              break;
             }
+            currentBaseType = currentBaseType.BaseType;
           }
-        }
-        catch(Exception e)
-        {
-          //TODO: log in plugin logger
         }
       }
     }

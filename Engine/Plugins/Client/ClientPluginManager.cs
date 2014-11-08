@@ -56,7 +56,16 @@ namespace Engine.Plugins.Client
 
     protected override void OnError(string pluginName, Exception e)
     {
-      ClientModel.Logger.Write(new ModelException(ErrorCode.PluginError, string.Format("Error in plugin: {0}", pluginName), e));
+      ClientModel.Logger.Write(new ModelException(ErrorCode.PluginError, string.Format("Error: {0}", pluginName), e));
+    }
+
+    protected override void Process()
+    {
+      lock (syncObject)
+      {
+        foreach (var command in commands.Values)
+          command.Process();
+      }
     }
   }
 }

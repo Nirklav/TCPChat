@@ -183,7 +183,7 @@ namespace Engine.Model.Client
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
       Client = new AsyncClient(nick);
       Peer = new AsyncPeer();
-      Plugins.LoadPlugins(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
+      Plugins.LoadPlugins(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"));
     }
 
     public static void Reset()

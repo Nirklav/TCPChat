@@ -114,8 +114,8 @@ namespace Engine.Network
     {
       lock(connections)
       {
-        ServerConnection connection;
-        if (!connections.TryGetValue(tempId, out connection))
+        var connection = GetConnection(tempId);
+        if (connection == null)
           return;
 
         connections.Remove(tempId);
@@ -133,8 +133,8 @@ namespace Engine.Network
       P2PService.RemoveEndPoint(id);
       lock (connections)
       {
-        ServerConnection connection;
-        if (!connections.TryGetValue(id, out connection))
+        var connection = GetConnection(id);
+        if (connection == null)
           return;
 
         connections.Remove(id);
@@ -152,14 +152,25 @@ namespace Engine.Network
     {
       lock (connections)
       {
-        ServerConnection connection;
-        if (!connections.TryGetValue(connectionId, out connection))
-        {
-          ServerModel.Logger.WriteWarning("Connection {0} don't finded", connectionId);
-          return;
-        }
+        var connection = GetConnection(connectionId);
+        if (connection != null)
+          connection.SendMessage(messageId, messageContent);
+      }
+    }
 
-        connection.SendMessage(messageId, messageContent);
+    /// <summary>
+    /// Отсправляет сообщение по индетификатору соединения.
+    /// </summary>
+    /// <param name="connectionId">Id соединения.</param>
+    /// <param name="messageId">Тип сообщения. (Command.Id)</param>
+    /// <param name="messageContent">Сериализованный контект команды.</param>
+    public void SendMessage(string connectionId, ushort messageId, byte[] messageContent)
+    {
+      lock (connections)
+      {
+        var connection = GetConnection(connectionId);
+        if (connection != null)
+          connection.SendMessage(messageId, messageContent);
       }
     }
 
@@ -170,9 +181,7 @@ namespace Engine.Network
     public string[] GetConnetionsIds()
     {
       lock(connections)
-      {
         return connections.Keys.Where(id => !id.Contains(Connection.TempConnectionPrefix)).ToArray();
-      }
     }
 
     /// <summary>
@@ -186,10 +195,10 @@ namespace Engine.Network
       {
         ServerConnection connection;
         if (!connections.TryGetValue(id, out connection))
-          throw new ArgumentException("Нет такого соединения.");
+          throw new ArgumentException("Connection not found.");
 
         if (connection.Id.Contains(Connection.TempConnectionPrefix))
-          throw new ArgumentException("Соединение не зарегестрированно.");
+          throw new ArgumentException("Connection not registered.");
 
         return connection.OpenKey;
       }
@@ -311,6 +320,20 @@ namespace Engine.Network
       lock (timerSync)
         if (systemTimer != null)
           systemTimer.Change(SystemTimerInterval, -1);
+    }
+    #endregion
+
+    #region private methods
+    private ServerConnection GetConnection(string connectionId)
+    {
+      ServerConnection connection;
+      if (!connections.TryGetValue(connectionId, out connection))
+      {
+        ServerModel.Logger.WriteWarning("Connection {0} don't finded", connectionId);
+        return null;
+      }
+
+      return connection;
     }
     #endregion
 

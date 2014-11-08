@@ -30,20 +30,20 @@ namespace Engine.Network
 
     private class WaitingCommandContainer
     {
-      public WaitingCommandContainer(ushort id, object content)
-        : this(id, content, false)
+      public WaitingCommandContainer(ushort commandId, byte[] messageContent)
+        : this(commandId, messageContent, false)
       { }
 
-      public WaitingCommandContainer(ushort id, object content, bool unreliable)
+      public WaitingCommandContainer(ushort commandId, byte[] messageContent, bool unreliable)
       {
-        CommandId = id;
-        MessageContent = content;
+        CommandId = commandId;
+        MessageContent = messageContent;
         Unreliable = unreliable;
       }
 
-      public ushort CommandId { get; set; }
-      public object MessageContent { get; set; }
-      public bool Unreliable { get; set; }
+      public ushort CommandId { get; private set; }
+      public byte[] MessageContent { get; private set; }
+      public bool Unreliable { get; private set; }
     }
 
     #endregion
@@ -121,7 +121,7 @@ namespace Engine.Network
 
       handler.Start();
 
-      NetOutgoingMessage hailMessage = handler.CreateMessage();
+      var hailMessage = handler.CreateMessage();
       using (var client = ClientModel.Get())
       {
         IPEndPoint localPoint = new IPEndPoint(Connection.GetIPAddress(remotePoint.AddressFamily), handler.Port);
@@ -150,7 +150,7 @@ namespace Engine.Network
 
       // Создания и отправка сообщения для пробивания NAT,
       // и возможности принять входящее соединение
-      NetOutgoingMessage holePunchMessage = handler.CreateMessage();
+      var holePunchMessage = handler.CreateMessage();
       holePunchMessage.Write((byte)0);
       handler.SendUnconnectedMessage(holePunchMessage, waitingPoint);
 
@@ -179,7 +179,7 @@ namespace Engine.Network
       lock (connectingTo)
         connectingTo.Add(remotePoint, peerId);
 
-      NetOutgoingMessage hailMessage = handler.CreateMessage();
+      var hailMessage = handler.CreateMessage();
       using (var client = ClientModel.Get())
         hailMessage.Write(client.User.Nick);
 
@@ -204,15 +204,17 @@ namespace Engine.Network
       return handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId)) != null;
     }
 
+    #region Send message
     /// <summary>
     /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
     /// </summary>
-    /// <param name="connectionId">Идентификатор соединения, которому отправляется команда.</param>
+    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
     /// <param name="commandId">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
-    public void SendMessage(string connectionId, ushort commandId, object messageContent)
+    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    public void SendMessage(string peerId, ushort commandId, object messageContent, bool unreliable = false)
     {
-      SendMessage(connectionId, commandId, messageContent, false);
+      SendMessage(peerId, commandId, Serializer.Serialize(messageContent), unreliable);
     }
 
     /// <summary>
@@ -222,7 +224,7 @@ namespace Engine.Network
     /// <param name="commandId">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
-    public void SendMessage(string peerId, ushort commandId, object messageContent, bool unreliable)
+    public void SendMessage(string peerId, ushort commandId, byte[] messageContent, bool unreliable = false)
     {
       ThrowIfDisposed();
 
@@ -232,29 +234,19 @@ namespace Engine.Network
         return;
       }
 
-      NetConnection connection = handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId));
+      var connection = handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId));
       if (connection == null)
       {
         SaveCommandAndConnect(peerId, commandId, messageContent, unreliable);
         return;
       }
 
-      NetOutgoingMessage message = CreateMessage(commandId, messageContent);
+      var message = CreateMessage(commandId, messageContent);
       handler.SendMessage(message, connection, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
     }
+    #endregion
 
-    /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
-    /// </summary>
-    /// <param name="connectionId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="commandId">Индетификатор команды.</param>
-    /// <param name="messageContent">Параметр команды.</param>
-    /// <returns>Отправлено ли сообщение.</returns>
-    public bool SendMessageIfConnected(string connectionId, ushort commandId, object messageContent)
-    {
-      return SendMessageIfConnected(connectionId, commandId, messageContent, false);
-    }
-
+    #region Send message if connected
     /// <summary>
     /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
     /// </summary>
@@ -263,23 +255,37 @@ namespace Engine.Network
     /// <param name="messageContent">Параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
-    public bool SendMessageIfConnected(string peerId, ushort commandId, object messageContent, bool unreliable)
+    public bool SendMessageIfConnected(string peerId, ushort commandId, object messageContent, bool unreliable = false)
+    {
+      return SendMessageIfConnected(peerId, commandId, Serializer.Serialize(messageContent), unreliable);
+    }
+
+    /// <summary>
+    /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
+    /// </summary>
+    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
+    /// <param name="commandId">Индетификатор команды.</param>
+    /// <param name="messageContent">Сериализованный параметр команды.</param>
+    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    /// <returns>Отправлено ли сообщение.</returns>
+    public bool SendMessageIfConnected(string peerId, ushort commandId, byte[] messageContent, bool unreliable = false)
     {
       ThrowIfDisposed();
 
       if (handler == null || handler.Status != NetPeerStatus.Running)
         return false;
 
-      NetConnection connection = handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId));
+      var connection = handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId));
       if (connection == null)
         return false;
 
-      NetOutgoingMessage message = CreateMessage(commandId, messageContent);
+      var message = CreateMessage(commandId, messageContent);
       handler.SendMessage(message, connection, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
-
       return true;
     }
+    #endregion
 
+    #region SendMessage if connected (multiple peers)
     /// <summary>
     /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
     /// </summary>
@@ -288,42 +294,50 @@ namespace Engine.Network
     /// <param name="messageContent">Параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
-    public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, object messageContent, bool unreliable)
+    public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, object messageContent, bool unreliable = false)
+    {
+      SendMessageIfConnected(peerIds, commandId, Serializer.Serialize(messageContent), unreliable);
+    }
+
+    /// <summary>
+    /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
+    /// </summary>
+    /// <param name="peerIds">Идентификаторы соединения, которым отправляется команда.</param>
+    /// <param name="commandId">Индетификатор команды.</param>
+    /// <param name="messageContent">Сериализованный параметр команды.</param>
+    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    /// <returns>Отправлено ли сообщение.</returns>
+    public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, byte[] messageContent, bool unreliable = false)
     {
       ThrowIfDisposed();
 
       if (handler == null || handler.Status != NetPeerStatus.Running)
         return;
 
-      NetOutgoingMessage message = CreateMessage(commandId, messageContent);
-      List<NetConnection> connections = handler.Connections.Where(c => peerIds.Contains((string)c.Tag)).ToList();
-
+      var connections = handler.Connections.Where(c => peerIds.Contains((string)c.Tag)).ToList();
       if (connections.Count <= 0)
         return;
 
+      var message = CreateMessage(commandId, messageContent);
       handler.SendMessage(message, connections, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
     }
     #endregion
+    #endregion
 
     #region private methods
-    private NetOutgoingMessage CreateMessage(ushort commandId, object messageContent)
+    private NetOutgoingMessage CreateMessage(ushort commandId, byte[] messageContent)
     {
-      NetOutgoingMessage message = handler.CreateMessage();
+      var message = handler.CreateMessage();
 
-      using (MemoryStream messageStream = new MemoryStream())
-      {
-        messageStream.Write(BitConverter.GetBytes(commandId), 0, sizeof(ushort));
+      message.Write(commandId);
 
-        if (messageContent != null)
-          Serializer.Serialize(messageContent, messageStream);
-
-        message.Write(messageStream.ToArray());
-      }
+      if (messageContent != null)
+        message.Write(messageContent);
 
       return message;
     }
 
-    private void SaveCommandAndConnect(string peerId, ushort commandId, object messageContent, bool unreliable)
+    private void SaveCommandAndConnect(string peerId, ushort commandId, byte[] messageContent, bool unreliable)
     {
       lock (waitingCommands)
       {

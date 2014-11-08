@@ -6,7 +6,7 @@ using System;
 namespace Engine.Plugins.Server
 {
   public class ServerModelWrapper :
-    MarshalByRefObject
+    CrossDomainObject
   {
     public ServerAPIWrapper API { get; private set; }
     public AsyncServer Server { get; private set; }

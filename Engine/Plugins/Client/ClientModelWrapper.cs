@@ -10,7 +10,7 @@ using System.Text;
 namespace Engine.Plugins.Client
 {
   public class ClientModelWrapper : 
-    MarshalByRefObject
+    CrossDomainObject
   {
     public ClientAPIWrapper API { get; private set; }
     public AsyncClient Client { get; private set; }

@@ -80,7 +80,7 @@ namespace Engine.Model.Server
 
       Server = new AsyncServer();
       API = new StandardServerAPI();
-      Plugins.LoadPlugins(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
+      Plugins.LoadPlugins(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"));
     }
 
     public static void Reset()
