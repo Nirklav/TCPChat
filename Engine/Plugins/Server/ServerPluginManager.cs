@@ -9,8 +9,6 @@ namespace Engine.Plugins.Server
   {
     private Dictionary<ushort, ServerPluginCommand> commands = new Dictionary<ushort, ServerPluginCommand>();
 
-    public ServerPluginManager(string path) : base(path) { }
-
     public bool TryGetCommand(ushort id, out IServerCommand command)
     {
       command = null;

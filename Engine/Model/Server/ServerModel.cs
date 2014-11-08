@@ -15,6 +15,7 @@ namespace Engine.Model.Server
     #region static model
     private static ServerModel model;
     private static Logger logger = new Logger("Server.log");
+    private static ServerPluginManager plugins = new ServerPluginManager();
 
     public static Logger Logger { get { return logger; } }
 
@@ -31,7 +32,7 @@ namespace Engine.Model.Server
     /// <summary>
     /// Менеджер плагинов.
     /// </summary>
-    public static ServerPluginManager Plugins { get; private set; }
+    public static ServerPluginManager Plugins { get { return plugins; } }
 
     /// <summary>
     /// Исользовать только с конструкцией using
@@ -79,7 +80,7 @@ namespace Engine.Model.Server
 
       Server = new AsyncServer();
       API = new StandardServerAPI();
-      Plugins = new ServerPluginManager(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
+      Plugins.LoadPlugins(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
     }
 
     public static void Reset()
@@ -87,11 +88,11 @@ namespace Engine.Model.Server
       if (Interlocked.Exchange(ref model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
+      Plugins.UnloadPlugins();
+
       Dispose(Server);
-      Dispose(Plugins);
 
       Server = null;
-      Plugins = null;
       API = null;
     }
 

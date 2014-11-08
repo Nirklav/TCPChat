@@ -1,5 +1,6 @@
 ﻿using Engine.Model.Client;
 using Engine.Plugins.Client;
+using System;
 using UI.Infrastructure;
 
 namespace UI.ViewModel
@@ -12,16 +13,30 @@ namespace UI.ViewModel
 
     public PluginViewModel(ClientPlugin plugin)
     {
-      Header = plugin.MenuCaption;
-      PluginName = plugin.Name;
-      InvokeCommand = new Command(Invoke);
+      try
+      {
+        Header = plugin.MenuCaption;
+        PluginName = plugin.Name;
+        InvokeCommand = new Command(Invoke);
+      }
+      catch(Exception e)
+      {
+        ClientModel.Logger.Write(e);
+      }
     } 
 
     public void Invoke(object o)
     {
-      var plugin = ClientModel.Plugins.GetPlugin(PluginName);
-      if (plugin != null)
-        plugin.InvokeMenuHandler();
+      try
+      {
+        var plugin = ClientModel.Plugins.GetPlugin(PluginName);
+        if (plugin != null)
+          plugin.InvokeMenuHandler();
+      }
+      catch (Exception e)
+      {
+        ClientModel.Logger.Write(e);
+      }
     }
   }
 }

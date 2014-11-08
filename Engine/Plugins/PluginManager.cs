@@ -6,9 +6,9 @@ using System.Threading;
 
 namespace Engine.Plugins
 {
-  public abstract class PluginManager<TPlugin, TModel> : IDisposable
+  public abstract class PluginManager<TPlugin, TModel>
     where TPlugin : Plugin<TModel>
-    where TModel : IPluginModelWrapper, new()
+    where TModel : new()
   {
     #region Nested types
 
@@ -32,7 +32,7 @@ namespace Engine.Plugins
 
     private Thread processThread;
 
-    protected PluginManager(string path)
+    public void LoadPlugins(string path)
     {
       plugins = new Dictionary<string, PluginContainer>();
       model = new TModel();
@@ -49,7 +49,7 @@ namespace Engine.Plugins
       processThread.Start();
     }
 
-    public void Dispose()
+    public void UnloadPlugins()
     {
       var containers = plugins.Values.ToList();
       foreach (var container in containers)
@@ -93,13 +93,26 @@ namespace Engine.Plugins
     protected virtual void OnPluginUnlodaing(PluginContainer unloading) { }
     protected virtual void OnError(string pluginName, Exception e) { }
 
-    protected void UnloadPlugin(string name)
+    public void UnloadPlugin(string name)
     {
       lock (syncObject)
       {
         PluginContainer container;
         if (plugins.TryGetValue(name, out container))
           UnloadPlugin(container);
+      }
+    }
+
+    public void UnloadPlugin(Plugin<TModel> plugin)
+    {
+      lock(syncObject)
+      {
+        var containers = plugins.Values.ToList();
+        foreach (var container in containers)
+        {
+          if (ReferenceEquals(container.Plugin, plugin))
+            UnloadPlugin(container);
+        }
       }
     }
 

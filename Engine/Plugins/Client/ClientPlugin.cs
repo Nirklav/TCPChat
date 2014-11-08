@@ -9,7 +9,6 @@ namespace Engine.Plugins.Client
     Plugin<ClientModelWrapper>
   {
     public abstract List<ClientPluginCommand> Commands { get; }
-
     public abstract string MenuCaption { get; }
     public abstract void InvokeMenuHandler();
   }

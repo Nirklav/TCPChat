@@ -20,6 +20,7 @@ namespace Engine.Model.Client
     private static Logger logger = new Logger("Client.log");
     private static IPlayer player = new OpenALPlayer();
     private static IRecorder recorder = new OpenALRecorder();
+    private static ClientPluginManager plugins = new ClientPluginManager();
 
     public static Logger Logger { get { return logger; } }
 
@@ -51,7 +52,7 @@ namespace Engine.Model.Client
     /// <summary>
     /// Менеджер плагинов.
     /// </summary>
-    public static ClientPluginManager Plugins { get; private set; }
+    public static ClientPluginManager Plugins { get { return plugins; } }
 
     /// <summary>
     /// Исользовать только с конструкцией using
@@ -182,7 +183,7 @@ namespace Engine.Model.Client
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
       Client = new AsyncClient(nick);
       Peer = new AsyncPeer();
-      Plugins = new ClientPluginManager(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
+      Plugins.LoadPlugins(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"));
     }
 
     public static void Reset()
@@ -190,16 +191,16 @@ namespace Engine.Model.Client
       if (Interlocked.Exchange(ref model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
+      Plugins.UnloadPlugins();
+
       Dispose(Client);
       Dispose(Peer);
       Dispose(Recorder);
       Dispose(Player);
-      Dispose(Plugins);
 
       Client = null;
       Peer = null;
       API = null;
-      Plugins = null;
     }
 
     private static void Dispose(IDisposable disposable)
