@@ -29,7 +29,7 @@ namespace Engine.Plugins
     #endregion
 
     protected object syncObject = new object();
-    protected Dictionary<string, PluginContainer> plugins;
+    protected Dictionary<string, PluginContainer> plugins = new Dictionary<string, PluginContainer>();
     protected TModel model;
 
     private Thread processThread;
@@ -38,13 +38,10 @@ namespace Engine.Plugins
     {
       try
       {
-        plugins = new Dictionary<string, PluginContainer>();
         model = new TModel();
 
-        var infoLoader = new PluginInfoLoader();
         var libs = FindLibraries(path);
-
-        var infos = infoLoader.LoadFrom(typeof(TPlugin).FullName, libs);
+        var infos = new PluginInfoLoader().LoadFrom(typeof(TPlugin).FullName, libs);
         foreach (var info in infos)
           LoadPlugin(info);
 
@@ -165,8 +162,6 @@ namespace Engine.Plugins
 
         lock (syncObject)
         {
-          // update cross domain wrappers
-
           foreach (var container in plugins.Values)
             container.Plugin.Process();
         }

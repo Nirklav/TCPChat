@@ -170,7 +170,6 @@ namespace Engine.Model.Client
 
     public static void Init(string nick, Color nickColor)
     {
-
       if (Interlocked.CompareExchange(ref model, new ClientModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 

@@ -107,12 +107,14 @@ namespace Engine.Network.Connections
 
       try
       {
-        var messageToSendSize = sizeof(int) + sizeof(ushort) + (messageContent == null ? 0 : messageContent.Length);
+        var messageToSendSize = sizeof(int) + sizeof(ushort);
+        if (messageContent != null)
+          messageToSendSize += messageContent.Length;
+
         var messageToSend = new byte[messageToSendSize];
 
         Buffer.BlockCopy(BitConverter.GetBytes(messageToSendSize), 0, messageToSend, 0, sizeof(int));
         Buffer.BlockCopy(BitConverter.GetBytes(id), 0, messageToSend, sizeof(int), sizeof(ushort));
-
         if (messageContent != null)
           Buffer.BlockCopy(messageContent, 0, messageToSend, sizeof(int) + sizeof(ushort), messageContent.Length);
 
