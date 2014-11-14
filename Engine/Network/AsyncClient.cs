@@ -294,7 +294,7 @@ namespace Engine.Network
       {
         base.Dispose();
 
-        keyCryptor.Clear();
+        ((IDisposable)keyCryptor).Dispose();
 
         if (systemTimer != null)
           systemTimer.Dispose();

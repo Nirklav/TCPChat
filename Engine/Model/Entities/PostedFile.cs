@@ -10,7 +10,7 @@ namespace Engine.Model.Entities
   /// <summary>
   /// Класс описывающий выложенный файл.
   /// </summary>
-  public class PostedFile :
+  public sealed class PostedFile :
     MarshalByRefObject,
     IDisposable
   {

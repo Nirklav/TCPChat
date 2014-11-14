@@ -123,7 +123,7 @@ namespace Engine.Network.Connections
       catch (SocketException se)
       {
         if (!HandleSocketException(se))
-          throw se;
+          throw;
       }
     }
 
@@ -157,7 +157,7 @@ namespace Engine.Network.Connections
       catch (SocketException se)
       {
         if (!HandleSocketException(se))
-          throw se;
+          throw;
       }
       finally
       {
@@ -357,7 +357,7 @@ namespace Engine.Network.Connections
       catch (SocketException se)
       {
         if (!HandleSocketException(se))
-          throw se;
+          throw;
       }
     }
     #endregion

@@ -12,7 +12,7 @@ namespace Engine.Plugins
     where TPlugin : Plugin<TModel>
     where TModel : CrossDomainObject, new()
   {
-    #region Nested types
+    #region nested types
 
     protected class PluginContainer
     {
@@ -28,11 +28,27 @@ namespace Engine.Plugins
 
     #endregion
 
+    #region fields
+
     protected object syncObject = new object();
     protected Dictionary<string, PluginContainer> plugins = new Dictionary<string, PluginContainer>();
     protected TModel model;
 
     private Thread processThread;
+
+    #endregion
+
+    #region overridable
+
+    protected virtual void OnPluginLoaded(PluginContainer loaded) { }
+    protected virtual void OnPluginUnlodaing(PluginContainer unloading) { }
+    protected virtual void OnError(string message, Exception e) { }
+
+    protected virtual void Process() { }
+
+    #endregion
+
+    #region load
 
     public void LoadPlugins(string path)
     {
@@ -53,13 +69,6 @@ namespace Engine.Plugins
       {
         OnError("load plugins failed", e);
       }
-    }
-
-    public void UnloadPlugins()
-    {
-      var containers = plugins.Values.ToList();
-      foreach (var container in containers)
-        UnloadPlugin(container);
     }
 
     private void LoadPlugin(PluginInfo info)
@@ -114,11 +123,16 @@ namespace Engine.Plugins
       }
     }
 
-    protected virtual void OnPluginLoaded(PluginContainer loaded) { }
-    protected virtual void OnPluginUnlodaing(PluginContainer unloading) { }
-    protected virtual void OnError(string message, Exception e) { }
+    #endregion
 
-    protected virtual void Process() { }
+    #region unload
+
+    public void UnloadPlugins()
+    {
+      var containers = plugins.Values.ToList();
+      foreach (var container in containers)
+        UnloadPlugin(container);
+    }
 
     public void UnloadPlugin(string name)
     {
@@ -152,6 +166,13 @@ namespace Engine.Plugins
         plugins.Remove(container.Plugin.Name);
         AppDomain.Unload(container.Domain);
       }
+    }
+
+    #endregion unload
+
+    public List<string> GetPlugins()
+    {
+      return plugins.Keys.ToList();
     }
 
     protected void ProcessThreadHandler()

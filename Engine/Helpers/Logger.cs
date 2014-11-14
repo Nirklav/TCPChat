@@ -44,16 +44,18 @@ namespace Engine.Helpers
     public void WriteWarning(string message, params object[] args)
     {
       StackTrace stackTrace = new StackTrace(true);
-      Write(string.Format(WarningTemplate, DateTime.Now, message, stackTrace, Environment.NewLine, "  "), args);
+      Write(string.Format(WarningTemplate, DateTime.Now, message, stackTrace, Environment.NewLine), args);
     }
 
     private void Write(string message, params object[] args)
     {
       lock (syncObj)
       {
-        using (FileStream logFile = new FileStream(logFileName, FileMode.Append, FileAccess.Write))
-        using (StreamWriter logWriter = new StreamWriter(logFile))
+        using (var logFile = new FileStream(logFileName, FileMode.Append, FileAccess.Write))
+        {
+          StreamWriter logWriter = new StreamWriter(logFile);
           logWriter.WriteLine(string.Format(message, args));
+        }
       }
     }
 

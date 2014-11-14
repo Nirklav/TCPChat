@@ -8,7 +8,7 @@ namespace Engine.Helpers
 {
   class EngineSyncContext : SynchronizationContext
   {
-    private class Event
+    private class Event : IDisposable
     {
       private SendOrPostCallback callback;
       private object state;
@@ -31,6 +31,11 @@ namespace Engine.Helpers
           e(state);
 
         resetEvent.Set();
+      }
+
+      public void Dispose()
+      {
+        resetEvent.Close();
       }
     }
 

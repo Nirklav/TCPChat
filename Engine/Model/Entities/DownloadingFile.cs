@@ -10,7 +10,7 @@ namespace Engine.Model.Entities
   /// <summary>
   /// Класс описывающий загружаемый файл.
   /// </summary>
-  public class DownloadingFile : 
+  public sealed class DownloadingFile : 
     MarshalByRefObject, 
     IDisposable
   {

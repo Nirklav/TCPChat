@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Engine.Audio.OpenAL
 {
-  public class OpenALRecorder :
+  public sealed class OpenALRecorder :
     MarshalByRefObject,
     IRecorder
   {

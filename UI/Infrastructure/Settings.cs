@@ -67,6 +67,8 @@ namespace UI.Infrastructure
     public string InputAudioDevice { get; set; }
     public int Frequency { get; set; }
     public int Bits { get; set; }
+
+    public List<PluginSetting> Plugins { get; set; }
     #endregion
 
     public class SavedColor
