@@ -8,7 +8,7 @@ namespace Engine.Helpers
 {
   class EngineSyncContext : SynchronizationContext
   {
-    private class Event : IDisposable
+    private class Event
     {
       private SendOrPostCallback callback;
       private object state;
@@ -32,40 +32,35 @@ namespace Engine.Helpers
 
         resetEvent.Set();
       }
-
-      public void Dispose()
-      {
-        resetEvent.Close();
-      }
     }
 
+    private object syncObject = new object();
     private Queue<Event> callbackQueue;
     private Thread engineTread;
 
     public EngineSyncContext()
 	  {
       callbackQueue = new Queue<Event>();
-      engineTread = new Thread(ThreadFunc);
-      engineTread.IsBackground = true;
-      engineTread.Start();
 	  }
 
     public override void Post(SendOrPostCallback d, object state)
     {
-      lock (callbackQueue)
-      {
+      lock (syncObject)
         callbackQueue.Enqueue(new Event(d, state, false));
-      }
+
+      StartThread();
     }
 
     public override void Send(SendOrPostCallback d, object state)
     {
       Event item = null;
-      lock (callbackQueue)
+      lock (syncObject)
       {
         item = new Event(d, state, true);
         callbackQueue.Enqueue(item);
       }
+
+      StartThread();
 
       if (item != null)
         item.Handle.WaitOne();
@@ -76,16 +71,28 @@ namespace Engine.Helpers
       return this;
     }
 
+    private void StartThread()
+    {
+      if (engineTread != null && engineTread.IsAlive)
+        return;
+
+      engineTread = new Thread(ThreadFunc);
+      engineTread.IsBackground = true;
+      engineTread.Start();
+    }
+
     private void ThreadFunc()
     {
+      SynchronizationContext.SetSynchronizationContext(this);
+
       while(true)
       {
-        lock(callbackQueue)
+        lock (syncObject)
         {
           if (callbackQueue.Count <= 0)
           {
-            Monitor.PulseAll(callbackQueue);
-            continue;
+            engineTread.Abort();
+            return;
           }
 
           var e = callbackQueue.Dequeue();

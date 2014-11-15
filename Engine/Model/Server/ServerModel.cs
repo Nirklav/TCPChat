@@ -5,7 +5,6 @@ using Engine.Network;
 using Engine.Plugins.Server;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 
 namespace Engine.Model.Server
@@ -73,14 +72,15 @@ namespace Engine.Model.Server
       get { return Interlocked.CompareExchange(ref model, null, null) != null; }
     }
 
-    public static void Init()
+    public static void Init(ServerInitializer initializer)
     {
       if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 
       Server = new AsyncServer();
-      API = new StandardServerAPI();
-      Plugins.LoadPlugins(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"));
+      API = initializer.API ?? new StandardServerAPI();
+
+      Plugins.LoadPlugins(initializer.PluginsPath, initializer.ExcludedPlugins);
     }
 
     public static void Reset()

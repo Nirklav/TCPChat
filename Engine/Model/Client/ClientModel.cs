@@ -3,12 +3,9 @@ using Engine.Audio.OpenAL;
 using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Network;
-using Engine.Plugins;
 using Engine.Plugins.Client;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
 using System.Threading;
 
 namespace Engine.Model.Client
@@ -168,21 +165,22 @@ namespace Engine.Model.Client
       get { return Interlocked.CompareExchange(ref model, null, null) != null; }
     }
 
-    public static void Init(string nick, Color nickColor)
+    public static void Init(ClientInitializer initializer)
     {
       if (Interlocked.CompareExchange(ref model, new ClientModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 
       using (var client = Get())
       {
-        model.User = new User(nick);
-        model.User.NickColor = nickColor;
+        model.User = new User(initializer.Nick);
+        model.User.NickColor = initializer.NickColor;
       }
 
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
-      Client = new AsyncClient(nick);
+      Client = new AsyncClient(initializer.Nick);
       Peer = new AsyncPeer();
-      Plugins.LoadPlugins(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"));
+
+      Plugins.LoadPlugins(initializer.PluginsPath, initializer.ExcludedPlugins);
     }
 
     public static void Reset()

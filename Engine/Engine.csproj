@@ -120,6 +120,7 @@
     <Compile Include="Audio\OpenAL\OpenALRecorder.cs" />
     <Compile Include="EventArgs\PluginEventArgs.cs" />
     <Compile Include="Helpers\EngineSyncContext.cs" />
+    <Compile Include="Model\Client\ClientInitializer.cs" />
     <Compile Include="Model\Entities\AudioQuality.cs" />
     <Compile Include="Model\Entities\SoundPack.cs" />
     <Compile Include="EventArgs\RecordedEventArgs.cs" />
@@ -129,6 +130,7 @@
     <Compile Include="Model\Entities\RoomType.cs" />
     <Compile Include="Model\Entities\VoiceRoom.cs" />
     <Compile Include="Model\Server\ServerContext.cs" />
+    <Compile Include="Model\Server\ServerInitializer.cs" />
     <Compile Include="Network\AsyncClient.cs" />
     <Compile Include="Network\AsyncServer.cs" />
     <Compile Include="Network\Conections\Connection.cs" />

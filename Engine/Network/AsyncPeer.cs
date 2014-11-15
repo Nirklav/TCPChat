@@ -66,6 +66,8 @@ namespace Engine.Network
     private NetPeer handler;
     private DateTime lastActivity;
     private int state; //PeerState
+
+    private SynchronizationContext syncContext;
     #endregion
 
     #region events and properties
@@ -83,6 +85,8 @@ namespace Engine.Network
     {
       waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
       connectingTo = new Dictionary<IPEndPoint, string>();
+
+      syncContext = new EngineSyncContext();
     }
     #endregion
 
@@ -109,16 +113,7 @@ namespace Engine.Network
         config.LocalAddress = IPAddress.IPv6Any;
 
       handler = new NetPeer(config);
-
-      if (SynchronizationContext.Current != null)
-        handler.RegisterReceivedCallback(ReceivedCallback);
-      else
-      {
-        SynchronizationContext.SetSynchronizationContext(new EngineSyncContext());
-        handler.RegisterReceivedCallback(ReceivedCallback);
-        SynchronizationContext.SetSynchronizationContext(null);
-      }
-
+      syncContext.Send(p => ((NetPeer)p).RegisterReceivedCallback(ReceivedCallback), handler);
       handler.Start();
 
       var hailMessage = handler.CreateMessage();

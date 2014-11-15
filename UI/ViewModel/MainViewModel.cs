@@ -5,6 +5,7 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -39,6 +40,7 @@ namespace UI.ViewModel
     private MainWindow window;
     private int selectedRoomIndex;
     private RoomViewModel selectedRoom;
+
     private volatile bool keyPressed;
     #endregion
 
@@ -173,7 +175,18 @@ namespace UI.ViewModel
       {
         try
         {
-          ServerModel.Init();
+          var excludedPlugins = Settings.Current.Plugins
+            .Where(s => !s.Enabled)
+            .Select(s => s.Name)
+            .ToArray();
+
+          var initializer = new ServerInitializer
+          {
+            PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
+            ExcludedPlugins = excludedPlugins
+          };
+
+          ServerModel.Init(initializer);
           ServerModel.Server.Start(Settings.Current.Port, Settings.Current.ServicePort, Settings.Current.StateOfIPv6Protocol);
 
           InitializeClient(true);
@@ -443,7 +456,21 @@ namespace UI.ViewModel
     #region helpers methods
     private void InitializeClient(bool loopback)
     {
-      ClientModel.Init(Settings.Current.Nick, Settings.Current.NickColor);
+      var excludedPlugins = Settings.Current.Plugins
+        .Where(s => !s.Enabled)
+        .Select(s => s.Name)
+        .ToArray();
+
+      var initializer = new ClientInitializer
+      {
+        Nick = Settings.Current.Nick,
+        NickColor = Settings.Current.NickColor,
+
+        PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
+        ExcludedPlugins = excludedPlugins
+      };
+
+      ClientModel.Init(initializer);
 
       try
       {

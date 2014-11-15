@@ -35,6 +35,7 @@ namespace Engine.Plugins
     protected TModel model;
 
     private Thread processThread;
+    private string[] excludedPlugins;
 
     #endregion
 
@@ -50,10 +51,12 @@ namespace Engine.Plugins
 
     #region load
 
-    public void LoadPlugins(string path)
+    public void LoadPlugins(string path, string[] excludedPlugins)
     {
       try
       {
+        this.excludedPlugins = excludedPlugins;
+
         model = new TModel();
 
         var libs = FindLibraries(path);
@@ -101,7 +104,7 @@ namespace Engine.Plugins
           var plugin = (TPlugin)domain.CreateInstanceFromAndUnwrap(info.AssemblyPath, info.TypeName);
           pluginName = plugin.Name;
 
-          if (plugins.ContainsKey(pluginName))
+          if (plugins.ContainsKey(pluginName) || excludedPlugins.Contains(pluginName))
           {
             AppDomain.Unload(domain);
             return;

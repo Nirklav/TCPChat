@@ -42,10 +42,12 @@ namespace Engine.Network
     #endregion
 
     #region fields
-    Dictionary<string, ClientDescription> clientsEndPoints;
-    List<RequestPair> requests;
-    NetServer server;
-    bool disposed;
+    private Dictionary<string, ClientDescription> clientsEndPoints;
+    private List<RequestPair> requests;
+    private NetServer server;
+    private bool disposed;
+
+    private SynchronizationContext syncContext;
     #endregion
 
     #region constructors
@@ -66,17 +68,10 @@ namespace Engine.Network
       if (usingIPv6)
         config.LocalAddress = IPAddress.IPv6Any;
 
+      syncContext = new EngineSyncContext();
+
       server = new NetServer(config);
-
-      if (SynchronizationContext.Current != null)
-        server.RegisterReceivedCallback(ReceivedCallback);
-      else
-      {
-        SynchronizationContext.SetSynchronizationContext(new EngineSyncContext());
-        server.RegisterReceivedCallback(ReceivedCallback);
-        SynchronizationContext.SetSynchronizationContext(null);
-      }
-
+      syncContext.Send(s => ((NetServer)s).RegisterReceivedCallback(ReceivedCallback), server);
       server.Start();
     }
     #endregion

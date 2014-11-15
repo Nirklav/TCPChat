@@ -34,8 +34,6 @@ namespace UI.ViewModel
 
     public override void SaveSettings()
     {
-      
-
       Settings.Current.Plugins = Plugins.ToList();
     }
   }
