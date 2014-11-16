@@ -3,7 +3,7 @@ using Engine.Model.Server;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
-  class ServerPingRequestCommand : IServerCommand
+  class ServerPingRequestCommand : ICommand<ServerCommandArgs>
   {
     public void Run(ServerCommandArgs args)
     {

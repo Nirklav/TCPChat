@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientRoomOpenedCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

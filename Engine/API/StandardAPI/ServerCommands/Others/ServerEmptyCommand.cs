@@ -1,6 +1,6 @@
 ﻿namespace Engine.API.StandardAPI.ServerCommands
 {
-  class ServerEmptyCommand : IServerCommand
+  class ServerEmptyCommand : ICommand<ServerCommandArgs>
   {
     protected ServerEmptyCommand()
     {

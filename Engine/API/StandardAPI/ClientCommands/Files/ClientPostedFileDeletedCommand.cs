@@ -8,7 +8,7 @@ using System.Linq;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientPostedFileDeletedCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

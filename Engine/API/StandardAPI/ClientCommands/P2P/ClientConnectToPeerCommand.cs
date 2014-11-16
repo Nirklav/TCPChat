@@ -7,7 +7,7 @@ using System.Net;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientConnectToPeerCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

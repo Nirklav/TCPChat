@@ -9,7 +9,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerExitFromRoomCommand :
       BaseServerCommand,
-      IServerCommand
+      ICommand<ServerCommandArgs>
   {
     public void Run(ServerCommandArgs args)
     {

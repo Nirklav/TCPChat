@@ -11,7 +11,7 @@ namespace Engine.Plugins.Client
     MarshalByRefObject,
     IClientAPI
   {
-    public IClientCommand GetCommand(byte[] message) { return ClientModel.API.GetCommand(message); }
+    public ICommand<ClientCommandArgs> GetCommand(byte[] message) { return ClientModel.API.GetCommand(message); }
     public void SendMessage(string message, string roomName) { ClientModel.API.SendMessage(message, roomName); }
     public void SendPrivateMessage(string receiver, string message) { ClientModel.API.SendPrivateMessage(receiver, message); }
     public void CreateRoom(string roomName, RoomType type) { ClientModel.API.CreateRoom(roomName, type); }

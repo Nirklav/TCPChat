@@ -9,7 +9,7 @@ namespace Engine
 {
   public interface IClientAPI
   {
-    IClientCommand GetCommand(byte[] message);
+    ICommand<ClientCommandArgs> GetCommand(byte[] message);
 
     void SendMessage(string message, string roomName);
     void SendPrivateMessage(string receiver, string message);

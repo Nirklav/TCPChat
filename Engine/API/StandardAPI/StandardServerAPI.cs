@@ -24,7 +24,7 @@ namespace Engine.API.StandardAPI
     /// </summary>
     public const string API = "StandardAPI v2.2";
 
-    private Dictionary<ushort, IServerCommand> commandDictionary = new Dictionary<ushort, IServerCommand>();
+    private Dictionary<ushort, ICommand<ServerCommandArgs>> commandDictionary = new Dictionary<ushort, ICommand<ServerCommandArgs>>();
 
     /// <summary>
     /// Создает экземпляр API.
@@ -64,11 +64,11 @@ namespace Engine.API.StandardAPI
     /// </summary>
     /// <param name="message">Пришедшее сообщение, по которому будет определена необходимая для извлекания команда.</param>
     /// <returns>Команда для выполнения.</returns>
-    public IServerCommand GetCommand(byte[] message)
+    public ICommand<ServerCommandArgs> GetCommand(byte[] message)
     {
       ushort id = BitConverter.ToUInt16(message, 0);
 
-      IServerCommand command;
+      ICommand<ServerCommandArgs> command;
       if (commandDictionary.TryGetValue(id, out command))
         return command;
 

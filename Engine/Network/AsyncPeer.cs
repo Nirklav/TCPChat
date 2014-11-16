@@ -441,8 +441,8 @@ namespace Engine.Network
 
       try
       {
-        IClientCommand command = ClientModel.API.GetCommand(message.Data);
-        ClientCommandArgs args = new ClientCommandArgs
+        var command = ClientModel.API.GetCommand(message.Data);
+        var args = new ClientCommandArgs
         {
           Message = message.Data,
           PeerConnectionId = (string)message.SenderConnection.Tag

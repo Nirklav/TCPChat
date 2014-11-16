@@ -53,7 +53,7 @@ namespace Engine.Helpers
 
     public override void Send(SendOrPostCallback d, object state)
     {
-      Event item = null;
+      Event item;
       lock (syncObject)
       {
         item = new Event(d, state, true);
@@ -61,9 +61,7 @@ namespace Engine.Helpers
       }
 
       StartThread();
-
-      if (item != null)
-        item.Handle.WaitOne();
+      item.Handle.WaitOne();
     }
 
     public override SynchronizationContext CreateCopy()

@@ -27,6 +27,7 @@ namespace Engine.Network
     private Dictionary<string, ServerConnection> connections;
     private Socket listener;
     private P2PService p2pService;
+    private RequestQueue<ICommand<ServerCommandArgs>, ServerCommandArgs> queue;
     private bool isServerRunning;
     private long lastTempId;
 
@@ -69,12 +70,10 @@ namespace Engine.Network
     #endregion
 
     #region constructors
-    /// <summary>
-    /// Констуктор сервера cо стандартным API, без файла для логирования.
-    /// </summary>
     public AsyncServer()
     {
       connections = new Dictionary<string, ServerConnection>();
+      queue = new RequestQueue<ICommand<ServerCommandArgs>, ServerCommandArgs>();
       isServerRunning = false;
     }
     #endregion
@@ -83,7 +82,8 @@ namespace Engine.Network
     /// <summary>
     /// Включает сервер.
     /// </summary>
-    /// <param name="serverPort">Порт для соединение с сервером.</param>
+    /// <param name="serverPort">TCP порт для соединение с сервером.</param>
+    /// <param name="p2pServicePort">Порт UDP P2P сервиса.</param>
     /// <param name="usingIPv6">Использовать ли IPv6, при ложном значении будет использован IPv4.</param>
     /// <exception cref="System.ArgumentException"/>
     public void Start(int serverPort, int p2pServicePort, bool usingIPv6)
@@ -99,10 +99,9 @@ namespace Engine.Network
       p2pService = new P2PService(p2pServicePort, usingIPv6);
       systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
 
-      AddressFamily addressFamily = usingIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork;
-      IPAddress address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;
+      var address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;
 
-      listener = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+      listener = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       listener.Bind(new IPEndPoint(address, serverPort));
       listener.Listen(ListenConnections);
       listener.BeginAccept(AcceptCallback, null);
@@ -212,9 +211,7 @@ namespace Engine.Network
     public bool ContainsConnection(string id)
     {
       lock (connections)
-      {
         return connections.ContainsKey(id);
-      }
     }
     #endregion
 
@@ -254,14 +251,15 @@ namespace Engine.Network
         if (!isServerRunning)
           return;
 
-        IServerCommand command = ServerModel.API.GetCommand(e.ReceivedData);
-        ServerCommandArgs args = new ServerCommandArgs
+        var connectionId = ((IConnection)sender).Id;
+        var command = ServerModel.API.GetCommand(e.ReceivedData);
+        var args = new ServerCommandArgs
         {
           Message = e.ReceivedData,
-          ConnectionId = ((IConnection)sender).Id,
+          ConnectionId = connectionId,
         };
 
-        command.Run(args);
+        queue.Add(connectionId, command, args);
       }
       catch (Exception exc)
       {

@@ -8,7 +8,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerRemoveFileFromRoomCommand :
       BaseServerCommand,
-      IServerCommand
+      ICommand<ServerCommandArgs>
   {
     public void Run(ServerCommandArgs args)
     {

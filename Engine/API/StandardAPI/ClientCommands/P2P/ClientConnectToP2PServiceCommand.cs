@@ -6,7 +6,7 @@ using System.Net;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientConnectToP2PServiceCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

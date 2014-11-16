@@ -10,7 +10,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerKickUsersCommand :
       BaseServerCommand,
-      IServerCommand
+      ICommand<ServerCommandArgs>
   {
     public void Run(ServerCommandArgs args)
     {

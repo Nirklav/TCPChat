@@ -69,9 +69,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\IClientAPI.cs" />
-    <Compile Include="API\IClientCommand.cs" />
+    <Compile Include="API\ICommand.cs" />
     <Compile Include="API\IServerAPI.cs" />
-    <Compile Include="API\IServerCommand.cs" />
     <Compile Include="Helpers\Serializer.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\Voice\ClientPlayVoiceCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\BaseServerCommand.cs" />
@@ -157,6 +156,7 @@
     <Compile Include="Network\P2PService.cs" />
     <Compile Include="Model\Entities\Room.cs" />
     <Compile Include="Model\Entities\User.cs" />
+    <Compile Include="Network\RequestQueue.cs" />
     <Compile Include="Plugins\Client\ClientAPIWrapper.cs" />
     <Compile Include="Plugins\Client\ClientModelWrapper.cs" />
     <Compile Include="Plugins\Client\ClientPlugin.cs" />

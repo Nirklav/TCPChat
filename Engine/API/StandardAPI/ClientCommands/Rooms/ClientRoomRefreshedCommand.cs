@@ -8,7 +8,7 @@ using Engine.Helpers;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientRoomRefreshedCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

@@ -27,6 +27,7 @@ namespace Engine.Network
     private const int SystemTimerInterval = 1000;
     private const int ReconnectTimeInterval = 10 * 1000;
     private const int PingInterval = 3000;
+    private const string ClientId = "Client";
 
     private static readonly SocketError[] reconnectErrorsList = new SocketError[] 
     { 
@@ -39,7 +40,7 @@ namespace Engine.Network
 
     #region private fields
     private IPEndPoint hostAddress;
-
+    private RequestQueue<ICommand<ClientCommandArgs>, ClientCommandArgs> queue;
     private RSACryptoServiceProvider keyCryptor;
 
     private bool waitingAPIName;
@@ -60,6 +61,7 @@ namespace Engine.Network
     /// </summary>
     public AsyncClient(string nick)
     {
+      queue = new RequestQueue<ICommand<ClientCommandArgs>, ClientCommandArgs>();
       keyCryptor = new RSACryptoServiceProvider(CryptorKeySize);
 
       waitingAPIName = false;
@@ -197,8 +199,10 @@ namespace Engine.Network
         if (TrySetAPI(e))
           return;
 
-        IClientCommand command = ClientModel.API.GetCommand(e.ReceivedData);
-        command.Run(new ClientCommandArgs { Message = e.ReceivedData });
+        var command = ClientModel.API.GetCommand(e.ReceivedData);
+        var args = new ClientCommandArgs { Message = e.ReceivedData };
+
+        queue.Add(ClientId, command, args);
       }
       catch (Exception exc)
       {

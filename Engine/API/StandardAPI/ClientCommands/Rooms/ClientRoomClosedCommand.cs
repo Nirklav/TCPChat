@@ -6,7 +6,7 @@ using System;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientRoomClosedCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

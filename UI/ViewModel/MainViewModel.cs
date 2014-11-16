@@ -536,7 +536,7 @@ namespace UI.ViewModel
     #region record hot key
     private void OnKeyDown(Keys keys)
     {
-      Keys recorderKey = Settings.Current.RecorderKey;
+      var recorderKey = Settings.Current.RecorderKey;
 
       if ((keys & recorderKey) == recorderKey && !keyPressed)
       {
@@ -548,7 +548,7 @@ namespace UI.ViewModel
 
     private void OnKeyUp(Keys keys)
     {
-      Keys recorderKey = Settings.Current.RecorderKey;
+      var recorderKey = Settings.Current.RecorderKey;
 
       if ((keys & recorderKey) == recorderKey && keyPressed)
       {

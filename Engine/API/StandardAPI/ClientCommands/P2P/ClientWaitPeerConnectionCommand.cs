@@ -8,7 +8,7 @@ using System.Net;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientWaitPeerConnectionCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

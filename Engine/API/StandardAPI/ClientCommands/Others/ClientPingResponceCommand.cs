@@ -1,6 +1,6 @@
 ﻿namespace Engine.API.StandardAPI.ClientCommands
 {
-  class ClientPingResponceCommand : IClientCommand
+  class ClientPingResponceCommand : ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

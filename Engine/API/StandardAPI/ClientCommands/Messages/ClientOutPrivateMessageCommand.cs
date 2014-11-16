@@ -8,7 +8,7 @@ using System.Text;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientOutPrivateMessageCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

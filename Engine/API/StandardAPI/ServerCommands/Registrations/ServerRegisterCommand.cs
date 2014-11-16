@@ -11,7 +11,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 {
   class ServerRegisterCommand :
       BaseServerCommand,
-      IServerCommand
+      ICommand<ServerCommandArgs>
   {
     public void Run(ServerCommandArgs args)
     {

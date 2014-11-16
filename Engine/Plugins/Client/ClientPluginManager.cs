@@ -9,7 +9,7 @@ namespace Engine.Plugins.Client
   {
     private Dictionary<ushort, ClientPluginCommand> commands = new Dictionary<ushort, ClientPluginCommand>();
 
-    public bool TryGetCommand(ushort id, out IClientCommand command)
+    public bool TryGetCommand(ushort id, out ICommand<ClientCommandArgs> command)
     {
       command = null;
 

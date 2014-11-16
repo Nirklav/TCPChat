@@ -9,7 +9,7 @@ using System.Linq;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientReadFilePartCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

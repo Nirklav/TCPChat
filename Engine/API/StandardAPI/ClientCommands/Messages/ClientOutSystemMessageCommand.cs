@@ -5,7 +5,7 @@ using System;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientOutSystemMessageCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

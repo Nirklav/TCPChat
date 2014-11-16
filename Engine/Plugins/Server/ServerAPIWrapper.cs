@@ -9,7 +9,7 @@ namespace Engine.Plugins.Server
     IServerAPI
   {
     public string Name { get { return ServerModel.API.Name; } }
-    public IServerCommand GetCommand(byte[] message) { return ServerModel.API.GetCommand(message); }
+    public ICommand<ServerCommandArgs> GetCommand(byte[] message) { return ServerModel.API.GetCommand(message); }
     public void SendP2PConnectRequest(string nick, int port) { ServerModel.API.SendP2PConnectRequest(nick, port); }
     public void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint) { ServerModel.API.IntroduceConnections(senderId, senderPoint, requestId, requestPoint); }
     public void SendSystemMessage(string nick, string message) { ServerModel.API.SendSystemMessage(nick, message); }

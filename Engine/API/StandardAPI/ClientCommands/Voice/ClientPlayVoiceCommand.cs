@@ -6,7 +6,7 @@ using System;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientPlayVoiceCommand :
-    IClientCommand
+    ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

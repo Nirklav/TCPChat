@@ -11,7 +11,7 @@ using System.Text;
 namespace Engine.API.StandardAPI.ClientCommands
 {
   class ClientReceiveUserOpenKeyCommand :
-      IClientCommand
+      ICommand<ClientCommandArgs>
   {
     public void Run(ClientCommandArgs args)
     {

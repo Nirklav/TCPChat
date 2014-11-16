@@ -23,7 +23,7 @@ namespace Engine.API.StandardAPI
     MarshalByRefObject,
     IClientAPI
   {
-    private Dictionary<ushort, IClientCommand> commandDictionary;
+    private Dictionary<ushort, ICommand<ClientCommandArgs>> commandDictionary;
     private Random idCreator;
     private long lastSendedNumber;
 
@@ -38,7 +38,7 @@ namespace Engine.API.StandardAPI
     /// <param name="host">Клиент которому будет принадлежать данный API.</param>
     public StandardClientAPI()
     {
-      commandDictionary = new Dictionary<ushort, IClientCommand>();
+      commandDictionary = new Dictionary<ushort, ICommand<ClientCommandArgs>>();
       WaitingPrivateMessages = new List<WaitingPrivateMessage>();
       idCreator = new Random(DateTime.Now.Millisecond);
 
@@ -104,7 +104,7 @@ namespace Engine.API.StandardAPI
     /// </summary>
     /// <param name="message">Пришедшее сообщение, по которому будет определена необходимая для извлекания команда.</param>
     /// <returns>Команда для выполнения.</returns>
-    public IClientCommand GetCommand(byte[] message)
+    public ICommand<ClientCommandArgs> GetCommand(byte[] message)
     {
       if (message == null)
         throw new ArgumentNullException("message");
@@ -114,7 +114,7 @@ namespace Engine.API.StandardAPI
 
       ushort id = BitConverter.ToUInt16(message, 0);
 
-      IClientCommand command;
+      ICommand<ClientCommandArgs> command;
       if (commandDictionary.TryGetValue(id, out command))
         return command;
 
