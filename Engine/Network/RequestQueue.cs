@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Engine.Model.Client;
+using Engine.Model.Server;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,16 +8,40 @@ using System.Threading;
 
 namespace Engine.Network
 {
-  class RequestQueue<TCommand, TArgs>
+  class ServerRequestQueue : RequestQueue<ICommand<ServerCommandArgs>, ServerCommandArgs>
+  {
+    protected override void OnError(Exception exc)
+    {
+      ServerModel.Logger.Write(exc);
+    }
+  }
+
+  class ClientRequestQueue : RequestQueue<ICommand<ClientCommandArgs>, ClientCommandArgs>
+  {
+    protected override void OnError(Exception exc)
+    {
+      ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = exc });
+      ClientModel.Logger.Write(exc);
+    }
+  }
+
+  abstract class RequestQueue<TCommand, TArgs>
     where TCommand : ICommand<TArgs>
   {
     #region Nested Types
 
     private class QueueContainer
     {
+      private RequestQueue<TCommand, TArgs> queue;
+
       private volatile bool inProcess;
       private object syncObject = new object();
       private Queue<CommandContainer> commands = new Queue<CommandContainer>();
+
+      public QueueContainer(RequestQueue<TCommand, TArgs> queue)
+	    {
+        this.queue = queue;
+	    }
 
       public void Enqueue(TCommand command, TArgs args)
       {
@@ -46,24 +72,33 @@ namespace Engine.Network
             commandContainer = commands.Dequeue();
           }
 
-          var command = commandContainer.Command;
-          var args = commandContainer.Args;
-
-          command.Run(args);
+          try
+          {
+            commandContainer.Run();
+          }
+          catch(Exception e)
+          {
+            queue.OnError(e);
+          }
         }
       }
     }
 
     private class CommandContainer
     {
+      private TCommand command;
+      private TArgs args;
+
       public CommandContainer(TCommand command, TArgs args)
 	    {
-        Command = command;
-        Args = args;
+        this.command = command;
+        this.args = args;
 	    }
 
-      public TCommand Command { get; private set; }
-      public TArgs Args { get; private set; }
+      public void Run()
+      {
+        command.Run(args);
+      }
     }
 
     #endregion
@@ -85,10 +120,12 @@ namespace Engine.Network
       {
         requests.TryGetValue(connectionId, out queueContainer);
         if (queueContainer == null)
-          requests.Add(connectionId, (queueContainer = new QueueContainer()));
+          requests.Add(connectionId, (queueContainer = new QueueContainer(this)));
       }
 
       queueContainer.Enqueue(command, args);
     }
+
+    protected abstract void OnError(Exception e);
   }
 }

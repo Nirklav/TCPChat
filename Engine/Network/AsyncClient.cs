@@ -40,7 +40,7 @@ namespace Engine.Network
 
     #region private fields
     private IPEndPoint hostAddress;
-    private RequestQueue<ICommand<ClientCommandArgs>, ClientCommandArgs> queue;
+    private ClientRequestQueue queue;
     private RSACryptoServiceProvider keyCryptor;
 
     private bool waitingAPIName;
@@ -61,7 +61,7 @@ namespace Engine.Network
     /// </summary>
     public AsyncClient(string nick)
     {
-      queue = new RequestQueue<ICommand<ClientCommandArgs>, ClientCommandArgs>();
+      queue = new ClientRequestQueue();
       keyCryptor = new RSACryptoServiceProvider(CryptorKeySize);
 
       waitingAPIName = false;

@@ -52,8 +52,8 @@ namespace Engine.Helpers
       lock (syncObj)
       {
         using (var logFile = new FileStream(logFileName, FileMode.Append, FileAccess.Write))
+        using (var logWriter = new StreamWriter(logFile))
         {
-          StreamWriter logWriter = new StreamWriter(logFile);
           logWriter.WriteLine(string.Format(message, args));
         }
       }

@@ -27,7 +27,7 @@ namespace Engine.Network
     private Dictionary<string, ServerConnection> connections;
     private Socket listener;
     private P2PService p2pService;
-    private RequestQueue<ICommand<ServerCommandArgs>, ServerCommandArgs> queue;
+    private ServerRequestQueue queue;
     private bool isServerRunning;
     private long lastTempId;
 
@@ -73,7 +73,7 @@ namespace Engine.Network
     public AsyncServer()
     {
       connections = new Dictionary<string, ServerConnection>();
-      queue = new RequestQueue<ICommand<ServerCommandArgs>, ServerCommandArgs>();
+      queue = new ServerRequestQueue();
       isServerRunning = false;
     }
     #endregion
