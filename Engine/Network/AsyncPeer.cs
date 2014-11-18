@@ -68,6 +68,7 @@ namespace Engine.Network
     private int state; //PeerState
 
     private SynchronizationContext syncContext;
+    private ClientRequestQueue requestQueue;
     #endregion
 
     #region events and properties
@@ -87,6 +88,7 @@ namespace Engine.Network
       connectingTo = new Dictionary<IPEndPoint, string>();
 
       syncContext = new EngineSyncContext();
+      requestQueue = new ClientRequestQueue();
     }
     #endregion
 
@@ -441,14 +443,15 @@ namespace Engine.Network
 
       try
       {
+        var peerConnectionId = (string)message.SenderConnection.Tag;
         var command = ClientModel.API.GetCommand(message.Data);
         var args = new ClientCommandArgs
         {
           Message = message.Data,
-          PeerConnectionId = (string)message.SenderConnection.Tag
+          PeerConnectionId = peerConnectionId
         };
 
-        command.Run(args);
+        requestQueue.Add(peerConnectionId, command, args);
       }
       catch (Exception exc)
       {

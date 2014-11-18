@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Engine.Network
 {
-  class ServerRequestQueue : RequestQueue<ICommand<ServerCommandArgs>, ServerCommandArgs>
+  class ServerRequestQueue : RequestQueue<ServerCommandArgs>
   {
     protected override void OnError(Exception exc)
     {
@@ -16,7 +16,7 @@ namespace Engine.Network
     }
   }
 
-  class ClientRequestQueue : RequestQueue<ICommand<ClientCommandArgs>, ClientCommandArgs>
+  class ClientRequestQueue : RequestQueue<ClientCommandArgs>
   {
     protected override void OnError(Exception exc)
     {
@@ -25,25 +25,24 @@ namespace Engine.Network
     }
   }
 
-  abstract class RequestQueue<TCommand, TArgs>
-    where TCommand : ICommand<TArgs>
+  abstract class RequestQueue<TArgs>
   {
     #region Nested Types
 
     private class QueueContainer
     {
-      private RequestQueue<TCommand, TArgs> queue;
+      private RequestQueue<TArgs> queue;
 
       private volatile bool inProcess;
       private object syncObject = new object();
       private Queue<CommandContainer> commands = new Queue<CommandContainer>();
 
-      public QueueContainer(RequestQueue<TCommand, TArgs> queue)
+      public QueueContainer(RequestQueue<TArgs> queue)
 	    {
         this.queue = queue;
 	    }
 
-      public void Enqueue(TCommand command, TArgs args)
+      public void Enqueue(ICommand<TArgs> command, TArgs args)
       {
         lock (syncObject)
         {
@@ -86,10 +85,10 @@ namespace Engine.Network
 
     private class CommandContainer
     {
-      private TCommand command;
+      private ICommand<TArgs> command;
       private TArgs args;
 
-      public CommandContainer(TCommand command, TArgs args)
+      public CommandContainer(ICommand<TArgs> command, TArgs args)
 	    {
         this.command = command;
         this.args = args;
@@ -112,7 +111,7 @@ namespace Engine.Network
       requests = new Dictionary<string, QueueContainer>();
     }
 
-    public void Add(string connectionId, TCommand command, TArgs args)
+    public void Add(string connectionId, ICommand<TArgs> command, TArgs args)
     {
       QueueContainer queueContainer;
 

@@ -40,7 +40,7 @@ namespace Engine.Network
 
     #region private fields
     private IPEndPoint hostAddress;
-    private ClientRequestQueue queue;
+    private ClientRequestQueue requestQueue;
     private RSACryptoServiceProvider keyCryptor;
 
     private bool waitingAPIName;
@@ -61,7 +61,7 @@ namespace Engine.Network
     /// </summary>
     public AsyncClient(string nick)
     {
-      queue = new ClientRequestQueue();
+      requestQueue = new ClientRequestQueue();
       keyCryptor = new RSACryptoServiceProvider(CryptorKeySize);
 
       waitingAPIName = false;
@@ -202,7 +202,7 @@ namespace Engine.Network
         var command = ClientModel.API.GetCommand(e.ReceivedData);
         var args = new ClientCommandArgs { Message = e.ReceivedData };
 
-        queue.Add(ClientId, command, args);
+        requestQueue.Add(ClientId, command, args);
       }
       catch (Exception exc)
       {
