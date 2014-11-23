@@ -120,6 +120,12 @@ namespace Engine.Model.Entities
     /// <returns>Истина если объекты равны.</returns>
     public override bool Equals(object obj)
     {
+      if (ReferenceEquals(obj, null))
+        return false;
+
+      if (ReferenceEquals(obj, this))
+        return true;
+
       if (!(obj is Room))
         return false;
 

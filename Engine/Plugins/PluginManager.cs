@@ -34,10 +34,16 @@ namespace Engine.Plugins
     protected Dictionary<string, PluginContainer> plugins = new Dictionary<string, PluginContainer>();
     protected TModel model;
 
+    private string path;
+    private List<PluginInfo> infos;
     private Thread processThread;
-    private string[] excludedPlugins;
 
     #endregion
+
+    protected PluginManager(string pluginsPath)
+    {
+      path = pluginsPath;
+    }
 
     #region overridable
 
@@ -51,19 +57,18 @@ namespace Engine.Plugins
 
     #region load
 
-    public void LoadPlugins(string path, string[] excludedPlugins)
+    public void LoadPlugins(string[] excludedPlugins = null)
     {
       try
       {
-        this.excludedPlugins = excludedPlugins;
-
         model = new TModel();
 
         var libs = FindLibraries(path);
-        var infos = new PluginInfoLoader().LoadFrom(typeof(TPlugin).FullName, libs);
+        var loader = new PluginInfoLoader();
+        infos = loader.LoadFrom(typeof(TPlugin).FullName, libs);
         if (infos != null)
           foreach (var info in infos)
-            LoadPlugin(info);
+            LoadPlugin(info, excludedPlugins);
 
         processThread = new Thread(ProcessThreadHandler);
         processThread.IsBackground = true;
@@ -75,7 +80,16 @@ namespace Engine.Plugins
       }
     }
 
-    private void LoadPlugin(PluginInfo info)
+    public void LoadPlugin(string name)
+    {
+      var info = infos.Find(pi => pi.Name == name);
+      if (info == null)
+        return;
+
+      LoadPlugin(info);
+    }
+
+    private void LoadPlugin(PluginInfo info, string[] excludedPlugins = null)
     {
       lock (syncObject)
       {
@@ -103,9 +117,10 @@ namespace Engine.Plugins
         try
         {
           var plugin = (TPlugin)domain.CreateInstanceFromAndUnwrap(info.AssemblyPath, info.TypeName);
+          info.Name = plugin.Name;
           pluginName = plugin.Name;
 
-          if (plugins.ContainsKey(pluginName) || excludedPlugins.Contains(pluginName))
+          if (plugins.ContainsKey(pluginName) || (excludedPlugins != null && excludedPlugins.Contains(pluginName)))
           {
             AppDomain.Unload(domain);
             return;
@@ -115,6 +130,7 @@ namespace Engine.Plugins
 
           var container = new PluginContainer(domain, plugin);
           plugins.Add(pluginName, container);
+          info.Loaded = true;
 
           OnPluginLoaded(container);
         }
@@ -148,7 +164,7 @@ namespace Engine.Plugins
       }
     }
 
-    public void UnloadPlugin(Plugin<TModel> plugin)
+    protected void UnloadPlugin(Plugin<TModel> plugin)
     {
       lock (syncObject)
       {
@@ -174,9 +190,14 @@ namespace Engine.Plugins
 
     #endregion unload
 
-    public List<string> GetPlugins()
+    public bool IsLoaded(string name)
     {
-      return plugins.Keys.ToList();
+      return plugins.Keys.Contains(name);
+    }
+
+    public string[] GetPlugins()
+    {
+      return infos.Select(pi => pi.Name).ToArray();
     }
 
     protected void ProcessThreadHandler()

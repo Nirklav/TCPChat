@@ -7,22 +7,6 @@ using System.Security.Permissions;
 
 namespace Engine.Plugins
 {
-  [Serializable]
-  struct PluginInfo
-  {
-    private string assemblyPath;
-    private string typeName;
-
-    public PluginInfo(string assemblyPath, string typeName)
-    {
-      this.assemblyPath = assemblyPath;
-      this.typeName = typeName;
-    }
-
-    public string AssemblyPath { get { return assemblyPath; } }
-    public string TypeName { get { return typeName; } }
-  }
-
   class PluginInfoLoader
   {
     private class Proxy : MarshalByRefObject
@@ -77,8 +61,7 @@ namespace Engine.Plugins
       var pluginLoader = AppDomain.CreateDomain("Plugin loader", null, domainSetup, permmisions);
       try
       {
-        var engineAssemblyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"bin\Engine.dll");
-        var proxy = (Proxy)pluginLoader.CreateInstanceAndUnwrap(AssemblyName.GetAssemblyName(engineAssemblyPath).FullName, typeof(Proxy).FullName);
+        var proxy = (Proxy)pluginLoader.CreateInstanceAndUnwrap(typeof(Proxy).Assembly.FullName, typeof(Proxy).FullName);
 
         proxy.PluginInfos = new List<PluginInfo>();
         proxy.PluginLibs = inputPluginLibs;

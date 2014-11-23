@@ -168,6 +168,7 @@
     <Compile Include="Plugins\Client\ClientPluginManager.cs" />
     <Compile Include="Plugins\CrossDomainObject.cs" />
     <Compile Include="Plugins\Plugin.cs" />
+    <Compile Include="Plugins\PluginInfo.cs" />
     <Compile Include="Plugins\Server\ServerAPIWrapper.cs" />
     <Compile Include="Plugins\Server\ServerModelWrapper.cs" />
     <Compile Include="Plugins\Server\ServerPlugin.cs" />

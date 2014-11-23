@@ -46,7 +46,6 @@ namespace UI.ViewModel
 
     #region properties
     public Dispatcher Dispatcher { get; private set; }
-    public ClientEventNotifierContext NotifierContext { get; private set; }
 
     public bool Alerts
     {
@@ -119,8 +118,6 @@ namespace UI.ViewModel
       AllUsers = new ObservableCollection<UserViewModel>();
       Plugins = new ObservableCollection<PluginViewModel>();
       Dispatcher = mainWindow.Dispatcher;
-
-      ClientModel.Notifier.Add(NotifierContext = new ClientEventNotifierContext());
 
       KeyBoard.KeyDown += OnKeyDown;
       KeyBoard.KeyUp += OnKeyUp;

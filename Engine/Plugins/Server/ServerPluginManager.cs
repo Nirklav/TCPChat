@@ -10,7 +10,13 @@ namespace Engine.Plugins.Server
     private Dictionary<ushort, ServerPluginCommand> commands = new Dictionary<ushort, ServerPluginCommand>();
     private Dictionary<string, ServerNotifierContext> notifierContexts = new Dictionary<string, ServerNotifierContext>();
 
-    public bool TryGetCommand(ushort id, out ICommand<ServerCommandArgs> command)
+    public ServerPluginManager(string path)
+      : base(path)
+    {
+
+    }
+
+    internal bool TryGetCommand(ushort id, out ICommand<ServerCommandArgs> command)
     {
       command = null;
 
@@ -27,7 +33,7 @@ namespace Engine.Plugins.Server
       return false;
     }
 
-    public IEnumerable<ServerNotifierContext> GetNotifierContexts()
+    internal IEnumerable<ServerNotifierContext> GetNotifierContexts()
     {
       return notifierContexts.Values;
     }

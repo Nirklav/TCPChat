@@ -8,6 +8,7 @@ namespace Engine.Model.Common
 {
   public abstract class Notifier<TNotifierContext> : MarshalByRefObject
   {
+    private object syncObject = new object();
     private List<TNotifierContext> contexts;
 
     public Notifier()
@@ -17,17 +18,23 @@ namespace Engine.Model.Common
 
     public void Add(TNotifierContext context)
     {
-      contexts.Add(context);
+      lock (syncObject)
+        contexts.Add(context);
     }
 
     public bool Remove(TNotifierContext context)
     {
-      return contexts.Remove(context);
+      lock (syncObject)
+        return contexts.Remove(context);
     }
 
     protected virtual void Notify<TArgs>(Action<TNotifierContext, TArgs> methodInvoker, TArgs args) where TArgs : EventArgs
     {
-      foreach (var context in contexts)
+      TNotifierContext[] localContexts;
+      lock (syncObject)
+        localContexts = contexts.ToArray();
+
+      foreach (var context in localContexts)
         methodInvoker(context, args);
     }
   }

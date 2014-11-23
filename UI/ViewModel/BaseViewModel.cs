@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Engine.Model.Client;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -16,6 +17,23 @@ namespace UI.ViewModel
 
     public event PropertyChangedEventHandler PropertyChanged;
 
+    protected ClientEventNotifierContext NotifierContext;
+
+    public BaseViewModel()
+    {
+      ClientModel.Notifier.Add(NotifierContext = new ClientEventNotifierContext());
+    }
+
+    public virtual void Dispose()
+    {
+      if (disposed)
+        return;
+
+      disposed = true;
+
+      ClientModel.Notifier.Remove(NotifierContext);
+    }
+
     protected virtual void OnPropertyChanged(string name)
     {
       PropertyChangedEventHandler temp = Interlocked.CompareExchange(ref PropertyChanged, null, null);
@@ -28,14 +46,6 @@ namespace UI.ViewModel
     {
       setter(value);
       OnPropertyChanged(propertyName);
-    }
-
-    public virtual void Dispose()
-    {
-      if (disposed)
-        return;
-
-      disposed = true;
     }
   }
 }

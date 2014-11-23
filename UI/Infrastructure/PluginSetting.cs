@@ -9,10 +9,10 @@ namespace UI.Infrastructure
   {
     public PluginSetting() { }
 
-    public PluginSetting(string name)
+    public PluginSetting(string name, bool enabled)
     {
       Name = name;
-      Enabled = true;
+      Enabled = enabled;
     }
 
     public string Name { get; set; }

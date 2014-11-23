@@ -14,7 +14,6 @@ namespace Engine.Model.Server
     #region static model
     private static ServerModel model;
     private static Logger logger = new Logger("Server.log");
-    private static ServerPluginManager plugins = new ServerPluginManager();
     private static ServerNotifier notifier = new ServerNotifier();
 
     public static Logger Logger { get { return logger; } }
@@ -32,7 +31,7 @@ namespace Engine.Model.Server
     /// <summary>
     /// Менеджер плагинов.
     /// </summary>
-    public static ServerPluginManager Plugins { get { return plugins; } }
+    public static ServerPluginManager Plugins { get; private set; }
 
     /// <summary>
     /// Уведомитель.
@@ -86,7 +85,8 @@ namespace Engine.Model.Server
       Server = new AsyncServer();
       API = initializer.API ?? new StandardServerAPI();
 
-      Plugins.LoadPlugins(initializer.PluginsPath, initializer.ExcludedPlugins);
+      Plugins = new ServerPluginManager(initializer.PluginsPath);
+      Plugins.LoadPlugins(initializer.ExcludedPlugins);
     }
 
     public static void Reset()

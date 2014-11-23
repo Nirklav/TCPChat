@@ -10,7 +10,13 @@ namespace Engine.Plugins.Client
     private Dictionary<ushort, ClientPluginCommand> commands = new Dictionary<ushort, ClientPluginCommand>();
     private Dictionary<string, ClientNotifierContext> notifierContexts = new Dictionary<string, ClientNotifierContext>();
 
-    public bool TryGetCommand(ushort id, out ICommand<ClientCommandArgs> command)
+    public ClientPluginManager(string path)
+      : base(path)
+    {
+
+    }
+
+    internal bool TryGetCommand(ushort id, out ICommand<ClientCommandArgs> command)
     {
       command = null;
 
@@ -27,7 +33,7 @@ namespace Engine.Plugins.Client
       return false;
     }
 
-    public IEnumerable<ClientNotifierContext> GetNotifierContexts()
+    internal IEnumerable<ClientNotifierContext> GetNotifierContexts()
     {
       return notifierContexts.Values;
     }

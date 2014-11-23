@@ -17,7 +17,6 @@ namespace Engine.Model.Client
     private static Logger logger = new Logger("Client.log");
     private static IPlayer player = new OpenALPlayer();
     private static IRecorder recorder = new OpenALRecorder();
-    private static ClientPluginManager plugins = new ClientPluginManager();
     private static ClientNotifier notifier = new ClientNotifier();
 
     public static Logger Logger { get { return logger; } }
@@ -50,7 +49,7 @@ namespace Engine.Model.Client
     /// <summary>
     /// Менеджер плагинов.
     /// </summary>
-    public static ClientPluginManager Plugins { get { return plugins; } }
+    public static ClientPluginManager Plugins { get; private set; }
 
     /// <summary>
     /// Уведомитель.
@@ -105,7 +104,8 @@ namespace Engine.Model.Client
       Client = new AsyncClient(initializer.Nick);
       Peer = new AsyncPeer();
 
-      Plugins.LoadPlugins(initializer.PluginsPath, initializer.ExcludedPlugins);
+      Plugins = new ClientPluginManager(initializer.PluginsPath);
+      Plugins.LoadPlugins(initializer.ExcludedPlugins);
     }
 
     public static void Reset()
