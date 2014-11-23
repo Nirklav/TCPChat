@@ -128,9 +128,8 @@ namespace UI.ViewModel
       KickFromRoomCommand = new Command(KickFromRoom, Obj => ClientModel.Client != null);
 
       MainViewModel.AllUsers.CollectionChanged += AllUsersCollectionChanged;
-
-      ClientEventNotifierContext.ReceiveMessage += ClientReceiveMessage;
-      ClientEventNotifierContext.RoomRefreshed += ClientRoomRefreshed;
+      MainViewModel.NotifierContext.ReceiveMessage += ClientReceiveMessage;
+      MainViewModel.NotifierContext.RoomRefreshed += ClientRoomRefreshed;
     }
 
     public override void Dispose()
@@ -147,9 +146,8 @@ namespace UI.ViewModel
       Messages.Clear();
 
       MainViewModel.AllUsers.CollectionChanged -= AllUsersCollectionChanged;
-
-      ClientEventNotifierContext.ReceiveMessage -= ClientReceiveMessage;
-      ClientEventNotifierContext.RoomRefreshed -= ClientRoomRefreshed;
+      MainViewModel.NotifierContext.ReceiveMessage -= ClientReceiveMessage;
+      MainViewModel.NotifierContext.RoomRefreshed -= ClientRoomRefreshed;
     }
     #endregion
 

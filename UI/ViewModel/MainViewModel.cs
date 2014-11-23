@@ -46,6 +46,7 @@ namespace UI.ViewModel
 
     #region properties
     public Dispatcher Dispatcher { get; private set; }
+    public ClientEventNotifierContext NotifierContext { get; private set; }
 
     public bool Alerts
     {
@@ -119,20 +120,20 @@ namespace UI.ViewModel
       Plugins = new ObservableCollection<PluginViewModel>();
       Dispatcher = mainWindow.Dispatcher;
 
-      ClientModel.Notifier.Add(new ClientEventNotifierContext());
+      ClientModel.Notifier.Add(NotifierContext = new ClientEventNotifierContext());
 
       KeyBoard.KeyDown += OnKeyDown;
       KeyBoard.KeyUp += OnKeyUp;
 
-      ClientEventNotifierContext.Connected += ClientConnect;
-      ClientEventNotifierContext.ReceiveMessage += ClientReceiveMessage;
-      ClientEventNotifierContext.ReceiveRegistrationResponse += ClientRegistration;
-      ClientEventNotifierContext.RoomRefreshed += ClientRoomRefreshed;
-      ClientEventNotifierContext.RoomClosed += ClientRoomClosed;
-      ClientEventNotifierContext.RoomOpened += ClientRoomOpened;
-      ClientEventNotifierContext.AsyncError += ClientAsyncError;
-      ClientEventNotifierContext.PluginLoaded += ClientPluginLoaded;
-      ClientEventNotifierContext.PluginUnloading += ClientPluginUnloading;
+      NotifierContext.Connected += ClientConnect;
+      NotifierContext.ReceiveMessage += ClientReceiveMessage;
+      NotifierContext.ReceiveRegistrationResponse += ClientRegistration;
+      NotifierContext.RoomRefreshed += ClientRoomRefreshed;
+      NotifierContext.RoomClosed += ClientRoomClosed;
+      NotifierContext.RoomOpened += ClientRoomOpened;
+      NotifierContext.AsyncError += ClientAsyncError;
+      NotifierContext.PluginLoaded += ClientPluginLoaded;
+      NotifierContext.PluginUnloading += ClientPluginUnloading;
 
       ClearTabs();
 
@@ -156,15 +157,15 @@ namespace UI.ViewModel
       KeyBoard.KeyDown -= OnKeyDown;
       KeyBoard.KeyUp -= OnKeyUp;
 
-      ClientEventNotifierContext.Connected -= ClientConnect;
-      ClientEventNotifierContext.ReceiveMessage -= ClientReceiveMessage;
-      ClientEventNotifierContext.ReceiveRegistrationResponse -= ClientRegistration;
-      ClientEventNotifierContext.RoomRefreshed -= ClientRoomRefreshed;
-      ClientEventNotifierContext.RoomClosed -= ClientRoomClosed;
-      ClientEventNotifierContext.RoomOpened -= ClientRoomOpened;
-      ClientEventNotifierContext.AsyncError -= ClientAsyncError;
-      ClientEventNotifierContext.PluginLoaded -= ClientPluginLoaded;
-      ClientEventNotifierContext.PluginUnloading -= ClientPluginUnloading;
+      NotifierContext.Connected -= ClientConnect;
+      NotifierContext.ReceiveMessage -= ClientReceiveMessage;
+      NotifierContext.ReceiveRegistrationResponse -= ClientRegistration;
+      NotifierContext.RoomRefreshed -= ClientRoomRefreshed;
+      NotifierContext.RoomClosed -= ClientRoomClosed;
+      NotifierContext.RoomOpened -= ClientRoomOpened;
+      NotifierContext.AsyncError -= ClientAsyncError;
+      NotifierContext.PluginLoaded -= ClientPluginLoaded;
+      NotifierContext.PluginUnloading -= ClientPluginUnloading;
     }
     #endregion
 

@@ -15,6 +15,14 @@ namespace Engine.Model.Server
     {
       Notify((c, a) => c.OnUnregistered(a), args);
     }
+
+    protected override void Notify<TArgs>(Action<ServerNotifierContext, TArgs> methodInvoker, TArgs args)
+    {
+      base.Notify<TArgs>(methodInvoker, args);
+
+      foreach (var context in ServerModel.Plugins.GetNotifierContexts())
+        methodInvoker(context, args);
+    }
   }
 
   public abstract class ServerNotifierContext : CrossDomainObject

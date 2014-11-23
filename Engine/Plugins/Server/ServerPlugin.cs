@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Engine.Model.Server;
+using System.Collections.Generic;
 
 namespace Engine.Plugins.Server
 {
@@ -8,6 +9,8 @@ namespace Engine.Plugins.Server
   public abstract class ServerPlugin :
     Plugin<ServerModelWrapper>
   {
+    public virtual ServerNotifierContext NotifierContext { get { return null; } }
+
     public abstract List<ServerPluginCommand> Commands { get; }
   }
 }
