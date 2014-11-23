@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Server;
+﻿using Engine.Model.Server;
 using System;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -141,7 +140,7 @@ namespace Engine.Network.Connections
       {
         SocketException se = args.Error as SocketException;
         if (se != null && se.SocketErrorCode == SocketError.ConnectionReset)
-            return;
+          return;
 
         ServerModel.Logger.Write(args.Error);
         return;

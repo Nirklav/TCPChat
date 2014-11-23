@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Engine
 {
+  [Serializable]
   public class PluginEventArgs : EventArgs
   {
     public ClientPlugin Plugin { get; private set; }

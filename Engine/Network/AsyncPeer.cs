@@ -373,7 +373,7 @@ namespace Engine.Network
         {
           case NetIncomingMessageType.ErrorMessage:
           case NetIncomingMessageType.WarningMessage:
-            ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = new NetException(message.ReadString()) });
+            ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = new NetException(message.ReadString()) });
             break;
 
           case NetIncomingMessageType.StatusChanged:
@@ -455,7 +455,7 @@ namespace Engine.Network
       }
       catch (Exception exc)
       {
-        ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = exc });
+        ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = exc });
         ClientModel.Logger.Write(exc);
       }
     }

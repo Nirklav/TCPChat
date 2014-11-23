@@ -1,6 +1,5 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Entities;
-using System.Drawing;
 using System.Net.Sockets;
 using System.Windows.Input;
 using UI.Infrastructure;
@@ -39,7 +38,6 @@ namespace UI.ViewModel
     public WPFColor NickColor
     {
       get { return WPFColor.FromRgb(Info.NickColor.R, Info.NickColor.G, Info.NickColor.B); }
-      set { SetValue(value, "NickColor", v => Info.NickColor = Color.FromArgb(v.R, v.G, v.G)); }
     }
 
     public string Nick

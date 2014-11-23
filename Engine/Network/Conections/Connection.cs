@@ -5,7 +5,6 @@ using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Engine.Network.Connections
 {
@@ -149,8 +148,8 @@ namespace Engine.Network.Connections
         if (messageContent != null)
           Serializer.Serialize(messageContent, messageStream);
 
-        byte[] messageToSend = messageStream.ToArray();
-        int messageToSendSize = (int)messageStream.Length;
+        var messageToSend = messageStream.ToArray();
+        var messageToSendSize = (int)messageStream.Length;
         Buffer.BlockCopy(BitConverter.GetBytes(messageToSendSize), 0, messageToSend, 0, sizeof(int));
         handler.BeginSend(messageToSend, 0, messageToSend.Length, SocketFlags.None, SendCallback, null);
       }

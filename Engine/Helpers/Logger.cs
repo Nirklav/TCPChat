@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Engine.Helpers
@@ -41,9 +42,10 @@ namespace Engine.Helpers
 #endif
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public void WriteWarning(string message, params object[] args)
     {
-      StackTrace stackTrace = new StackTrace(true);
+      StackTrace stackTrace = new StackTrace(1, true);
       Write(string.Format(WarningTemplate, DateTime.Now, message, stackTrace, Environment.NewLine), args);
     }
 
@@ -69,12 +71,12 @@ namespace Engine.Helpers
       stackTrace.Replace("  ", "  " + tabs);
 
       StringBuilder builder = new StringBuilder(200);
-      builder.AppendFormat(MessageTemplate, 
-        DateTime.Now, 
-        e.GetType(), 
+      builder.AppendFormat(MessageTemplate,
+        DateTime.Now,
+        e.GetType(),
         e.Message,
-        stackTrace, 
-        tabs, 
+        stackTrace,
+        tabs,
         Environment.NewLine);
 
       if (e.InnerException != null)

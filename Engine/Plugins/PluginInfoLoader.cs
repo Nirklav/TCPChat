@@ -59,6 +59,9 @@ namespace Engine.Plugins
 
     public List<PluginInfo> LoadFrom(string typeName, string[] inputPluginLibs)
     {
+      if (inputPluginLibs.Length <= 0)
+        return null;
+
       var domainSetup = new AppDomainSetup();
       domainSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
       domainSetup.PrivateBinPath = "plugins;bin";

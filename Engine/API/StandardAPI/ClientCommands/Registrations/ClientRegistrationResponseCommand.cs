@@ -17,7 +17,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         Message = receivedContent.Message
       };
 
-      ClientModel.OnReceiveRegistrationResponse(this, eventArgs);
+      ClientModel.Notifier.ReceiveRegistrationResponse(eventArgs);
     }
 
     [Serializable]

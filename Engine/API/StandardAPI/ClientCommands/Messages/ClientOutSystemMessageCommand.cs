@@ -14,7 +14,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (string.IsNullOrEmpty(receivedContent.Message))
         throw new ArgumentException("message");
 
-      ClientModel.OnSystemMessage(receivedContent.Message);
+      ClientModel.Notifier.SystemMessage(receivedContent.Message);
     }
 
     [Serializable]

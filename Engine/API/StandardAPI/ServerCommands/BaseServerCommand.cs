@@ -2,6 +2,7 @@
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using Engine.Network.Connections;
+using System.Linq;
 
 namespace Engine.API.StandardAPI.ServerCommands
 {
@@ -28,6 +29,23 @@ namespace Engine.API.StandardAPI.ServerCommands
       }
 
       return result;
+    }
+
+    /// <summary>
+    /// Посылает команду обновления комнаты всем ее участникам.
+    /// </summary>
+    /// <param name="server">Контекст сервера.</param>
+    /// <param name="room">Комната.</param>
+    protected static void RefreshRoom(ServerContext server, Room room)
+    {
+      var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
+      {
+        Room = room,
+        Users = room.Users.Select(nick => server.Users[nick]).ToList()
+      };
+
+      foreach (string user in room.Users)
+        ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.Id, roomRefreshedContent);
     }
   }
 }

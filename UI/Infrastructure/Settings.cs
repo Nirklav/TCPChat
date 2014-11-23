@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 using Keys = System.Windows.Forms.Keys;
 
@@ -25,7 +23,7 @@ namespace UI.Infrastructure
         lock (syncObj)
         {
           if (current == null)
-          {         
+          {
             XmlSerializer serializer = new XmlSerializer(typeof(Settings));
             using (FileStream stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + FileName, FileMode.Open))
               current = (Settings)serializer.Deserialize(stream);

@@ -28,7 +28,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         RoomName = receivedContent.RoomName,
       };
 
-      ClientModel.OnReceiveMessage(this, receiveMessageArgs);
+      ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);
     }
 
     [Serializable]

@@ -52,15 +52,7 @@ namespace Engine.API.StandardAPI.ServerCommands
           }
         }
 
-        foreach (string user in room.Users)
-        {
-          var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
-          {
-            Room = room,
-            Users = room.Users.Select(nick => server.Users[nick]).ToList()
-          };
-          ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.Id, roomRefreshedContent);
-        }
+        RefreshRoom(server, room);
       }
     }
 

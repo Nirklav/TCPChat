@@ -39,9 +39,9 @@ namespace Engine.Helpers
     private Thread engineTread;
 
     public EngineSyncContext()
-	  {
+    {
       callbackQueue = new Queue<Event>();
-	  }
+    }
 
     public override void Post(SendOrPostCallback d, object state)
     {
@@ -83,8 +83,9 @@ namespace Engine.Helpers
     {
       SynchronizationContext.SetSynchronizationContext(this);
 
-      while(true)
+      while (true)
       {
+        Event e;
         lock (syncObject)
         {
           if (callbackQueue.Count <= 0)
@@ -93,9 +94,10 @@ namespace Engine.Helpers
             return;
           }
 
-          var e = callbackQueue.Dequeue();
-          e.Dispatch();
+          e = callbackQueue.Dequeue();         
         }
+
+        e.Dispatch();
       }
     }
   }

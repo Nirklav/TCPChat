@@ -44,7 +44,7 @@ namespace Engine.API.StandardAPI.ClientCommands
           Sender = receivedContent.Sender,
         };
 
-        ClientModel.OnReceiveMessage(this, receiveMessageArgs);
+        ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);
       }
     }
 

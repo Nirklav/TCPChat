@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Engine
 {
+  [Serializable]
   public class DataSendedEventArgs : EventArgs
   {
     public int SendedDataCount { get; set; }

@@ -96,7 +96,7 @@ namespace Engine.Audio.OpenAL
           context = new AudioContext(deviceName);
         }
       }
-      catch(Exception e)
+      catch (Exception e)
       {
         if (context != null)
           context.Dispose();

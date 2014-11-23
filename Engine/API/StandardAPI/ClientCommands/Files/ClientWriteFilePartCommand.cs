@@ -72,7 +72,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         }
       }
 
-      ClientModel.OnDownloadProgress(this, downloadEventArgs);
+      ClientModel.Notifier.DownloadProgress(downloadEventArgs);
     }
 
     [Serializable]

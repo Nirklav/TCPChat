@@ -51,26 +51,26 @@ namespace Engine.API.StandardAPI.ServerCommands
           invitedUsers.Add(user);
         }
 
-        var sendingContent = new ClientRoomOpenedCommand.MessageContent
+        var users = room.Users.Select(nick => server.Users[nick]).ToList();
+        var roomOpenContent = new ClientRoomOpenedCommand.MessageContent
         {
           Room = room,
           Type = room is VoiceRoom ? RoomType.Voice : RoomType.Chat,
-          Users = room.Users.Select(nick => server.Users[nick]).ToList()
+          Users = users
+        };
+
+        var roomRefreshContent = new ClientRoomRefreshedCommand.MessageContent
+        {
+          Room = room,
+          Users = users
         };
 
         foreach (string user in room.Users)
         {
           if (invitedUsers.Contains(server.Users[user]))
-            ServerModel.Server.SendMessage(user, ClientRoomOpenedCommand.Id, sendingContent);
+            ServerModel.Server.SendMessage(user, ClientRoomOpenedCommand.Id, roomOpenContent);
           else
-          {
-            var roomRefreshContent = new ClientRoomRefreshedCommand.MessageContent
-            {
-              Room = room,
-              Users = room.Users.Select(nick => server.Users[nick]).ToList()
-            };
             ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.Id, roomRefreshContent);
-          }
         }
       }
     }
@@ -79,10 +79,10 @@ namespace Engine.API.StandardAPI.ServerCommands
     public class MessageContent
     {
       string roomName;
-      IEnumerable<User> users;
+      List<User> users;
 
       public string RoomName { get { return roomName; } set { roomName = value; } }
-      public IEnumerable<User> Users { get { return users; } set { users = value; } }
+      public List<User> Users { get { return users; } set { users = value; } }
     }
 
     public const ushort Id = (ushort)ServerCommand.InvateUsers;

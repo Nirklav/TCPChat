@@ -35,7 +35,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         RoomName = receivedContent.RoomName,
       };
 
-      ClientModel.OnPostedFileDeleted(this, downloadEventArgs);
+      ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
     }
 
     [Serializable]

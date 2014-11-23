@@ -73,8 +73,8 @@ namespace UI.ViewModel
     public MessageViewModel(UserViewModel sender, string fileName, FileDescription fileDescription, RoomViewModel room)
       : this(room)
     {
-      ClientModel.DownloadProgress += ClientDownloadProgress;
-      ClientModel.PostedFileDeleted += ClientPostedFileDeleted;
+      ClientEventNotifierContext.DownloadProgress += ClientDownloadProgress;
+      ClientEventNotifierContext.PostedFileDeleted += ClientPostedFileDeleted;
 
       Sender = sender;
       File = fileDescription;
@@ -126,8 +126,8 @@ namespace UI.ViewModel
     {
       base.Dispose();
 
-      ClientModel.DownloadProgress -= ClientDownloadProgress;
-      ClientModel.PostedFileDeleted -= ClientPostedFileDeleted;
+      ClientEventNotifierContext.DownloadProgress -= ClientDownloadProgress;
+      ClientEventNotifierContext.PostedFileDeleted -= ClientPostedFileDeleted;
     }
     #endregion
 

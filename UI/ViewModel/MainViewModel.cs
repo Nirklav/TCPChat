@@ -119,18 +119,20 @@ namespace UI.ViewModel
       Plugins = new ObservableCollection<PluginViewModel>();
       Dispatcher = mainWindow.Dispatcher;
 
+      ClientModel.Notifier.Add(new ClientEventNotifierContext());
+
       KeyBoard.KeyDown += OnKeyDown;
       KeyBoard.KeyUp += OnKeyUp;
 
-      ClientModel.Connected += ClientConnect;
-      ClientModel.ReceiveMessage += ClientReceiveMessage;
-      ClientModel.ReceiveRegistrationResponse += ClientRegistration;
-      ClientModel.RoomRefreshed += ClientRoomRefreshed;
-      ClientModel.RoomClosed += ClientRoomClosed;
-      ClientModel.RoomOpened += ClientRoomOpened;
-      ClientModel.AsyncError += ClientAsyncError;
-      ClientModel.PluginLoaded += ClientPluginLoaded;
-      ClientModel.PluginUnloading += ClientPluginUnloading;
+      ClientEventNotifierContext.Connected += ClientConnect;
+      ClientEventNotifierContext.ReceiveMessage += ClientReceiveMessage;
+      ClientEventNotifierContext.ReceiveRegistrationResponse += ClientRegistration;
+      ClientEventNotifierContext.RoomRefreshed += ClientRoomRefreshed;
+      ClientEventNotifierContext.RoomClosed += ClientRoomClosed;
+      ClientEventNotifierContext.RoomOpened += ClientRoomOpened;
+      ClientEventNotifierContext.AsyncError += ClientAsyncError;
+      ClientEventNotifierContext.PluginLoaded += ClientPluginLoaded;
+      ClientEventNotifierContext.PluginUnloading += ClientPluginUnloading;
 
       ClearTabs();
 
@@ -154,15 +156,15 @@ namespace UI.ViewModel
       KeyBoard.KeyDown -= OnKeyDown;
       KeyBoard.KeyUp -= OnKeyUp;
 
-      ClientModel.Connected -= ClientConnect;
-      ClientModel.ReceiveMessage -= ClientReceiveMessage;
-      ClientModel.ReceiveRegistrationResponse -= ClientRegistration;
-      ClientModel.RoomRefreshed -= ClientRoomRefreshed;
-      ClientModel.RoomClosed -= ClientRoomClosed;
-      ClientModel.RoomOpened -= ClientRoomOpened;
-      ClientModel.AsyncError -= ClientAsyncError;
-      ClientModel.PluginLoaded -= ClientPluginLoaded;
-      ClientModel.PluginUnloading -= ClientPluginUnloading;
+      ClientEventNotifierContext.Connected -= ClientConnect;
+      ClientEventNotifierContext.ReceiveMessage -= ClientReceiveMessage;
+      ClientEventNotifierContext.ReceiveRegistrationResponse -= ClientRegistration;
+      ClientEventNotifierContext.RoomRefreshed -= ClientRoomRefreshed;
+      ClientEventNotifierContext.RoomClosed -= ClientRoomClosed;
+      ClientEventNotifierContext.RoomOpened -= ClientRoomOpened;
+      ClientEventNotifierContext.AsyncError -= ClientAsyncError;
+      ClientEventNotifierContext.PluginLoaded -= ClientPluginLoaded;
+      ClientEventNotifierContext.PluginUnloading -= ClientPluginUnloading;
     }
     #endregion
 
@@ -504,7 +506,7 @@ namespace UI.ViewModel
           if (ClientModel.API != null)
             ClientModel.API.Unregister();
         }
-        catch (SocketException) { }
+        catch (Exception) { }
 
         ClientModel.Reset();
       }

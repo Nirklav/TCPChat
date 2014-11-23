@@ -11,20 +11,27 @@ namespace UI.ViewModel
 {
   public class PluginSettingTabViewModel : SettingsTabViewModel
   {
-    public ObservableCollection<PluginSetting> Plugins { get; private set; }
+    public ObservableCollection<PluginInfoViewModel> Plugins { get; private set; }
 
     public PluginSettingTabViewModel(string name) : base(name) 
     {
-      Plugins = new ObservableCollection<PluginSetting>();
+      Plugins = new ObservableCollection<PluginInfoViewModel>();
 
-      AddPlugins(ClientModel.Plugins.GetPlugins());
-      AddPlugins(ServerModel.Plugins.GetPlugins());
+      AddPlugins(ClientModel.Plugins.GetPlugins(), PluginKindId.Client);
+      AddPlugins(ServerModel.Plugins.GetPlugins(), PluginKindId.Server);
     }
 
-    private void AddPlugins(List<string> plugins)
+    private void AddPlugins(List<string> plugins, PluginKindId kind)
     {
       foreach (var pluginName in plugins)
-        Plugins.Add(new PluginSetting(pluginName));
+      {
+        var plugin = new PluginSetting(pluginName);
+        Plugins.Add(new PluginInfoViewModel(plugin, kind));
+
+        var saved = Settings.Current.Plugins.Find(p => p.Name == pluginName);
+        if (saved != null)
+          plugin.Enabled = saved.Enabled;
+      }
     }
 
     public override void Dispose()
@@ -34,7 +41,7 @@ namespace UI.ViewModel
 
     public override void SaveSettings()
     {
-      Settings.Current.Plugins = Plugins.ToList();
+      Settings.Current.Plugins = Plugins.Select(pi => pi.ToSetting()).ToList();
     }
   }
 }

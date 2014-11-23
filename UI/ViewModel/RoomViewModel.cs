@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Drawing;
 using System.Linq;
 using System.Net.Sockets;
 using System.Windows.Input;
@@ -26,7 +27,7 @@ namespace UI.ViewModel
     private const int MessagesLimit = 200;
     private const int CountToDelete = 100;
     #endregion
-    
+
     #region fields
     private bool updated;
     private bool messagesAutoScroll;
@@ -35,7 +36,7 @@ namespace UI.ViewModel
     private UserViewModel allInRoom;
     private ObservableCollection<MessageViewModel> messages;
     #endregion
-    
+
     #region commands
     public ICommand InviteInRoomCommand { get; private set; }
     public ICommand KickFromRoomCommand { get; private set; }
@@ -115,7 +116,7 @@ namespace UI.ViewModel
       Description = room;
       MainViewModel = mainViewModel;
       Messages = new ObservableCollection<MessageViewModel>();
-      allInRoom = new UserViewModel(new User("Все в комнате"), this);
+      allInRoom = new UserViewModel(new User("Все в комнате", Color.Black), this);
       Users = new ObservableCollection<UserViewModel>(users == null
         ? Enumerable.Empty<UserViewModel>()
         : room.Users.Select(user => new UserViewModel(users.Single(u => u.Equals(user)), this)));
@@ -128,8 +129,8 @@ namespace UI.ViewModel
 
       MainViewModel.AllUsers.CollectionChanged += AllUsersCollectionChanged;
 
-      ClientModel.ReceiveMessage += ClientReceiveMessage;
-      ClientModel.RoomRefreshed += ClientRoomRefreshed;
+      ClientEventNotifierContext.ReceiveMessage += ClientReceiveMessage;
+      ClientEventNotifierContext.RoomRefreshed += ClientRoomRefreshed;
     }
 
     public override void Dispose()
@@ -147,8 +148,8 @@ namespace UI.ViewModel
 
       MainViewModel.AllUsers.CollectionChanged -= AllUsersCollectionChanged;
 
-      ClientModel.ReceiveMessage -= ClientReceiveMessage;
-      ClientModel.RoomRefreshed -= ClientRoomRefreshed;
+      ClientEventNotifierContext.ReceiveMessage -= ClientReceiveMessage;
+      ClientEventNotifierContext.RoomRefreshed -= ClientRoomRefreshed;
     }
     #endregion
 
@@ -247,13 +248,13 @@ namespace UI.ViewModel
       try
       {
         IEnumerable<UserViewModel> availableUsers = MainViewModel.AllUsers.Except(Users);
-        if (availableUsers.Count() == 0)
+        if (!availableUsers.Any())
         {
           AddSystemMessage(NoBodyToInvite);
           return;
         }
 
-        UsersOperationDialog dialog = new UsersOperationDialog(InviteInRoomTitle, availableUsers);
+        var dialog = new UsersOperationDialog(InviteInRoomTitle, availableUsers);
         if (dialog.ShowDialog() == true && ClientModel.API != null)
           ClientModel.API.InviteUsers(Name, dialog.Users);
       }

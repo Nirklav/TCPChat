@@ -6,8 +6,8 @@ using System.Text;
 namespace Engine
 {
   [Serializable]
-  public class ConnectEventArgs : EventArgs
+  public class ServerRegistrationEventArgs : EventArgs
   {
-    public Exception Error { get; set; }
+    public string Nick { get; set; }
   }
 }

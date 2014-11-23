@@ -1,12 +1,8 @@
-﻿using Engine.API.StandardAPI.ClientCommands;
-using Engine.Containers;
-using Engine.Helpers;
+﻿using Engine.Helpers;
 using Engine.Model.Server;
-using Engine.Network.Connections;
 using Lidgren.Network;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -115,8 +111,8 @@ namespace Engine.Network
       lock (requests)
         requests.Add(new RequestPair(requestId, senderId));
 
-      AddressFamily addressFamily = ServerModel.Server.UsingIPv6 
-        ? AddressFamily.InterNetworkV6 
+      AddressFamily addressFamily = ServerModel.Server.UsingIPv6
+        ? AddressFamily.InterNetworkV6
         : AddressFamily.InterNetwork;
 
       if (!clientsEndPoints.ContainsKey(senderId))
@@ -170,7 +166,7 @@ namespace Engine.Network
               break;
           }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
           ServerModel.Logger.Write(e);
         }
@@ -211,7 +207,7 @@ namespace Engine.Network
         senderPoint = null;
         requestPoint = null;
       }
-      
+
       return received;
     }
 
@@ -223,7 +219,7 @@ namespace Engine.Network
 
       if (received = TryGetRequest(senderId, requestId, out senderEndPoint, out requestEndPoint))
       {
-        lock(requests)
+        lock (requests)
           requests.RemoveAll(p => string.Equals(p.SenderId, senderId) && string.Equals(p.RequestId, requestId));
 
         ServerModel.API.IntroduceConnections(senderId, senderEndPoint, requestId, requestEndPoint);

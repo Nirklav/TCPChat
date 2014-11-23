@@ -61,14 +61,15 @@ namespace Engine.Plugins
 
         var libs = FindLibraries(path);
         var infos = new PluginInfoLoader().LoadFrom(typeof(TPlugin).FullName, libs);
-        foreach (var info in infos)
-          LoadPlugin(info);
+        if (infos != null)
+          foreach (var info in infos)
+            LoadPlugin(info);
 
         processThread = new Thread(ProcessThreadHandler);
         processThread.IsBackground = true;
         processThread.Start();
       }
-      catch(Exception e)
+      catch (Exception e)
       {
         OnError("load plugins failed", e);
       }
@@ -86,15 +87,15 @@ namespace Engine.Plugins
         permmisions.AddPermission(new UIPermission(PermissionState.Unrestricted));
 
         permmisions.AddPermission(new SecurityPermission(
-          SecurityPermissionFlag.Execution | 
-          SecurityPermissionFlag.UnmanagedCode | 
+          SecurityPermissionFlag.Execution |
+          SecurityPermissionFlag.UnmanagedCode |
           SecurityPermissionFlag.SerializationFormatter |
           SecurityPermissionFlag.Assertion));
 
         permmisions.AddPermission(new FileIOPermission(
-          FileIOPermissionAccess.PathDiscovery | 
-          FileIOPermissionAccess.Write | 
-          FileIOPermissionAccess.Read, 
+          FileIOPermissionAccess.PathDiscovery |
+          FileIOPermissionAccess.Write |
+          FileIOPermissionAccess.Read,
           AppDomain.CurrentDomain.BaseDirectory));
 
         var domain = AppDomain.CreateDomain(string.Format("Plugin Domain [{0}]", Path.GetFileNameWithoutExtension(info.AssemblyPath)), null, domainSetup, permmisions);
@@ -149,7 +150,7 @@ namespace Engine.Plugins
 
     public void UnloadPlugin(Plugin<TModel> plugin)
     {
-      lock(syncObject)
+      lock (syncObject)
       {
         var containers = plugins.Values.ToList();
         foreach (var container in containers)

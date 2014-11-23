@@ -8,6 +8,7 @@ namespace Engine.Plugins.Client
   public class ClientPluginManager : PluginManager<ClientPlugin, ClientModelWrapper>
   {
     private Dictionary<ushort, ClientPluginCommand> commands = new Dictionary<ushort, ClientPluginCommand>();
+    private Dictionary<string, ClientNotifierContext> notifierContexts = new Dictionary<string, ClientNotifierContext>();
 
     public bool TryGetCommand(ushort id, out ICommand<ClientCommandArgs> command)
     {
@@ -26,9 +27,14 @@ namespace Engine.Plugins.Client
       return false;
     }
 
+    public IEnumerable<ClientNotifierContext> GetNotifierContexts()
+    {
+      return notifierContexts.Values;
+    }
+
     public ClientPlugin GetPlugin(string name)
     {
-      lock(syncObject)
+      lock (syncObject)
       {
         PluginContainer container;
         if (plugins.TryGetValue(name, out container))
@@ -43,7 +49,11 @@ namespace Engine.Plugins.Client
       foreach (var command in loaded.Plugin.Commands)
         commands.Add(command.Id, command);
 
-      ClientModel.OnPluginLoaded(this, new PluginEventArgs(loaded.Plugin));
+      ClientModel.Notifier.PluginLoaded(new PluginEventArgs(loaded.Plugin));
+
+      var context = loaded.Plugin.NotifierContext;
+      if (context != null)
+        notifierContexts.Add(loaded.Plugin.Name, context);
     }
 
     protected override void OnPluginUnlodaing(PluginContainer unloading)
@@ -51,7 +61,9 @@ namespace Engine.Plugins.Client
       foreach (var command in unloading.Plugin.Commands)
         commands.Remove(command.Id);
 
-      ClientModel.OnPluginUnloading(this, new PluginEventArgs(unloading.Plugin));
+      ClientModel.Notifier.PluginUnloading(new PluginEventArgs(unloading.Plugin));
+
+      notifierContexts.Remove(unloading.Plugin.Name);
     }
 
     protected override void OnError(string pluginName, Exception e)
@@ -65,6 +77,9 @@ namespace Engine.Plugins.Client
       {
         foreach (var command in commands.Values)
           command.Process();
+
+        foreach (var context in notifierContexts.Values)
+          context.Process();
       }
     }
   }

@@ -55,7 +55,7 @@ namespace Engine.Audio.OpenAL
         {
           return AudioCapture.AvailableDevices;
         }
-        catch(Exception)
+        catch (Exception)
         {
           return new List<string>();
         }
@@ -91,7 +91,7 @@ namespace Engine.Audio.OpenAL
           capture = new AudioCapture(deviceName, quality.Frequency, format, samplesSize * 2);
         }
       }
-      catch(Exception e)
+      catch (Exception e)
       {
         if (capture != null)
           capture.Dispose();

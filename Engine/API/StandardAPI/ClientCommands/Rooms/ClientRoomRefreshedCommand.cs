@@ -20,7 +20,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       using (var client = ClientModel.Get())
         client.Rooms[receivedContent.Room.Name] = receivedContent.Room;
 
-      ClientModel.OnRoomRefreshed(this, new RoomEventArgs { Room = receivedContent.Room, Users = receivedContent.Users });
+      ClientModel.Notifier.RoomRefreshed(new RoomEventArgs { Room = receivedContent.Room, Users = receivedContent.Users });
     }
 
     [Serializable]

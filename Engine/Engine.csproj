@@ -71,6 +71,7 @@
     <Compile Include="API\IClientAPI.cs" />
     <Compile Include="API\ICommand.cs" />
     <Compile Include="API\IServerAPI.cs" />
+    <Compile Include="EventArgs\ServerRegistrationEventArgs.cs" />
     <Compile Include="Helpers\Serializer.cs" />
     <Compile Include="API\StandardAPI\ClientCommands\Voice\ClientPlayVoiceCommand.cs" />
     <Compile Include="API\StandardAPI\ServerCommands\BaseServerCommand.cs" />
@@ -119,7 +120,10 @@
     <Compile Include="Audio\OpenAL\OpenALRecorder.cs" />
     <Compile Include="EventArgs\PluginEventArgs.cs" />
     <Compile Include="Helpers\EngineSyncContext.cs" />
+    <Compile Include="Model\Client\ClientNotifier.cs" />
     <Compile Include="Model\Client\ClientInitializer.cs" />
+    <Compile Include="Model\Client\ClientEventNotifierContext.cs" />
+    <Compile Include="Model\Common\Notifier.cs" />
     <Compile Include="Model\Entities\AudioQuality.cs" />
     <Compile Include="Model\Entities\SoundPack.cs" />
     <Compile Include="EventArgs\RecordedEventArgs.cs" />
@@ -129,6 +133,7 @@
     <Compile Include="Model\Entities\RoomType.cs" />
     <Compile Include="Model\Entities\VoiceRoom.cs" />
     <Compile Include="Model\Server\ServerContext.cs" />
+    <Compile Include="Model\Server\ServerNotifier.cs" />
     <Compile Include="Model\Server\ServerInitializer.cs" />
     <Compile Include="Network\AsyncClient.cs" />
     <Compile Include="Network\AsyncServer.cs" />

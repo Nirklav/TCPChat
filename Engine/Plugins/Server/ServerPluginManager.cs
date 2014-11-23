@@ -45,7 +45,7 @@ namespace Engine.Plugins.Server
 
     protected override void Process()
     {
-      lock(syncObject)
+      lock (syncObject)
       {
         foreach (var command in commands.Values)
           command.Process();

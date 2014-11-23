@@ -20,13 +20,15 @@ namespace Engine.Network
   {
     protected override void OnError(Exception exc)
     {
-      ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = exc });
+      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = exc });
       ClientModel.Logger.Write(exc);
     }
   }
 
-  abstract class RequestQueue<TArgs>
+  abstract class RequestQueue<TArgs> : MarshalByRefObject
   {
+    private const int Timeout = 1000;
+
     #region Nested Types
 
     private class QueueContainer
@@ -38,20 +40,32 @@ namespace Engine.Network
       private Queue<CommandContainer> commands = new Queue<CommandContainer>();
 
       public QueueContainer(RequestQueue<TArgs> queue)
-	    {
+      {
         this.queue = queue;
-	    }
+      }
 
       public void Enqueue(ICommand<TArgs> command, TArgs args)
       {
-        lock (syncObject)
+        var sync = syncObject;
+        var lockTaken = false;
+
+        try
         {
+          lockTaken = Monitor.TryEnter(sync, Timeout);
+          if (!lockTaken)
+            throw new InvalidOperationException("Monitor.TryEnter timeout");
+
           commands.Enqueue(new CommandContainer(command, args));
           if (!inProcess)
           {
             inProcess = true;
             ThreadPool.QueueUserWorkItem(Process);
           }
+        }
+        finally
+        {
+          if (lockTaken)
+            Monitor.Exit(sync);
         }
       }
 
@@ -60,8 +74,15 @@ namespace Engine.Network
         while (true)
         {
           CommandContainer commandContainer;
-          lock (syncObject)
+          var sync = syncObject;
+          var lockTaken = false;
+
+          try
           {
+            lockTaken = Monitor.TryEnter(sync, Timeout);
+            if (!lockTaken)
+              throw new InvalidOperationException("Monitor.TryEnter timeout");
+
             if (commands.Count == 0)
             {
               inProcess = false;
@@ -70,12 +91,17 @@ namespace Engine.Network
 
             commandContainer = commands.Dequeue();
           }
+          finally
+          {
+            if (lockTaken)
+              Monitor.Exit(sync);
+          }
 
           try
           {
             commandContainer.Run();
           }
-          catch(Exception e)
+          catch (Exception e)
           {
             queue.OnError(e);
           }
@@ -89,10 +115,10 @@ namespace Engine.Network
       private TArgs args;
 
       public CommandContainer(ICommand<TArgs> command, TArgs args)
-	    {
+      {
         this.command = command;
         this.args = args;
-	    }
+      }
 
       public void Run()
       {
@@ -111,15 +137,27 @@ namespace Engine.Network
       requests = new Dictionary<string, QueueContainer>();
     }
 
-    public void Add(string connectionId, ICommand<TArgs> command, TArgs args)
+    internal void Add(string connectionId, ICommand<TArgs> command, TArgs args)
     {
       QueueContainer queueContainer;
 
-      lock (syncObject)
+      var sync = syncObject;
+      var lockTaken = false;
+
+      try
       {
+        lockTaken = Monitor.TryEnter(sync, Timeout);
+        if (!lockTaken)
+          throw new InvalidOperationException("Monitor.TryEnter timeout");
+
         requests.TryGetValue(connectionId, out queueContainer);
         if (queueContainer == null)
           requests.Add(connectionId, (queueContainer = new QueueContainer(this)));
+      }
+      finally
+      {
+        if (lockTaken)
+          Monitor.Exit(sync);
       }
 
       queueContainer.Enqueue(command, args);

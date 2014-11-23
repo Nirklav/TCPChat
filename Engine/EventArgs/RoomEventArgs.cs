@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace Engine
 {
+  [Serializable]
   public class RoomEventArgs : EventArgs
   {
     public Room Room { get; set; }

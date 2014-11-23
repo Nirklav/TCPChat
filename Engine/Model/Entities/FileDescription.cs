@@ -9,7 +9,7 @@ namespace Engine.Model.Entities
   /// Класс описывающий файл раздаваемый пользователем.
   /// </summary>
   [Serializable]
-  public class FileDescription : MarshalByRefObject
+  public class FileDescription
   {
     private User owner;
     private int id;

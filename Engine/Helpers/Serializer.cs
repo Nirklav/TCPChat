@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 
 namespace Engine.Helpers
 {
@@ -11,7 +7,7 @@ namespace Engine.Helpers
   {
     public static byte[] Serialize<T>(T obj)
     {
-      using(MemoryStream stream = new MemoryStream())
+      using (MemoryStream stream = new MemoryStream())
       {
         BinaryFormatter formatter = new BinaryFormatter();
         formatter.Serialize(stream, obj);
@@ -31,9 +27,14 @@ namespace Engine.Helpers
       {
         stream.Position = sizeof(ushort);
         BinaryFormatter formatter = new BinaryFormatter();
-        T obj = (T)formatter.Deserialize(stream);
-        return obj;
+        return (T)formatter.Deserialize(stream);
       }
+    }
+
+    public static T Deserialize<T>(MemoryStream stream)
+    {
+      BinaryFormatter formatter = new BinaryFormatter();
+      return (T)formatter.Deserialize(stream);
     }
   }
 }

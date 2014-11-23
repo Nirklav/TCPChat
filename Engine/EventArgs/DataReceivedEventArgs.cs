@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Engine
 {
+  [Serializable]
   public class DataReceivedEventArgs : EventArgs
   {
     public byte[] ReceivedData { get; set; }

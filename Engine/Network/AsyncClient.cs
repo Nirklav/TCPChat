@@ -178,13 +178,13 @@ namespace Engine.Network
           reconnecting = true;
         else
         {
-          ClientModel.OnConnected(this, new ConnectEventArgs { Error = se });
+          ClientModel.Notifier.Connected(new ConnectEventArgs { Error = se });
           ClientModel.Logger.Write(se);
         }
       }
       catch (Exception e)
       {
-        ClientModel.OnConnected(this, new ConnectEventArgs { Error = e });
+        ClientModel.Notifier.Connected(new ConnectEventArgs { Error = e });
         ClientModel.Logger.Write(e);
       }
     }
@@ -206,7 +206,7 @@ namespace Engine.Network
       }
       catch (Exception exc)
       {
-        ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = exc });
+        ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = exc });
         ClientModel.Logger.Write(exc);
       }
     }
@@ -227,7 +227,7 @@ namespace Engine.Network
 
       if (ClientModel.API != null)
       {
-        ClientModel.OnConnected(this, new ConnectEventArgs { Error = null });
+        ClientModel.Notifier.Connected(new ConnectEventArgs { Error = null });
         waitingAPIName = false;
       }
       else
@@ -241,7 +241,7 @@ namespace Engine.Network
       if (args.Error == null)
         return;
 
-      ClientModel.OnAsyncError(this, new AsyncErrorEventArgs { Error = args.Error });
+      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = args.Error });
       ClientModel.Logger.Write(args.Error);
     }
 
@@ -273,7 +273,7 @@ namespace Engine.Network
       {
         if ((DateTime.Now - lastReconnect).TotalMilliseconds >= ReconnectTimeInterval)
         {
-          ClientModel.OnSystemMessage("Попытка соединения с сервером...");
+          ClientModel.Notifier.SystemMessage("Попытка соединения с сервером...");
 
           if (handler != null)
             handler.Close();

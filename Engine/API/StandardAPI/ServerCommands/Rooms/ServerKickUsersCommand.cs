@@ -41,7 +41,7 @@ namespace Engine.API.StandardAPI.ServerCommands
           return;
         }
 
-        var sendingContent = new ClientRoomClosedCommand.MessageContent() { Room = room };
+        var sendingContent = new ClientRoomClosedCommand.MessageContent { Room = room };
 
         foreach (User user in receivedContent.Users)
         {
@@ -59,15 +59,7 @@ namespace Engine.API.StandardAPI.ServerCommands
           ServerModel.Server.SendMessage(user.Nick, ClientRoomClosedCommand.Id, sendingContent);
         }
 
-        foreach (string user in room.Users)
-        {
-          var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
-          {
-            Room = room,
-            Users = room.Users.Select(nick => server.Users[nick]).ToList()
-          };
-          ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.Id, roomRefreshedContent);
-        }
+        RefreshRoom(server, room);
       }
     }
 
@@ -75,10 +67,10 @@ namespace Engine.API.StandardAPI.ServerCommands
     public class MessageContent
     {
       string roomName;
-      IEnumerable<User> users;
+      List<User> users;
 
       public string RoomName { get { return roomName; } set { roomName = value; } }
-      public IEnumerable<User> Users { get { return users; } set { users = value; } }
+      public List<User> Users { get { return users; } set { users = value; } }
     }
 
     public const ushort Id = (ushort)ServerCommand.KickUsers;

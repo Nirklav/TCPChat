@@ -1,7 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model;
-using Engine.Model.Entities;
-using Engine.Model.Server;
+﻿using Engine.Model.Server;
 using Engine.Network.Connections;
 using System;
 using System.Collections.Generic;
@@ -90,7 +87,7 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (isServerRunning) 
+      if (isServerRunning)
         return;
 
       if (!Connection.TCPPortIsAvailable(serverPort))
@@ -111,7 +108,7 @@ namespace Engine.Network
 
     public void RegisterConnection(string tempId, string id, RSAParameters openKey)
     {
-      lock(connections)
+      lock (connections)
       {
         var connection = GetConnection(tempId);
         if (connection == null)
@@ -179,7 +176,7 @@ namespace Engine.Network
     /// <returns>Список зарегестрированых Id.</returns>
     public string[] GetConnetionsIds()
     {
-      lock(connections)
+      lock (connections)
         return connections.Keys.Where(id => !id.Contains(Connection.TempConnectionPrefix)).ToArray();
     }
 
@@ -190,7 +187,7 @@ namespace Engine.Network
     /// <returns>Открытый ключ.</returns>
     public RSAParameters GetOpenKey(string id)
     {
-      lock(connections)
+      lock (connections)
       {
         ServerConnection connection;
         if (!connections.TryGetValue(id, out connection))
@@ -272,7 +269,7 @@ namespace Engine.Network
       lock (connections)
       {
         string[] keys = connections.Keys.ToArray();
-        foreach(string id in keys)
+        foreach (string id in keys)
         {
           try
           {
@@ -302,10 +299,10 @@ namespace Engine.Network
         }
       }
 
-      using(var server = ServerModel.Get())
+      using (var server = ServerModel.Get())
       {
         string[] roomsNames = server.Rooms.Keys.ToArray();
-        foreach(string name in roomsNames)
+        foreach (string name in roomsNames)
         {
           if (string.Equals(name, ServerModel.MainRoomName))
             continue;

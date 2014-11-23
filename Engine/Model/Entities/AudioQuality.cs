@@ -6,7 +6,7 @@ using System.Text;
 namespace Engine.Model.Entities
 {
   [Serializable]
-  public class AudioQuality : MarshalByRefObject
+  public class AudioQuality
   {
     public int Channels { get; set; }
     public int Bits { get; set; }

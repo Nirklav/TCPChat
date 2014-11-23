@@ -2,14 +2,10 @@
 using Engine.Helpers;
 using Engine.Model.Client;
 using Engine.Network;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Engine.Plugins.Client
 {
-  public class ClientModelWrapper : 
+  public class ClientModelWrapper :
     CrossDomainObject
   {
     public ClientAPIWrapper API { get; private set; }

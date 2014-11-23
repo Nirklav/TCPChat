@@ -58,6 +58,8 @@ namespace Engine.API.StandardAPI.ServerCommands
 
           foreach (var connectionId in room.Users)
             ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.Id, sendingContent);
+
+          ServerModel.Notifier.OnRegistered(new ServerRegistrationEventArgs { Nick = receivedContent.User.Nick });
         }
       }
     }

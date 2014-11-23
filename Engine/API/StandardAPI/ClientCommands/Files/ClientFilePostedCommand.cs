@@ -27,7 +27,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         State = receivedContent.File,
       };
 
-      ClientModel.OnReceiveMessage(this, receiveMessageArgs);
+      ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);
     }
 
     [Serializable]

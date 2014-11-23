@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Engine
 {
+  [Serializable]
   public class RegistrationEventArgs : EventArgs
   {
     public bool Registered { get; set; }

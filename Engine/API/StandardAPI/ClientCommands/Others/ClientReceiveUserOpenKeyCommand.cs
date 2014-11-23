@@ -15,24 +15,21 @@ namespace Engine.API.StandardAPI.ClientCommands
   {
     public void Run(ClientCommandArgs args)
     {
-      StandardClientAPI API = (StandardClientAPI)ClientModel.API;
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var API = ClientModel.API as StandardClientAPI;
+      if (API == null)
+        throw new InvalidOperationException("ClientReceiveUserOpenKeyCommand need StandardAPI");
+
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.Nick))
         throw new ArgumentException("Nick");
 
-      WaitingPrivateMessage waitingMessage;
-      lock (API.WaitingPrivateMessages)
-      {
-        waitingMessage = API.WaitingPrivateMessages.Find(m => m.Receiver.Equals(receivedContent.Nick));
-        if (waitingMessage == null)
-          return;
-
-        API.WaitingPrivateMessages.Remove(waitingMessage);
-      }
+      var waitingMessage = API.GetWaitingMessage(receivedContent.Nick);
+      if (waitingMessage == null)
+        return;
 
       var sendingContent = new ServerSendPrivateMessageCommand.MessageContent { Receiver = receivedContent.Nick };
-      AesCryptoServiceProvider provider = new AesCryptoServiceProvider
+      var provider = new AesCryptoServiceProvider
       {
         Padding = PaddingMode.Zeros,
         Mode = CipherMode.CBC
@@ -40,9 +37,8 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       using (Crypter messageCrypter = new Crypter(provider))
       {
-        byte[] symmetricKey = messageCrypter.GenerateKey();
-
-        RSACryptoServiceProvider keyCryptor = new RSACryptoServiceProvider(AsyncClient.CryptorKeySize);
+        var symmetricKey = messageCrypter.GenerateKey();
+        var keyCryptor = new RSACryptoServiceProvider(AsyncClient.CryptorKeySize);
         keyCryptor.ImportParameters(receivedContent.OpenKey);
         sendingContent.Key = keyCryptor.Encrypt(symmetricKey, false);
         keyCryptor.Clear();

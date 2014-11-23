@@ -15,6 +15,7 @@ namespace Engine.Model.Server
     private static ServerModel model;
     private static Logger logger = new Logger("Server.log");
     private static ServerPluginManager plugins = new ServerPluginManager();
+    private static ServerNotifier notifier = new ServerNotifier();
 
     public static Logger Logger { get { return logger; } }
 
@@ -32,6 +33,11 @@ namespace Engine.Model.Server
     /// Менеджер плагинов.
     /// </summary>
     public static ServerPluginManager Plugins { get { return plugins; } }
+
+    /// <summary>
+    /// Уведомитель.
+    /// </summary>
+    public static ServerNotifier Notifier { get { return notifier; } }
 
     /// <summary>
     /// Исользовать только с конструкцией using

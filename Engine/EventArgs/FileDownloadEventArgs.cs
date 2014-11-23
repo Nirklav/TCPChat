@@ -3,6 +3,7 @@ using System;
 
 namespace Engine
 {
+  [Serializable]
   public class FileDownloadEventArgs : EventArgs
   {
     public int Progress { get; set; }

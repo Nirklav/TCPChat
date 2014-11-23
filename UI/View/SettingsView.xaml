@@ -271,6 +271,21 @@
             </Grid> 
         </DataTemplate>
         
+        <DataTemplate x:Key="PluginsTemplate">
+            <ListView ItemsSource="{Binding ElementName=MainWindow,
+                                            Path=DataContext.SelectedTab.Plugins}">
+                <ListView.View>
+                    <GridView>
+                        <GridView.Columns>
+                            <GridViewColumn Width="130" Header="Название" DisplayMemberBinding="{Binding Path=Name}"/>
+                            <GridViewColumn Width="70" Header="Включен" DisplayMemberBinding="{Binding Path=Enabled}"/>
+                            <GridViewColumn Width="70" Header="Тип" DisplayMemberBinding="{Binding Path=Kind}"/>
+                        </GridView.Columns>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </DataTemplate>
+        
         <Style x:Key="TabControlStyle">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=SelectedTab.Name}"
@@ -289,6 +304,12 @@
                              Value="Клиент">
                     <Setter Property="ContentControl.ContentTemplate" 
                             Value="{StaticResource ResourceKey=ClientTemplate}"/>
+                </DataTrigger>
+                
+                <DataTrigger Binding="{Binding Path=SelectedTab.Name}"
+                             Value="Плагины">
+                    <Setter Property="ContentControl.ContentTemplate" 
+                            Value="{StaticResource ResourceKey=PluginsTemplate}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>

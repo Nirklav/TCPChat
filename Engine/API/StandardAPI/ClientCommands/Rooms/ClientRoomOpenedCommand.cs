@@ -35,7 +35,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       using (var client = ClientModel.Get())
         client.Rooms.Add(receivedContent.Room.Name, receivedContent.Room);
 
-      ClientModel.OnRoomOpened(this, new RoomEventArgs { Room = receivedContent.Room, Users = receivedContent.Users });
+      ClientModel.Notifier.RoomOpened(new RoomEventArgs { Room = receivedContent.Room, Users = receivedContent.Users });
     }
 
     [Serializable]

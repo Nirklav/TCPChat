@@ -18,6 +18,7 @@ namespace Engine.Model.Client
     private static IPlayer player = new OpenALPlayer();
     private static IRecorder recorder = new OpenALRecorder();
     private static ClientPluginManager plugins = new ClientPluginManager();
+    private static ClientNotifier notifier = new ClientNotifier();
 
     public static Logger Logger { get { return logger; } }
 
@@ -52,6 +53,11 @@ namespace Engine.Model.Client
     public static ClientPluginManager Plugins { get { return plugins; } }
 
     /// <summary>
+    /// Уведомитель.
+    /// </summary>
+    public static ClientNotifier Notifier { get { return notifier; } }
+
+    /// <summary>
     /// Исользовать только с конструкцией using
     /// </summary>
     /// <example>using (var client = ClientModel.Get()) { ... }</example>
@@ -64,84 +70,6 @@ namespace Engine.Model.Client
       return new ClientContext(model);
     }
     #endregion
-
-    #region events
-    /// <summary>
-    /// Событие происходит при обновлении списка подключенных к серверу клиентов.
-    /// </summary>
-    public static event EventHandler<RoomEventArgs> RoomRefreshed;
-    internal static void OnRoomRefreshed(object sender, RoomEventArgs args) { Raise(ref RoomRefreshed, sender, args); }
-
-    /// <summary>
-    /// Событие происходит при подключении клиента к серверу.
-    /// </summary>
-    public static event EventHandler<ConnectEventArgs> Connected;
-    internal static void OnConnected(object sender, ConnectEventArgs args) { Raise(ref Connected, sender, args); }
-
-    /// <summary>
-    /// Событие происходит при полученни ответа от сервера, о регистрации.
-    /// </summary>
-    public static event EventHandler<RegistrationEventArgs> ReceiveRegistrationResponse;
-    internal static void OnReceiveRegistrationResponse(object sender, RegistrationEventArgs args) { Raise(ref ReceiveRegistrationResponse, sender, args); }
-
-    /// <summary>
-    /// Событие происходит при полученнии сообщения от сервера.
-    /// </summary>
-    public static event EventHandler<ReceiveMessageEventArgs> ReceiveMessage;
-    internal static void OnSystemMessage(string message) { OnReceiveMessage(null, new ReceiveMessageEventArgs { Type = MessageType.System, Message = message }); }
-    internal static void OnReceiveMessage(object sender, ReceiveMessageEventArgs args) { Raise(ref ReceiveMessage, sender, args); }
-
-    /// <summary>
-    /// Событие происходит при любой асинхронной ошибке.
-    /// </summary>
-    public static event EventHandler<AsyncErrorEventArgs> AsyncError;
-    internal static void OnAsyncError(object sender, AsyncErrorEventArgs args) { Raise(ref AsyncError, sender, args); }
-
-    /// <summary>
-    /// Событие происходит при открытии комнаты клиентом. Или когда клиента пригласили в комнату.
-    /// </summary>
-    public static event EventHandler<RoomEventArgs> RoomOpened;
-    internal static void OnRoomOpened(object sender, RoomEventArgs args) { Raise(ref RoomOpened, sender, args); }
-
-    /// <summary>
-    /// Событие происходит при закрытии комнаты клиентом, когда клиента кикают из комнаты.
-    /// </summary>
-    public static event EventHandler<RoomEventArgs> RoomClosed;
-    internal static void OnRoomClosed(object sender, RoomEventArgs args) { Raise(ref RoomClosed, sender, args); }
-
-    /// <summary>
-    /// Событие происходит при получении части файла, а также при завершении загрузки файла.
-    /// </summary>
-    public static event EventHandler<FileDownloadEventArgs> DownloadProgress;
-    internal static void OnDownloadProgress(object sender, FileDownloadEventArgs args) { Raise(ref DownloadProgress, sender, args); }
-
-    /// <summary>
-    /// Происходит при удалении выложенного файла.
-    /// </summary>
-    public static event EventHandler<FileDownloadEventArgs> PostedFileDeleted;
-    internal static void OnPostedFileDeleted(object sender, FileDownloadEventArgs args) { Raise(ref PostedFileDeleted, sender, args); }
-
-    /// <summary>
-    /// Происходит после успешной загрзуки плагина.
-    /// </summary>
-    public static event EventHandler<PluginEventArgs> PluginLoaded;
-    internal static void OnPluginLoaded(object sender, PluginEventArgs args) { Raise(ref PluginLoaded, sender, args); }
-
-    /// <summary>
-    /// Происходит перед выгрузкой плагина.
-    /// </summary>
-    public static event EventHandler<PluginEventArgs> PluginUnloading;
-    internal static void OnPluginUnloading(object sender, PluginEventArgs args) { Raise(ref PluginUnloading, sender, args); }
-
-    private static void Raise<T>(ref EventHandler<T> eventHandler, object sender, T args) where T: EventArgs
-    {
-      var temp = Interlocked.CompareExchange(ref eventHandler, null, null);
-
-      if (temp != null)
-        temp(sender, args);
-    }
-
-    #endregion events
 
     #region properties
     public User User { get; private set; }
@@ -171,10 +99,7 @@ namespace Engine.Model.Client
         throw new InvalidOperationException("model already inited");
 
       using (var client = Get())
-      {
-        model.User = new User(initializer.Nick);
-        model.User.NickColor = initializer.NickColor;
-      }
+        model.User = new User(initializer.Nick, initializer.NickColor);
 
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
       Client = new AsyncClient(initializer.Nick);

@@ -51,10 +51,6 @@ namespace UI.Infrastructure
     }
     #endregion
 
-    #region constructor
-    public CommandReference() { }
-    #endregion
-
     #region ICommand
     public bool CanExecute(object parameter)
     {

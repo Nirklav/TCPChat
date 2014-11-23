@@ -24,7 +24,7 @@ namespace Engine.API.StandardAPI
     /// </summary>
     public const string API = "StandardAPI v2.2";
 
-    private Dictionary<ushort, ICommand<ServerCommandArgs>> commandDictionary = new Dictionary<ushort, ICommand<ServerCommandArgs>>();
+    private Dictionary<ushort, ICommand<ServerCommandArgs>> commands;
 
     /// <summary>
     /// Создает экземпляр API.
@@ -32,23 +32,25 @@ namespace Engine.API.StandardAPI
     /// <param name="host">Сервер которому будет принадлежать данный API.</param>
     public StandardServerAPI()
     {
-      commandDictionary.Add(ServerRegisterCommand.Id, new ServerRegisterCommand());
-      commandDictionary.Add(ServerUnregisterCommand.Id, new ServerUnregisterCommand());
-      commandDictionary.Add(ServerSendRoomMessageCommand.Id, new ServerSendRoomMessageCommand());
-      commandDictionary.Add(ServerSendPrivateMessageCommand.Id, new ServerSendPrivateMessageCommand());
-      commandDictionary.Add(ServerGetUserOpenKeyCommand.Id, new ServerGetUserOpenKeyCommand());
-      commandDictionary.Add(ServerCreateRoomCommand.Id, new ServerCreateRoomCommand());
-      commandDictionary.Add(ServerDeleteRoomCommand.Id, new ServerDeleteRoomCommand());
-      commandDictionary.Add(ServerInviteUsersCommand.Id, new ServerInviteUsersCommand());
-      commandDictionary.Add(ServerKickUsersCommand.Id, new ServerKickUsersCommand());
-      commandDictionary.Add(ServerExitFromRoomCommand.Id, new ServerExitFromRoomCommand());
-      commandDictionary.Add(ServerRefreshRoomCommand.Id, new ServerRefreshRoomCommand());
-      commandDictionary.Add(ServerSetRoomAdminCommand.Id, new ServerSetRoomAdminCommand());
-      commandDictionary.Add(ServerAddFileToRoomCommand.Id, new ServerAddFileToRoomCommand());
-      commandDictionary.Add(ServerRemoveFileFromRoomCommand.Id, new ServerRemoveFileFromRoomCommand());
-      commandDictionary.Add(ServerP2PConnectRequestCommand.Id, new ServerP2PConnectRequestCommand());
-      commandDictionary.Add(ServerP2PReadyAcceptCommand.Id, new ServerP2PReadyAcceptCommand());
-      commandDictionary.Add(ServerPingRequestCommand.Id, new ServerPingRequestCommand());
+      commands = new Dictionary<ushort, ICommand<ServerCommandArgs>>();
+
+      commands.Add(ServerRegisterCommand.Id, new ServerRegisterCommand());
+      commands.Add(ServerUnregisterCommand.Id, new ServerUnregisterCommand());
+      commands.Add(ServerSendRoomMessageCommand.Id, new ServerSendRoomMessageCommand());
+      commands.Add(ServerSendPrivateMessageCommand.Id, new ServerSendPrivateMessageCommand());
+      commands.Add(ServerGetUserOpenKeyCommand.Id, new ServerGetUserOpenKeyCommand());
+      commands.Add(ServerCreateRoomCommand.Id, new ServerCreateRoomCommand());
+      commands.Add(ServerDeleteRoomCommand.Id, new ServerDeleteRoomCommand());
+      commands.Add(ServerInviteUsersCommand.Id, new ServerInviteUsersCommand());
+      commands.Add(ServerKickUsersCommand.Id, new ServerKickUsersCommand());
+      commands.Add(ServerExitFromRoomCommand.Id, new ServerExitFromRoomCommand());
+      commands.Add(ServerRefreshRoomCommand.Id, new ServerRefreshRoomCommand());
+      commands.Add(ServerSetRoomAdminCommand.Id, new ServerSetRoomAdminCommand());
+      commands.Add(ServerAddFileToRoomCommand.Id, new ServerAddFileToRoomCommand());
+      commands.Add(ServerRemoveFileFromRoomCommand.Id, new ServerRemoveFileFromRoomCommand());
+      commands.Add(ServerP2PConnectRequestCommand.Id, new ServerP2PConnectRequestCommand());
+      commands.Add(ServerP2PReadyAcceptCommand.Id, new ServerP2PReadyAcceptCommand());
+      commands.Add(ServerPingRequestCommand.Id, new ServerPingRequestCommand());
     }
 
     /// <summary>
@@ -69,7 +71,7 @@ namespace Engine.API.StandardAPI
       ushort id = BitConverter.ToUInt16(message, 0);
 
       ICommand<ServerCommandArgs> command;
-      if (commandDictionary.TryGetValue(id, out command))
+      if (commands.TryGetValue(id, out command))
         return command;
 
       if (ServerModel.Plugins.TryGetCommand(id, out command))
@@ -119,7 +121,7 @@ namespace Engine.API.StandardAPI
     }
 
     /// <summary>
-    /// Закрывает соединение.
+    /// Удаляет пользователя и закрывает соединение с ним.
     /// </summary>
     /// <param name="nick">Ник пользователя, соединение котрого будет закрыто.</param>
     public void RemoveUser(string nick)
@@ -164,6 +166,8 @@ namespace Engine.API.StandardAPI
           }
         }
       }
+
+      ServerModel.Notifier.OnUnregistered(new ServerRegistrationEventArgs { Nick = nick });
     }
   }
 }

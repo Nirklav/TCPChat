@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 
 namespace Engine.Model.Entities
 {
@@ -10,7 +7,7 @@ namespace Engine.Model.Entities
   /// Описание пользователя.
   /// </summary>
   [Serializable]
-  public class User : MarshalByRefObject
+  public class User
   {
     private string nick;
     private Color nickColor;
@@ -19,9 +16,10 @@ namespace Engine.Model.Entities
     /// Создает описание пользователя.
     /// </summary>
     /// <param name="Nick">Ник пользователя.</param>
-    public User(string Nick)
+    public User(string Nick, Color color)
     {
       nick = Nick;
+      nickColor = color;
     }
 
     /// <summary>
@@ -30,7 +28,6 @@ namespace Engine.Model.Entities
     public string Nick
     {
       get { return nick; }
-      set { nick = value; }
     }
 
     /// <summary>
@@ -39,7 +36,6 @@ namespace Engine.Model.Entities
     public Color NickColor
     {
       get { return nickColor; }
-      set { nickColor = value; }
     }
 
     public override bool Equals(object obj)
@@ -60,7 +56,7 @@ namespace Engine.Model.Entities
 
     public bool Equals(string userNick)
     {
-      return string.Equals(Nick, userNick);
+      return string.Equals(Nick, userNick, StringComparison.OrdinalIgnoreCase);
     }
 
     public bool Equals(User user)
@@ -68,7 +64,7 @@ namespace Engine.Model.Entities
       if (user == null)
         return false;
 
-      return string.Equals(Nick, user.Nick);
+      return Equals(Nick, user.Nick);
     }
   }
 }

@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Engine
 {
+  [Serializable]
   public class ReceiveMessageEventArgs : EventArgs
   {
     public MessageType Type { get; set; }

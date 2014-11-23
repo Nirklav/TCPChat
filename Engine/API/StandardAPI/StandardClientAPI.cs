@@ -1,7 +1,5 @@
 ﻿using Engine.API.StandardAPI.ClientCommands;
 using Engine.API.StandardAPI.ServerCommands;
-using Engine.Audio;
-using Engine.Audio.OpenAL;
 using Engine.Containers;
 using Engine.Exceptions;
 using Engine.Model.Client;
@@ -9,7 +7,6 @@ using Engine.Model.Entities;
 using Engine.Network;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -23,14 +20,10 @@ namespace Engine.API.StandardAPI
     MarshalByRefObject,
     IClientAPI
   {
-    private Dictionary<ushort, ICommand<ClientCommandArgs>> commandDictionary;
+    private List<WaitingPrivateMessage> waitingPrivateMessages;
+    private Dictionary<ushort, ICommand<ClientCommandArgs>> commands;
     private Random idCreator;
     private long lastSendedNumber;
-
-    /// <summary>
-    /// Приватные сообщения которые ожидают открытого ключа, для шифрования.
-    /// </summary>
-    internal List<WaitingPrivateMessage> WaitingPrivateMessages { get; private set; }
 
     /// <summary>
     /// Создает экземпляр API.
@@ -38,29 +31,29 @@ namespace Engine.API.StandardAPI
     /// <param name="host">Клиент которому будет принадлежать данный API.</param>
     public StandardClientAPI()
     {
-      commandDictionary = new Dictionary<ushort, ICommand<ClientCommandArgs>>();
-      WaitingPrivateMessages = new List<WaitingPrivateMessage>();
+      commands = new Dictionary<ushort, ICommand<ClientCommandArgs>>();
+      waitingPrivateMessages = new List<WaitingPrivateMessage>();
       idCreator = new Random(DateTime.Now.Millisecond);
 
       ClientModel.Recorder.Recorded += OnRecorded;
 
-      commandDictionary.Add(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand());
-      commandDictionary.Add(ClientRoomRefreshedCommand.Id, new ClientRoomRefreshedCommand());
-      commandDictionary.Add(ClientOutRoomMessageCommand.Id, new ClientOutRoomMessageCommand());
-      commandDictionary.Add(ClientOutPrivateMessageCommand.Id, new ClientOutPrivateMessageCommand());
-      commandDictionary.Add(ClientOutSystemMessageCommand.Id, new ClientOutSystemMessageCommand());
-      commandDictionary.Add(ClientFilePostedCommand.Id, new ClientFilePostedCommand());
-      commandDictionary.Add(ClientReceiveUserOpenKeyCommand.Id, new ClientReceiveUserOpenKeyCommand());
-      commandDictionary.Add(ClientRoomOpenedCommand.Id, new ClientRoomOpenedCommand());
-      commandDictionary.Add(ClientRoomClosedCommand.Id, new ClientRoomClosedCommand());
-      commandDictionary.Add(ClientPostedFileDeletedCommand.Id, new ClientPostedFileDeletedCommand());
-      commandDictionary.Add(ClientReadFilePartCommand.Id, new ClientReadFilePartCommand());
-      commandDictionary.Add(ClientWriteFilePartCommand.Id, new ClientWriteFilePartCommand());
-      commandDictionary.Add(ClientPingResponceCommand.Id, new ClientPingResponceCommand());
-      commandDictionary.Add(ClientConnectToPeerCommand.Id, new ClientConnectToPeerCommand());
-      commandDictionary.Add(ClientWaitPeerConnectionCommand.Id, new ClientWaitPeerConnectionCommand());
-      commandDictionary.Add(ClientConnectToP2PServiceCommand.Id, new ClientConnectToP2PServiceCommand());
-      commandDictionary.Add(ClientPlayVoiceCommand.Id, new ClientPlayVoiceCommand());
+      commands.Add(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand());
+      commands.Add(ClientRoomRefreshedCommand.Id, new ClientRoomRefreshedCommand());
+      commands.Add(ClientOutRoomMessageCommand.Id, new ClientOutRoomMessageCommand());
+      commands.Add(ClientOutPrivateMessageCommand.Id, new ClientOutPrivateMessageCommand());
+      commands.Add(ClientOutSystemMessageCommand.Id, new ClientOutSystemMessageCommand());
+      commands.Add(ClientFilePostedCommand.Id, new ClientFilePostedCommand());
+      commands.Add(ClientReceiveUserOpenKeyCommand.Id, new ClientReceiveUserOpenKeyCommand());
+      commands.Add(ClientRoomOpenedCommand.Id, new ClientRoomOpenedCommand());
+      commands.Add(ClientRoomClosedCommand.Id, new ClientRoomClosedCommand());
+      commands.Add(ClientPostedFileDeletedCommand.Id, new ClientPostedFileDeletedCommand());
+      commands.Add(ClientReadFilePartCommand.Id, new ClientReadFilePartCommand());
+      commands.Add(ClientWriteFilePartCommand.Id, new ClientWriteFilePartCommand());
+      commands.Add(ClientPingResponceCommand.Id, new ClientPingResponceCommand());
+      commands.Add(ClientConnectToPeerCommand.Id, new ClientConnectToPeerCommand());
+      commands.Add(ClientWaitPeerConnectionCommand.Id, new ClientWaitPeerConnectionCommand());
+      commands.Add(ClientConnectToP2PServiceCommand.Id, new ClientConnectToP2PServiceCommand());
+      commands.Add(ClientPlayVoiceCommand.Id, new ClientPlayVoiceCommand());
     }
 
     private void OnRecorded(object sender, RecordedEventArgs e)
@@ -85,11 +78,9 @@ namespace Engine.API.StandardAPI
 
       using (var client = ClientModel.Get())
       {
-        IEnumerable<string> users = Enumerable.Empty<string>();
         List<string> receivers = client.Rooms.Values
           .OfType<VoiceRoom>()
-          .Select(r => r.Users)
-          .Aggregate(users, (acc, u) => acc.Concat(u))
+          .SelectMany(r => r.Users)
           .Distinct()
           .ToList();
 
@@ -115,7 +106,7 @@ namespace Engine.API.StandardAPI
       ushort id = BitConverter.ToUInt16(message, 0);
 
       ICommand<ClientCommandArgs> command;
-      if (commandDictionary.TryGetValue(id, out command))
+      if (commands.TryGetValue(id, out command))
         return command;
 
       if (ClientModel.Plugins.TryGetCommand(id, out command))
@@ -154,11 +145,30 @@ namespace Engine.API.StandardAPI
       if (string.IsNullOrEmpty(receiver))
         throw new ArgumentException("receiver");
 
-      lock (WaitingPrivateMessages)
-        WaitingPrivateMessages.Add(new WaitingPrivateMessage { Receiver = receiver, Message = message });
+      lock (waitingPrivateMessages)
+        waitingPrivateMessages.Add(new WaitingPrivateMessage { Receiver = receiver, Message = message });
 
       var sendingContent = new ServerGetUserOpenKeyCommand.MessageContent { Nick = receiver };
       ClientModel.Client.SendMessage(ServerGetUserOpenKeyCommand.Id, sendingContent);
+    }
+
+    /// <summary>
+    /// Возвращает ожидающее отправки сообщение.
+    /// </summary>
+    /// <param name="receiver">Имя получателя.</param>
+    /// <returns>Ожидающее отправки сообщение.</returns>
+    public WaitingPrivateMessage GetWaitingMessage(string receiver)
+    {
+      lock (waitingPrivateMessages)
+      {
+        var waitingMessage = waitingPrivateMessages.Find(m => m.Receiver.Equals(receiver));
+        if (waitingMessage == null)
+          return null;
+
+        waitingPrivateMessages.Remove(waitingMessage);
+
+        return waitingMessage;
+      }
     }
 
     /// <summary>
@@ -221,7 +231,7 @@ namespace Engine.API.StandardAPI
       if (users == null)
         throw new ArgumentNullException("users");
 
-      var sendingContent = new ServerInviteUsersCommand.MessageContent { RoomName = roomName, Users = users };
+      var sendingContent = new ServerInviteUsersCommand.MessageContent { RoomName = roomName, Users = users as List<User> ?? users.ToList() };
       ClientModel.Client.SendMessage(ServerInviteUsersCommand.Id, sendingContent);
     }
 
@@ -238,7 +248,7 @@ namespace Engine.API.StandardAPI
       if (users == null)
         throw new ArgumentNullException("users");
 
-      var sendingContent = new ServerKickUsersCommand.MessageContent { RoomName = roomName, Users = users };
+      var sendingContent = new ServerKickUsersCommand.MessageContent { RoomName = roomName, Users = users as List<User> ?? users.ToList() };
       ClientModel.Client.SendMessage(ServerKickUsersCommand.Id, sendingContent);
     }
 

@@ -75,7 +75,8 @@ namespace UI.ViewModel
 
     #endregion
 
-    public AudioTabViewModel(string name) : base(name)
+    public AudioTabViewModel(string name)
+      : base(name)
     {
       OutputDevices = ClientModel.Player.Devices;
       InputDevices = ClientModel.Recorder.Devices;
@@ -150,7 +151,7 @@ namespace UI.ViewModel
         ClientModel.Recorder.SetOptions(Settings.Current.InputAudioDevice, InputConfigs[SelectedConfigIndex]);
         ClientModel.Player.SetOptions(Settings.Current.OutputAudioDevice);
       }
-      catch(ModelException me)
+      catch (ModelException me)
       {
         ClientModel.Player.Dispose();
         ClientModel.Recorder.Dispose();
