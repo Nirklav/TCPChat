@@ -21,8 +21,8 @@ namespace UI.ViewModel
     {
       Plugins = new ObservableCollection<PluginInfoViewModel>();
 
-      LoadCommand = new Command(Load);
-      UnloadCommand = new Command(Unload);
+      LoadCommand = new Command(Load, o => ClientModel.IsInited || ServerModel.IsInited);
+      UnloadCommand = new Command(Unload, o => ClientModel.IsInited || ServerModel.IsInited);
 
       Refresh();
     }
@@ -36,8 +36,11 @@ namespace UI.ViewModel
     {
       Plugins.Clear();
 
-      AddPlugins(ClientModel.Plugins.IsLoaded, ClientModel.Plugins.GetPlugins(), PluginKindId.Client);
-      AddPlugins(ServerModel.Plugins.IsLoaded, ServerModel.Plugins.GetPlugins(), PluginKindId.Server);
+      if (ClientModel.IsInited)
+        AddPlugins(ClientModel.Plugins.IsLoaded, ClientModel.Plugins.GetPlugins(), PluginKindId.Client);
+
+      if (ServerModel.IsInited)
+        AddPlugins(ServerModel.Plugins.IsLoaded, ServerModel.Plugins.GetPlugins(), PluginKindId.Server);
     }
 
     private void AddPlugins(Func<string, bool> isLoadedFunc, string[] plugins, PluginKindId kind)
@@ -97,8 +100,8 @@ namespace UI.ViewModel
     private static bool IsLoaded(PluginInfoViewModel plugin)
     {
       return plugin.Kind == PluginKindId.Client
-        ? ClientModel.Plugins.IsLoaded(plugin.Name)
-        : ServerModel.Plugins.IsLoaded(plugin.Name);
+        ? ClientModel.IsInited && ClientModel.Plugins.IsLoaded(plugin.Name)
+        : ServerModel.IsInited && ServerModel.Plugins.IsLoaded(plugin.Name);
     }
   }
 }
