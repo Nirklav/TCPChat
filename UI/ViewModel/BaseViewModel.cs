@@ -19,9 +19,10 @@ namespace UI.ViewModel
 
     protected ClientEventNotifierContext NotifierContext;
 
-    public BaseViewModel()
+    public BaseViewModel(bool initializeNotifier)
     {
-      ClientModel.Notifier.Add(NotifierContext = new ClientEventNotifierContext());
+      if (initializeNotifier)
+        ClientModel.Notifier.Add(NotifierContext = new ClientEventNotifierContext());
     }
 
     public virtual void Dispose()
@@ -31,7 +32,8 @@ namespace UI.ViewModel
 
       disposed = true;
 
-      ClientModel.Notifier.Remove(NotifierContext);
+      if (NotifierContext != null)
+        ClientModel.Notifier.Remove(NotifierContext);
     }
 
     protected virtual void OnPropertyChanged(string name)

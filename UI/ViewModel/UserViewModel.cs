@@ -20,6 +20,7 @@ namespace UI.ViewModel
 
     #region constructors
     public UserViewModel(User info, RoomViewModel roomViewModel)
+      : base(false)
     {
       Info = info;
       RoomViewModel = roomViewModel;

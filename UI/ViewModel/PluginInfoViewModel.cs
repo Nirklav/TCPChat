@@ -32,6 +32,7 @@ namespace UI.ViewModel
     public PluginKindId Kind { get; private set; }
 
     public PluginInfoViewModel(PluginSetting setting, PluginKindId kindId)
+      : base(false)
     {
       Name = setting.Name;
       Enabled = setting.Enabled;

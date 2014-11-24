@@ -33,6 +33,7 @@ namespace UI.ViewModel
 
     #region constructors
     public SettingsViewModel(SettingsView view)
+      : base(false)
     {
       window = view;
       CloseSettingsCommand = new Command(CloseSettings);

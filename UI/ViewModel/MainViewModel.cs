@@ -111,6 +111,7 @@ namespace UI.ViewModel
 
     #region constructors
     public MainViewModel(MainWindow mainWindow)
+      : base(true)
     {
       window = mainWindow;
       window.Closed += WindowClosed;
@@ -374,7 +375,7 @@ namespace UI.ViewModel
         {
           AllUsers.Clear();
 
-          using(var client = ClientModel.Get())
+          using (var client = ClientModel.Get())
             foreach (string nick in args.Room.Users)
             {
               User user = args.Users.Single(u => u.Equals(nick));
@@ -388,7 +389,7 @@ namespace UI.ViewModel
     {
       Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
       {
-        if (Rooms.FirstOrDefault(roomVM => roomVM.Name == args.Room.Name) != null)      
+        if (Rooms.FirstOrDefault(roomVM => roomVM.Name == args.Room.Name) != null)
           return;
 
         RoomViewModel roomViewModel = new RoomViewModel(this, args.Room, args.Users);
@@ -447,7 +448,7 @@ namespace UI.ViewModel
         var pluginViewModel = Plugins.FirstOrDefault(pvm => pvm.PluginName == e.Plugin.Name);
         Plugins.Remove(pluginViewModel);
 
-                pluginViewModel.Dispose();
+        pluginViewModel.Dispose();
       }), e);
     }
 
@@ -477,7 +478,7 @@ namespace UI.ViewModel
         ClientModel.Player.SetOptions(Settings.Current.OutputAudioDevice);
         ClientModel.Recorder.SetOptions(Settings.Current.InputAudioDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
       }
-      catch(ModelException me)
+      catch (ModelException me)
       {
         ClientModel.Player.Dispose();
         ClientModel.Recorder.Dispose();

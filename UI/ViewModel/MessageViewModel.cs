@@ -64,14 +64,14 @@ namespace UI.ViewModel
 
     #region constructors
     public MessageViewModel(string systemMessage, RoomViewModel room)
-      : this(room)
+      : this(room, false)
     {
       Message = systemMessage;
       Type = MessageType.System;
     }
 
     public MessageViewModel(UserViewModel sender, string fileName, FileDescription fileDescription, RoomViewModel room)
-      : this(room)
+      : this(room, true)
     {
       NotifierContext.DownloadProgress += ClientDownloadProgress;
       NotifierContext.PostedFileDeleted += ClientPostedFileDeleted;
@@ -108,7 +108,7 @@ namespace UI.ViewModel
     }
 
     public MessageViewModel(UserViewModel sender, UserViewModel receiver, string message, bool isPrivate, RoomViewModel room)
-      : this(room)
+      : this(room, false)
     {
       Message = message;
       Sender = sender;
@@ -117,7 +117,8 @@ namespace UI.ViewModel
       Title = string.Format(isPrivate ? PMForm : From, DateTime.Now.ToString(TimeFormat));
     }
 
-    private MessageViewModel(RoomViewModel room)
+    private MessageViewModel(RoomViewModel room, bool initializeNotifier)
+      : base(initializeNotifier)
     {
       roomViewModel = room;
     }
@@ -125,6 +126,9 @@ namespace UI.ViewModel
     public override void Dispose()
     {
       base.Dispose();
+
+      if (NotifierContext == null)
+        return;
 
       NotifierContext.DownloadProgress -= ClientDownloadProgress;
       NotifierContext.PostedFileDeleted -= ClientPostedFileDeleted;

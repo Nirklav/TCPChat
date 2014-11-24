@@ -112,6 +112,7 @@ namespace UI.ViewModel
 
     #region constructors
     public RoomViewModel(MainViewModel mainViewModel, Room room, IList<User> users)
+      : base(true)
     {
       Description = room;
       MainViewModel = mainViewModel;

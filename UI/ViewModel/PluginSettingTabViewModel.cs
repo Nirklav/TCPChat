@@ -63,6 +63,9 @@ namespace UI.ViewModel
 
     private void Load(object obj)
     {
+      if (SelectedPlugin == null)
+        return;
+
       if (IsLoaded(SelectedPlugin))
         return;
 
@@ -81,6 +84,9 @@ namespace UI.ViewModel
 
     private void Unload(object obj)
     {
+      if (SelectedPlugin == null)
+        return;
+
       if (!IsLoaded(SelectedPlugin))
         return;
 

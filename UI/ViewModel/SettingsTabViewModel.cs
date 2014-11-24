@@ -21,6 +21,7 @@ namespace UI.ViewModel
     #endregion
 
     public SettingsTabViewModel(string tabName)
+      : base(false)
     {
       Name = tabName;
     }
