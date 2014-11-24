@@ -35,8 +35,8 @@ namespace Engine.Helpers
     }
 
     private object syncObject = new object();
+    private volatile bool inProcess;
     private Queue<Event> callbackQueue;
-    private Thread engineTread;
 
     public EngineSyncContext()
     {
@@ -46,9 +46,11 @@ namespace Engine.Helpers
     public override void Post(SendOrPostCallback d, object state)
     {
       lock (syncObject)
+      {
         callbackQueue.Enqueue(new Event(d, state, false));
 
-      StartThread();
+        StartThread();
+      }
     }
 
     public override void Send(SendOrPostCallback d, object state)
@@ -58,9 +60,10 @@ namespace Engine.Helpers
       {
         item = new Event(d, state, true);
         callbackQueue.Enqueue(item);
+
+        StartThread();
       }
 
-      StartThread();
       item.Handle.WaitOne();
     }
 
@@ -71,15 +74,14 @@ namespace Engine.Helpers
 
     private void StartThread()
     {
-      if (engineTread != null && engineTread.IsAlive)
+      if (inProcess)
         return;
 
-      engineTread = new Thread(ThreadFunc);
-      engineTread.IsBackground = true;
-      engineTread.Start();
+      inProcess = true;
+      ThreadPool.QueueUserWorkItem(ThreadFunc);
     }
 
-    private void ThreadFunc()
+    private void ThreadFunc(object state)
     {
       SynchronizationContext.SetSynchronizationContext(this);
 
@@ -90,7 +92,8 @@ namespace Engine.Helpers
         {
           if (callbackQueue.Count <= 0)
           {
-            engineTread.Abort();
+            SynchronizationContext.SetSynchronizationContext(null);
+            inProcess = false;           
             return;
           }
 
