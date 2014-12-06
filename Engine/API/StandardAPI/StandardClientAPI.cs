@@ -1,6 +1,5 @@
 ﻿using Engine.API.StandardAPI.ClientCommands;
 using Engine.API.StandardAPI.ServerCommands;
-using Engine.Containers;
 using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
@@ -20,6 +19,12 @@ namespace Engine.API.StandardAPI
     MarshalByRefObject,
     IClientAPI
   {
+    internal class WaitingPrivateMessage
+    {
+      public string Receiver { get; set; }
+      public string Message { get; set; }
+    }
+
     private List<WaitingPrivateMessage> waitingPrivateMessages;
     private Dictionary<ushort, ICommand<ClientCommandArgs>> commands;
     private Random idCreator;
@@ -157,7 +162,7 @@ namespace Engine.API.StandardAPI
     /// </summary>
     /// <param name="receiver">Имя получателя.</param>
     /// <returns>Ожидающее отправки сообщение.</returns>
-    public WaitingPrivateMessage GetWaitingMessage(string receiver)
+    internal WaitingPrivateMessage GetWaitingMessage(string receiver)
     {
       lock (waitingPrivateMessages)
       {

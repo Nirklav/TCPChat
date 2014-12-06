@@ -1,17 +1,13 @@
-﻿using Engine.Model.Client;
-using Engine.Network;
+﻿using Engine.Helpers;
+using Engine.Model.Client;
 using Engine.Network.Connections;
 using Lidgren.Network;
 using System;
-using System.IO;
-using System.Net;
-using System.Linq;
-using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Threading;
 using System.Collections.Generic;
-using Engine.Containers;
-using Engine.Helpers;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 
 namespace Engine.Network
 {
@@ -121,7 +117,7 @@ namespace Engine.Network
       var hailMessage = handler.CreateMessage();
       using (var client = ClientModel.Get())
       {
-        IPEndPoint localPoint = new IPEndPoint(Connection.GetIPAddress(remotePoint.AddressFamily), handler.Port);
+        var localPoint = new IPEndPoint(Connection.GetIPAddress(remotePoint.AddressFamily), handler.Port);
 
         hailMessage.Write(client.User.Nick);
         hailMessage.Write(localPoint);

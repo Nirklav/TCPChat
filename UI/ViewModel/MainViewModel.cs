@@ -446,9 +446,11 @@ namespace UI.ViewModel
       Dispatcher.Invoke(new Action<PluginEventArgs>(args =>
       {
         var pluginViewModel = Plugins.FirstOrDefault(pvm => pvm.PluginName == e.Plugin.Name);
-        Plugins.Remove(pluginViewModel);
-
-        pluginViewModel.Dispose();
+        if (pluginViewModel != null)
+        {
+          Plugins.Remove(pluginViewModel);
+          pluginViewModel.Dispose();
+        }
       }), e);
     }
 

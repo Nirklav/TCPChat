@@ -299,18 +299,19 @@ namespace Engine.Network
         }
       }
 
-      using (var server = ServerModel.Get())
-      {
-        string[] roomsNames = server.Rooms.Keys.ToArray();
-        foreach (string name in roomsNames)
+      if (ServerModel.IsInited)
+        using (var server = ServerModel.Get())
         {
-          if (string.Equals(name, ServerModel.MainRoomName))
-            continue;
+          string[] roomsNames = server.Rooms.Keys.ToArray();
+          foreach (string name in roomsNames)
+          {
+            if (string.Equals(name, ServerModel.MainRoomName))
+              continue;
 
-          if (server.Rooms[name].Count == 0)
-            server.Rooms.Remove(name);
+            if (server.Rooms[name].Count == 0)
+              server.Rooms.Remove(name);
+          }
         }
-      }
 
       lock (timerSync)
         if (systemTimer != null)

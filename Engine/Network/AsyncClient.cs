@@ -1,6 +1,5 @@
 ﻿using Engine.API.StandardAPI;
 using Engine.API.StandardAPI.ServerCommands;
-using Engine.Containers;
 using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Network.Connections;
@@ -262,7 +261,7 @@ namespace Engine.Network
     {
       if (handler != null && IsConnected)
       {
-        if ((DateTime.Now - lastPingRequest).TotalMilliseconds >= PingInterval)
+        if ((DateTime.Now - lastPingRequest).TotalMilliseconds >= PingInterval && ClientModel.API != null)
         {
           ClientModel.API.PingRequest();
           lastPingRequest = DateTime.Now;

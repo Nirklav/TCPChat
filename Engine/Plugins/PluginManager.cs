@@ -1,14 +1,16 @@
-﻿using System;
+﻿using Engine.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
 using System.Threading;
 
 namespace Engine.Plugins
 {
-  public abstract class PluginManager<TPlugin, TModel>
+  public abstract class PluginManager<TPlugin, TModel> : IDisposable
     where TPlugin : Plugin<TModel>
     where TModel : CrossDomainObject, new()
   {
@@ -38,12 +40,30 @@ namespace Engine.Plugins
     private List<PluginInfo> infos;
     private Thread processThread;
 
+    private bool disposed;
+
     #endregion
+
+    #region Initialization
 
     protected PluginManager(string pluginsPath)
     {
       path = pluginsPath;
     }
+
+    public void Dispose()
+    {
+      if (disposed)
+        return;
+
+      disposed = true;
+
+      var containers = plugins.Values.ToList();
+      foreach (var container in containers)
+        UnloadPlugin(container);
+    }
+
+    #endregion
 
     #region overridable
 
@@ -57,7 +77,7 @@ namespace Engine.Plugins
 
     #region load
 
-    public void LoadPlugins(string[] excludedPlugins = null)
+    internal void LoadPlugins(string[] excludedPlugins)
     {
       try
       {
@@ -68,7 +88,7 @@ namespace Engine.Plugins
         infos = loader.LoadFrom(typeof(TPlugin).FullName, libs);
         if (infos != null)
           foreach (var info in infos)
-            LoadPlugin(info, excludedPlugins);
+            LoadPlugin(info);
 
         processThread = new Thread(ProcessThreadHandler);
         processThread.IsBackground = true;
@@ -137,8 +157,11 @@ namespace Engine.Plugins
         catch (Exception e)
         {
           OnError(string.Format("plugin failed: {0}", pluginName), e);
+
+          if (UnloadPlugin(pluginName))
+            return;
+                    
           AppDomain.Unload(domain);
-          return;
         }
       }
     }
@@ -147,24 +170,19 @@ namespace Engine.Plugins
 
     #region unload
 
-    public void UnloadPlugins()
-    {
-      var containers = plugins.Values.ToList();
-      foreach (var container in containers)
-        UnloadPlugin(container);
-    }
-
-    public void UnloadPlugin(string name)
+    public bool UnloadPlugin(string name)
     {
       lock (syncObject)
       {
         PluginContainer container;
         if (plugins.TryGetValue(name, out container))
-          UnloadPlugin(container);
+          return UnloadPlugin(container);
+
+        return false;
       }
     }
 
-    protected void UnloadPlugin(Plugin<TModel> plugin)
+    protected bool UnloadPlugin(Plugin<TModel> plugin)
     {
       lock (syncObject)
       {
@@ -172,12 +190,14 @@ namespace Engine.Plugins
         foreach (var container in containers)
         {
           if (ReferenceEquals(container.Plugin, plugin))
-            UnloadPlugin(container);
+            return UnloadPlugin(container);
         }
+
+        return false;
       }
     }
 
-    protected void UnloadPlugin(PluginContainer container)
+    protected bool UnloadPlugin(PluginContainer container)
     {
       lock (syncObject)
       {
@@ -185,6 +205,7 @@ namespace Engine.Plugins
 
         plugins.Remove(container.Plugin.Name);
         AppDomain.Unload(container.Domain);
+        return true;
       }
     }
 
@@ -192,7 +213,7 @@ namespace Engine.Plugins
 
     public bool IsLoaded(string name)
     {
-      return plugins.Keys.Contains(name);
+      return plugins.ContainsKey(name);
     }
 
     public string[] GetPlugins()

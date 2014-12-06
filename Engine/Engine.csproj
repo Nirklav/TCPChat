@@ -145,7 +145,6 @@
     <Compile Include="Model\Entities\DownloadingFile.cs" />
     <Compile Include="Model\Common\ModelContext.cs" />
     <Compile Include="Model\Entities\PostedFile.cs" />
-    <Compile Include="Containers\WaitingPrivateMessage.cs" />
     <Compile Include="Model\Server\ServerModel.cs" />
     <Compile Include="EventArgs\AsyncErrorEventArgs.cs" />
     <Compile Include="EventArgs\ConnectEventArgs.cs" />

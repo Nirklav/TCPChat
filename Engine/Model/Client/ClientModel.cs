@@ -103,7 +103,6 @@ namespace Engine.Model.Client
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
       Client = new AsyncClient(initializer.Nick);
       Peer = new AsyncPeer();
-
       Plugins = new ClientPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
     }
@@ -113,8 +112,7 @@ namespace Engine.Model.Client
       if (Interlocked.Exchange(ref model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
-      Plugins.UnloadPlugins();
-
+      Dispose(Plugins);
       Dispose(Client);
       Dispose(Peer);
       Dispose(Recorder);
