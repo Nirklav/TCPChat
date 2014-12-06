@@ -88,7 +88,7 @@ namespace Engine.Plugins
         infos = loader.LoadFrom(typeof(TPlugin).FullName, libs);
         if (infos != null)
           foreach (var info in infos)
-            LoadPlugin(info);
+            LoadPlugin(info, excludedPlugins);
 
         processThread = new Thread(ProcessThreadHandler);
         processThread.IsBackground = true;
@@ -106,10 +106,10 @@ namespace Engine.Plugins
       if (info == null)
         return;
 
-      LoadPlugin(info);
+      LoadPlugin(info, null);
     }
 
-    private void LoadPlugin(PluginInfo info, string[] excludedPlugins = null)
+    private void LoadPlugin(PluginInfo info, string[] excludedPlugins)
     {
       lock (syncObject)
       {
