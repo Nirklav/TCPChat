@@ -94,7 +94,7 @@ namespace Engine.Network
         throw new ArgumentException("port not available", "serverPort");
 
       p2pService = new P2PService(p2pServicePort, usingIPv6);
-      systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
+      systemTimer = new Timer(TimerCallback, null, SystemTimerInterval, -1);
 
       var address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;
 
@@ -223,7 +223,7 @@ namespace Engine.Network
         listener.BeginAccept(AcceptCallback, null);
 
         Socket handler = listener.EndAccept(result);
-        ServerConnection connection = new ServerConnection(handler, MaxDataSize, DataReceivedCallBack);
+        ServerConnection connection = new ServerConnection(handler, MaxDataSize, DataReceivedCallback);
         connection.SendAPIName(ServerModel.API.Name);
 
         lock (connections)
@@ -238,7 +238,7 @@ namespace Engine.Network
       }
     }
 
-    private void DataReceivedCallBack(object sender, DataReceivedEventArgs e)
+    private void DataReceivedCallback(object sender, DataReceivedEventArgs e)
     {
       try
       {
@@ -264,8 +264,21 @@ namespace Engine.Network
       }
     }
 
-    private void SystemTimerCallback(object arg)
+    #region timer process
+    private void TimerCallback(object arg)
     {
+      RefreshConnections();
+      RefreshRooms();
+
+      lock (timerSync)
+        if (systemTimer != null)
+          systemTimer.Change(SystemTimerInterval, -1);
+    }
+
+    private void RefreshConnections()
+    {
+      List<string> removingUsers = null; // Prevent deadlock (in RemoveUser locked ServerModel)
+
       lock (connections)
       {
         string[] keys = connections.Keys.ToArray();
@@ -282,15 +295,10 @@ namespace Engine.Network
 #if !DEBUG
             if (connections[id].IntervalOfSilence >= ServerConnection.ConnectionTimeOut)
             {
-              ServerModel.API.RemoveUser(id);
+              (removingUsers ?? (removingUsers = new List<string>())).Add(id);
               continue;
             }
 #endif
-          }
-          catch (SocketException se)
-          {
-            ServerModel.Logger.Write(se);
-            CloseConnection(id);
           }
           catch (Exception e)
           {
@@ -299,6 +307,23 @@ namespace Engine.Network
         }
       }
 
+      if (removingUsers != null)
+        foreach (var id in removingUsers)
+        {
+          try
+          {
+            ServerModel.API.RemoveUser(id);
+          }
+          catch(Exception e)
+          {
+            ServerModel.Logger.Write(e);
+            CloseConnection(id);
+          }
+        }
+    }
+
+    private void RefreshRooms()
+    {
       if (ServerModel.IsInited)
         using (var server = ServerModel.Get())
         {
@@ -312,11 +337,8 @@ namespace Engine.Network
               server.Rooms.Remove(name);
           }
         }
-
-      lock (timerSync)
-        if (systemTimer != null)
-          systemTimer.Change(SystemTimerInterval, -1);
     }
+    #endregion
     #endregion
 
     #region private methods

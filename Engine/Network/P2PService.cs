@@ -32,14 +32,18 @@ namespace Engine.Network
         SenderId = senderId;
       }
 
-      public string RequestId { get; set; }
-      public string SenderId { get; set; }
+      public string RequestId { get; private set; }
+      public string SenderId { get; private set; }
     }
     #endregion
 
     #region fields
-    private Dictionary<string, ClientDescription> clientsEndPoints;
-    private List<RequestPair> requests;
+    private readonly object syncObject = new object();
+
+    private readonly Dictionary<string, ClientDescription> clientsEndPoints;
+    private readonly HashSet<string> connectingClients;
+    private readonly List<RequestPair> requests;
+
     private NetServer server;
     private bool disposed;
 
@@ -53,9 +57,9 @@ namespace Engine.Network
     public P2PService(int port, bool usingIPv6)
     {
       disposed = false;
-
       requests = new List<RequestPair>();
       clientsEndPoints = new Dictionary<string, ClientDescription>();
+      connectingClients = new HashSet<string>();
 
       NetPeerConfiguration config = new NetPeerConfiguration(AsyncPeer.NetConfigString);
       config.MaximumConnections = 100;
@@ -108,23 +112,40 @@ namespace Engine.Network
       if (TryDoneRequest(senderId, requestId))
         return;
 
-      lock (requests)
-        requests.Add(new RequestPair(requestId, senderId));
-
       AddressFamily addressFamily = ServerModel.Server.UsingIPv6
         ? AddressFamily.InterNetworkV6
         : AddressFamily.InterNetwork;
 
-      if (!clientsEndPoints.ContainsKey(senderId))
-        ServerModel.API.SendP2PConnectRequest(senderId, Port);
+      lock (syncObject)
+      {
+        requests.Add(new RequestPair(requestId, senderId));
 
-      if (!clientsEndPoints.ContainsKey(requestId))
-        ServerModel.API.SendP2PConnectRequest(requestId, Port);
+        TrySendConnectRequest(senderId);
+        TrySendConnectRequest(requestId);
+      }
+    }
+
+    private void TrySendConnectRequest(string connectionId)
+    {
+      bool needSend = false;
+
+      lock (syncObject)
+      {
+        needSend = !clientsEndPoints.ContainsKey(connectionId);
+
+        if (connectingClients.Contains(connectionId))
+          needSend = false;
+        else if (needSend)
+          connectingClients.Add(connectionId);
+      }
+
+      if (needSend)
+        ServerModel.API.SendP2PConnectRequest(connectionId, Port);
     }
 
     internal void RemoveEndPoint(string id)
     {
-      lock (clientsEndPoints)
+      lock (syncObject)
         clientsEndPoints.Remove(id);
     }
     #endregion
@@ -159,10 +180,12 @@ namespace Engine.Network
               var localPoint = hailMessage.ReadIPEndPoint();
               var publicPoint = message.SenderEndPoint;
 
-              lock (clientsEndPoints)
+              lock (syncObject)
+              {
                 clientsEndPoints.Add(id, new ClientDescription(localPoint, publicPoint));
 
-              TryDoneAllRequest();
+                TryDoneAllRequest();
+              }
               break;
           }
         }
@@ -180,7 +203,7 @@ namespace Engine.Network
       ClientDescription senderDescription;
       ClientDescription requestDescription;
 
-      lock (clientsEndPoints)
+      lock (syncObject)
       {
         received &= clientsEndPoints.TryGetValue(senderId, out senderDescription);
         received &= clientsEndPoints.TryGetValue(requestId, out requestDescription);
@@ -219,8 +242,13 @@ namespace Engine.Network
 
       if (received = TryGetRequest(senderId, requestId, out senderEndPoint, out requestEndPoint))
       {
-        lock (requests)
+        lock (syncObject)
+        {
           requests.RemoveAll(p => string.Equals(p.SenderId, senderId) && string.Equals(p.RequestId, requestId));
+
+          connectingClients.Remove(senderId);
+          connectingClients.Remove(requestId);
+        }
 
         ServerModel.API.IntroduceConnections(senderId, senderEndPoint, requestId, requestEndPoint);
       }
@@ -230,7 +258,10 @@ namespace Engine.Network
 
     private void TryDoneAllRequest()
     {
-      lock (requests)
+      List<string> removedIds = null;
+
+      lock (syncObject)
+      {
         for (int i = requests.Count - 1; i >= 0; i--)
         {
           IPEndPoint senderEndPoint;
@@ -238,10 +269,17 @@ namespace Engine.Network
 
           if (TryGetRequest(requests[i].SenderId, requests[i].RequestId, out senderEndPoint, out requestEndPoint))
           {
+            (removedIds ?? (removedIds = new List<string>())).Add(requests[i].SenderId);
+            (removedIds ?? (removedIds = new List<string>())).Add(requests[i].RequestId);
+
             ServerModel.API.IntroduceConnections(requests[i].SenderId, senderEndPoint, requests[i].RequestId, requestEndPoint);
             requests.RemoveAt(i);
           }
         }
+
+        foreach (var id in removedIds)
+          connectingClients.Remove(id);
+      }
     }
     #endregion
 
@@ -261,8 +299,12 @@ namespace Engine.Network
 
       server.Shutdown(string.Empty);
 
-      lock (requests)
+      lock (syncObject)
+      {
         requests.Clear();
+        clientsEndPoints.Clear();
+        connectingClients.Clear();
+      }
     }
     #endregion
   }

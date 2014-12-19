@@ -98,10 +98,10 @@ namespace Engine.Network
       ThrowIfDisposed();
 
       if (Interlocked.CompareExchange(ref state, (int)PeerState.ConnectedToService, (int)PeerState.NotConnected) != (int)PeerState.NotConnected)
-        throw new InvalidOperationException("Пир имеет неправильное состояние.");
+        throw new InvalidOperationException("Peer has not right state.");
 
       if (handler != null && handler.Status == NetPeerStatus.Running)
-        throw new ArgumentException("уже запущен");
+        throw new ArgumentException("Already runned.");
 
       NetPeerConfiguration config = new NetPeerConfiguration(NetConfigString);
       config.Port = 0;
@@ -139,7 +139,7 @@ namespace Engine.Network
 
       int oldState = Interlocked.CompareExchange(ref state, (int)PeerState.ConnectedToPeers, (int)PeerState.ConnectedToService);
       if (oldState == (int)PeerState.NotConnected)
-        throw new InvalidOperationException("Пир имеет неправильное состояние.");
+        throw new InvalidOperationException("Peer has not right state.");
 
       // Создания и отправка сообщения для пробивания NAT,
       // и возможности принять входящее соединение
@@ -164,10 +164,10 @@ namespace Engine.Network
 
       int oldState = Interlocked.CompareExchange(ref state, (int)PeerState.ConnectedToPeers, (int)PeerState.ConnectedToService);
       if (oldState == (int)PeerState.NotConnected)
-        throw new InvalidOperationException("Пир имеет неправильное состояние.");
+        throw new InvalidOperationException("Peer has not right state.");
 
       if (handler == null)
-        throw new InvalidOperationException("обработчик не создан");
+        throw new InvalidOperationException("Handler not created.");
 
       lock (connectingTo)
         connectingTo.Add(remotePoint, peerId);
@@ -351,7 +351,10 @@ namespace Engine.Network
     private void DisconnectFromService()
     {
       if (serviceConnection != null)
+      {
         serviceConnection.Disconnect(string.Empty);
+        serviceConnection = null;
+      }
     }
     #endregion
 
