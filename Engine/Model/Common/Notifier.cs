@@ -8,7 +8,7 @@ namespace Engine.Model.Common
 {
   public abstract class Notifier<TNotifierContext> : MarshalByRefObject
   {
-    private object syncObject = new object();
+    private readonly object syncObject = new object();
     private List<TNotifierContext> contexts;
 
     public Notifier()

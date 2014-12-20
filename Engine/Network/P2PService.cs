@@ -258,27 +258,30 @@ namespace Engine.Network
 
     private void TryDoneAllRequest()
     {
-      List<string> removedIds = null;
-
       lock (syncObject)
       {
+        List<string> removedIds = null;
+
         for (int i = requests.Count - 1; i >= 0; i--)
         {
           IPEndPoint senderEndPoint;
           IPEndPoint requestEndPoint;
 
-          if (TryGetRequest(requests[i].SenderId, requests[i].RequestId, out senderEndPoint, out requestEndPoint))
-          {
-            (removedIds ?? (removedIds = new List<string>())).Add(requests[i].SenderId);
-            (removedIds ?? (removedIds = new List<string>())).Add(requests[i].RequestId);
+          var request = requests[i];
 
-            ServerModel.API.IntroduceConnections(requests[i].SenderId, senderEndPoint, requests[i].RequestId, requestEndPoint);
+          if (TryGetRequest(request.SenderId, request.RequestId, out senderEndPoint, out requestEndPoint))
+          {
+            (removedIds ?? (removedIds = new List<string>())).Add(request.SenderId);
+            (removedIds ?? (removedIds = new List<string>())).Add(request.RequestId);
+
+            ServerModel.API.IntroduceConnections(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint);
             requests.RemoveAt(i);
           }
         }
 
-        foreach (var id in removedIds)
-          connectingClients.Remove(id);
+        if (removedIds != null)
+          foreach (var id in removedIds)
+            connectingClients.Remove(id);
       }
     }
     #endregion
