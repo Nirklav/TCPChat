@@ -5,9 +5,6 @@ using UI.Infrastructure;
 
 namespace UI.Dialogs
 {
-  /// <summary>
-  /// Логика взаимодействия для ServerDialog.xaml
-  /// </summary>
   public partial class ServerDialog : Window
   {
     public ServerDialog()

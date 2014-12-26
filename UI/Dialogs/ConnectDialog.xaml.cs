@@ -6,9 +6,6 @@ using UI.Infrastructure;
 
 namespace UI.Dialogs
 {
-  /// <summary>
-  /// Логика взаимодействия для ConnectDialog.xaml
-  /// </summary>
   public partial class ConnectDialog : Window
   {
     public ConnectDialog()

@@ -11,10 +11,16 @@ namespace Engine.Model.Entities
   [Serializable]
   public class Room
   {
+    /// <summary>
+    /// Идентификатор сообщений которые невозможно редактировать.
+    /// </summary>
+    public const long SpecificMessageId = -1;
+
     protected string name;
     protected string admin;
     protected List<string> users;
     protected List<FileDescription> files;
+    protected long lastMessageId;
 
     /// <summary>
     /// Создает комнату.
@@ -102,6 +108,11 @@ namespace Engine.Model.Entities
     public virtual void Remove(string nick)
     {
       users.Remove(nick);
+    }
+
+    public virtual long IncrementMessageId()
+    {
+      return lastMessageId++;
     }
 
     /// <summary>

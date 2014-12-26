@@ -34,7 +34,9 @@ namespace UI.ViewModel
     private string message;
     private int messageCaretIndex;
     private UserViewModel allInRoom;
+
     private ObservableCollection<MessageViewModel> messages;
+    private HashSet<long> messageIds;
     #endregion
 
     #region commands
@@ -118,6 +120,7 @@ namespace UI.ViewModel
       MainViewModel = mainViewModel;
       Messages = new ObservableCollection<MessageViewModel>();
       allInRoom = new UserViewModel(new User("Все в комнате", Color.Black), this);
+      messageIds = new HashSet<long>();
       Users = new ObservableCollection<UserViewModel>(users == null
         ? Enumerable.Empty<UserViewModel>()
         : room.Users.Select(user => new UserViewModel(users.Single(u => u.Equals(user)), this)));
@@ -155,30 +158,44 @@ namespace UI.ViewModel
     #region methods
     public void AddSystemMessage(string message)
     {
-      Messages.Add(new MessageViewModel(message, this));
-      MessagesAutoScroll = true;
-      TryClearMessages();
+      AddMessage(new MessageViewModel(message, this));
     }
 
-    public void AddMessage(UserViewModel sender, string message)
+    public void AddMessage(long messageId, UserViewModel sender, string message)
     {
-      Messages.Add(new MessageViewModel(sender, null, message, false, this));
-      MessagesAutoScroll = true;
-      TryClearMessages();
+      AddMessage(new MessageViewModel(messageId, sender, null, message, false, this));
     }
 
     public void AddPrivateMessage(UserViewModel sender, UserViewModel receiver, string message)
     {
-      Messages.Add(new MessageViewModel(sender, receiver, message, true, this));
-      MessagesAutoScroll = true;
-      TryClearMessages();
+      AddMessage(new MessageViewModel(Room.SpecificMessageId, sender, receiver, message, true, this));
     }
 
-    public void AddFileMessage(UserViewModel sender, FileDescription file)
+    public void AddFileMessage(long messageId, UserViewModel sender, FileDescription file)
     {
-      Messages.Add(new MessageViewModel(sender, file.Name, file, this));
-      MessagesAutoScroll = true;
+      AddMessage(new MessageViewModel(messageId, sender, file.Name, file, this));
+    }
+
+    private void AddMessage(MessageViewModel message)
+    {
       TryClearMessages();
+
+      MessageViewModel lastMessage = null;
+      if (Messages.Count > 0)
+        lastMessage = Messages[Messages.Count - 1];
+
+      if (lastMessage == null || !lastMessage.TryConcat(message))
+      {
+        if (message.MessageId == Room.SpecificMessageId || messageIds.Add(message.MessageId))
+          Messages.Add(message);
+        else
+        {
+          var existingMessage = Messages.First(m => m.MessageId == message.MessageId);
+          existingMessage.Message = message.Message;
+        }     
+      }
+
+      MessagesAutoScroll = true;
     }
 
     private void TryClearMessages()
@@ -189,7 +206,10 @@ namespace UI.ViewModel
       for (int i = 0; i < CountToDelete; i++)
         Messages[i].Dispose();
 
-      IEnumerable<MessageViewModel> leftMessages = Messages.Skip(CountToDelete);
+      var leftMessages = Messages.Skip(CountToDelete);
+      var deletingMessages = Messages.Take(CountToDelete);
+
+      messageIds.ExceptWith(deletingMessages.Select(m => m.MessageId));
       Messages = new ObservableCollection<MessageViewModel>(leftMessages);
     }
     #endregion
@@ -197,7 +217,8 @@ namespace UI.ViewModel
     #region command methods
     private void SendMessage(object obj)
     {
-      if (Message == string.Empty) return;
+      if (Message == string.Empty)
+        return;
 
       try
       {
@@ -208,7 +229,8 @@ namespace UI.ViewModel
           else
           {
             ClientModel.API.SendPrivateMessage(SelectedReceiver.Nick, Message);
-            AddPrivateMessage(MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id)), SelectedReceiver, Message);
+            var sender = MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id));
+            AddPrivateMessage(sender, SelectedReceiver, Message);
           }
         }
 
@@ -230,7 +252,7 @@ namespace UI.ViewModel
     {
       try
       {
-        OpenFileDialog openDialog = new OpenFileDialog();
+        var openDialog = new OpenFileDialog();
         openDialog.Filter = FileDialogFilter;
 
         if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.API != null)
@@ -246,7 +268,7 @@ namespace UI.ViewModel
     {
       try
       {
-        IEnumerable<UserViewModel> availableUsers = MainViewModel.AllUsers.Except(Users);
+        var availableUsers = MainViewModel.AllUsers.Except(Users);
         if (!availableUsers.Any())
         {
           AddSystemMessage(NoBodyToInvite);
@@ -267,7 +289,7 @@ namespace UI.ViewModel
     {
       try
       {
-        UsersOperationDialog dialog = new UsersOperationDialog(KickFormRoomTitle, Users);
+        var dialog = new UsersOperationDialog(KickFormRoomTitle, Users);
         if (dialog.ShowDialog() == true && ClientModel.API != null)
           ClientModel.API.KickUsers(Name, dialog.Users);
       }
@@ -291,16 +313,16 @@ namespace UI.ViewModel
 
       MainViewModel.Dispatcher.Invoke(new Action<ReceiveMessageEventArgs>(args =>
       {
-        UserViewModel senderUser = MainViewModel.AllUsers.Single(uvm => uvm.Info.Nick == args.Sender);
+        var senderUser = MainViewModel.AllUsers.Single(uvm => uvm.Info.Nick == args.Sender);
 
         switch (args.Type)
         {
           case MessageType.Common:
-            AddMessage(senderUser, args.Message);
+            AddMessage(args.MessageId, senderUser, args.Message);
             break;
 
           case MessageType.File:
-            AddFileMessage(senderUser, (FileDescription)args.State);
+            AddFileMessage(args.MessageId, senderUser, (FileDescription)args.State);
             break;
         }
 
@@ -320,7 +342,7 @@ namespace UI.ViewModel
       {
         Description = args.Room;
 
-        foreach (UserViewModel user in Users)
+        foreach (var user in Users)
           user.Dispose();
 
         Users.Clear();

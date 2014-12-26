@@ -13,6 +13,7 @@ namespace Engine
     public string Message { get; set; }
     public string RoomName { get; set; }
     public object State { get; set; }
+    public long MessageId { get; set; }
   }
 
   public enum MessageType

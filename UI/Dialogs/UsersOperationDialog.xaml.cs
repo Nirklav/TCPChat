@@ -16,9 +16,6 @@ using Engine.Model.Entities;
 
 namespace UI.Dialogs
 {
-  /// <summary>
-  /// Логика взаимодействия для UsersOperationDialog.xaml
-  /// </summary>
   public partial class UsersOperationDialog : Window
   {
     class UserListItem
@@ -29,7 +26,7 @@ namespace UI.Dialogs
         Invite = false;
       }
 
-      public UserViewModel User { get; set; }
+      public UserViewModel User { get; private set; }
       public bool Invite { get; set; }
     }
 
@@ -41,21 +38,16 @@ namespace UI.Dialogs
 
       Title = title;
 
-      foreach (UserViewModel user in users)
-      {
+      foreach (var user in users)
         UserList.Items.Add(new UserListItem(user));
-      }
     }
 
     private void OkBtn_Click(object sender, RoutedEventArgs e)
     {
-      List<User> result = new List<User>();
-
-      foreach (UserListItem item in UserList.Items.Cast<UserListItem>())
-        if (item.Invite)
-          result.Add(item.User.Info);
-
-      Users = result;
+      Users = UserList.Items
+        .Cast<UserListItem>()
+        .Where(i => i.Invite)
+        .Select(i => i.User.Info);
 
       DialogResult = true;
     }

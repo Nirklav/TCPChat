@@ -19,7 +19,7 @@ namespace Engine.API.StandardAPI
     /// <summary>
     /// Версия и имя данного API.
     /// </summary>
-    public const string API = "StandardAPI v2.2";
+    public const string API = "StandardAPI v2.3";
 
     private Dictionary<ushort, ICommand<ServerCommandArgs>> commands;
 

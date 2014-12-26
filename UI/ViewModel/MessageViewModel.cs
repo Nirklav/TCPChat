@@ -17,7 +17,7 @@ namespace UI.ViewModel
     private const string ProgramName = "TCPChat";
     private const string From = "[{0}] от: ";
     private const string PMForm = "[{0}] ЛС от: ";
-    private const string TimeFormat = "hh:mm:ss";
+    private const string TimeFormat = "hh:mm";
     private const string SizeFormat = " ({0:#,##0.0} {1})";
     private const string ByteStr = "байт";
     private const string KByteStr = "Кб";
@@ -31,9 +31,11 @@ namespace UI.ViewModel
     private string message;
     private FileDescription file;
     private RoomViewModel roomViewModel;
+    private DateTime time;
     #endregion
 
     #region properties
+    public long MessageId { get; private set; }
     public string Title { get; set; }
     public UserViewModel Sender { get; set; }
     public UserViewModel Receiver { get; set; }
@@ -64,14 +66,14 @@ namespace UI.ViewModel
 
     #region constructors
     public MessageViewModel(string systemMessage, RoomViewModel room)
-      : this(room, false)
+      : this(Room.SpecificMessageId, room, false)
     {
       Message = systemMessage;
       Type = MessageType.System;
     }
 
-    public MessageViewModel(UserViewModel sender, string fileName, FileDescription fileDescription, RoomViewModel room)
-      : this(room, true)
+    public MessageViewModel(long messageId, UserViewModel sender, string fileName, FileDescription fileDescription, RoomViewModel room)
+      : this(messageId, room, true)
     {
       NotifierContext.DownloadProgress += ClientDownloadProgress;
       NotifierContext.PostedFileDeleted += ClientPostedFileDeleted;
@@ -107,8 +109,8 @@ namespace UI.ViewModel
       DownloadFileCommand = new Command(DownloadFile, Obj => ClientModel.Client != null);
     }
 
-    public MessageViewModel(UserViewModel sender, UserViewModel receiver, string message, bool isPrivate, RoomViewModel room)
-      : this(room, false)
+    public MessageViewModel(long messageId, UserViewModel sender, UserViewModel receiver, string message, bool isPrivate, RoomViewModel room)
+      : this(messageId, room, false)
     {
       Message = message;
       Sender = sender;
@@ -117,10 +119,12 @@ namespace UI.ViewModel
       Title = string.Format(isPrivate ? PMForm : From, DateTime.Now.ToString(TimeFormat));
     }
 
-    private MessageViewModel(RoomViewModel room, bool initializeNotifier)
+    private MessageViewModel(long messageId, RoomViewModel room, bool initializeNotifier)
       : base(initializeNotifier)
     {
+      MessageId = messageId;
       roomViewModel = room;
+      time = DateTime.Now;
     }
 
     public override void Dispose()
@@ -135,6 +139,29 @@ namespace UI.ViewModel
     }
     #endregion
 
+    #region methods
+    public bool TryConcat(MessageViewModel other)
+    {
+      if (Type == MessageType.System || Type == MessageType.File)
+        return false;
+
+      if (Type != other.Type)
+        return false;
+
+      if (Sender != null && !Sender.Info.Equals(other.Sender.Info))
+        return false;
+
+      if (Receiver != null && !Receiver.Info.Equals(other.Receiver.Info))
+        return false;
+
+      if ((other.time - time).TotalMinutes > 1)
+        return false;
+
+      Message += string.Format("{0}{1}", Environment.NewLine, other.Message);
+      return true;
+    }
+    #endregion
+
     #region client events
     private void ClientDownloadProgress(object sender, FileDownloadEventArgs e)
     {
@@ -143,14 +170,12 @@ namespace UI.ViewModel
         if (args.RoomName != roomViewModel.Name || !args.File.Equals(File))
           return;
 
-        if (args.Progress >= 100)
+        if (args.Progress < 100)
+          Progress = args.Progress;
+        else
         {
           Progress = 0;
           roomViewModel.AddSystemMessage(string.Format("Загрузка файла \"{0}\" завершена.", args.File.Name));
-        }
-        else
-        {
-          Progress = args.Progress;
         }
       }), e);
     }

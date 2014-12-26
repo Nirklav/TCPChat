@@ -39,7 +39,12 @@
         <TreeView x:Name="files"
                   Grid.Row="0"
                   Margin="10, 10, 10, 5">
-
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem">
+                    <Setter Property="ItemTemplate" 
+                            Value="{StaticResource ResourceKey=PostedFileTemplate}"/>
+                </Style>
+            </TreeView.ItemContainerStyle>
         </TreeView>
 
         <Button x:Name="okBtn"

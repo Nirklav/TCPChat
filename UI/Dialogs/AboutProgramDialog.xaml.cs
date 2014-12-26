@@ -13,9 +13,6 @@ using System.Windows.Shapes;
 
 namespace UI.Dialogs
 {
-  /// <summary>
-  /// Логика взаимодействия для AboutProgram.xaml
-  /// </summary>
   public partial class AboutProgramDialog : Window
   {
     public AboutProgramDialog()

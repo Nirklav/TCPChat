@@ -19,21 +19,23 @@ namespace Engine.API.StandardAPI.ServerCommands
         throw new ArgumentException("Message");
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
-        throw new ArgumentNullException("RoomName");
-
-      var sendingContent = new ClientOutRoomMessageCommand.MessageContent
-      {
-        Message = receivedContent.Message,
-        RoomName = receivedContent.RoomName,
-        Sender = args.ConnectionId,
-      };
+        throw new ArgumentException("RoomName");
 
       if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
         return;
 
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[receivedContent.RoomName];
+        var messageId = receivedContent.MessageId ?? room.IncrementMessageId();
+
+        var sendingContent = new ClientOutRoomMessageCommand.MessageContent
+        {
+          Message = receivedContent.Message,
+          RoomName = receivedContent.RoomName,
+          Sender = args.ConnectionId,
+          MessageId = messageId
+        };
 
         if (!room.Users.Contains(args.ConnectionId))
         {
@@ -49,11 +51,13 @@ namespace Engine.API.StandardAPI.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      string message;
-      string roomName;
+      private string message;
+      private string roomName;
+      private long? messageId;
 
       public string Message { get { return message; } set { message = value; } }
       public string RoomName { get { return roomName; } set { roomName = value; } }
+      public long? MessageId { get { return messageId; } set { messageId = value; } }
     }
 
     public const ushort Id = (ushort)ServerCommand.SendRoomMessage;

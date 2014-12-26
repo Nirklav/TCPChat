@@ -27,31 +27,28 @@ namespace UI.Dialogs
     {
       files.Items.Clear();
 
-      DataTemplate postedFileTemplate = (DataTemplate)FindResource("PostedFileTemplate");
-
       using (var client = ClientModel.Get())
       {
         foreach (PostedFile current in client.PostedFiles)
         {
-          TreeViewItem roomItem = files.Items.Cast<TreeViewItem>().FirstOrDefault(curRoomItem => string.Equals(curRoomItem.Header, current.RoomName));
+          var roomItem = files.Items
+            .Cast<TreeViewItem>()
+            .FirstOrDefault(curRoomItem => string.Equals(curRoomItem.Header, current.RoomName));
 
-          if (roomItem != null)
+          if (roomItem == null)
           {
-            roomItem.Items.Add(new Container { PostedFile = current });
-            continue;
+            roomItem = new TreeViewItem { Header = current.RoomName };
+            files.Items.Add(roomItem);
           }
 
-          roomItem = new TreeViewItem { Header = current.RoomName };
           roomItem.Items.Add(new Container { PostedFile = current });
-          roomItem.ItemTemplate = postedFileTemplate;
-          files.Items.Add(roomItem);
         }
       }
     }
 
     private void RemoveFile_Click(object sender, RoutedEventArgs e)
     {
-      PostedFile postedFile = (PostedFile)((Button)sender).Tag;
+      var postedFile = (PostedFile)((Button)sender).Tag;
 
       if (ClientModel.API != null)
         ClientModel.API.RemoveFileFromRoom(postedFile.RoomName, postedFile.File);

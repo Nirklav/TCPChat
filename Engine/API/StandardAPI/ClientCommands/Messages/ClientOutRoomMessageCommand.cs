@@ -20,12 +20,13 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("roomName");
 
-      ReceiveMessageEventArgs receiveMessageArgs = new ReceiveMessageEventArgs
+      var receiveMessageArgs = new ReceiveMessageEventArgs
       {
         Type = MessageType.Common,
         Message = receivedContent.Message,
         Sender = receivedContent.Sender,
         RoomName = receivedContent.RoomName,
+        MessageId = receivedContent.MessageId,
       };
 
       ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);
@@ -37,10 +38,12 @@ namespace Engine.API.StandardAPI.ClientCommands
       private string sender;
       private string message;
       private string roomName;
+      private long messageId;
 
       public string Sender { get { return sender; } set { sender = value; } }
       public string Message { get { return message; } set { message = value; } }
       public string RoomName { get { return roomName; } set { roomName = value; } }
+      public long MessageId { get { return messageId; } set { messageId = value; } }
     }
 
     public const ushort Id = (ushort)ClientCommand.OutRoomMessage;

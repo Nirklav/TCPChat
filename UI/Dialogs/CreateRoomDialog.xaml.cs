@@ -14,9 +14,6 @@ using System.Windows.Shapes;
 
 namespace UI.Dialogs
 {
-  /// <summary>
-  /// Логика взаимодействия для CreateRoomDialog.xaml
-  /// </summary>
   public partial class CreateRoomDialog : Window
   {
     public new string Name { get; set; }
