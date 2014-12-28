@@ -121,11 +121,12 @@ namespace Engine.API.StandardAPI
     }
 
     /// <summary>
-    /// Асинхронно отправляет сообщение всем пользователям в комнате. Если клиента нет в комнате, сообщение игнорируется сервером.
+    /// Редактирует сообщение.
     /// </summary>
+    /// <param name="messageId">Идентификатор сообщения</param>
     /// <param name="message">Сообщение.</param>
     /// <param name="roomName">Название комнаты.</param>
-    public void SendMessage(string message, string roomName)
+    public void SendMessage(long? messageId, string message, string roomName)
     {
       if (message == null)
         throw new ArgumentNullException("message");
@@ -133,7 +134,7 @@ namespace Engine.API.StandardAPI
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
-      var sendingContent = new ServerSendRoomMessageCommand.MessageContent { Message = message, RoomName = roomName };
+      var sendingContent = new ServerSendRoomMessageCommand.MessageContent { Message = message, RoomName = roomName, MessageId = messageId };
       ClientModel.Client.SendMessage(ServerSendRoomMessageCommand.Id, sendingContent);
     }
 

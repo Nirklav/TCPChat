@@ -13,7 +13,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.Message))
         throw new ArgumentException("Message");
@@ -27,7 +27,14 @@ namespace Engine.API.StandardAPI.ServerCommands
       using (var server = ServerModel.Get())
       {
         var room = server.Rooms[receivedContent.RoomName];
+        var roomUser = room.GetUser(args.ConnectionId);
         var messageId = receivedContent.MessageId ?? room.IncrementMessageId();
+
+        if (receivedContent.MessageId != null && !roomUser.ContainsId(messageId))
+        {
+          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете редактировать это сообщение.");
+          return;
+        }
 
         var sendingContent = new ClientOutRoomMessageCommand.MessageContent
         {
@@ -42,6 +49,8 @@ namespace Engine.API.StandardAPI.ServerCommands
           ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете отправить сообщение, т.к. не входите в состав этой комнаты.");
           return;
         }
+
+        roomUser.AddId(messageId);
 
         foreach (string user in room.Users.Where(u => u != null))
           ServerModel.Server.SendMessage(user, ClientOutRoomMessageCommand.Id, sendingContent);

@@ -168,7 +168,7 @@ namespace UI.ViewModel
     #endregion
 
     #region command methods
-    public void EnableServer(object obj)
+    private void EnableServer(object obj)
     {
       ServerDialog dialog = new ServerDialog();
 
@@ -205,7 +205,7 @@ namespace UI.ViewModel
       }
     }
 
-    public void DisableServer(object obj)
+    private void DisableServer(object obj)
     {
       if (MessageBox.Show(ServerDisableQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
         return;
@@ -219,7 +219,7 @@ namespace UI.ViewModel
       ClearTabs();
     }
 
-    public void Connect(object obj)
+    private void Connect(object obj)
     {
       ConnectDialog dialog = new ConnectDialog();
 
@@ -227,7 +227,7 @@ namespace UI.ViewModel
         InitializeClient(false);
     }
 
-    public void Disconnect(object obj)
+    private void Disconnect(object obj)
     {
       try
       {
@@ -242,7 +242,7 @@ namespace UI.ViewModel
       ClearTabs();
     }
 
-    public void CreateRoom(object obj)
+    private void CreateRoom(object obj)
     {
       try
       {
@@ -256,7 +256,7 @@ namespace UI.ViewModel
       }
     }
 
-    public void DeleteRoom(object obj)
+    private void DeleteRoom(object obj)
     {
       try
       {
@@ -272,7 +272,7 @@ namespace UI.ViewModel
       }
     }
 
-    public void ExitFromRoom(object obj)
+    private void ExitFromRoom(object obj)
     {
       try
       {
@@ -288,13 +288,13 @@ namespace UI.ViewModel
       }
     }
 
-    public void OpenFilesDialog(object obj)
+    private void OpenFilesDialog(object obj)
     {
       PostedFilesDialog dialog = new PostedFilesDialog();
       dialog.ShowDialog();
     }
 
-    public void OpenAboutProgram(object obj)
+    private void OpenAboutProgram(object obj)
     {
       AboutProgramDialog dialog = new AboutProgramDialog();
       dialog.ShowDialog();

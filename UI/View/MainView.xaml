@@ -38,11 +38,19 @@
 
                 <TextBox IsReadOnly="True"
                          BorderThickness="0"
-                         Text="{Binding Path=Message}"
+                         Text="{Binding Path=Text}"
                          TextWrapping="Wrap"
                          Margin="5, 2.5, 5, 2.5"
                          Padding="0"
-                         Background="Transparent"/>
+                         Background="Transparent">
+                    <TextBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Command="Copy"/>
+                            <MenuItem Header="Редактировать"
+                                      Command="{Binding Path=EditMessageCommand}"/>
+                        </ContextMenu>
+                    </TextBox.ContextMenu>
+                </TextBox>
             </StackPanel>
         </DataTemplate>
 
@@ -50,7 +58,7 @@
             <StackPanel Orientation="Vertical">
                 <TextBox IsReadOnly="True"
                          BorderThickness="0"
-                         Text="{Binding Path=Message}"
+                         Text="{Binding Path=Text}"
                          TextWrapping="Wrap"
                          Margin="5, 2.5, 5, 2.5"
                          Padding="0"
@@ -97,7 +105,7 @@
 
                 <TextBox IsReadOnly="True"
                          BorderThickness="0"
-                         Text="{Binding Path=Message}"
+                         Text="{Binding Path=Text}"
                          TextWrapping="Wrap"
                          Margin="5, 2.5, 5, 2.5"
                          Padding="0"
@@ -126,7 +134,7 @@
                     </TextBlock>
                 </StackPanel>
 
-                <TextBlock Text="{Binding Path=Message}"
+                <TextBlock Text="{Binding Path=Text}"
                            TextWrapping="Wrap"
                            Margin="5, 2.5, 5, 2.5"
                            Padding="0"

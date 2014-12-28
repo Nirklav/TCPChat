@@ -11,7 +11,7 @@ namespace Engine
   {
     ICommand<ClientCommandArgs> GetCommand(byte[] message);
 
-    void SendMessage(string message, string roomName);
+    void SendMessage(long? messageId, string message, string roomName);
     void SendPrivateMessage(string receiver, string message);
 
     void CreateRoom(string roomName, RoomType type);

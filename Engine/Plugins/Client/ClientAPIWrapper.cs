@@ -10,7 +10,7 @@ namespace Engine.Plugins.Client
     IClientAPI
   {
     public ICommand<ClientCommandArgs> GetCommand(byte[] message) { return ClientModel.API.GetCommand(message); }
-    public void SendMessage(string message, string roomName) { ClientModel.API.SendMessage(message, roomName); }
+    public void SendMessage(long? messageId, string message, string roomName) { ClientModel.API.SendMessage(messageId, message, roomName); }
     public void SendPrivateMessage(string receiver, string message) { ClientModel.API.SendPrivateMessage(receiver, message); }
     public void CreateRoom(string roomName, RoomType type) { ClientModel.API.CreateRoom(roomName, type); }
     public void DeleteRoom(string roomName) { ClientModel.API.DeleteRoom(roomName); }

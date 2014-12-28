@@ -28,7 +28,7 @@ namespace UI.ViewModel
     private const string FileDialogFilter = "Все файлы|*.*";
 
     private int progress;
-    private string message;
+    private string text;
     private FileDescription file;
     private RoomViewModel roomViewModel;
     private DateTime time;
@@ -41,10 +41,10 @@ namespace UI.ViewModel
     public UserViewModel Receiver { get; set; }
     public MessageType Type { get; set; }
 
-    public string Message 
+    public string Text 
     {
-      get { return message; }
-      set { SetValue(value, "Message", v => message = v); }
+      get { return text; }
+      set { SetValue(value, "Text", v => text = v); }
     }
 
     public FileDescription File
@@ -62,13 +62,14 @@ namespace UI.ViewModel
 
     #region commands
     public ICommand DownloadFileCommand { get; private set; }
+    public ICommand EditMessageCommand { get; private set; }
     #endregion
 
     #region constructors
     public MessageViewModel(string systemMessage, RoomViewModel room)
       : this(Room.SpecificMessageId, room, false)
     {
-      Message = systemMessage;
+      Text = systemMessage;
       Type = MessageType.System;
     }
 
@@ -104,7 +105,7 @@ namespace UI.ViewModel
         size = fileDescription.Size / (1024.0f * 1024.0f);
       }
       
-      Message = fileName + string.Format(SizeFormat, size, sizeDim);
+      Text = fileName + string.Format(SizeFormat, size, sizeDim);
       Type = MessageType.File;
       DownloadFileCommand = new Command(DownloadFile, Obj => ClientModel.Client != null);
     }
@@ -112,10 +113,13 @@ namespace UI.ViewModel
     public MessageViewModel(long messageId, UserViewModel sender, UserViewModel receiver, string message, bool isPrivate, RoomViewModel room)
       : this(messageId, room, false)
     {
-      Message = message;
+      Text = message;
       Sender = sender;
       Receiver = receiver;
       Type = isPrivate ? MessageType.Private : MessageType.Common;
+
+      EditMessageCommand = new Command(EditMessage, Obj => ClientModel.Client != null);
+
       Title = string.Format(isPrivate ? PMForm : From, DateTime.Now.ToString(TimeFormat));
     }
 
@@ -157,7 +161,7 @@ namespace UI.ViewModel
       if ((other.time - time).TotalMinutes > 1)
         return false;
 
-      Message += string.Format("{0}{1}", Environment.NewLine, other.Message);
+      Text += string.Format("{0}{1}", Environment.NewLine, other.Text);
       return true;
     }
     #endregion
@@ -213,7 +217,7 @@ namespace UI.ViewModel
             throw new ArgumentException(CantDownloadItsFile);
         }
 
-        SaveFileDialog saveDialog = new SaveFileDialog();
+        var saveDialog = new SaveFileDialog();
         saveDialog.OverwritePrompt = false;
         saveDialog.Filter = FileDialogFilter;
         saveDialog.FileName = File.Name;
@@ -244,6 +248,11 @@ namespace UI.ViewModel
       {
         roomViewModel.AddSystemMessage(se.Message);
       }
+    }
+
+    private void EditMessage(object obj)
+    {
+      roomViewModel.EditMessage(this);
     }
     #endregion
   }

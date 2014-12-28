@@ -16,10 +16,11 @@ namespace Engine.Model.Entities
     /// </summary>
     public const long SpecificMessageId = -1;
 
-    protected string name;
+    protected readonly string name;
+    protected readonly Dictionary<string, RoomUser> users;
+    protected readonly List<FileDescription> files;
+
     protected string admin;
-    protected List<string> users;
-    protected List<FileDescription> files;
     protected long lastMessageId;
 
     /// <summary>
@@ -32,11 +33,11 @@ namespace Engine.Model.Entities
       this.admin = admin;
       this.name = name;
 
-      users = new List<string>();
+      users = new Dictionary<string, RoomUser>();
       files = new List<FileDescription>();
 
       if (admin != null)
-        users.Add(admin);
+        users.Add(admin, new RoomUser(admin));
     }
 
     /// <summary>
@@ -44,11 +45,17 @@ namespace Engine.Model.Entities
     /// </summary>
     /// <param name="admin">Ник администратора комнаты.</param>
     /// <param name="name">Название комнаты.</param>
-    /// <param name="initialUsers">Начальный список пользователей комнаты. Уже существуюшие пользователе повторно добавлены не будут.</param>
+    /// <param name="initialUsers">Начальный список пользователей комнаты.</param>
     public Room(string admin, string name, IEnumerable<User> initialUsers)
       : this(admin, name)
     {
-      users.AddRange(initialUsers.Where(u => !string.Equals(admin, u.Nick)).Select(u => u.Nick));
+      foreach(var user in initialUsers)
+      {
+        if (string.Equals(admin, user.Nick))
+          continue;
+
+        users.Add(user.Nick, new RoomUser(user.Nick));
+      }
     }
 
     /// <summary>
@@ -73,7 +80,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public ICollection<string> Users
     {
-      get { return users; }
+      get { return users.Keys; }
     }
 
     /// <summary>
@@ -98,7 +105,7 @@ namespace Engine.Model.Entities
     /// <param name="nick">Ник пользователя.</param>
     public virtual void Add(string nick)
     {
-      users.Add(nick);
+      users.Add(nick, new RoomUser(nick));
     }
 
     /// <summary>
@@ -121,7 +128,19 @@ namespace Engine.Model.Entities
     /// <param name="nick">Ник пользователя</param>
     public bool Contains(string nick)
     {
-      return users.Contains(nick);
+      return users.ContainsKey(nick);
+    }
+
+    /// <summary>
+    /// Возвращает пользователя комнаты.
+    /// </summary>
+    /// <param name="nick">Ник пользователя.</param>
+    /// <returns>Пользователь команты.</returns>
+    public RoomUser GetUser(string nick)
+    {
+      RoomUser user;
+      users.TryGetValue(nick, out user);
+      return user;
     }
 
     /// <summary>

@@ -21,7 +21,8 @@ namespace Engine.Model.Entities
     /// </summary>
     /// <param name="admin">Ник администратора комнаты.</param>
     /// <param name="name">Название комнаты.</param>
-    public VoiceRoom(string admin, string name) : base(admin, name) 
+    public VoiceRoom(string admin, string name)
+      : base(admin, name) 
     {
       connectionMap = new Dictionary<string, List<string>>();
       connectionMap.Add(admin, new List<string>());
@@ -33,16 +34,19 @@ namespace Engine.Model.Entities
     /// <param name="admin">Ник администратора комнаты.</param>
     /// <param name="name">Название комнаты.</param>
     /// <param name="initialUsers">Начальный список пользователей комнаты. Уже существуюшие пользователе повторно добавлены не будут.</param>
-    public VoiceRoom(string admin, string name, IEnumerable<User> initialUsers) : base(admin, name, initialUsers) 
+    public VoiceRoom(string admin, string name, IEnumerable<User> initialUsers)
+      : base(admin, name, initialUsers) 
     {
-      for(int i = 0; i < users.Count; i++)
-      {
-        List<string> connectionList = new List<string>();
-        
-        for(int m = i + 1; m < users.Count; m++)
-          connectionList.Add(users[m]);
+      connectionMap = new Dictionary<string, List<string>>();
 
-        connectionMap.Add(users[i], connectionList);
+      var userNames = users.Keys.ToList();
+      for (int i = 0; i < userNames.Count; i++)
+      {
+        var connections = new List<string>();
+        for (int m = i + 1; m < userNames.Count; m++)
+          connections.Add(userNames[m]);
+
+        connectionMap.Add(userNames[i], connections);
       }
     }
 
@@ -54,7 +58,7 @@ namespace Engine.Model.Entities
     {
       base.Add(nick);
 
-      List<string> users = connectionMap.Keys.ToList();
+      var users = connectionMap.Keys.ToList();
 
       foreach (var kvp in connectionMap)
         kvp.Value.Add(nick);

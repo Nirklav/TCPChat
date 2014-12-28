@@ -37,6 +37,8 @@ namespace UI.ViewModel
 
     private ObservableCollection<MessageViewModel> messages;
     private HashSet<long> messageIds;
+
+    private long? editingMessageId;
     #endregion
 
     #region commands
@@ -95,9 +97,9 @@ namespace UI.ViewModel
       get
       {
         yield return allInRoom;
-        foreach (UserViewModel model in MainViewModel.AllUsers)
-          if (!model.IsClient)
-            yield return model;
+        foreach (var user in MainViewModel.AllUsers)
+          if (!user.IsClient)
+            yield return user;
 
         SelectedReceiver = allInRoom;
       }
@@ -156,6 +158,12 @@ namespace UI.ViewModel
     #endregion
 
     #region methods
+    public void EditMessage(MessageViewModel message)
+    {
+      editingMessageId = message.MessageId;
+      Message = message.Text;
+    }
+
     public void AddSystemMessage(string message)
     {
       AddMessage(new MessageViewModel(message, this));
@@ -184,16 +192,16 @@ namespace UI.ViewModel
       if (Messages.Count > 0)
         lastMessage = Messages[Messages.Count - 1];
 
-      if (lastMessage == null || !lastMessage.TryConcat(message))
+      if (message.MessageId == Room.SpecificMessageId || messageIds.Add(message.MessageId))
       {
-        if (message.MessageId == Room.SpecificMessageId || messageIds.Add(message.MessageId))
+        if (lastMessage == null || !lastMessage.TryConcat(message))
           Messages.Add(message);
-        else
-        {
-          var existingMessage = Messages.First(m => m.MessageId == message.MessageId);
-          existingMessage.Message = message.Message;
-        }     
       }
+      else
+      {
+        var existingMessage = Messages.First(m => m.MessageId == message.MessageId);
+        existingMessage.Text = message.Text;
+      }    
 
       MessagesAutoScroll = true;
     }
@@ -222,23 +230,26 @@ namespace UI.ViewModel
 
       try
       {
-        if (ClientModel.API != null && ClientModel.Client.IsConnected)
-        {
-          if (ReferenceEquals(allInRoom, SelectedReceiver))
-            ClientModel.API.SendMessage(Message, Name);
-          else
-          {
-            ClientModel.API.SendPrivateMessage(SelectedReceiver.Nick, Message);
-            var sender = MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id));
-            AddPrivateMessage(sender, SelectedReceiver, Message);
-          }
-        }
+        if (ClientModel.API == null || !ClientModel.Client.IsConnected)
+          return;
 
-        Message = string.Empty;
+        if (ReferenceEquals(allInRoom, SelectedReceiver))
+          ClientModel.API.SendMessage(editingMessageId, Message, Name);
+        else
+        {
+          ClientModel.API.SendPrivateMessage(SelectedReceiver.Nick, Message);
+          var sender = MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id));
+          AddPrivateMessage(sender, SelectedReceiver, Message);
+        }
       }
       catch (SocketException se)
       {
         AddSystemMessage(se.Message);
+      }
+      finally
+      {
+        editingMessageId = null;
+        Message = string.Empty;
       }
     }
 

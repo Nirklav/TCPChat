@@ -9,7 +9,7 @@ namespace Engine.API.StandardAPI.ClientCommands
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.Sender))
         throw new ArgumentException("sender");
@@ -19,6 +19,14 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("roomName");
+
+      using (var client = ClientModel.Get())
+      {
+        var room = client.Rooms[receivedContent.RoomName];
+        var roomUser = room.GetUser(receivedContent.Sender);
+
+        roomUser.AddId(receivedContent.MessageId);
+      }
 
       var receiveMessageArgs = new ReceiveMessageEventArgs
       {
