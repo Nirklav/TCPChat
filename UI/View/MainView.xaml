@@ -290,7 +290,8 @@
                         Grid.Column="0"
                         BorderThickness="1" 
                         BorderBrush="#FF828790" 
-                        Background="White">
+                        Background="White"
+                        Grid.Row="0">
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   Infrastructure:AttachedHelper.AutoScroll="{Binding Path=MessagesAutoScroll}">
@@ -314,7 +315,6 @@
 
                 <GridSplitter Grid.Column="1" 
                               Grid.Row="0"
-                              Grid.RowSpan="1"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"
                               Width="5" 
@@ -322,7 +322,7 @@
 
                 <GridSplitter Grid.Column="0"
                               Grid.ColumnSpan="3"
-                              Grid.Row="1" 
+                              Grid.Row="1"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"
                               Height="Auto"
@@ -375,12 +375,32 @@
                                             UpdateSourceTrigger=PropertyChanged}"
                              AllowDrop="True"
                              Infrastructure:AttachedHelper.MessageCaret="{Binding Path=MessageCaretIndex}">
+                        
+                        <TextBox.Style>
+                            <Style>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsMessageSelected}"
+                                                 Value="true">
+                                        
+                                        <Setter Property="TextBox.Background">
+                                            <Setter.Value>
+                                                <SolidColorBrush Color="#FFFDF6B5"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                        
                         <TextBox.Resources>
                             <Infrastructure:CommandReference x:Key="SendMessageCommand"
                                                              Command="{Binding Path=SendMessageCommand}"/>
 
                             <Infrastructure:CommandReference x:Key="PastReturnCommand"
                                                              Command="{Binding Path=PastReturnCommand}"/>
+
+                            <Infrastructure:CommandReference x:Key="ClearSelectedMessageCommand"
+                                                             Command="{Binding Path=ClearSelectedMessageCommand}"/>
                         </TextBox.Resources>
 
                         <TextBox.InputBindings>
@@ -389,6 +409,8 @@
                             <KeyBinding Key="Enter"
                                         Modifiers="Control"
                                         Command="{StaticResource ResourceKey=PastReturnCommand}"/>
+                            <KeyBinding Key="Escape"
+                                        Command="{StaticResource ResourceKey=ClearSelectedMessageCommand}"/>
                         </TextBox.InputBindings>
 
                     </TextBox>

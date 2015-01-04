@@ -11,7 +11,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.Nick))
         throw new ArgumentException("Nick");

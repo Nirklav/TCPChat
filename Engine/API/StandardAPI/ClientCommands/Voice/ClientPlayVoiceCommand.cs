@@ -13,7 +13,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (args.PeerConnectionId == null)
         return;
 
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
       ClientModel.Player.Enqueue(args.PeerConnectionId, receivedContent.Number, receivedContent.Pack);
     }
 

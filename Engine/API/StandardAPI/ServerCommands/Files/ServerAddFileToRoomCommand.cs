@@ -13,7 +13,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.File == null)
         throw new ArgumentNullException("File");
@@ -26,7 +26,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 
       using (var context = ServerModel.Get())
       {
-        Room room = context.Rooms[receivedContent.RoomName];
+        var room = context.Rooms[receivedContent.RoomName];
 
         if (!room.Users.Contains(args.ConnectionId))
         {

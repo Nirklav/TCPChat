@@ -21,7 +21,7 @@ namespace Engine.Helpers
     private static readonly Dictionary<string, object> syncObjects = new Dictionary<string, object>();
     private static object GetSyncObject(string fileName)
     {
-      lock(syncObjects)
+      lock (syncObjects)
       {
         object syncObject;
         syncObjects.TryGetValue(fileName, out syncObject);

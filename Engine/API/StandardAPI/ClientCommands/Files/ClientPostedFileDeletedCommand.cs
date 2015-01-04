@@ -12,7 +12,7 @@ namespace Engine.API.StandardAPI.ClientCommands
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.File == null)
         throw new ArgumentNullException("file");
@@ -22,13 +22,13 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       using (var client = ClientModel.Get())
       {
-        IEnumerable<DownloadingFile> downloadFiles = client.DownloadingFiles.Where((dFile) => dFile.File.Equals(receivedContent.File));
+        var downloadFiles = client.DownloadingFiles.Where((dFile) => dFile.File.Equals(receivedContent.File));
 
-        foreach (DownloadingFile file in downloadFiles)
+        foreach (var file in downloadFiles)
           file.Dispose();
       }
 
-      FileDownloadEventArgs downloadEventArgs = new FileDownloadEventArgs
+      var downloadEventArgs = new FileDownloadEventArgs
       {
         File = receivedContent.File,
         Progress = 0,

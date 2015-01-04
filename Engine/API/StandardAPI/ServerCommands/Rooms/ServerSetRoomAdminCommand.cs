@@ -11,7 +11,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("RoomName");
@@ -30,7 +30,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[receivedContent.RoomName];
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
@@ -40,7 +40,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 
         room.Admin = receivedContent.NewAdmin.Nick;
 
-        string message = string.Format("Вы назначены администратором комнаты {0}.", room.Name);
+        var message = string.Format("Вы назначены администратором комнаты {0}.", room.Name);
         ServerModel.API.SendSystemMessage(receivedContent.NewAdmin.Nick, message);
       }
     }

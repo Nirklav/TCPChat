@@ -12,6 +12,7 @@ using System.Windows.Input;
 using UI.Dialogs;
 using UI.Infrastructure;
 using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
+using Keys = System.Windows.Forms.Keys;
 
 namespace UI.ViewModel
 {
@@ -38,7 +39,12 @@ namespace UI.ViewModel
     private ObservableCollection<MessageViewModel> messages;
     private HashSet<long> messageIds;
 
-    private long? editingMessageId;
+    private long? messageId;
+    private long? SelectedMessageId
+    {
+      get { return messageId; }
+      set { SetValue<long?>(value, "IsMessageSelected", v => messageId = v); }
+    }
     #endregion
 
     #region commands
@@ -46,6 +52,7 @@ namespace UI.ViewModel
     public ICommand KickFromRoomCommand { get; private set; }
     public ICommand SendMessageCommand { get; private set; }
     public ICommand PastReturnCommand { get; private set; }
+    public ICommand ClearSelectedMessageCommand { get; private set; }
     public ICommand AddFileCommand { get; private set; }
     #endregion
 
@@ -53,6 +60,7 @@ namespace UI.ViewModel
     public Room Description { get; private set; }
     public UserViewModel SelectedReceiver { get; set; }
     public MainViewModel MainViewModel { get; private set; }
+    public bool IsMessageSelected { get { return SelectedMessageId != null; } } // OnProperyChanged called from SelectedMessageId
 
     public bool MessagesAutoScroll
     {
@@ -81,7 +89,12 @@ namespace UI.ViewModel
     public string Message
     {
       get { return message; }
-      set { SetValue(value, "Message", v => message = v); }
+      set 
+      { 
+        SetValue(value, "Message", v => message = v);
+        if (value == string.Empty)
+          SelectedMessageId = null;
+      }
     }
 
     public int MessageCaretIndex
@@ -132,6 +145,7 @@ namespace UI.ViewModel
       AddFileCommand = new Command(AddFile, Obj => ClientModel.Client != null);
       InviteInRoomCommand = new Command(InviteInRoom, Obj => ClientModel.Client != null);
       KickFromRoomCommand = new Command(KickFromRoom, Obj => ClientModel.Client != null);
+      ClearSelectedMessageCommand = new Command(ClearSelectedMessage, Obj => ClientModel.Client != null);
 
       MainViewModel.AllUsers.CollectionChanged += AllUsersCollectionChanged;
       NotifierContext.ReceiveMessage += ClientReceiveMessage;
@@ -160,7 +174,7 @@ namespace UI.ViewModel
     #region methods
     public void EditMessage(MessageViewModel message)
     {
-      editingMessageId = message.MessageId;
+      SelectedMessageId = message.MessageId;
       Message = message.Text;
     }
 
@@ -179,24 +193,17 @@ namespace UI.ViewModel
       AddMessage(new MessageViewModel(Room.SpecificMessageId, sender, receiver, message, true, this));
     }
 
-    public void AddFileMessage(long messageId, UserViewModel sender, FileDescription file)
+    public void AddFileMessage(UserViewModel sender, FileDescription file)
     {
-      AddMessage(new MessageViewModel(messageId, sender, file.Name, file, this));
+      AddMessage(new MessageViewModel(sender, file.Name, file, this));
     }
 
     private void AddMessage(MessageViewModel message)
     {
       TryClearMessages();
 
-      MessageViewModel lastMessage = null;
-      if (Messages.Count > 0)
-        lastMessage = Messages[Messages.Count - 1];
-
       if (message.MessageId == Room.SpecificMessageId || messageIds.Add(message.MessageId))
-      {
-        if (lastMessage == null || !lastMessage.TryConcat(message))
-          Messages.Add(message);
-      }
+        Messages.Add(message);
       else
       {
         var existingMessage = Messages.First(m => m.MessageId == message.MessageId);
@@ -234,7 +241,7 @@ namespace UI.ViewModel
           return;
 
         if (ReferenceEquals(allInRoom, SelectedReceiver))
-          ClientModel.API.SendMessage(editingMessageId, Message, Name);
+          ClientModel.API.SendMessage(SelectedMessageId, Message, Name);
         else
         {
           ClientModel.API.SendPrivateMessage(SelectedReceiver.Nick, Message);
@@ -248,7 +255,7 @@ namespace UI.ViewModel
       }
       finally
       {
-        editingMessageId = null;
+        SelectedMessageId = null;
         Message = string.Empty;
       }
     }
@@ -309,6 +316,15 @@ namespace UI.ViewModel
         AddSystemMessage(se.Message);
       }
     }
+
+    private void ClearSelectedMessage(object obj)
+    {
+      if (SelectedMessageId == null)
+        return;
+
+      SelectedMessageId = null;
+      Message = string.Empty;
+    }
     #endregion
 
     #region client methods
@@ -333,7 +349,7 @@ namespace UI.ViewModel
             break;
 
           case MessageType.File:
-            AddFileMessage(args.MessageId, senderUser, (FileDescription)args.State);
+            AddFileMessage(senderUser, (FileDescription)args.State);
             break;
         }
 

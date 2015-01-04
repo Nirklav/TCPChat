@@ -14,7 +14,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("RoomName");
@@ -33,7 +33,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[receivedContent.RoomName];
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
@@ -41,13 +41,13 @@ namespace Engine.API.StandardAPI.ServerCommands
           return;
         }
 
-        List<User> invitedUsers = new List<User>();
-        foreach (User user in receivedContent.Users)
+        var invitedUsers = new List<User>();
+        foreach (var user in receivedContent.Users)
         {
           if (room.Users.Contains(user.Nick))
             continue;
 
-          room.Add(user.Nick);
+          room.AddUser(user.Nick);
           invitedUsers.Add(user);
         }
 
@@ -65,7 +65,7 @@ namespace Engine.API.StandardAPI.ServerCommands
           Users = users
         };
 
-        foreach (string user in room.Users)
+        foreach (var user in room.Users)
         {
           if (invitedUsers.Contains(server.Users[user]))
             ServerModel.Server.SendMessage(user, ClientRoomOpenedCommand.Id, roomOpenContent);

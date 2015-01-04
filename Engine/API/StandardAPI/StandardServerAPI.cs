@@ -134,7 +134,7 @@ namespace Engine.API.StandardAPI
           if (!room.Users.Contains(nick))
             continue;
 
-          room.Remove(nick);
+          room.RemoveUser(nick);
           server.Users.Remove(nick);
 
           if (string.Equals(room.Admin, nick))

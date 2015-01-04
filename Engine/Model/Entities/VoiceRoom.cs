@@ -54,9 +54,9 @@ namespace Engine.Model.Entities
     /// Добавляет пользователя в комнату.
     /// </summary>
     /// <param name="nick">Ник пользователя.</param>
-    public override void Add(string nick)
+    public override void AddUser(string nick)
     {
-      base.Add(nick);
+      base.AddUser(nick);
 
       var users = connectionMap.Keys.ToList();
 
@@ -70,9 +70,9 @@ namespace Engine.Model.Entities
     /// Удаляет пользователя из комнаты.
     /// </summary>
     /// <param name="nick">Ник пользователя.</param>
-    public override void Remove(string nick)
+    public override void RemoveUser(string nick)
     {
-      base.Remove(nick);
+      base.RemoveUser(nick);
 
       foreach (var kvp in connectionMap)
         kvp.Value.Remove(nick);

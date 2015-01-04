@@ -12,7 +12,7 @@ namespace Engine.API.StandardAPI.ClientCommands
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.Key == null)
         throw new ArgumentNullException("key");
@@ -28,7 +28,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       using (MemoryStream messageStream = new MemoryStream(),
              encryptedMessageStream = new MemoryStream(receivedContent.Message))
       {
-        AesCryptoServiceProvider provider = new AesCryptoServiceProvider 
+        var provider = new AesCryptoServiceProvider 
         { 
           Padding = PaddingMode.Zeros, 
           Mode = CipherMode.CBC 
@@ -37,7 +37,7 @@ namespace Engine.API.StandardAPI.ClientCommands
         using(Crypter messageCrypter = new Crypter(provider))
           messageCrypter.DecryptStream(encryptedMessageStream, messageStream, decryptedSymmetricKey);
 
-        ReceiveMessageEventArgs receiveMessageArgs = new ReceiveMessageEventArgs
+        var receiveMessageArgs = new ReceiveMessageEventArgs
         {
           Type = MessageType.Private,
           Message = Encoding.Unicode.GetString(messageStream.ToArray()),

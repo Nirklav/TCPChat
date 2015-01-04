@@ -73,8 +73,8 @@ namespace UI.ViewModel
       Type = MessageType.System;
     }
 
-    public MessageViewModel(long messageId, UserViewModel sender, string fileName, FileDescription fileDescription, RoomViewModel room)
-      : this(messageId, room, true)
+    public MessageViewModel(UserViewModel sender, string fileName, FileDescription fileDescription, RoomViewModel room)
+      : this(Room.SpecificMessageId, room, true)
     {
       NotifierContext.DownloadProgress += ClientDownloadProgress;
       NotifierContext.PostedFileDeleted += ClientPostedFileDeleted;
@@ -144,26 +144,7 @@ namespace UI.ViewModel
     #endregion
 
     #region methods
-    public bool TryConcat(MessageViewModel other)
-    {
-      if (Type == MessageType.System || Type == MessageType.File)
-        return false;
 
-      if (Type != other.Type)
-        return false;
-
-      if (Sender != null && !Sender.Info.Equals(other.Sender.Info))
-        return false;
-
-      if (Receiver != null && !Receiver.Info.Equals(other.Receiver.Info))
-        return false;
-
-      if ((other.time - time).TotalMinutes > 1)
-        return false;
-
-      Text += string.Format("{0}{1}", Environment.NewLine, other.Text);
-      return true;
-    }
     #endregion
 
     #region client events

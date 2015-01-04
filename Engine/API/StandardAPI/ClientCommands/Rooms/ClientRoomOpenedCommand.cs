@@ -11,15 +11,13 @@ namespace Engine.API.StandardAPI.ClientCommands
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
       if (receivedContent.Room == null)
         throw new ArgumentNullException("room");
 
       if (receivedContent.Type == RoomType.Voice)
       {
-        VoiceRoom room = receivedContent.Room as VoiceRoom;
-
+        var room = receivedContent.Room as VoiceRoom;
         if (room == null)
           throw new ArgumentException("type");
 

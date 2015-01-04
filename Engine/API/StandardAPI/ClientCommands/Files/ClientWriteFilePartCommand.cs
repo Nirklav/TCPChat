@@ -16,7 +16,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (args.PeerConnectionId == null)
         return;
 
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.File == null)
         throw new ArgumentNullException("File");
@@ -30,7 +30,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("roomName");
 
-      FileDownloadEventArgs downloadEventArgs = new FileDownloadEventArgs
+      var downloadEventArgs = new FileDownloadEventArgs
       {
         RoomName = receivedContent.RoomName,
         File = receivedContent.File,
@@ -38,8 +38,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       using (var client = ClientModel.Get())
       {
-        DownloadingFile downloadingFile = client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(receivedContent.File));
-
+        var downloadingFile = client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(receivedContent.File));
         if (downloadingFile == null)
           return;
 

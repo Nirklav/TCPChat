@@ -13,7 +13,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentNullException("RoomName");
@@ -26,7 +26,7 @@ namespace Engine.API.StandardAPI.ServerCommands
           return;
         }
 
-        Room creatingRoom = receivedContent.Type == RoomType.Chat
+        var creatingRoom = receivedContent.Type == RoomType.Chat
           ? new Room(args.ConnectionId, receivedContent.RoomName)
           : new VoiceRoom(args.ConnectionId, receivedContent.RoomName);
 

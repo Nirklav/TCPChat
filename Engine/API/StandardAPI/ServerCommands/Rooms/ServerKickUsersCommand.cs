@@ -14,7 +14,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("RoomName");
@@ -43,7 +43,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 
         var sendingContent = new ClientRoomClosedCommand.MessageContent { Room = room };
 
-        foreach (User user in receivedContent.Users)
+        foreach (var user in receivedContent.Users)
         {
           if (!room.Users.Contains(user.Nick))
             continue;
@@ -54,7 +54,7 @@ namespace Engine.API.StandardAPI.ServerCommands
             continue;
           }
 
-          room.Remove(user.Nick);
+          room.RemoveUser(user.Nick);
 
           ServerModel.Server.SendMessage(user.Nick, ClientRoomClosedCommand.Id, sendingContent);
         }

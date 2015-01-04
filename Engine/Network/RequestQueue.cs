@@ -150,7 +150,7 @@ namespace Engine.Network
 
         requests.TryGetValue(connectionId, out queueContainer);
         if (queueContainer == null)
-          requests.Add(connectionId, (queueContainer = new QueueContainer(this)));
+          requests.Add(connectionId, queueContainer = new QueueContainer(this));
       }
       finally
       {

@@ -28,21 +28,6 @@ namespace Engine.API.StandardAPI.ServerCommands
       {
         var room = server.Rooms[receivedContent.RoomName];
         var roomUser = room.GetUser(args.ConnectionId);
-        var messageId = receivedContent.MessageId ?? room.IncrementMessageId();
-
-        if (receivedContent.MessageId != null && !roomUser.ContainsId(messageId))
-        {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете редактировать это сообщение.");
-          return;
-        }
-
-        var sendingContent = new ClientOutRoomMessageCommand.MessageContent
-        {
-          Message = receivedContent.Message,
-          RoomName = receivedContent.RoomName,
-          Sender = args.ConnectionId,
-          MessageId = messageId
-        };
 
         if (!room.Users.Contains(args.ConnectionId))
         {
@@ -50,7 +35,28 @@ namespace Engine.API.StandardAPI.ServerCommands
           return;
         }
 
-        roomUser.AddId(messageId);
+        if (receivedContent.MessageId != null && !roomUser.ContainsMessage(receivedContent.MessageId.Value))
+        {
+          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете редактировать это сообщение.");
+          return;
+        }
+
+        Message message = null;
+        if (receivedContent.MessageId == null)
+          message = room.AddMessage(args.ConnectionId, receivedContent.Message);
+        else
+        {
+          message = room.GetMessage(receivedContent.MessageId.Value);
+          message.Text = receivedContent.Message;
+        }
+
+        var sendingContent = new ClientOutRoomMessageCommand.MessageContent
+        {
+          Message = message.Text,
+          RoomName = receivedContent.RoomName,
+          Sender = args.ConnectionId,
+          MessageId = message.Id
+        };
 
         foreach (string user in room.Users.Where(u => u != null))
           ServerModel.Server.SendMessage(user, ClientOutRoomMessageCommand.Id, sendingContent);

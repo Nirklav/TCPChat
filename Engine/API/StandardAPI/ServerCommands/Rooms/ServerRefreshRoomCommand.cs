@@ -13,7 +13,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("RoomName");
@@ -26,7 +26,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[receivedContent.RoomName];
 
         if (!room.Users.Contains(args.ConnectionId))
         {

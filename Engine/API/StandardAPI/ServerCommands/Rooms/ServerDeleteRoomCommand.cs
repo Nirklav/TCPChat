@@ -12,7 +12,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("RoomName");
@@ -28,7 +28,7 @@ namespace Engine.API.StandardAPI.ServerCommands
 
       using (var context = ServerModel.Get())
       {
-        Room deletingRoom = context.Rooms[receivedContent.RoomName];
+        var deletingRoom = context.Rooms[receivedContent.RoomName];
         if (!deletingRoom.Admin.Equals(args.ConnectionId))
         {
           ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");

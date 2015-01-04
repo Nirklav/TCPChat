@@ -12,7 +12,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.File == null)
         throw new ArgumentNullException("File");
@@ -25,12 +25,12 @@ namespace Engine.API.StandardAPI.ServerCommands
 
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[receivedContent.RoomName];
 
         if (!room.Files.Exists(file => file.Equals(receivedContent.File)))
           return;
 
-        if (!room.Contains(args.ConnectionId))
+        if (!room.ContainsUser(args.ConnectionId))
         {
           ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
           return;

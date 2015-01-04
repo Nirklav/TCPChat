@@ -15,7 +15,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.User == null)
         throw new ArgumentNullException("User");
@@ -31,8 +31,8 @@ namespace Engine.API.StandardAPI.ServerCommands
       
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[ServerModel.MainRoomName];    
-        bool userExist = room.Users.Any(nick => string.Equals(receivedContent.User.Nick, nick));
+        var room = server.Rooms[ServerModel.MainRoomName];    
+        var userExist = room.Users.Any(nick => string.Equals(receivedContent.User.Nick, nick));
 
         if (userExist)
         {
@@ -44,11 +44,11 @@ namespace Engine.API.StandardAPI.ServerCommands
           ServerModel.Logger.WriteInfo("User login: {0}", receivedContent.User.Nick);
 
           server.Users.Add(receivedContent.User.Nick, receivedContent.User);
-          room.Add(receivedContent.User.Nick);
+          room.AddUser(receivedContent.User.Nick);
 
           var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = true };
-          ServerModel.Server.SendMessage(args.ConnectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
           ServerModel.Server.RegisterConnection(args.ConnectionId, receivedContent.User.Nick, receivedContent.OpenKey);
+          ServerModel.Server.SendMessage(receivedContent.User.Nick, ClientRegistrationResponseCommand.Id, regResponseContent);
 
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent
           {

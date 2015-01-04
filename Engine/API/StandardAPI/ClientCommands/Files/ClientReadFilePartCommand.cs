@@ -16,7 +16,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (args.PeerConnectionId == null)
         return;
 
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.File == null)
         throw new ArgumentNullException("File");
@@ -62,7 +62,7 @@ namespace Engine.API.StandardAPI.ClientCommands
 
       using (var client = ClientModel.Get())
       {
-        FileStream sendingFileStream = client.PostedFiles.First(c => c.File.Equals(receivedContent.File)).ReadStream;
+        var sendingFileStream = client.PostedFiles.First(c => c.File.Equals(receivedContent.File)).ReadStream;
         sendingFileStream.Position = receivedContent.StartPartPosition;
         sendingFileStream.Read(sendingContent.Part, 0, sendingContent.Part.Length);
       }

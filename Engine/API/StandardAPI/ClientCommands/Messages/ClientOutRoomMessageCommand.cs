@@ -23,9 +23,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       using (var client = ClientModel.Get())
       {
         var room = client.Rooms[receivedContent.RoomName];
-        var roomUser = room.GetUser(receivedContent.Sender);
-
-        roomUser.AddId(receivedContent.MessageId);
+        room.AddMessage(receivedContent.Sender, receivedContent.MessageId, receivedContent.Message);
       }
 
       var receiveMessageArgs = new ReceiveMessageEventArgs

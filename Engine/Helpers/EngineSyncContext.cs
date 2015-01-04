@@ -83,6 +83,7 @@ namespace Engine.Helpers
 
     private void ThreadFunc(object state)
     {
+      var oldSyncContext = SynchronizationContext.Current;
       SynchronizationContext.SetSynchronizationContext(this);
 
       while (true)
@@ -92,7 +93,7 @@ namespace Engine.Helpers
         {
           if (callbackQueue.Count <= 0)
           {
-            SynchronizationContext.SetSynchronizationContext(null);
+            SynchronizationContext.SetSynchronizationContext(oldSyncContext);
             inProcess = false;           
             return;
           }

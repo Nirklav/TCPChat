@@ -10,7 +10,7 @@ namespace Engine.API.StandardAPI.ClientCommands
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
       if (receivedContent.File == null)
         throw new ArgumentNullException("file");
@@ -18,9 +18,10 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (string.IsNullOrEmpty(receivedContent.RoomName))
         throw new ArgumentException("roomName");
 
-      ReceiveMessageEventArgs receiveMessageArgs = new ReceiveMessageEventArgs
+      var receiveMessageArgs = new ReceiveMessageEventArgs
       {
         Type = MessageType.File,
+        MessageId = Room.SpecificMessageId,
         Message = receivedContent.File.Name,
         Sender = receivedContent.File.Owner.Nick,
         RoomName = receivedContent.RoomName,

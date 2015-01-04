@@ -6,9 +6,6 @@ using UI.ViewModel;
 
 namespace UI
 {
-  /// <summary>
-  /// Логика взаимодействия для App.xaml
-  /// </summary>
   public partial class App : Application
   {
     protected override void OnStartup(StartupEventArgs e)
@@ -17,8 +14,8 @@ namespace UI
 
       AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
-      MainWindow window = new MainWindow();
-      MainViewModel viewModel = new MainViewModel(window);
+      var window = new MainWindow();
+      var viewModel = new MainViewModel(window);
       window.DataContext = viewModel;
       window.Show();
     }
@@ -30,7 +27,7 @@ namespace UI
       if (error == null)
         return;
 
-      Logger logger = new Logger(AppDomain.CurrentDomain.BaseDirectory + "/UnhandledError.log");
+      var logger = new Logger(AppDomain.CurrentDomain.BaseDirectory + "/UnhandledError.log");
       logger.Write(error);
     }
   }

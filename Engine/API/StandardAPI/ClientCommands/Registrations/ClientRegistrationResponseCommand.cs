@@ -9,9 +9,9 @@ namespace Engine.API.StandardAPI.ClientCommands
   {
     public void Run(ClientCommandArgs args)
     {
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
-      RegistrationEventArgs eventArgs = new RegistrationEventArgs
+      var eventArgs = new RegistrationEventArgs
       {
         Registered = receivedContent.Registered,
         Message = receivedContent.Message

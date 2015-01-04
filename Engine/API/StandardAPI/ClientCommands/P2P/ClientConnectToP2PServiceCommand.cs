@@ -13,10 +13,10 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (args.PeerConnectionId != null)
         return;
 
-      MessageContent receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
+      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
 
-      IPAddress address = ClientModel.Client.RemotePoint.Address;
-      IPEndPoint endPoint = new IPEndPoint(address, receivedContent.Port);
+      var address = ClientModel.Client.RemotePoint.Address;
+      var endPoint = new IPEndPoint(address, receivedContent.Port);
 
       ClientModel.Peer.ConnectToService(endPoint);
     }
