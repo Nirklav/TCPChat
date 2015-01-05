@@ -120,6 +120,7 @@
     <Compile Include="Audio\OpenAL\OpenALRecorder.cs" />
     <Compile Include="EventArgs\PluginEventArgs.cs" />
     <Compile Include="Helpers\EngineSyncContext.cs" />
+    <Compile Include="Helpers\TryLock.cs" />
     <Compile Include="Model\Client\ClientNotifier.cs" />
     <Compile Include="Model\Client\ClientInitializer.cs" />
     <Compile Include="Model\Client\ClientEventNotifierContext.cs" />

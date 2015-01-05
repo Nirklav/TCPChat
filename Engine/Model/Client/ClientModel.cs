@@ -112,11 +112,11 @@ namespace Engine.Model.Client
       if (Interlocked.Exchange(ref model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
-      Dispose(Plugins);
       Dispose(Client);
       Dispose(Peer);
       Dispose(Recorder);
       Dispose(Player);
+      Dispose(Plugins);
 
       Client = null;
       Peer = null;

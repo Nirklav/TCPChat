@@ -476,6 +476,9 @@ namespace Engine.Network
 
       disposed = true;
 
+      if (requestQueue != null)
+        requestQueue.Dispose();
+
       if (handler != null && handler.Status == NetPeerStatus.Running)
         handler.Shutdown(string.Empty);
 

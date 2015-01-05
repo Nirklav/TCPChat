@@ -94,8 +94,8 @@ namespace Engine.Model.Server
       if (Interlocked.Exchange(ref model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
-      Dispose(Plugins);
       Dispose(Server);
+      Dispose(Plugins);
 
       Server = null;
       API = null;

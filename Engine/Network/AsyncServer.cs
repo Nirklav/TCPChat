@@ -371,6 +371,9 @@ namespace Engine.Network
 
       isServerRunning = false;
 
+      if (requestQueue != null)
+        requestQueue.Dispose();
+
       lock (timerSync)
       {
         if (systemTimer != null)

@@ -295,6 +295,9 @@ namespace Engine.Network
     {
       lock (timerSync)
       {
+        if (requestQueue != null)
+          requestQueue.Dispose();
+
         base.Dispose();
 
         ((IDisposable)keyCryptor).Dispose();

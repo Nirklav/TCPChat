@@ -1,8 +1,10 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Server;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
+using Engine.Helpers;
 
 namespace Engine.Network
 {
@@ -23,19 +25,25 @@ namespace Engine.Network
     }
   }
 
-  abstract class RequestQueue<TArgs> : MarshalByRefObject
+  abstract class RequestQueue<TArgs> :
+    MarshalByRefObject,
+    IDisposable
   {
     private const int Timeout = 1000;
 
     #region Nested Types
 
-    private class QueueContainer
+    private class QueueContainer : IDisposable
     {
-      private RequestQueue<TArgs> queue;
+      private readonly RequestQueue<TArgs> queue;
 
+      private readonly object syncObject = new object();
+      private readonly Queue<CommandContainer> commands = new Queue<CommandContainer>();
       private volatile bool inProcess;
-      private object syncObject = new object();
-      private Queue<CommandContainer> commands = new Queue<CommandContainer>();
+
+      private static readonly TimeSpan disposeEventTimeout = TimeSpan.FromSeconds(10);
+      private readonly ManualResetEvent disposeEvent = new ManualResetEvent(true);
+      private bool disposed;
 
       public QueueContainer(RequestQueue<TArgs> queue)
       {
@@ -44,26 +52,15 @@ namespace Engine.Network
 
       public void Enqueue(ICommand<TArgs> command, TArgs args)
       {
-        var sync = syncObject;
-        var lockTaken = false;
-
-        try
+        using(new TryLock(syncObject, Timeout))
         {
-          lockTaken = Monitor.TryEnter(sync, Timeout);
-          if (!lockTaken)
-            throw new InvalidOperationException("Monitor.TryEnter timeout");
-
           commands.Enqueue(new CommandContainer(command, args));
           if (!inProcess)
           {
             inProcess = true;
+            disposeEvent.Reset();
             ThreadPool.QueueUserWorkItem(Process);
           }
-        }
-        finally
-        {
-          if (lockTaken)
-            Monitor.Exit(sync);
         }
       }
 
@@ -72,27 +69,17 @@ namespace Engine.Network
         while (true)
         {
           CommandContainer commandContainer;
-          var sync = syncObject;
-          var lockTaken = false;
 
-          try
+          using (new TryLock(syncObject, Timeout))
           {
-            lockTaken = Monitor.TryEnter(sync, Timeout);
-            if (!lockTaken)
-              throw new InvalidOperationException("Monitor.TryEnter timeout");
-
             if (commands.Count == 0)
             {
               inProcess = false;
+              disposeEvent.Set();
               return;
             }
 
             commandContainer = commands.Dequeue();
-          }
-          finally
-          {
-            if (lockTaken)
-              Monitor.Exit(sync);
           }
 
           try
@@ -104,6 +91,19 @@ namespace Engine.Network
             queue.OnError(e);
           }
         }
+      }
+
+      public void Dispose()
+      {
+        if (disposed)
+          return;
+
+        disposed = true;
+
+        lock (syncObject)
+          commands.Clear();
+
+        disposeEvent.WaitOne(disposeEventTimeout);
       }
     }
 
@@ -126,8 +126,10 @@ namespace Engine.Network
 
     #endregion
 
-    private object syncObject;
-    private Dictionary<string, QueueContainer> requests;
+    private readonly object syncObject;
+    private readonly Dictionary<string, QueueContainer> requests;
+
+    private bool disposed;
 
     public RequestQueue()
     {
@@ -139,28 +141,35 @@ namespace Engine.Network
     {
       QueueContainer queueContainer;
 
-      var sync = syncObject;
-      var lockTaken = false;
-
-      try
+      using (new TryLock(syncObject, Timeout))
       {
-        lockTaken = Monitor.TryEnter(sync, Timeout);
-        if (!lockTaken)
-          throw new InvalidOperationException("Monitor.TryEnter timeout");
-
         requests.TryGetValue(connectionId, out queueContainer);
         if (queueContainer == null)
           requests.Add(connectionId, queueContainer = new QueueContainer(this));
-      }
-      finally
-      {
-        if (lockTaken)
-          Monitor.Exit(sync);
       }
 
       queueContainer.Enqueue(command, args);
     }
 
     protected abstract void OnError(Exception e);
+
+    public void Dispose()
+    {
+      if (disposed)
+        return;
+
+      disposed = true;
+
+      QueueContainer[] queues;
+
+      lock (syncObject)
+      {
+        queues = requests.Values.ToArray();
+        requests.Clear();
+      }
+
+      foreach (var queue in queues)
+        queue.Dispose();
+    }
   }
 }
