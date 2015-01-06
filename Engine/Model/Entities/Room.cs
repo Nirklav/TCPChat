@@ -17,7 +17,7 @@ namespace Engine.Model.Entities
     public const long SpecificMessageId = -1;
 
     protected readonly string name;
-    protected readonly Dictionary<string, RoomUser> users;
+    protected readonly List<string> users;
     protected readonly Dictionary<long, Message> messages;
     protected readonly List<FileDescription> files;
 
@@ -34,12 +34,12 @@ namespace Engine.Model.Entities
       this.admin = admin;
       this.name = name;
 
-      users = new Dictionary<string, RoomUser>();
+      users = new List<string>();
       messages = new Dictionary<long, Message>();
       files = new List<FileDescription>();
 
       if (admin != null)
-        users.Add(admin, new RoomUser(admin));
+        users.Add(admin);
     }
 
     /// <summary>
@@ -56,7 +56,7 @@ namespace Engine.Model.Entities
         if (string.Equals(admin, user.Nick))
           continue;
 
-        users.Add(user.Nick, new RoomUser(user.Nick));
+        users.Add(user.Nick);
       }
     }
 
@@ -82,7 +82,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public ICollection<string> Users
     {
-      get { return users.Keys; }
+      get { return users; }
     }
 
     /// <summary>
@@ -107,7 +107,7 @@ namespace Engine.Model.Entities
     /// <param name="nick">Ник пользователя.</param>
     public virtual void AddUser(string nick)
     {
-      users.Add(nick, new RoomUser(nick));
+      users.Add(nick);
     }
 
     /// <summary>
@@ -143,17 +143,12 @@ namespace Engine.Model.Entities
     /// <returns>Добавленное сообщение.</returns>
     public Message AddMessage(string nick, long messageId, string text)
     {
-      var user = GetUser(nick);
-      if (user == null)
-        throw new ArgumentException("nick");
-
       var message = new Message(nick, messageId, text);
       var lastMessage = GetMessage(lastMessageId - 1);
 
       if (lastMessage != null && lastMessage.TryConcat(message))
         return lastMessage;
 
-      user.AddMessageId(message.Id);
       messages[message.Id] = message;
       return message;
     }
@@ -176,19 +171,22 @@ namespace Engine.Model.Entities
     /// <param name="nick">Ник пользователя</param>
     public bool ContainsUser(string nick)
     {
-      return users.ContainsKey(nick);
+      return users.Contains(nick);
     }
 
     /// <summary>
-    /// Возвращает пользователя комнаты.
+    /// Проверяет принадлежит ли сообщение пользователю.
     /// </summary>
-    /// <param name="nick">Ник пользователя.</param>
-    /// <returns>Пользователь команты.</returns>
-    public RoomUser GetUser(string nick)
+    /// <param name="nick">Ник.</param>
+    /// <param name="messageId">Идентификатор сообщения.</param>
+    /// <returns>Принадлежит ли сообщение пользователю</returns>
+    public bool IsMessageBelongToUser(string nick, long messageId)
     {
-      RoomUser user;
-      users.TryGetValue(nick, out user);
-      return user;
+      var message = GetMessage(messageId);
+      if (message == null)
+        return false;
+
+      return string.Equals(nick, message.Owner);
     }
 
     /// <summary>

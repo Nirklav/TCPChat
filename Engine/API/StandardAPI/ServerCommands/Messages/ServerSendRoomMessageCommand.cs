@@ -27,7 +27,6 @@ namespace Engine.API.StandardAPI.ServerCommands
       using (var server = ServerModel.Get())
       {
         var room = server.Rooms[receivedContent.RoomName];
-        var roomUser = room.GetUser(args.ConnectionId);
 
         if (!room.Users.Contains(args.ConnectionId))
         {
@@ -35,7 +34,7 @@ namespace Engine.API.StandardAPI.ServerCommands
           return;
         }
 
-        if (receivedContent.MessageId != null && !roomUser.ContainsMessage(receivedContent.MessageId.Value))
+        if (receivedContent.MessageId != null && !room.IsMessageBelongToUser(args.ConnectionId, receivedContent.MessageId.Value))
         {
           ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете редактировать это сообщение.");
           return;

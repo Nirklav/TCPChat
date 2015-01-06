@@ -127,7 +127,6 @@
     <Compile Include="Model\Common\Notifier.cs" />
     <Compile Include="Model\Entities\AudioQuality.cs" />
     <Compile Include="Model\Entities\Message.cs" />
-    <Compile Include="Model\Entities\RoomUser.cs" />
     <Compile Include="Model\Entities\SoundPack.cs" />
     <Compile Include="EventArgs\RecordedEventArgs.cs" />
     <Compile Include="Exceptions\ErrorCode.cs" />

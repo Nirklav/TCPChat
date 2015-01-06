@@ -34,13 +34,15 @@ namespace Engine.API.StandardAPI.ClientCommands
         Mode = CipherMode.CBC
       };
 
-      using (Crypter messageCrypter = new Crypter(provider))
+      using (var messageCrypter = new Crypter(provider))
       {
         var symmetricKey = messageCrypter.GenerateKey();
-        var keyCryptor = new RSACryptoServiceProvider(AsyncClient.CryptorKeySize);
-        keyCryptor.ImportParameters(receivedContent.OpenKey);
-        sendingContent.Key = keyCryptor.Encrypt(symmetricKey, false);
-        keyCryptor.Clear();
+
+        using (var keyCryptor = new RSACryptoServiceProvider(AsyncClient.CryptorKeySize))
+        {
+          keyCryptor.ImportParameters(receivedContent.OpenKey);
+          sendingContent.Key = keyCryptor.Encrypt(symmetricKey, true);
+        }
 
         using (MemoryStream encryptedMessageStream = new MemoryStream(),
                messageStream = new MemoryStream(Encoding.Unicode.GetBytes(waitingMessage.Message)))

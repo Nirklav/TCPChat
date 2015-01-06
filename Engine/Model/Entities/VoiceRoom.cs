@@ -39,14 +39,13 @@ namespace Engine.Model.Entities
     {
       connectionMap = new Dictionary<string, List<string>>();
 
-      var userNames = users.Keys.ToList();
-      for (int i = 0; i < userNames.Count; i++)
+      for (int i = 0; i < users.Count; i++)
       {
         var connections = new List<string>();
-        for (int m = i + 1; m < userNames.Count; m++)
-          connections.Add(userNames[m]);
+        for (int m = i + 1; m < users.Count; m++)
+          connections.Add(users[m]);
 
-        connectionMap.Add(userNames[i], connections);
+        connectionMap.Add(users[i], connections);
       }
     }
 
