@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Text;
+using System.Threading;
 
 namespace Engine.Helpers
 {
@@ -42,11 +43,10 @@ namespace Engine.Helpers
       Write(string.Format(InfoTemplate, DateTime.Now, message), param);
     }
 
+    [Conditional("DEBUG")]
     public void WriteDebug(string message, params object[] args)
     {
-#if DEBUG
       Write(string.Format(DebugMessageTemplate, DateTime.Now, message), args);
-#endif
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

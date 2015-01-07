@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 
 namespace Engine.Network
@@ -55,12 +56,10 @@ namespace Engine.Network
 
     #region private fields
     private Dictionary<string, List<WaitingCommandContainer>> waitingCommands;
-    private Dictionary<IPEndPoint, string> connectingTo;
 
     private NetConnection serviceConnection;
 
     private NetPeer handler;
-    private DateTime lastActivity;
     private int state; //PeerState
 
     private SynchronizationContext syncContext;
@@ -81,7 +80,6 @@ namespace Engine.Network
     internal AsyncPeer()
     {
       waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
-      connectingTo = new Dictionary<IPEndPoint, string>();
 
       syncContext = new EngineSyncContext();
       requestQueue = new ClientRequestQueue();
@@ -103,9 +101,10 @@ namespace Engine.Network
       if (handler != null && handler.Status == NetPeerStatus.Running)
         throw new ArgumentException("Already runned.");
 
-      NetPeerConfiguration config = new NetPeerConfiguration(NetConfigString);
+      var config = new NetPeerConfiguration(NetConfigString);
       config.Port = 0;
       config.AcceptIncomingConnections = true;
+      config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
 
       if (remotePoint.AddressFamily == AddressFamily.InterNetworkV6)
         config.LocalAddress = IPAddress.IPv6Any;
@@ -169,15 +168,12 @@ namespace Engine.Network
       if (handler == null)
         throw new InvalidOperationException("Handler not created.");
 
-      lock (connectingTo)
-        connectingTo.Add(remotePoint, peerId);
-
       var hailMessage = handler.CreateMessage();
       using (var client = ClientModel.Get())
         hailMessage.Write(client.User.Nick);
 
       handler.Connect(remotePoint, hailMessage);
-
+      
       DisconnectFromService();
 
       ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToPeer({0}, {1})", peerId, remotePoint);
@@ -375,8 +371,13 @@ namespace Engine.Network
             ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = new NetException(message.ReadString()) });
             break;
 
+          case NetIncomingMessageType.ConnectionApproval:
+            Approve(message);
+            break;
+
           case NetIncomingMessageType.StatusChanged:
             NetConnectionStatus status = (NetConnectionStatus)message.ReadByte();
+
             if (status == NetConnectionStatus.Connected && state == (int)PeerState.ConnectedToPeers)
               PeerConnected(message);
 
@@ -396,26 +397,28 @@ namespace Engine.Network
       }
     }
 
+    private void Approve(NetIncomingMessage message)
+    {
+      var userNick = string.Empty;
+      using (var client = ClientModel.Get())
+        userNick = client.User.Nick;
+
+      var hailMessage = handler.CreateMessage(userNick);
+      message.SenderConnection.Approve(hailMessage);
+
+      ClientModel.Logger.WriteDebug("AsyncPeer.Approve({0})", userNick);
+    }
+
     private void PeerConnected(NetIncomingMessage message)
     {
-      string connectionId;
-      lock (connectingTo)
-      {
-        if (connectingTo.TryGetValue(message.SenderEndPoint, out connectionId))
-          connectingTo.Remove(message.SenderEndPoint);
-      }
+      string connectionId = null;
 
-      if (connectionId == null)
-      {
-        if (message.SenderConnection.RemoteHailMessage == null)
-          return;
-
+      if (message.SenderConnection.RemoteHailMessage != null)
         connectionId = message.SenderConnection.RemoteHailMessage.ReadString();
-      }
 
       if (connectionId == null)
       {
-        ClientModel.Logger.WriteWarning("ConnectionId is null [Message: {0}]", message.ToString());
+        ClientModel.Logger.WriteWarning("ConnectionId is null [Message: {0}, SenderEndPoint: {1}]", message.ToString(), message.SenderEndPoint);
         return;
       }
 
@@ -438,8 +441,6 @@ namespace Engine.Network
 
     private void DataReceived(NetIncomingMessage message)
     {
-      lastActivity = DateTime.Now;
-
       try
       {
         var peerConnectionId = (string)message.SenderConnection.Tag;
@@ -484,9 +485,6 @@ namespace Engine.Network
 
       lock (waitingCommands)
         waitingCommands.Clear();
-
-      lock (connectingTo)
-        connectingTo.Clear();
     }
     #endregion
   }
