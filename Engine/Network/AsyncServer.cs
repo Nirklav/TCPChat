@@ -248,7 +248,7 @@ namespace Engine.Network
         if (!isServerRunning)
           return;
 
-        var connectionId = ((IConnection)sender).Id;
+        var connectionId = ((ServerConnection)sender).Id;
         var command = ServerModel.API.GetCommand(e.ReceivedData);
         var args = new ServerCommandArgs
         {

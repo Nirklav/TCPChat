@@ -13,7 +13,7 @@ namespace Engine.Network.Connections
   /// </summary>
   public abstract class Connection :
     MarshalByRefObject,
-    IConnection
+    IDisposable
   {
     #region consts
     private const int bufferSize = 4096;
