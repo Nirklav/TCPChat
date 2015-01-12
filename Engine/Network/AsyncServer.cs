@@ -110,7 +110,7 @@ namespace Engine.Network
     {
       lock (connections)
       {
-        var connection = GetConnection(tempId);
+        var connection = GetConnection(tempId, true);
         if (connection == null)
           return;
 
@@ -129,7 +129,7 @@ namespace Engine.Network
       P2PService.RemoveEndPoint(id);
       lock (connections)
       {
-        var connection = GetConnection(id);
+        var connection = GetConnection(id, true);
         if (connection == null)
           return;
 
@@ -189,13 +189,7 @@ namespace Engine.Network
     {
       lock (connections)
       {
-        ServerConnection connection;
-        if (!connections.TryGetValue(id, out connection))
-          throw new ArgumentException("Connection not found.");
-
-        if (connection.Id.Contains(Connection.TempConnectionPrefix))
-          throw new ArgumentException("Connection not registered.");
-
+        var connection = GetConnection(id);
         return connection.OpenKey;
       }
     }
@@ -222,8 +216,9 @@ namespace Engine.Network
       {
         listener.BeginAccept(AcceptCallback, null);
 
-        Socket handler = listener.EndAccept(result);
-        ServerConnection connection = new ServerConnection(handler, MaxDataSize, DataReceivedCallback);
+        var handler = listener.EndAccept(result);
+        var connection = new ServerConnection(handler, MaxDataSize, DataReceivedCallback);
+
         connection.SendAPIName(ServerModel.API.Name);
 
         lock (connections)
@@ -342,8 +337,11 @@ namespace Engine.Network
     #endregion
 
     #region private methods
-    private ServerConnection GetConnection(string connectionId)
+    private ServerConnection GetConnection(string connectionId, bool allowTempConnections = false)
     {
+      if (connectionId.Contains(Connection.TempConnectionPrefix) && !allowTempConnections)
+        throw new InvalidOperationException("this connection don't registered");
+
       ServerConnection connection;
       if (!connections.TryGetValue(connectionId, out connection))
       {

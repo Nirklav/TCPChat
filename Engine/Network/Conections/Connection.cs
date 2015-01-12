@@ -185,18 +185,13 @@ namespace Engine.Network.Connections
       try
       {
         int BytesRead = handler.EndReceive(result);
-
         if (BytesRead > 0)
         {
-          OnPackageReceive();
+          OnPackageReceived();
 
           receivedData.Write(buffer, 0, BytesRead);
 
-          if (DataIsReceived())
-            OnDataReceived(new DataReceivedEventArgs { ReceivedData = GetData(), Error = null });
-          else
-            if (GetSizeReceivingData() > maxReceivedDataSize)
-              throw new ModelException(ErrorCode.LargeReceivedData);
+          TryProcessData();
         }
 
         handler.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, ReceiveCallback, null);
@@ -274,7 +269,7 @@ namespace Engine.Network.Connections
     /// <summary>
     /// Происходит при получении пакета данных.
     /// </summary>
-    protected virtual void OnPackageReceive() { }
+    protected virtual void OnPackageReceived() { }
 
     /// <summary>
     /// Происходит при отсоединении.
@@ -293,33 +288,41 @@ namespace Engine.Network.Connections
     #endregion
 
     #region private methods
+    private void TryProcessData()
+    {
+      if (IsDataReceived())
+        OnDataReceived(new DataReceivedEventArgs { ReceivedData = GetData(), Error = null });
+      else
+        if (GetReceivingDataSize() > maxReceivedDataSize)
+          throw new ModelException(ErrorCode.LargeReceivedData);
+    }
+
     private byte[] GetData()
     {
-      if (!DataIsReceived())
+      if (!IsDataReceived())
         return null;
 
+      int receivingDataSize = GetReceivingDataSize();
+      int restDataSize = (int)(receivedData.Position - receivingDataSize);
+
+      byte[] resultData = new byte[receivingDataSize - sizeof(int)];
       byte[] memoryStreamBuffer = receivedData.GetBuffer();
 
-      byte[] resultData = new byte[GetSizeReceivingData() - sizeof(int)];
       Buffer.BlockCopy(memoryStreamBuffer, sizeof(int), resultData, 0, resultData.Length);
-
-      int restDataSize = (int)(receivedData.Position - GetSizeReceivingData());
-      int sizeOfReceivingData = GetSizeReceivingData();
 
       receivedData.Seek(0, SeekOrigin.Begin);
 
       if (restDataSize > 0)
-        receivedData.Write(memoryStreamBuffer, sizeOfReceivingData, restDataSize);
+        receivedData.Write(memoryStreamBuffer, receivingDataSize, restDataSize);
 
-      if (DataIsReceived())
-        OnDataReceived(new DataReceivedEventArgs { ReceivedData = GetData(), Error = null });
+      TryProcessData();
 
       return resultData;
     }
 
-    private bool DataIsReceived()
+    private bool IsDataReceived()
     {
-      int receivingDataSize = GetSizeReceivingData();
+      int receivingDataSize = GetReceivingDataSize();
 
       if (receivingDataSize == -1)
         return false;
@@ -330,26 +333,26 @@ namespace Engine.Network.Connections
       return true;
     }
 
-    private int GetSizeReceivingData()
+    private int GetReceivingDataSize()
     {
       if (receivedData.Position < sizeof(int))
         return -1;
 
-      int DataSize = BitConverter.ToInt32(receivedData.GetBuffer(), 0);
-
-      return DataSize;
+      return BitConverter.ToInt32(receivedData.GetBuffer(), 0);
     }
 
     protected virtual void SendMessage(byte[] data)
     {
+      int messageSize = data.Length + sizeof(int);
+
+      MemoryStream messageStream = null;
       try
       {
-        MemoryStream messageStream = new MemoryStream();
-        messageStream.Write(BitConverter.GetBytes(data.Length + sizeof(int)), 0, sizeof(int));
+        messageStream = new MemoryStream(messageSize);
+        messageStream.Write(BitConverter.GetBytes(messageSize), 0, sizeof(int));
         messageStream.Write(data, 0, data.Length);
 
-        byte[] message = messageStream.ToArray();
-        messageStream.Dispose();
+        var message = messageStream.GetBuffer();
 
         handler.BeginSend(message, 0, message.Length, SocketFlags.None, SendCallback, null);
       }
@@ -357,6 +360,11 @@ namespace Engine.Network.Connections
       {
         if (!HandleSocketException(se))
           throw;
+      }
+      finally
+      {
+        if (messageStream != null)
+          messageStream.Dispose();
       }
     }
     #endregion

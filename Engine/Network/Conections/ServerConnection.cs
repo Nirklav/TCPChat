@@ -10,8 +10,8 @@ namespace Engine.Network.Connections
   /// <summary>
   /// Серверное соединение с клиентом.
   /// </summary>
-  public sealed class ServerConnection :
-      Connection
+  sealed class ServerConnection :
+    Connection
   {
     #region public const
     /// <summary>
@@ -129,7 +129,7 @@ namespace Engine.Network.Connections
     #endregion
 
     #region override methods
-    protected override void OnPackageReceive()
+    protected override void OnPackageReceived()
     {
       lastActivity = DateTime.Now;
     }
