@@ -9,9 +9,9 @@ namespace Engine.Model.Common
   public static class NotifierGenerator
   {
     private const string InvokeEventPrefix = "invoke_";
-    private const string GeneretedTypePostfix = "_genered_type";
-    private const string GeneretedModuleName = "notifier_genered_module";
-    private const string GeneretedAssemblyName = "notifier_genered_asm";
+    private const string GeneretedTypePostfix = "_generated_type";
+    private const string GeneretedModuleName = "notifier_generated_module";
+    private const string GeneretedAssemblyName = "notifier_generated_asm";
 
     private static readonly AssemblyBuilder assemblyBuilder;
     private static readonly ModuleBuilder moduleBuilder;
@@ -106,7 +106,6 @@ namespace Engine.Model.Common
       builder.DefineMethodOverride(methodBuilder, overriding);
 
       var il = methodBuilder.GetILGenerator();
-      il.DeclareLocal(eventField.FieldType);
   
       il.Emit(OpCodes.Ldarg_0);
       il.Emit(OpCodes.Ldarg_0);
