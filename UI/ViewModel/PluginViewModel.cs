@@ -11,11 +11,15 @@ namespace UI.ViewModel
     public string PluginName { get; private set; }
     public Command InvokeCommand { get; private set;} 
 
-    public PluginViewModel(ClientPlugin plugin)
+    public PluginViewModel(string pluginName)
       : base(false)
     {
       try
       {
+        var plugin = ClientModel.Plugins.GetPlugin(pluginName);
+        if (plugin == null)
+          return;
+
         Header = plugin.MenuCaption;
         PluginName = plugin.Name;
         InvokeCommand = new Command(Invoke);

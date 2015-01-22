@@ -9,11 +9,11 @@ namespace Engine
   [Serializable]
   public class PluginEventArgs : EventArgs
   {
-    public ClientPlugin Plugin { get; private set; }
+    public string PluginName { get; private set; }
 
-    public PluginEventArgs(ClientPlugin plugin)
+    public PluginEventArgs(string pluginName)
     {
-      Plugin = plugin;
+      PluginName = pluginName;
     }
   }
 }

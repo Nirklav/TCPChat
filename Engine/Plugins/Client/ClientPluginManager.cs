@@ -51,7 +51,7 @@ namespace Engine.Plugins.Client
       foreach (var command in loaded.Plugin.Commands)
         commands.Add(command.Id, command);
 
-      ClientModel.Notifier.PluginLoaded(new PluginEventArgs(loaded.Plugin));
+      ClientModel.Notifier.PluginLoaded(new PluginEventArgs(loaded.Plugin.Name));
     }
 
     protected override void OnPluginUnlodaing(PluginContainer unloading)
@@ -61,7 +61,7 @@ namespace Engine.Plugins.Client
       foreach (var command in unloading.Plugin.Commands)
         commands.Remove(command.Id);
 
-      ClientModel.Notifier.PluginUnloading(new PluginEventArgs(unloading.Plugin));
+      ClientModel.Notifier.PluginUnloading(new PluginEventArgs(unloading.Plugin.Name));
     }
 
     protected override void OnError(string pluginName, Exception e)

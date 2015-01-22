@@ -439,7 +439,7 @@ namespace UI.ViewModel
     {
       Dispatcher.BeginInvoke(new Action<PluginEventArgs>(args =>
       {
-        Plugins.Add(new PluginViewModel(args.Plugin));
+        Plugins.Add(new PluginViewModel(args.PluginName));
       }), e);
     }
 
@@ -447,7 +447,7 @@ namespace UI.ViewModel
     {
       Dispatcher.BeginInvoke(new Action<PluginEventArgs>(args =>
       {
-        var pluginViewModel = Plugins.FirstOrDefault(pvm => pvm.PluginName == e.Plugin.Name);
+        var pluginViewModel = Plugins.FirstOrDefault(pvm => pvm.PluginName == e.PluginName);
         if (pluginViewModel != null)
         {
           Plugins.Remove(pluginViewModel);
