@@ -58,7 +58,7 @@ namespace Engine.Model.Common
         var startValue = value;
         var result = (EventHandler<TArgs>)Delegate.Combine(startValue, added);
         var endValue = Interlocked.CompareExchange(ref value, result, startValue);
-
+        
         if (ReferenceEquals(startValue, endValue))
           break;
       }

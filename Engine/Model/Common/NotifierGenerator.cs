@@ -36,6 +36,9 @@ namespace Engine.Model.Common
 
     private static Type MakeContext(Type interfaceType)
     {
+      if (!interfaceType.IsInterface)
+        throw new InvalidOperationException("TInterface must be interface");
+
       Type resultType;
       if (!contexts.TryGetValue(interfaceType, out resultType))
       {
@@ -104,13 +107,10 @@ namespace Engine.Model.Common
 
       var il = methodBuilder.GetILGenerator();
       il.DeclareLocal(eventField.FieldType);
-
+  
+      il.Emit(OpCodes.Ldarg_0);
       il.Emit(OpCodes.Ldarg_0);
       il.Emit(OpCodes.Ldflda, eventField);
-      il.Emit(OpCodes.Stloc_0);
-
-      il.Emit(OpCodes.Ldarg_0);
-      il.Emit(OpCodes.Ldloc_0);
       il.Emit(OpCodes.Ldarg_1);
       il.Emit(OpCodes.Callvirt, helperMethod);
 

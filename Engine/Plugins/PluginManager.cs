@@ -129,22 +129,23 @@ namespace Engine.Plugins
         domainSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
         domainSetup.PrivateBinPath = "plugins;bin";
 
-        var permmisions = new PermissionSet(PermissionState.None);
-        permmisions.AddPermission(new UIPermission(PermissionState.Unrestricted));
+        var permissions = new PermissionSet(PermissionState.None);
+        permissions.AddPermission(new UIPermission(PermissionState.Unrestricted));
+        permissions.AddPermission(new ReflectionPermission(PermissionState.Unrestricted));
 
-        permmisions.AddPermission(new SecurityPermission(
+        permissions.AddPermission(new SecurityPermission(
           SecurityPermissionFlag.Execution |
           SecurityPermissionFlag.UnmanagedCode |
           SecurityPermissionFlag.SerializationFormatter |
           SecurityPermissionFlag.Assertion));
 
-        permmisions.AddPermission(new FileIOPermission(
+        permissions.AddPermission(new FileIOPermission(
           FileIOPermissionAccess.PathDiscovery |
           FileIOPermissionAccess.Write |
           FileIOPermissionAccess.Read,
           AppDomain.CurrentDomain.BaseDirectory));
 
-        var domain = AppDomain.CreateDomain(string.Format("Plugin Domain [{0}]", Path.GetFileNameWithoutExtension(info.AssemblyPath)), null, domainSetup, permmisions);
+        var domain = AppDomain.CreateDomain(string.Format("Plugin Domain [{0}]", Path.GetFileNameWithoutExtension(info.AssemblyPath)), null, domainSetup, permissions);
         var pluginName = string.Empty;
         try
         {
