@@ -8,7 +8,6 @@ namespace Engine.Plugins.Client
   public class ClientPluginManager : PluginManager<ClientPlugin, ClientModelWrapper>
   {
     private Dictionary<ushort, ClientPluginCommand> commands = new Dictionary<ushort, ClientPluginCommand>();
-    private Dictionary<string, ClientNotifierContext> notifierContexts = new Dictionary<string, ClientNotifierContext>();
 
     public ClientPluginManager(string path)
       : base(path)
@@ -33,11 +32,6 @@ namespace Engine.Plugins.Client
       return false;
     }
 
-    internal IEnumerable<ClientNotifierContext> GetNotifierContexts()
-    {
-      return notifierContexts.Values;
-    }
-
     public ClientPlugin GetPlugin(string name)
     {
       lock (syncObject)
@@ -52,24 +46,22 @@ namespace Engine.Plugins.Client
 
     protected override void OnPluginLoaded(PluginContainer loaded)
     {
+      base.OnPluginLoaded(loaded);
+
       foreach (var command in loaded.Plugin.Commands)
         commands.Add(command.Id, command);
 
       ClientModel.Notifier.PluginLoaded(new PluginEventArgs(loaded.Plugin));
-
-      var context = loaded.Plugin.NotifierContext;
-      if (context != null)
-        notifierContexts.Add(loaded.Plugin.Name, context);
     }
 
     protected override void OnPluginUnlodaing(PluginContainer unloading)
     {
+      base.OnPluginUnlodaing(unloading);
+
       foreach (var command in unloading.Plugin.Commands)
         commands.Remove(command.Id);
 
       ClientModel.Notifier.PluginUnloading(new PluginEventArgs(unloading.Plugin));
-
-      notifierContexts.Remove(unloading.Plugin.Name);
     }
 
     protected override void OnError(string pluginName, Exception e)
@@ -83,9 +75,6 @@ namespace Engine.Plugins.Client
       {
         foreach (var command in commands.Values)
           command.Process();
-
-        foreach (var context in notifierContexts.Values)
-          context.Process();
       }
     }
   }

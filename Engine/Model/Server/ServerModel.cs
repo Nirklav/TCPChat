@@ -1,5 +1,6 @@
 ﻿using Engine.API.StandardAPI;
 using Engine.Helpers;
+using Engine.Model.Common;
 using Engine.Model.Entities;
 using Engine.Network;
 using Engine.Plugins.Server;
@@ -14,7 +15,7 @@ namespace Engine.Model.Server
     #region static model
     private static ServerModel model;
     private static Logger logger = new Logger("Server.log");
-    private static ServerNotifier notifier = new ServerNotifier();
+    private static IServerNotifier notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
 
     public static Logger Logger { get { return logger; } }
 
@@ -36,7 +37,7 @@ namespace Engine.Model.Server
     /// <summary>
     /// Уведомитель.
     /// </summary>
-    public static ServerNotifier Notifier { get { return notifier; } }
+    public static IServerNotifier Notifier { get { return notifier; } }
 
     /// <summary>
     /// Исользовать только с конструкцией using

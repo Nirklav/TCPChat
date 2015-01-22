@@ -338,7 +338,7 @@ namespace UI.ViewModel
       if (e.RoomName != Name)
         return;
 
-      MainViewModel.Dispatcher.Invoke(new Action<ReceiveMessageEventArgs>(args =>
+      MainViewModel.Dispatcher.BeginInvoke(new Action<ReceiveMessageEventArgs>(args =>
       {
         var senderUser = MainViewModel.AllUsers.Single(uvm => uvm.Info.Nick == args.Sender);
 
@@ -365,7 +365,7 @@ namespace UI.ViewModel
       if (e.Room.Name != Name)
         return;
 
-      MainViewModel.Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
+      MainViewModel.Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
       {
         Description = args.Room;
 

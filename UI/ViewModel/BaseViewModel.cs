@@ -1,4 +1,5 @@
 ﻿using Engine.Model.Client;
+using Engine.Model.Common;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,12 +18,16 @@ namespace UI.ViewModel
 
     public event PropertyChangedEventHandler PropertyChanged;
 
-    protected ClientEventNotifierContext NotifierContext;
+    protected IClientNotifierContext NotifierContext;
 
     public BaseViewModel(bool initializeNotifier)
     {
       if (initializeNotifier)
-        ClientModel.Notifier.Add(NotifierContext = new ClientEventNotifierContext());
+      {
+        NotifierContext = NotifierGenerator.MakeContext<IClientNotifierContext>();
+        var notifier = (Notifier)ClientModel.Notifier;
+        notifier.Add(NotifierContext);
+      }
     }
 
     public virtual void Dispose()
@@ -33,7 +38,10 @@ namespace UI.ViewModel
       disposed = true;
 
       if (NotifierContext != null)
-        ClientModel.Notifier.Remove(NotifierContext);
+      {
+        var notifier = (Notifier)ClientModel.Notifier;
+        notifier.Remove(NotifierContext);
+      }
     }
 
     protected virtual void OnPropertyChanged(string name)

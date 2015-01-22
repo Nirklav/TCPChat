@@ -150,7 +150,7 @@ namespace UI.ViewModel
     #region client events
     private void ClientDownloadProgress(object sender, FileDownloadEventArgs e)
     {
-      roomViewModel.MainViewModel.Dispatcher.Invoke(new Action<FileDownloadEventArgs>(args =>
+      roomViewModel.MainViewModel.Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
       {
         if (args.RoomName != roomViewModel.Name || !args.File.Equals(File))
           return;
@@ -167,7 +167,7 @@ namespace UI.ViewModel
 
     private void ClientPostedFileDeleted(object sender, FileDownloadEventArgs e)
     {
-      roomViewModel.MainViewModel.Dispatcher.Invoke(new Action<FileDownloadEventArgs>(args =>
+      roomViewModel.MainViewModel.Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
       {
         if (args.RoomName != roomViewModel.Name || !args.File.Equals(File))
           return;

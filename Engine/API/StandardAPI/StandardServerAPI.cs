@@ -164,7 +164,7 @@ namespace Engine.API.StandardAPI
         }
       }
 
-      ServerModel.Notifier.OnUnregistered(new ServerRegistrationEventArgs { Nick = nick });
+      ServerModel.Notifier.Unregistered(new ServerRegistrationEventArgs { Nick = nick });
     }
   }
 }

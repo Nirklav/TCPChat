@@ -1,41 +1,81 @@
-﻿using System;
+﻿using Engine.Plugins;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
+using System.Threading;
 
 namespace Engine.Model.Common
 {
-  public abstract class Notifier<TNotifierContext> : MarshalByRefObject
+  [AttributeUsage(AttributeTargets.Interface, AllowMultiple = false)]
+  public class NotifierAttribute : Attribute
   {
-    private readonly object syncObject = new object();
-    private List<TNotifierContext> contexts;
+    public Type Context { get; private set; }
 
-    public Notifier()
+    public Type BaseNotifier { get; set; }
+
+    public NotifierAttribute(Type context)
     {
-      contexts = new List<TNotifierContext>();
+      Context = context;
+    }
+  }
+
+  public abstract class Notifier : MarshalByRefObject
+  {
+    private readonly List<object> contexts = new List<object>();
+    public virtual object[] GetContexts()
+    {
+      lock (contexts)
+        return contexts.ToArray();
     }
 
-    public void Add(TNotifierContext context)
+    public void Add(object context)
     {
-      lock (syncObject)
+      lock (contexts)
         contexts.Add(context);
     }
 
-    public bool Remove(TNotifierContext context)
+    public bool Remove(object context)
     {
-      lock (syncObject)
+      lock (contexts)
         return contexts.Remove(context);
     }
+  }
 
-    protected virtual void Notify<TArgs>(Action<TNotifierContext, TArgs> methodInvoker, TArgs args) where TArgs : EventArgs
+  public abstract class NotifierContext : CrossDomainObject
+  {
+    protected void Invoke<TArgs>(EventHandler<TArgs> handler, object sender, TArgs args)
+      where TArgs : EventArgs
     {
-      TNotifierContext[] localContexts;
-      lock (syncObject)
-        localContexts = contexts.ToArray();
+      var e = Interlocked.CompareExchange(ref handler, null, null);
+      if (e != null)
+        e(sender, args);
+    }
 
-      foreach (var context in localContexts)
-        methodInvoker(context, args);
+    protected void Add<TArgs>(ref EventHandler<TArgs> value, EventHandler<TArgs> added)
+      where TArgs : EventArgs
+    {
+      while (true)
+      {
+        var startValue = value;
+        var result = (EventHandler<TArgs>)Delegate.Combine(startValue, added);
+        var endValue = Interlocked.CompareExchange(ref value, result, startValue);
+
+        if (ReferenceEquals(startValue, endValue))
+          break;
+      }
+    }
+
+    protected void Remove<TArgs>(ref EventHandler<TArgs> value, EventHandler<TArgs> removed)
+      where TArgs : EventArgs
+    {
+      while (true)
+      {
+        var startValue = value;
+        var result = (EventHandler<TArgs>)Delegate.Remove(startValue, removed);
+        var endValue = Interlocked.CompareExchange(ref value, result, startValue);
+
+        if (ReferenceEquals(startValue, endValue))
+          break;
+      }
     }
   }
 }

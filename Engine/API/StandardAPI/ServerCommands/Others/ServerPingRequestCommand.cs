@@ -7,7 +7,7 @@ namespace Engine.API.StandardAPI.ServerCommands
   {
     public void Run(ServerCommandArgs args)
     {
-      ServerModel.Server.SendMessage(args.ConnectionId, ClientPingResponceCommand.Id, null);
+      ServerModel.Server.SendMessage(args.ConnectionId, ClientPingResponceCommand.Id, null, true);
     }
 
     public const ushort Id = (ushort)ServerCommand.PingRequest;

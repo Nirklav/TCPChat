@@ -1,5 +1,6 @@
 ﻿using Engine.Exceptions;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -34,6 +35,7 @@ namespace Engine.Plugins
 
     protected object syncObject = new object();
     protected Dictionary<string, PluginContainer> plugins = new Dictionary<string, PluginContainer>();
+    protected Dictionary<string, CrossDomainObject> notifierContexts = new Dictionary<string, CrossDomainObject>();
     protected TModel model;
 
     private string path;
@@ -67,8 +69,18 @@ namespace Engine.Plugins
 
     #region overridable
 
-    protected virtual void OnPluginLoaded(PluginContainer loaded) { }
-    protected virtual void OnPluginUnlodaing(PluginContainer unloading) { }
+    protected virtual void OnPluginLoaded(PluginContainer loaded)
+    {
+      var context = loaded.Plugin.NotifierContext;
+      if (context != null)
+        notifierContexts.Add(loaded.Plugin.Name, context);
+    }
+
+    protected virtual void OnPluginUnlodaing(PluginContainer unloading) 
+    {
+      notifierContexts.Remove(unloading.Plugin.Name);
+    }
+
     protected virtual void OnError(string message, Exception e) { }
 
     protected virtual void Process() { }
@@ -221,6 +233,11 @@ namespace Engine.Plugins
       return infos.Select(pi => pi.Name).ToArray();
     }
 
+    internal IEnumerable GetNotifierContexts()
+    {
+      return notifierContexts.Values;
+    }
+
     protected void ProcessThreadHandler()
     {
       while (true)
@@ -231,6 +248,9 @@ namespace Engine.Plugins
         {
           foreach (var container in plugins.Values)
             container.Plugin.Process();
+
+          foreach (var context in notifierContexts.Values)
+            context.Process();
         }
 
         Process();

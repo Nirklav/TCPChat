@@ -13,6 +13,8 @@ namespace Engine.Plugins
 
     private Thread processThread;
 
+    public virtual CrossDomainObject NotifierContext { get { return null; } }
+
     public void Initialize(TModel model)
     {
       Model = model;

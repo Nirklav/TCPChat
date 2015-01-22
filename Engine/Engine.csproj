@@ -119,8 +119,8 @@
     <Compile Include="Helpers\TryLock.cs" />
     <Compile Include="Model\Client\ClientNotifier.cs" />
     <Compile Include="Model\Client\ClientInitializer.cs" />
-    <Compile Include="Model\Client\ClientEventNotifierContext.cs" />
     <Compile Include="Model\Common\Notifier.cs" />
+    <Compile Include="Model\Common\NotifierGenerator.cs" />
     <Compile Include="Model\Entities\AudioQuality.cs" />
     <Compile Include="Model\Entities\Message.cs" />
     <Compile Include="Model\Entities\SoundPack.cs" />

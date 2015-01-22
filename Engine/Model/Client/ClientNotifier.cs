@@ -1,135 +1,94 @@
 ﻿using Engine.Model.Common;
 using Engine.Plugins;
 using System;
+using System.Collections.Generic;
 
 namespace Engine.Model.Client
 {
-  public class ClientNotifier : Notifier<ClientNotifierContext>
+  public class ClientNotifier : Notifier
   {
-    internal void Connected(ConnectEventArgs args)
+    public override object[] GetContexts()
     {
-      Notify((c, a) => c.OnConnected(a), args);
-    }
-
-    internal void ReceiveRegistrationResponse(RegistrationEventArgs args)
-    {
-      Notify((c, a) => c.OnReceiveRegistrationResponse(a), args);
-    }
-
-    internal void SystemMessage(string message)
-    {
-      Notify((c, a) => c.OnReceiveMessage(a), new ReceiveMessageEventArgs { Type = MessageType.System, Message = message });
-    }
-
-    internal void ReceiveMessage(ReceiveMessageEventArgs args)
-    {
-      Notify((c, a) => c.OnReceiveMessage(a), args);
-    }
-
-    internal void AsyncError(AsyncErrorEventArgs args)
-    {
-      Notify((c, a) => c.OnAsyncError(a), args);
-    }
-
-    internal void RoomRefreshed(RoomEventArgs args)
-    {
-      Notify((c, a) => c.OnRoomRefreshed(a), args);
-    }
-
-    internal void RoomOpened(RoomEventArgs args)
-    {
-      Notify((c, a) => c.OnRoomOpened(a), args);
-
-    }
-    internal void RoomClosed(RoomEventArgs args)
-    {
-      Notify((c, a) => c.OnRoomClosed(a), args);
-    }
-
-    internal void DownloadProgress(FileDownloadEventArgs args)
-    {
-      Notify((c, a) => c.OnDownloadProgress(a), args);
-    }
-
-    internal void PostedFileDeleted(FileDownloadEventArgs args)
-    {
-      Notify((c, a) => c.OnPostedFileDeleted(a), args);
-    }
-
-    internal void PluginLoaded(PluginEventArgs args)
-    {
-      Notify((c, a) => c.OnPluginLoaded(a), args);
-    }
-
-    internal void PluginUnloading(PluginEventArgs args)
-    {
-      Notify((c, a) => c.OnPluginUnloading(a), args);
-    }
-
-    protected override void Notify<TArgs>(Action<ClientNotifierContext, TArgs> methodInvoker, TArgs args)
-    {
-      base.Notify<TArgs>(methodInvoker, args);
+      var contexts = new List<object>(base.GetContexts());
 
       foreach (var context in ClientModel.Plugins.GetNotifierContexts())
-        methodInvoker(context, args);
+        contexts.Add(context);
+
+      return contexts.ToArray();
     }
   }
 
-  public abstract class ClientNotifierContext : CrossDomainObject
+  [Notifier(typeof(IClientNotifierContext), BaseNotifier = typeof(ClientNotifier))]
+  public interface IClientNotifier
+  {
+    void Connected(ConnectEventArgs args);
+    void ReceiveRegistrationResponse(RegistrationEventArgs args);
+    void ReceiveMessage(ReceiveMessageEventArgs args);
+    void AsyncError(AsyncErrorEventArgs args);
+    void RoomRefreshed(RoomEventArgs args);
+    void RoomOpened(RoomEventArgs args);
+    void RoomClosed(RoomEventArgs args);
+    void DownloadProgress(FileDownloadEventArgs args);
+    void PostedFileDeleted(FileDownloadEventArgs args);
+    void PluginLoaded(PluginEventArgs args);
+    void PluginUnloading(PluginEventArgs args);
+  }
+
+  public interface IClientNotifierContext
   {
     /// <summary>
     /// Событие происходит при подключении клиента к серверу.
     /// </summary>
-    protected internal virtual void OnConnected(ConnectEventArgs args) { }
+    event EventHandler<ConnectEventArgs> Connected;
 
     /// <summary>
     /// Событие происходит при полученни ответа от сервера, о регистрации.
     /// </summary>
-    protected internal virtual void OnReceiveRegistrationResponse(RegistrationEventArgs args) { }
+    event EventHandler<RegistrationEventArgs> ReceiveRegistrationResponse;
 
     /// <summary>
     /// Событие происходит при полученнии сообщения от сервера.
     /// </summary>
-    protected internal virtual void OnReceiveMessage(ReceiveMessageEventArgs args) { }
+    event EventHandler<ReceiveMessageEventArgs> ReceiveMessage;
 
     /// <summary>
     /// Событие происходит при любой асинхронной ошибке.
     /// </summary>
-    protected internal virtual void OnAsyncError(AsyncErrorEventArgs args) { }
+    event EventHandler<AsyncErrorEventArgs> AsyncError;
 
     /// <summary>
     /// Событие происходит при обновлении списка подключенных к серверу клиентов.
     /// </summary>
-    protected internal virtual void OnRoomRefreshed(RoomEventArgs args) { }
+    event EventHandler<RoomEventArgs> RoomRefreshed;
 
     /// <summary>
     /// Событие происходит при открытии комнаты клиентом. Или когда клиента пригласили в комнату.
     /// </summary>
-    protected internal virtual void OnRoomOpened(RoomEventArgs args) { }
+    event EventHandler<RoomEventArgs> RoomOpened;
 
     /// <summary>
     /// Событие происходит при закрытии комнаты клиентом, когда клиента кикают из комнаты.
     /// </summary>
-    protected internal virtual void OnRoomClosed(RoomEventArgs args) { }
+    event EventHandler<RoomEventArgs> RoomClosed;
 
     /// <summary>
     /// Событие происходит при получении части файла, а также при завершении загрузки файла.
     /// </summary>
-    protected internal virtual void OnDownloadProgress(FileDownloadEventArgs args) { }
+    event EventHandler<FileDownloadEventArgs> DownloadProgress;
 
     /// <summary>
     /// Происходит при удалении выложенного файла.
     /// </summary>
-    protected internal virtual void OnPostedFileDeleted(FileDownloadEventArgs args) { }
+    event EventHandler<FileDownloadEventArgs> PostedFileDeleted;
 
     /// <summary>
     /// Происходит после успешной загрзуки плагина.
     /// </summary>
-    protected internal virtual void OnPluginLoaded(PluginEventArgs args) { }
+    event EventHandler<PluginEventArgs> PluginLoaded;
 
     /// <summary>
     /// Происходит перед выгрузкой плагина.
     /// </summary>
-    protected internal virtual void OnPluginUnloading(PluginEventArgs args) { }
+    event EventHandler<PluginEventArgs> PluginUnloading;
   }
 }

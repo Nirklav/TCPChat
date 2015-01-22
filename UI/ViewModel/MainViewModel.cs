@@ -311,7 +311,7 @@ namespace UI.ViewModel
     #region client events
     private void ClientConnect(object sender, ConnectEventArgs e)
     {
-      Dispatcher.Invoke(new Action<ConnectEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<ConnectEventArgs>(args =>
       {
         if (args.Error != null)
         {
@@ -330,7 +330,7 @@ namespace UI.ViewModel
 
     private void ClientRegistration(object sender, RegistrationEventArgs e)
     {
-      Dispatcher.Invoke(new Action<RegistrationEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<RegistrationEventArgs>(args =>
       {
         if (!args.Registered)
         {
@@ -347,21 +347,23 @@ namespace UI.ViewModel
       if (e.Type != MessageType.System && e.Type != MessageType.Private)
         return;
 
-      Dispatcher.Invoke(new Action<ReceiveMessageEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<ReceiveMessageEventArgs>(args =>
       {
-        using (var client = ClientModel.Get())
-          switch (args.Type)
-          {
-            case MessageType.Private:
+        switch (args.Type)
+        {
+          case MessageType.Private:
+            using (var client = ClientModel.Get())
+            {
               UserViewModel senderUser = AllUsers.Single(uvm => string.Equals(uvm.Info.Nick, args.Sender));
               UserViewModel receiverUser = AllUsers.Single(uvm => string.Equals(uvm.Info.Nick, client.User.Nick));
               SelectedRoom.AddPrivateMessage(senderUser, receiverUser, args.Message);
-              break;
+            }
+            break;
 
-            case MessageType.System:
-              SelectedRoom.AddSystemMessage(args.Message);
-              break;
-          }
+          case MessageType.System:
+            SelectedRoom.AddSystemMessage(args.Message);
+            break;
+        }
 
         Alert();
       }), e);
@@ -369,7 +371,7 @@ namespace UI.ViewModel
 
     private void ClientRoomRefreshed(object sender, RoomEventArgs e)
     {
-      Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
       {
         if (args.Room.Name == ServerModel.MainRoomName)
         {
@@ -387,7 +389,7 @@ namespace UI.ViewModel
 
     private void ClientRoomOpened(object sender, RoomEventArgs e)
     {
-      Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
       {
         if (Rooms.FirstOrDefault(roomVM => roomVM.Name == args.Room.Name) != null)
           return;
@@ -402,7 +404,7 @@ namespace UI.ViewModel
 
     private void ClientRoomClosed(object sender, RoomEventArgs e)
     {
-      Dispatcher.Invoke(new Action<RoomEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
       {
         RoomViewModel roomViewModel = Rooms.FirstOrDefault(roomVM => roomVM.Name == args.Room.Name);
 
@@ -418,7 +420,7 @@ namespace UI.ViewModel
 
     private void ClientAsyncError(object sender, AsyncErrorEventArgs e)
     {
-      Dispatcher.Invoke(new Action<AsyncErrorEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<AsyncErrorEventArgs>(args =>
       {
         ModelException modelException = args.Error as ModelException;
 
@@ -435,7 +437,7 @@ namespace UI.ViewModel
 
     private void ClientPluginLoaded(object sender, PluginEventArgs e)
     {
-      Dispatcher.Invoke(new Action<PluginEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<PluginEventArgs>(args =>
       {
         Plugins.Add(new PluginViewModel(args.Plugin));
       }), e);
@@ -443,7 +445,7 @@ namespace UI.ViewModel
 
     private void ClientPluginUnloading(object sender, PluginEventArgs e)
     {
-      Dispatcher.Invoke(new Action<PluginEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<PluginEventArgs>(args =>
       {
         var pluginViewModel = Plugins.FirstOrDefault(pvm => pvm.PluginName == e.Plugin.Name);
         if (pluginViewModel != null)

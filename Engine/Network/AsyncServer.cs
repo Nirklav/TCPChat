@@ -144,11 +144,12 @@ namespace Engine.Network
     /// <param name="connectionId">Id соединения.</param>
     /// <param name="messageId">Тип сообщения. (Command.Id)</param>
     /// <param name="messageContent">Контект команды.</param>
-    public void SendMessage(string connectionId, ushort messageId, object messageContent)
+    /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
+    public void SendMessage(string connectionId, ushort messageId, object messageContent, bool allowTempConnections = false)
     {
       lock (connections)
       {
-        var connection = GetConnection(connectionId);
+        var connection = GetConnection(connectionId, allowTempConnections);
         if (connection != null)
           connection.SendMessage(messageId, messageContent);
       }
@@ -160,11 +161,12 @@ namespace Engine.Network
     /// <param name="connectionId">Id соединения.</param>
     /// <param name="messageId">Тип сообщения. (Command.Id)</param>
     /// <param name="messageContent">Сериализованный контект команды.</param>
-    public void SendMessage(string connectionId, ushort messageId, byte[] messageContent)
+    /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
+    public void SendMessage(string connectionId, ushort messageId, byte[] messageContent, bool allowTempConnections = false)
     {
       lock (connections)
       {
-        var connection = GetConnection(connectionId);
+        var connection = GetConnection(connectionId, allowTempConnections);
         if (connection != null)
           connection.SendMessage(messageId, messageContent);
       }

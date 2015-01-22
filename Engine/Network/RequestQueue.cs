@@ -103,7 +103,8 @@ namespace Engine.Network
         lock (syncObject)
           commands.Clear();
 
-        disposeEvent.WaitOne(disposeEventTimeout);
+        if (!disposeEvent.WaitOne(disposeEventTimeout))
+          queue.OnError(new Exception("RequestQueue.Dispose() timeout"));
       }
     }
 
@@ -129,7 +130,7 @@ namespace Engine.Network
     private readonly object syncObject;
     private readonly Dictionary<string, QueueContainer> requests;
 
-    private bool disposed;
+    private volatile bool disposed;
 
     public RequestQueue()
     {
@@ -139,6 +140,8 @@ namespace Engine.Network
 
     internal void Add(string connectionId, ICommand<TArgs> command, TArgs args)
     {
+      ThrowIfDisposed();
+
       QueueContainer queueContainer;
 
       using (new TryLock(syncObject, Timeout))
@@ -152,6 +155,12 @@ namespace Engine.Network
     }
 
     protected abstract void OnError(Exception e);
+
+    private void ThrowIfDisposed()
+    {
+      if (disposed)
+        throw new ObjectDisposedException("RequestQueue is disposed");
+    }
 
     public void Dispose()
     {

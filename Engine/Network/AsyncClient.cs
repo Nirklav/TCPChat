@@ -50,7 +50,7 @@ namespace Engine.Network
     private DateTime lastReconnect;
     private DateTime lastPingRequest;
 
-    private object timerSync = new object();
+    private readonly object timerSync = new object();
     private Timer systemTimer;
     #endregion
 
@@ -272,7 +272,7 @@ namespace Engine.Network
       {
         if ((DateTime.Now - lastReconnect).TotalMilliseconds >= ReconnectTimeInterval)
         {
-          ClientModel.Notifier.SystemMessage("Попытка соединения с сервером...");
+          ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs { Message = "Попытка соединения с сервером...", Type = MessageType.System });
 
           if (handler != null)
             handler.Close();

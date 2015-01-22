@@ -1,6 +1,7 @@
 ﻿using Engine.Audio;
 using Engine.Audio.OpenAL;
 using Engine.Helpers;
+using Engine.Model.Common;
 using Engine.Model.Entities;
 using Engine.Network;
 using Engine.Plugins.Client;
@@ -17,7 +18,7 @@ namespace Engine.Model.Client
     private static Logger logger = new Logger("Client.log");
     private static IPlayer player = new OpenALPlayer();
     private static IRecorder recorder = new OpenALRecorder();
-    private static ClientNotifier notifier = new ClientNotifier();
+    private static IClientNotifier notifier = NotifierGenerator.MakeInvoker<IClientNotifier>();
 
     public static Logger Logger { get { return logger; } }
 
@@ -54,7 +55,7 @@ namespace Engine.Model.Client
     /// <summary>
     /// Уведомитель.
     /// </summary>
-    public static ClientNotifier Notifier { get { return notifier; } }
+    public static IClientNotifier Notifier { get { return notifier; } }
 
     /// <summary>
     /// Исользовать только с конструкцией using

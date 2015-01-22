@@ -1,33 +1,32 @@
 ﻿using Engine.Model.Common;
-using Engine.Plugins;
 using System;
+using System.Collections.Generic;
 
 namespace Engine.Model.Server
 {
-  public class ServerNotifier : Notifier<ServerNotifierContext>
+  public class ServerNotifier : Notifier
   {
-    protected internal virtual void OnRegistered(ServerRegistrationEventArgs args)
+    public override object[] GetContexts()
     {
-      Notify((c, a) => c.OnRegistered(a), args);
-    }
-
-    protected internal virtual void OnUnregistered(ServerRegistrationEventArgs args)
-    {
-      Notify((c, a) => c.OnUnregistered(a), args);
-    }
-
-    protected override void Notify<TArgs>(Action<ServerNotifierContext, TArgs> methodInvoker, TArgs args)
-    {
-      base.Notify<TArgs>(methodInvoker, args);
+      var contexts = new List<object>(base.GetContexts());
 
       foreach (var context in ServerModel.Plugins.GetNotifierContexts())
-        methodInvoker(context, args);
+        contexts.Add(context);
+
+      return contexts.ToArray();
     }
   }
 
-  public abstract class ServerNotifierContext : CrossDomainObject
+  [Notifier(typeof(IServerNotifierContext), BaseNotifier = typeof(ServerNotifier))]
+  public interface IServerNotifier
   {
-    protected internal virtual void OnRegistered(ServerRegistrationEventArgs args) { }
-    protected internal virtual void OnUnregistered(ServerRegistrationEventArgs args) { }
+    void Registered(ServerRegistrationEventArgs args);
+    void Unregistered(ServerRegistrationEventArgs args);
+  }
+
+  public interface IServerNotifierContext
+  {
+    event EventHandler<ServerRegistrationEventArgs> Registered;
+    event EventHandler<ServerRegistrationEventArgs> Unregistered;
   }
 }

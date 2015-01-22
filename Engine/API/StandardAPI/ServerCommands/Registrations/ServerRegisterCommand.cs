@@ -59,7 +59,7 @@ namespace Engine.API.StandardAPI.ServerCommands
           foreach (var connectionId in room.Users)
             ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.Id, sendingContent);
 
-          ServerModel.Notifier.OnRegistered(new ServerRegistrationEventArgs { Nick = receivedContent.User.Nick });
+          ServerModel.Notifier.Registered(new ServerRegistrationEventArgs { Nick = receivedContent.User.Nick });
         }
       }
     }
@@ -67,7 +67,7 @@ namespace Engine.API.StandardAPI.ServerCommands
     private void SendFail(string connectionId, string message)
     {
       var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
-      ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.Id, regResponseContent);
+      ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.Id, regResponseContent, true);
       ServerModel.API.RemoveUser(connectionId);
     }
 

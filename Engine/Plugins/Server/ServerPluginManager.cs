@@ -8,7 +8,6 @@ namespace Engine.Plugins.Server
   public class ServerPluginManager : PluginManager<ServerPlugin, ServerModelWrapper>
   {
     private Dictionary<ushort, ServerPluginCommand> commands = new Dictionary<ushort, ServerPluginCommand>();
-    private Dictionary<string, ServerNotifierContext> notifierContexts = new Dictionary<string, ServerNotifierContext>();
 
     public ServerPluginManager(string path)
       : base(path)
@@ -33,27 +32,20 @@ namespace Engine.Plugins.Server
       return false;
     }
 
-    internal IEnumerable<ServerNotifierContext> GetNotifierContexts()
-    {
-      return notifierContexts.Values;
-    }
-
     protected override void OnPluginLoaded(PluginContainer loaded)
     {
+      base.OnPluginLoaded(loaded);
+
       foreach (var command in loaded.Plugin.Commands)
         commands.Add(command.Id, command);
-
-      var context = loaded.Plugin.NotifierContext;
-      if (context != null)
-        notifierContexts.Add(loaded.Plugin.Name, context);
     }
 
     protected override void OnPluginUnlodaing(PluginContainer unloading)
     {
+      base.OnPluginUnlodaing(unloading);
+
       foreach (var command in unloading.Plugin.Commands)
         commands.Remove(command.Id);
-
-      notifierContexts.Remove(unloading.Plugin.Name);
     }
 
     protected override void OnError(string pluginName, Exception e)
@@ -67,9 +59,6 @@ namespace Engine.Plugins.Server
       {
         foreach (var command in commands.Values)
           command.Process();
-
-        foreach (var context in notifierContexts.Values)
-          context.Process();
       }
     }
   }
