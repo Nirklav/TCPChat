@@ -23,7 +23,7 @@ namespace Engine.API.StandardAPI.ClientCommands
       if (string.IsNullOrEmpty(receivedContent.Sender))
         throw new ArgumentException("sender");
 
-      byte[] decryptedSymmetricKey = ClientModel.Client.KeyCryptor.Decrypt(receivedContent.Key, false);
+      var decryptedSymmetricKey = ClientModel.Client.KeyCryptor.Decrypt(receivedContent.Key, true);
 
       using (MemoryStream messageStream = new MemoryStream(),
              encryptedMessageStream = new MemoryStream(receivedContent.Message))
