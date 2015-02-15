@@ -82,26 +82,27 @@ namespace Engine.Helpers
       if (inputStream == null || outputStream == null)
         throw new ArgumentNullException("One of the arguments (or two) equals null");
 
-      using (ICryptoTransform encryptor = cryptAlgorithm.CreateEncryptor(cryptAlgorithm.Key, cryptAlgorithm.IV))
+      using (var transform = cryptAlgorithm.CreateEncryptor(cryptAlgorithm.Key, cryptAlgorithm.IV))
       {
         int maxBufferSizeValue = bufferCoefficient * ConstBufferCoefficient;
 
-        CryptoStream csEncrypt = new CryptoStream(outputStream, encryptor, CryptoStreamMode.Write);
-
-        outputStream.Write(BitConverter.GetBytes(inputStream.Length), 0, sizeof(long));
-        outputStream.Write(cryptAlgorithm.IV, 0, cryptAlgorithm.BlockSize / 8);
-
-        inputStream.Position = 0;
-        byte[] dataBuffer = new byte[maxBufferSizeValue];
-
-        while (inputStream.Position < inputStream.Length)
+        using (var csEncrypt = new CryptoStream(outputStream, transform, CryptoStreamMode.Write))
         {
-          int dataSize = (inputStream.Length - inputStream.Position > maxBufferSizeValue) ? maxBufferSizeValue : (int)(inputStream.Length - inputStream.Position);
+          outputStream.Write(BitConverter.GetBytes(inputStream.Length), 0, sizeof(long));
+          outputStream.Write(cryptAlgorithm.IV, 0, cryptAlgorithm.BlockSize / 8);
 
-          int writedDataSize = CalculateDataSize(dataSize, maxBufferSizeValue);
+          inputStream.Position = 0;
+          var dataBuffer = new byte[maxBufferSizeValue];
 
-          inputStream.Read(dataBuffer, 0, dataSize);
-          csEncrypt.Write(dataBuffer, 0, writedDataSize);
+          while (inputStream.Position < inputStream.Length)
+          {
+            int dataSize = (inputStream.Length - inputStream.Position > maxBufferSizeValue) ? maxBufferSizeValue : (int)(inputStream.Length - inputStream.Position);
+
+            int writedDataSize = CalculateDataSize(dataSize, maxBufferSizeValue);
+
+            inputStream.Read(dataBuffer, 0, dataSize);
+            csEncrypt.Write(dataBuffer, 0, writedDataSize);
+          }
         }
       }
     }
@@ -129,18 +130,19 @@ namespace Engine.Helpers
 
       long deltaLength = inputStream.Length - HeadSize - cryptAlgorithm.BlockSize / 8 - BitConverter.ToInt64(originFileLengthArray, 0);
 
-      using (ICryptoTransform decryptor = cryptAlgorithm.CreateDecryptor(Key, iv))
+      using (var transform = cryptAlgorithm.CreateDecryptor(Key, iv))
       {
-        CryptoStream csEncrypt = new CryptoStream(inputStream, decryptor, CryptoStreamMode.Read);
-
-        byte[] dataBuffer = new byte[maxBufferSizeValue];
-
-        while (inputStream.Position < inputStream.Length)
+        using (var csEncrypt = new CryptoStream(inputStream, transform, CryptoStreamMode.Read))
         {
-          int dataSize = (inputStream.Length - inputStream.Position > maxBufferSizeValue) ? maxBufferSizeValue : (int)(inputStream.Length - inputStream.Position - deltaLength);
+          var dataBuffer = new byte[maxBufferSizeValue];
 
-          csEncrypt.Read(dataBuffer, 0, dataSize);
-          outputStream.Write(dataBuffer, 0, dataSize);
+          while (inputStream.Position < inputStream.Length)
+          {
+            int dataSize = (inputStream.Length - inputStream.Position > maxBufferSizeValue) ? maxBufferSizeValue : (int)(inputStream.Length - inputStream.Position - deltaLength);
+
+            csEncrypt.Read(dataBuffer, 0, dataSize);
+            outputStream.Write(dataBuffer, 0, dataSize);
+          }
         }
       }
     }

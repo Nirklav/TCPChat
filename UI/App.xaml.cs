@@ -22,8 +22,7 @@ namespace UI
 
     private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
-      Exception error = e.ExceptionObject as Exception;
-
+      var error = e.ExceptionObject as Exception;
       if (error == null)
         return;
 
