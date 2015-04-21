@@ -143,9 +143,7 @@ namespace Engine.Model.Common
         var contextsGetMethod = notifierType.GetMethod("GetContexts", BindingFlags.Instance | BindingFlags.Public);
         var arrayGetMethod = typeof(object[]).GetMethod("Get", BindingFlags.Instance | BindingFlags.Public, null, new[] { typeof(int) }, null);
 
-        Type contextType;
-        if (!contexts.TryGetValue(invokerAttribute.Context, out contextType))
-          contextType = MakeContext(invokerAttribute.Context);
+        var contextType = MakeContext(invokerAttribute.Context);
 
         var builder = moduleBuilder.DefineType(typeof(TInterface).Name + GeneretedTypePostfix);
         builder.SetParent(notifierType);

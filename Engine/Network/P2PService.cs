@@ -112,10 +112,6 @@ namespace Engine.Network
       if (TryDoneRequest(senderId, requestId))
         return;
 
-      AddressFamily addressFamily = ServerModel.Server.UsingIPv6
-        ? AddressFamily.InterNetworkV6
-        : AddressFamily.InterNetwork;
-
       lock (syncObject)
       {
         requests.Add(new RequestPair(requestId, senderId));

@@ -1,5 +1,5 @@
-﻿using Engine.API.StandardAPI;
-using Engine.API.StandardAPI.ServerCommands;
+﻿using Engine.API;
+using Engine.API.ServerCommands;
 using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Network.Connections;

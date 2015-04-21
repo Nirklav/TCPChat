@@ -10,6 +10,7 @@ namespace Engine.Plugins.Client
     IClientAPI
   {
     public ICommand<ClientCommandArgs> GetCommand(byte[] message) { return ClientModel.API.GetCommand(message); }
+
     public void SendMessage(long? messageId, string message, string roomName) { ClientModel.API.SendMessage(messageId, message, roomName); }
     public void SendPrivateMessage(string receiver, string message) { ClientModel.API.SendPrivateMessage(receiver, message); }
     public void CreateRoom(string roomName, RoomType type) { ClientModel.API.CreateRoom(roomName, type); }
@@ -25,6 +26,7 @@ namespace Engine.Plugins.Client
     public void CancelDownloading(FileDescription file, bool leaveLoadedPart) { ClientModel.API.CancelDownloading(file, leaveLoadedPart); }
     public void Register() { ClientModel.API.Register(); }
     public void Unregister() { ClientModel.API.Unregister(); }
+
     public void PingRequest() { ClientModel.API.PingRequest(); }
     public void ConnectToPeer(string peerId) { ClientModel.API.ConnectToPeer(peerId); }
 
