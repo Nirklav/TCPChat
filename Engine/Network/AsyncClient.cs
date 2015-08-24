@@ -1,10 +1,8 @@
 ﻿using Engine.API;
-using Engine.API.ServerCommands;
 using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Network.Connections;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -28,7 +26,7 @@ namespace Engine.Network
     private const int PingInterval = 3000;
     private const string ClientId = "Client";
 
-    private static readonly SocketError[] reconnectErrorsList = new SocketError[] 
+    private static readonly SocketError[] reconnectErrors = new SocketError[] 
     { 
       SocketError.NetworkReset, SocketError.ConnectionAborted,
       SocketError.ConnectionReset, SocketError.TimedOut,
@@ -249,7 +247,7 @@ namespace Engine.Network
       if (!reconnect)
         return false;
 
-      if (!reconnectErrorsList.Contains(se.SocketErrorCode))
+      if (!reconnectErrors.Contains(se.SocketErrorCode))
         return false;
 
       reconnecting = true;

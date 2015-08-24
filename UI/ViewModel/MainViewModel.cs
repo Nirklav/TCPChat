@@ -65,7 +65,7 @@ namespace UI.ViewModel
       {
         selectedRoom = value;
 
-        if (selectedRoom.Updated)
+        if (selectedRoom != null && selectedRoom.Updated)
           selectedRoom.Updated = false;
 
         OnPropertyChanged("SelectedRoom");
@@ -77,15 +77,7 @@ namespace UI.ViewModel
       get { return selectedRoomIndex; }
       set
       {
-        if (value < 0)
-        {
-          selectedRoomIndex = 0;
-          Dispatcher.BeginInvoke(new Action(() => OnPropertyChanged("SelectedRoomIndex")), DispatcherPriority.Render);
-          return;
-        }
-
         selectedRoomIndex = value;
-
         OnPropertyChanged("SelectedRoomIndex");
       }
     }
@@ -529,7 +521,7 @@ namespace UI.ViewModel
     {
       AllUsers.Clear();
 
-      foreach (RoomViewModel room in Rooms)
+      foreach (var room in Rooms)
         room.Dispose();
 
       Rooms.Clear();

@@ -79,8 +79,9 @@ namespace Engine.Model.Client
     #endregion
 
     #region conctructor
-    public ClientModel()
+    public ClientModel(User user)
     {
+      User = user;
       Rooms = new Dictionary<string, Room>();
       DownloadingFiles = new List<DownloadingFile>();
       PostedFiles = new List<PostedFile>();
@@ -95,11 +96,10 @@ namespace Engine.Model.Client
 
     public static void Init(ClientInitializer initializer)
     {
-      if (Interlocked.CompareExchange(ref model, new ClientModel(), null) != null)
-        throw new InvalidOperationException("model already inited");
+      var user = new User(initializer.Nick, initializer.NickColor);
 
-      using (var client = Get())
-        model.User = new User(initializer.Nick, initializer.NickColor);
+      if (Interlocked.CompareExchange(ref model, new ClientModel(user), null) != null)
+        throw new InvalidOperationException("model already inited");
 
       // API установится автоматически при подключении к серверу (согласно версии на сервере)
       Client = new AsyncClient(initializer.Nick);

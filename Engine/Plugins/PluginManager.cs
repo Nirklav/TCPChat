@@ -1,10 +1,8 @@
-﻿using Engine.Exceptions;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
 using System.Threading;
@@ -15,6 +13,8 @@ namespace Engine.Plugins
     where TPlugin : Plugin<TModel>
     where TModel : CrossDomainObject, new()
   {
+    private const int ProcessTimeout = 10000; // 10 sec
+
     #region nested types
 
     protected class PluginContainer
@@ -40,7 +40,9 @@ namespace Engine.Plugins
 
     private string path;
     private List<PluginInfo> infos;
+
     private Thread processThread;
+    private ManualResetEvent processThreadEvent;
 
     private bool disposed;
 
@@ -63,6 +65,10 @@ namespace Engine.Plugins
       var containers = plugins.Values.ToList();
       foreach (var container in containers)
         UnloadPlugin(container);
+
+      processThreadEvent.Set();
+      processThread.Join();
+      processThread = null;
     }
 
     #endregion
@@ -102,6 +108,7 @@ namespace Engine.Plugins
           foreach (var info in infos)
             LoadPlugin(info, excludedPlugins);
 
+        processThreadEvent = new ManualResetEvent(false);
         processThread = new Thread(ProcessThreadHandler);
         processThread.IsBackground = true;
         processThread.Start();
@@ -243,7 +250,8 @@ namespace Engine.Plugins
     {
       while (true)
       {
-        Thread.Sleep(TimeSpan.FromMinutes(1));
+        if (processThreadEvent.WaitOne(ProcessTimeout))
+          return;
 
         lock (syncObject)
         {
