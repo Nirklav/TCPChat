@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Security.AccessControl;
+using System.Security;
+using System.Security.Permissions;
 using System.Text;
-using System.Threading;
 
 namespace Engine.Helpers
 {
+  [SecuritySafeCritical]
   public class Logger : MarshalByRefObject
   {
     private const string DebugMessageTemplate = "Time: {0} DEBUG: {1}";
@@ -32,36 +33,43 @@ namespace Engine.Helpers
 
     private string logFileName;
     
+    [SecurityCritical]
     public Logger(string fileName)
     {
       logFileName = fileName;
       syncObjects.Add(logFileName, new object());
     }
 
+    [SecuritySafeCritical]
     public void WriteInfo(string message, params object[] param)
     {
       Write(string.Format(InfoTemplate, DateTime.Now, message), param);
     }
 
     [Conditional("DEBUG")]
+    [SecuritySafeCritical]
     public void WriteDebug(string message, params object[] args)
     {
       Write(string.Format(DebugMessageTemplate, DateTime.Now, message), args);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
+    [SecuritySafeCritical]
     public void WriteWarning(string message, params object[] args)
     {
       StackTrace stackTrace = new StackTrace(1, true);
       Write(string.Format(WarningTemplate, DateTime.Now, message, stackTrace, Environment.NewLine), args);
     }
 
+    [SecuritySafeCritical]
     public void Write(Exception e)
     {
       string message = CreateLogMessage(e, 0);
       Write(message);
     }
 
+    [SecurityCritical]
+    [FileIOPermission(SecurityAction.Assert, AllLocalFiles = FileIOPermissionAccess.Append)]
     private void Write(string message, params object[] args)
     {
       lock (GetSyncObject(logFileName))
@@ -100,6 +108,7 @@ namespace Engine.Helpers
       }
     }
 
+    [SecurityCritical]
     private string CreateLogMessage(Exception e, int level)
     {
       StringBuilder tabs = new StringBuilder();

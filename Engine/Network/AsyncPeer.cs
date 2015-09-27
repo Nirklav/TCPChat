@@ -1,4 +1,5 @@
-﻿using Engine.Helpers;
+﻿using Engine.API;
+using Engine.Helpers;
 using Engine.Model.Client;
 using Engine.Network.Connections;
 using Lidgren.Network;
@@ -7,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
+using System.Security;
 using System.Threading;
 
 namespace Engine.Network
@@ -19,6 +20,7 @@ namespace Engine.Network
     ConnectedToPeers = 2,
   }
 
+  [SecuritySafeCritical]
   public class AsyncPeer :
     MarshalByRefObject,
     IDisposable
@@ -61,6 +63,7 @@ namespace Engine.Network
 
     private NetPeer handler;
     private int state; //PeerState
+    private bool disposed;
 
     private SynchronizationContext syncContext;
     private ClientRequestQueue requestQueue;
@@ -72,11 +75,13 @@ namespace Engine.Network
     /// </summary>
     public PeerState State
     {
+      [SecurityCritical]
       get { return (PeerState)state; }
     }
     #endregion
 
     #region constructor
+    [SecurityCritical]
     internal AsyncPeer()
     {
       waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
@@ -91,6 +96,7 @@ namespace Engine.Network
     /// Подключение к P2P сервису. Для создания UDP окна.
     /// </summary>
     /// <param name="remotePoint">Адрес сервиса.</param>
+    [SecurityCritical]
     internal void ConnectToService(IPEndPoint remotePoint)
     {
       ThrowIfDisposed();
@@ -116,7 +122,7 @@ namespace Engine.Network
       var hailMessage = handler.CreateMessage();
       using (var client = ClientModel.Get())
       {
-        var localPoint = new IPEndPoint(Connection.GetIPAddress(remotePoint.AddressFamily), handler.Port);
+        var localPoint = new IPEndPoint(Connection.GetIpAddress(remotePoint.AddressFamily), handler.Port);
 
         hailMessage.Write(client.User.Nick);
         hailMessage.Write(localPoint);
@@ -132,6 +138,7 @@ namespace Engine.Network
     /// <remarks>Возможно вызвать только после подключения к сервису.</remarks>
     /// </summary>
     /// <param name="waitingPoint">Конечная точка, от которой следует ждать подключение.</param>
+    [SecurityCritical]
     internal void WaitConnection(IPEndPoint waitingPoint)
     {
       ThrowIfDisposed();
@@ -157,6 +164,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="peerId">Id пира к которому подключаемся.</param>
     /// <param name="remotePoint">Адрес клиента</param>
+    [SecurityCritical]
     internal void ConnectToPeer(string peerId, IPEndPoint remotePoint)
     {
       ThrowIfDisposed();
@@ -183,6 +191,7 @@ namespace Engine.Network
     /// Имеется ли соедиенение к данному пиру.
     /// </summary>
     /// <param name="peerId">Id соединения.</param>
+    [SecuritySafeCritical]
     public bool IsConnected(string peerId)
     {
       ThrowIfDisposed();
@@ -201,6 +210,7 @@ namespace Engine.Network
     /// <param name="commandId">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    [SecuritySafeCritical]
     public void SendMessage(string peerId, ushort commandId, object messageContent, bool unreliable = false)
     {
       SendMessage(peerId, commandId, Serializer.Serialize(messageContent), unreliable);
@@ -213,6 +223,7 @@ namespace Engine.Network
     /// <param name="commandId">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    [SecuritySafeCritical]
     public void SendMessage(string peerId, ushort commandId, byte[] messageContent, bool unreliable = false)
     {
       ThrowIfDisposed();
@@ -244,6 +255,7 @@ namespace Engine.Network
     /// <param name="messageContent">Параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
+    [SecuritySafeCritical]
     public bool SendMessageIfConnected(string peerId, ushort commandId, object messageContent, bool unreliable = false)
     {
       return SendMessageIfConnected(peerId, commandId, Serializer.Serialize(messageContent), unreliable);
@@ -257,6 +269,7 @@ namespace Engine.Network
     /// <param name="messageContent">Сериализованный параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
+    [SecuritySafeCritical]
     public bool SendMessageIfConnected(string peerId, ushort commandId, byte[] messageContent, bool unreliable = false)
     {
       ThrowIfDisposed();
@@ -283,6 +296,7 @@ namespace Engine.Network
     /// <param name="messageContent">Параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
+    [SecuritySafeCritical]
     public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, object messageContent, bool unreliable = false)
     {
       SendMessageIfConnected(peerIds, commandId, Serializer.Serialize(messageContent), unreliable);
@@ -296,6 +310,7 @@ namespace Engine.Network
     /// <param name="messageContent">Сериализованный параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
+    [SecuritySafeCritical]
     public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, byte[] messageContent, bool unreliable = false)
     {
       ThrowIfDisposed();
@@ -314,6 +329,7 @@ namespace Engine.Network
     #endregion
 
     #region private methods
+    [SecurityCritical]
     private NetOutgoingMessage CreateMessage(ushort commandId, byte[] messageContent)
     {
       var message = handler.CreateMessage();
@@ -326,6 +342,7 @@ namespace Engine.Network
       return message;
     }
 
+    [SecurityCritical]
     private void SaveCommandAndConnect(string peerId, ushort commandId, byte[] messageContent, bool unreliable)
     {
       lock (waitingCommands)
@@ -344,6 +361,7 @@ namespace Engine.Network
       ClientModel.API.ConnectToPeer(peerId);
     }
 
+    [SecurityCritical]
     private void DisconnectFromService()
     {
       if (serviceConnection != null)
@@ -355,6 +373,7 @@ namespace Engine.Network
     #endregion
 
     #region callback method
+    [SecurityCritical]
     private void ReceivedCallback(object obj)
     {
       if (handler == null || handler.Status != NetPeerStatus.Running)
@@ -397,6 +416,7 @@ namespace Engine.Network
       }
     }
 
+    [SecurityCritical]
     private void Approve(NetIncomingMessage message)
     {
       var userNick = string.Empty;
@@ -409,6 +429,7 @@ namespace Engine.Network
       ClientModel.Logger.WriteDebug("AsyncPeer.Approve({0})", userNick);
     }
 
+    [SecurityCritical]
     private void PeerConnected(NetIncomingMessage message)
     {
       string connectionId = null;
@@ -439,6 +460,7 @@ namespace Engine.Network
       ClientModel.Logger.WriteDebug("AsyncPeer.PeerConnected({0})", connectionId);
     }
 
+    [SecurityCritical]
     private void DataReceived(NetIncomingMessage message)
     {
       try
@@ -462,14 +484,14 @@ namespace Engine.Network
     #endregion
 
     #region IDisposable
-    private bool disposed = false;
-
+    [SecurityCritical]
     private void ThrowIfDisposed()
     {
       if (disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (disposed)

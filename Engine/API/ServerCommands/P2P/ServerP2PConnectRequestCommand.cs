@@ -1,13 +1,24 @@
 ﻿using Engine.Helpers;
 using Engine.Model.Server;
 using System;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerP2PConnectRequestCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.P2PConnectRequest;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -27,11 +38,13 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      string nick;
+      private string nick;
 
-      public string Nick { get { return nick; } set { nick = value; } }
+      public string Nick
+      {
+        get { return nick; }
+        set { nick = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.P2PConnectRequest;
   }
 }

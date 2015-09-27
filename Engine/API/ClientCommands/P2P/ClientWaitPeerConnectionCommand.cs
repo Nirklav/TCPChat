@@ -4,12 +4,23 @@ using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Net;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientWaitPeerConnectionCommand :
       ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.WaitPeerConnection;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -34,21 +45,33 @@ namespace Engine.API.ClientCommands
       using (var client = ClientModel.Get())
         sendingContent.RemoteInfo = client.User;
 
-      ClientModel.Client.SendMessage(ServerP2PReadyAcceptCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerP2PReadyAcceptCommand.CommandId, sendingContent);
     }
 
     [Serializable]
     public class MessageContent
     {
-      User remoteInfo;
-      IPEndPoint senderPoint;
-      IPEndPoint requestPoint;
+      private User remoteInfo;
+      private IPEndPoint senderPoint;
+      private IPEndPoint requestPoint;
 
-      public User RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }
-      public IPEndPoint SenderPoint { get { return senderPoint; } set { senderPoint = value; } }
-      public IPEndPoint RequestPoint { get { return requestPoint; } set { requestPoint = value; } }
+      public User RemoteInfo
+      {
+        get { return remoteInfo; }
+        set { remoteInfo = value; }
+      }
+
+      public IPEndPoint SenderPoint
+      {
+        get { return senderPoint; }
+        set { senderPoint = value; }
+      }
+
+      public IPEndPoint RequestPoint
+      {
+        get { return requestPoint; }
+        set { requestPoint = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.WaitPeerConnection;
   }
 }

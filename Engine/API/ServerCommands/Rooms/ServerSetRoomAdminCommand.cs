@@ -2,13 +2,24 @@
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerSetRoomAdminCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.SetRoomAdmin;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -48,13 +59,20 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      string roomName;
-      User newAdmin;
+      private string roomName;
+      private User newAdmin;
 
-      public string RoomName { get { return roomName; } set { roomName = value; } }
-      public User NewAdmin { get { return newAdmin; } set { newAdmin = value; } }
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
+
+      public User NewAdmin
+      {
+        get { return newAdmin; }
+        set { newAdmin = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.SetRoomAdmin;
   }
 }

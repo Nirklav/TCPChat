@@ -4,13 +4,24 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Net;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerP2PReadyAcceptCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.P2PReadyAccept;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -35,21 +46,33 @@ namespace Engine.API.ServerCommands
         PeerPoint = receivedContent.PeerPoint,
         RemoteInfo = receivedContent.RemoteInfo,
       };
-      ServerModel.Server.SendMessage(receivedContent.ReceiverNick, ClientConnectToPeerCommand.Id, connectContent);
+      ServerModel.Server.SendMessage(receivedContent.ReceiverNick, ClientConnectToPeerCommand.CommandId, connectContent);
     }
 
     [Serializable]
     public class MessageContent
     {
-      string receiverNick;
-      IPEndPoint peerPoint;
-      User remoteInfo;
+      private string receiverNick;
+      private IPEndPoint peerPoint;
+      private User remoteInfo;
 
-      public string ReceiverNick { get { return receiverNick; } set { receiverNick = value; } }
-      public IPEndPoint PeerPoint { get { return peerPoint; } set { peerPoint = value; } }
-      public User RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }
+      public string ReceiverNick
+      {
+        get { return receiverNick; }
+        set { receiverNick = value; }
+      }
+
+      public IPEndPoint PeerPoint
+      {
+        get { return peerPoint; }
+        set { peerPoint = value; }
+      }
+
+      public User RemoteInfo
+      {
+        get { return remoteInfo; }
+        set { remoteInfo = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.P2PReadyAccept;
   }
 }

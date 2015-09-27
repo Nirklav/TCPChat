@@ -1,12 +1,23 @@
 ﻿using Engine.Helpers;
 using Engine.Model.Client;
 using System;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientOutRoomMessageCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.OutRoomMessage;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -46,12 +57,29 @@ namespace Engine.API.ClientCommands
       private string roomName;
       private long messageId;
 
-      public string Sender { get { return sender; } set { sender = value; } }
-      public string Message { get { return message; } set { message = value; } }
-      public string RoomName { get { return roomName; } set { roomName = value; } }
-      public long MessageId { get { return messageId; } set { messageId = value; } }
-    }
+      public string Sender
+      {
+        get { return sender; }
+        set { sender = value; }
+      }
 
-    public const ushort Id = (ushort)ClientCommand.OutRoomMessage;
+      public string Message
+      {
+        get { return message; }
+        set { message = value; }
+      }
+
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
+
+      public long MessageId
+      {
+        get { return messageId; }
+        set { messageId = value; }
+      }
+    }
   }
 }

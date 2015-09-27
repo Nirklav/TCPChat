@@ -4,16 +4,19 @@ using Engine.Model.Entities;
 using OpenAL;
 using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Threading;
 
 namespace Engine.Audio.OpenAL
 {
+  [SecuritySafeCritical]
   public sealed class OpenALPlayer :
     MarshalByRefObject,
     IPlayer
   {
     #region fields
-    private object syncObject = new object();
+    private readonly object syncObject = new object();
+    private bool disposed;
 
     private AudioContext context;
     private Dictionary<string, SourceDescription> sources;
@@ -47,6 +50,7 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region constructor
+    [SecurityCritical]
     public OpenALPlayer(string deviceName = null)
     {
       if (string.IsNullOrEmpty(deviceName) || IsInited)
@@ -59,11 +63,13 @@ namespace Engine.Audio.OpenAL
     #region properties
     public bool IsInited
     {
+      [SecuritySafeCritical]
       get { return Interlocked.CompareExchange(ref context, null, null) != null; }
     }
 
     public IList<string> Devices
     {
+      [SecuritySafeCritical]
       get
       {
         try
@@ -79,6 +85,7 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region methods
+    [SecurityCritical]
     private void Initialize(string deviceName)
     {
       try
@@ -108,6 +115,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
+    [SecuritySafeCritical]
     public void SetOptions(string deviceName)
     {
       if (IsInited)
@@ -119,6 +127,7 @@ namespace Engine.Audio.OpenAL
       Initialize(deviceName);
     }
 
+    [SecuritySafeCritical]
     public void Enqueue(string id, long packNumber, SoundPack pack)
     {
       if (string.IsNullOrEmpty(id))
@@ -153,6 +162,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
+    [SecuritySafeCritical]
     public void Stop(string id)
     {
       if (!IsInited)
@@ -169,6 +179,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
+    [SecuritySafeCritical]
     public void Stop()
     {
       if (!IsInited)
@@ -183,6 +194,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
+    [SecurityCritical]
     private void Stop(SourceDescription source)
     {
       int count;
@@ -192,6 +204,7 @@ namespace Engine.Audio.OpenAL
       AL.DeleteSource(source.Id);
     }
 
+    [SecurityCritical]
     private void ClearBuffers(string id, int input)
     {
       SourceDescription source;
@@ -201,6 +214,7 @@ namespace Engine.Audio.OpenAL
       ClearBuffers(source, input);
     }
 
+    [SecurityCritical]
     private void ClearBuffers(SourceDescription source, int count)
     {
       if (context == null)
@@ -225,8 +239,7 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region IDisposable
-    private bool disposed = false;
-
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (disposed)

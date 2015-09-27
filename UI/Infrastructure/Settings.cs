@@ -24,14 +24,40 @@ namespace UI.Infrastructure
         {
           if (current == null)
           {
-            XmlSerializer serializer = new XmlSerializer(typeof(Settings));
-            using (FileStream stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + FileName, FileMode.Open))
+            var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, FileName);
+            var serializer = new XmlSerializer(typeof(Settings));
+
+            if (!File.Exists(fileName))
+              return current = GetDefault();
+
+            using (var stream = File.Open(fileName, FileMode.Open))
               current = (Settings)serializer.Deserialize(stream);
           }
         }
 
         return current;
       }
+    }
+
+    private static Settings GetDefault()
+    {
+      return new Settings
+      {
+        Nick = "User",
+        NickColor = Color.FromArgb(170, 50, 50),
+        RandomColor = true,
+
+        FormSize = new Size(380, 470),
+        Alerts = true,
+        Address = "127.0.0.1",
+        Port = 10021,
+        ServicePort = 10022,
+        StateOfIPv6Protocol = false,
+
+        RecorderKey = Keys.E,
+        Frequency = 44100,
+        Bits = 16
+      };
     }
 
     public static void SaveSettings()
@@ -41,8 +67,8 @@ namespace UI.Infrastructure
 
       lock (syncObj)
       {
-        XmlSerializer serializer = new XmlSerializer(typeof(Settings));
-        using (FileStream stream = File.Create(AppDomain.CurrentDomain.BaseDirectory + FileName))
+        var serializer = new XmlSerializer(typeof(Settings));
+        using (var stream = File.Create(AppDomain.CurrentDomain.BaseDirectory + FileName))
           serializer.Serialize(stream, current);
       }
     }

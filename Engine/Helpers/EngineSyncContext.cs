@@ -1,21 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Security;
 using System.Threading;
 
 namespace Engine.Helpers
 {
+  [SecurityCritical]
   class EngineSyncContext : SynchronizationContext
   {
+    [SecurityCritical]
     private class Event
     {
       private SendOrPostCallback callback;
       private object state;
       private ManualResetEvent resetEvent;
 
-      public WaitHandle Handle { get { return resetEvent; } }
+      public WaitHandle Handle
+      {
+        [SecurityCritical]
+        get { return resetEvent; }
+      }
 
+      [SecurityCritical]
       public Event(SendOrPostCallback callback, object state, bool isSend)
       {
         this.callback = callback;
@@ -24,6 +29,7 @@ namespace Engine.Helpers
         resetEvent = new ManualResetEvent(!isSend);
       }
 
+      [SecurityCritical]
       public void Dispatch()
       {
         var e = callback;
@@ -38,11 +44,13 @@ namespace Engine.Helpers
     private volatile bool inProcess;
     private Queue<Event> callbackQueue;
 
+    [SecurityCritical]
     public EngineSyncContext()
     {
       callbackQueue = new Queue<Event>();
     }
 
+    [SecuritySafeCritical]
     public override void Post(SendOrPostCallback d, object state)
     {
       lock (syncObject)
@@ -53,6 +61,7 @@ namespace Engine.Helpers
       }
     }
 
+    [SecuritySafeCritical]
     public override void Send(SendOrPostCallback d, object state)
     {
       Event item;
@@ -67,11 +76,13 @@ namespace Engine.Helpers
       item.Handle.WaitOne();
     }
 
+    [SecuritySafeCritical]
     public override SynchronizationContext CreateCopy()
     {
       return this;
     }
 
+    [SecurityCritical]
     private void StartThread()
     {
       if (inProcess)
@@ -81,10 +92,11 @@ namespace Engine.Helpers
       ThreadPool.QueueUserWorkItem(ThreadFunc);
     }
 
+    [SecurityCritical]
     private void ThreadFunc(object state)
     {
-      var oldSyncContext = SynchronizationContext.Current;
-      SynchronizationContext.SetSynchronizationContext(this);
+      var oldSyncContext = Current;
+      SetSynchronizationContext(this);
 
       while (true)
       {
@@ -93,7 +105,7 @@ namespace Engine.Helpers
         {
           if (callbackQueue.Count <= 0)
           {
-            SynchronizationContext.SetSynchronizationContext(oldSyncContext);
+            SetSynchronizationContext(oldSyncContext);
             inProcess = false;           
             return;
           }

@@ -9,7 +9,6 @@ namespace Engine.Model.Common
   public class NotifierAttribute : Attribute
   {
     public Type Context { get; private set; }
-
     public Type BaseNotifier { get; set; }
 
     public NotifierAttribute(Type context)
@@ -18,9 +17,10 @@ namespace Engine.Model.Common
     }
   }
 
-  public abstract class Notifier : MarshalByRefObject
+  public abstract class Notifier : CrossDomainObject
   {
     private readonly List<object> contexts = new List<object>();
+
     public virtual object[] GetContexts()
     {
       lock (contexts)

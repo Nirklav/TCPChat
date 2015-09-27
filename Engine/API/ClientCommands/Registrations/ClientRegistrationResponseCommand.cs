@@ -1,12 +1,23 @@
 ﻿using Engine.Helpers;
 using Engine.Model.Client;
 using System;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientRegistrationResponseCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.RegistrationResponse;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -23,13 +34,20 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      bool registered;
-      string message;
+      private bool registered;
+      private string message;
 
-      public bool Registered { get { return registered; } set { registered = value; } }
-      public string Message { get { return message; } set { message = value; } }
+      public bool Registered
+      {
+        get { return registered; }
+        set { registered = value; }
+      }
+
+      public string Message
+      {
+        get { return message; }
+        set { message = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.RegistrationResponse;
   }
 }

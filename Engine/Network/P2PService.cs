@@ -4,11 +4,12 @@ using Lidgren.Network;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
+using System.Security;
 using System.Threading;
 
 namespace Engine.Network
 {
+  [SecuritySafeCritical]
   public sealed class P2PService : IDisposable
   {
     #region nested types
@@ -54,6 +55,7 @@ namespace Engine.Network
     /// <summary>
     /// Создает экземпляр сервиса для функционирования UDP hole punching. Без логирования.
     /// </summary>
+    [SecurityCritical]
     public P2PService(int port, bool usingIPv6)
     {
       disposed = false;
@@ -82,6 +84,7 @@ namespace Engine.Network
     /// </summary>
     public int Port
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -96,6 +99,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="senderId">Соединение которое прислало запрос.</param>
     /// <param name="requestId">Соединение получащее ответ.</param>
+    [SecurityCritical]
     public void Introduce(string senderId, string requestId)
     {
       ThrowIfDisposed();
@@ -121,6 +125,7 @@ namespace Engine.Network
       }
     }
 
+    [SecurityCritical]
     private void TrySendConnectRequest(string connectionId)
     {
       bool needSend = false;
@@ -139,6 +144,7 @@ namespace Engine.Network
         ServerModel.API.SendP2PConnectRequest(connectionId, Port);
     }
 
+    [SecurityCritical]
     internal void RemoveEndPoint(string id)
     {
       lock (syncObject)
@@ -147,6 +153,7 @@ namespace Engine.Network
     #endregion
 
     #region private methods
+    [SecurityCritical]
     private void ReceivedCallback(object obj)
     {
       NetIncomingMessage message;
@@ -192,6 +199,7 @@ namespace Engine.Network
       }
     }
 
+    [SecurityCritical]
     private bool TryGetRequest(string senderId, string requestId, out IPEndPoint senderPoint, out IPEndPoint requestPoint)
     {
       bool received = true;
@@ -230,6 +238,7 @@ namespace Engine.Network
       return received;
     }
 
+    [SecurityCritical]
     private bool TryDoneRequest(string senderId, string requestId)
     {
       bool received;
@@ -252,6 +261,7 @@ namespace Engine.Network
       return received;
     }
 
+    [SecurityCritical]
     private void TryDoneAllRequest()
     {
       lock (syncObject)
@@ -283,12 +293,14 @@ namespace Engine.Network
     #endregion
 
     #region IDisposable
+    [SecurityCritical]
     private void ThrowIfDisposed()
     {
       if (disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (disposed)

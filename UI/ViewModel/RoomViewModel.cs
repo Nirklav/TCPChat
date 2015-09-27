@@ -152,7 +152,7 @@ namespace UI.ViewModel
       NotifierContext.RoomRefreshed += ClientRoomRefreshed;
     }
 
-    public override void Dispose()
+    protected override void DisposeManagedResources()
     {
       base.Dispose();
 

@@ -14,11 +14,10 @@ namespace UI.ViewModel
     INotifyPropertyChanged,
     IDisposable
   {
-    private bool disposed = false;
+    private bool disposed;
+    protected IClientNotifierContext NotifierContext;
 
     public event PropertyChangedEventHandler PropertyChanged;
-
-    protected IClientNotifierContext NotifierContext;
 
     public BaseViewModel(bool initializeNotifier)
     {
@@ -30,18 +29,21 @@ namespace UI.ViewModel
       }
     }
 
-    public virtual void Dispose()
+    protected virtual void DisposeManagedResources()
     {
-      if (disposed)
-        return;
-
-      disposed = true;
-
       if (NotifierContext != null)
       {
         var notifier = (Notifier)ClientModel.Notifier;
         notifier.Remove(NotifierContext);
       }
+    }
+
+    public void Dispose()
+    {
+      if (disposed)
+        return;
+      disposed = true;
+      DisposeManagedResources();
     }
 
     protected virtual void OnPropertyChanged(string name)

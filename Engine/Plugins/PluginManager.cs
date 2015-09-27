@@ -1,17 +1,20 @@
-﻿using System;
+﻿using Engine.API;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
 using System.Security.Permissions;
-using System.Threading;
+using System.Security.Policy;
 
 namespace Engine.Plugins
 {
-  public abstract class PluginManager<TPlugin, TModel> : IDisposable
-    where TPlugin : Plugin<TModel>
+  [SecurityCritical]
+  public abstract class PluginManager<TPlugin, TModel, TCommand> : IDisposable
+    where TPlugin : Plugin<TModel, TCommand>
     where TModel : CrossDomainObject, new()
+    where TCommand : CrossDomainObject, ICommand
   {
     private const int ProcessTimeout = 10000; // 10 sec
 
@@ -21,11 +24,14 @@ namespace Engine.Plugins
     {
       public AppDomain Domain { get; private set; }
       public TPlugin Plugin { get; private set; }
+      public TModel Model { get; private set; }
+      public bool CommandsLoaded { get; set; }
 
-      public PluginContainer(AppDomain domain, TPlugin plugin)
+      public PluginContainer(AppDomain domain, TPlugin plugin, TModel model)
       {
         Domain = domain;
         Plugin = plugin;
+        Model = model;
       }
     }
 
@@ -33,16 +39,13 @@ namespace Engine.Plugins
 
     #region fields
 
-    protected object syncObject = new object();
-    protected Dictionary<string, PluginContainer> plugins = new Dictionary<string, PluginContainer>();
-    protected Dictionary<string, CrossDomainObject> notifierContexts = new Dictionary<string, CrossDomainObject>();
-    protected TModel model;
+    protected readonly object SyncObject = new object();
+    protected readonly Dictionary<string, PluginContainer> Plugins = new Dictionary<string, PluginContainer>();
+    protected readonly Dictionary<ushort, TCommand> Commands = new Dictionary<ushort, TCommand>();
+    protected readonly Dictionary<string, object> NotifierContexts = new Dictionary<string, object>();
 
     private string path;
     private List<PluginInfo> infos;
-
-    private Thread processThread;
-    private ManualResetEvent processThreadEvent;
 
     private bool disposed;
 
@@ -50,11 +53,13 @@ namespace Engine.Plugins
 
     #region Initialization
 
+    [SecurityCritical]
     protected PluginManager(string pluginsPath)
     {
       path = pluginsPath;
     }
 
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (disposed)
@@ -62,65 +67,39 @@ namespace Engine.Plugins
 
       disposed = true;
 
-      var containers = plugins.Values.ToList();
+      var containers = Plugins.Values.ToList();
       foreach (var container in containers)
         UnloadPlugin(container);
-
-      processThreadEvent.Set();
-      processThread.Join();
-      processThread = null;
     }
-
-    #endregion
-
-    #region overridable
-
-    protected virtual void OnPluginLoaded(PluginContainer loaded)
-    {
-      var context = loaded.Plugin.NotifierContext;
-      if (context != null)
-        notifierContexts.Add(loaded.Plugin.Name, context);
-    }
-
-    protected virtual void OnPluginUnlodaing(PluginContainer unloading) 
-    {
-      notifierContexts.Remove(unloading.Plugin.Name);
-    }
-
-    protected virtual void OnError(string message, Exception e) { }
-
-    protected virtual void Process() { }
 
     #endregion
 
     #region load
 
+    [SecurityCritical]
     internal void LoadPlugins(string[] excludedPlugins)
     {
       try
       {
-        model = new TModel();
-
         var libs = FindLibraries(path);
         var loader = new PluginInfoLoader();
         infos = loader.LoadFrom(typeof(TPlugin).FullName, libs);
         if (infos != null)
           foreach (var info in infos)
             LoadPlugin(info, excludedPlugins);
-
-        processThreadEvent = new ManualResetEvent(false);
-        processThread = new Thread(ProcessThreadHandler);
-        processThread.IsBackground = true;
-        processThread.Start();
       }
       catch (Exception e)
       {
-        OnError("load plugins failed", e);
+        OnError("Load plugins failed", e);
       }
     }
 
+    [SecurityCritical]
     public void LoadPlugin(string name)
     {
+      if (infos == null)
+        return;
+
       var info = infos.Find(pi => pi.Name == name);
       if (info == null)
         return;
@@ -128,9 +107,10 @@ namespace Engine.Plugins
       LoadPlugin(info, null);
     }
 
+    [SecurityCritical]
     private void LoadPlugin(PluginInfo info, string[] excludedPlugins)
     {
-      lock (syncObject)
+      lock (SyncObject)
       {
         var domainSetup = new AppDomainSetup();
         domainSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
@@ -138,13 +118,11 @@ namespace Engine.Plugins
 
         var permissions = new PermissionSet(PermissionState.None);
         permissions.AddPermission(new UIPermission(PermissionState.Unrestricted));
-        permissions.AddPermission(new ReflectionPermission(PermissionState.Unrestricted));
 
         permissions.AddPermission(new SecurityPermission(
           SecurityPermissionFlag.Execution |
-          SecurityPermissionFlag.UnmanagedCode |
           SecurityPermissionFlag.SerializationFormatter |
-          SecurityPermissionFlag.Assertion));
+          SecurityPermissionFlag.UnmanagedCode)); // TODO: wpf need it :(
 
         permissions.AddPermission(new FileIOPermission(
           FileIOPermissionAccess.PathDiscovery |
@@ -152,31 +130,40 @@ namespace Engine.Plugins
           FileIOPermissionAccess.Read,
           AppDomain.CurrentDomain.BaseDirectory));
 
-        var domain = AppDomain.CreateDomain(string.Format("Plugin Domain [{0}]", Path.GetFileNameWithoutExtension(info.AssemblyPath)), null, domainSetup, permissions);
+        var engineStrongName = typeof(TPlugin).Assembly.Evidence.GetHostEvidence<StrongName>();
+        if (engineStrongName == null)
+        {
+          OnError("Can't load plugins. Engine library without strong name.", null);
+          return;
+        }
+
         var pluginName = string.Empty;
+        var domainName = string.Format("Plugin Domain [{0}]", Path.GetFileNameWithoutExtension(info.AssemblyPath));
+        var domain = AppDomain.CreateDomain(domainName, null, domainSetup, permissions, engineStrongName);
         try
         {
-          var plugin = (TPlugin)domain.CreateInstanceFromAndUnwrap(info.AssemblyPath, info.TypeName);
+          var plugin = (TPlugin) domain.CreateInstanceFromAndUnwrap(info.AssemblyPath, info.TypeName);
           info.Name = plugin.Name;
           pluginName = plugin.Name;
 
-          if (plugins.ContainsKey(pluginName) || (excludedPlugins != null && excludedPlugins.Contains(pluginName)))
+          if (Plugins.ContainsKey(pluginName) || (excludedPlugins != null && excludedPlugins.Contains(pluginName)))
           {
             AppDomain.Unload(domain);
             return;
           }
 
+          var model = new TModel();
+
           plugin.Initialize(model);
 
-          var container = new PluginContainer(domain, plugin);
-          plugins.Add(pluginName, container);
-          info.Loaded = true;
+          var container = new PluginContainer(domain, plugin, model);
+          Plugins.Add(pluginName, container);
 
           OnPluginLoaded(container);
         }
         catch (Exception e)
         {
-          OnError(string.Format("plugin failed: {0}", pluginName), e);
+          OnError(string.Format("Plugin failed: {0}", pluginName), e);
 
           if (UnloadPlugin(pluginName))
             return;
@@ -190,40 +177,27 @@ namespace Engine.Plugins
 
     #region unload
 
+    [SecurityCritical]
     public bool UnloadPlugin(string name)
     {
-      lock (syncObject)
+      lock (SyncObject)
       {
         PluginContainer container;
-        if (plugins.TryGetValue(name, out container))
+        if (Plugins.TryGetValue(name, out container))
           return UnloadPlugin(container);
 
         return false;
       }
     }
 
-    protected bool UnloadPlugin(Plugin<TModel> plugin)
-    {
-      lock (syncObject)
-      {
-        var containers = plugins.Values.ToList();
-        foreach (var container in containers)
-        {
-          if (ReferenceEquals(container.Plugin, plugin))
-            return UnloadPlugin(container);
-        }
-
-        return false;
-      }
-    }
-
+    [SecurityCritical]
     protected bool UnloadPlugin(PluginContainer container)
     {
-      lock (syncObject)
+      lock (SyncObject)
       {
         OnPluginUnlodaing(container);
 
-        plugins.Remove(container.Plugin.Name);
+        Plugins.Remove(container.Plugin.Name);
         AppDomain.Unload(container.Domain);
         return true;
       }
@@ -231,44 +205,74 @@ namespace Engine.Plugins
 
     #endregion unload
 
-    public bool IsLoaded(string name)
+    #region overridable
+
+    [SecurityCritical]
+    protected virtual void OnPluginLoaded(PluginContainer loaded)
     {
-      return plugins.ContainsKey(name);
+      // Context
+      var context = loaded.Plugin.NotifierContext;
+      if (context != null)
+        NotifierContexts.Add(loaded.Plugin.Name, context);
+
+      // Commands
+      foreach (var command in loaded.Plugin.Commands)
+        if (Commands.ContainsKey(command.Id))
+          throw new ArgumentException(string.Format("In manager already loaded plugin with same command id [CommandId: {0}]", command.Id));
+
+      foreach (var command in loaded.Plugin.Commands)
+        Commands.Add(command.Id, command);
+
+      loaded.CommandsLoaded = true;
     }
 
-    public string[] GetPlugins()
+    [SecurityCritical]
+    protected virtual void OnPluginUnlodaing(PluginContainer unloading)
     {
-      return infos.Select(pi => pi.Name).ToArray();
-    }
+      // Context
+      NotifierContexts.Remove(unloading.Plugin.Name);
 
-    internal IEnumerable GetNotifierContexts()
-    {
-      return notifierContexts.Values;
-    }
-
-    protected void ProcessThreadHandler()
-    {
-      while (true)
+      // Commands
+      if (unloading.CommandsLoaded)
       {
-        if (processThreadEvent.WaitOne(ProcessTimeout))
-          return;
-
-        lock (syncObject)
-        {
-          foreach (var container in plugins.Values)
-            container.Plugin.Process();
-
-          foreach (var context in notifierContexts.Values)
-            context.Process();
-        }
-
-        Process();
+        foreach (var command in unloading.Plugin.Commands)
+          Commands.Remove(command.Id);
       }
     }
 
+    [SecurityCritical]
+    protected virtual void OnError(string message, Exception e) { }
+
+    #endregion
+
+    #region helpers
+
+    [SecurityCritical]
+    public bool IsLoaded(string name)
+    {
+      return Plugins.ContainsKey(name);
+    }
+
+    [SecurityCritical]
+    public string[] GetPlugins()
+    {
+      if (infos == null)
+        return null;
+      return infos.Select(pi => pi.Name).ToArray();
+    }
+
+    [SecurityCritical]
+    internal IEnumerable GetNotifierContexts()
+    {
+      return NotifierContexts.Values;
+    }
+
+    [SecurityCritical]
     private static string[] FindLibraries(string path)
     {
       return Directory.GetFiles(path).Where(f => f.Contains(".dll")).ToArray();
     }
+
+    #endregion
   }
 }

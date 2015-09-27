@@ -12,7 +12,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("39-80")]
 [assembly: AssemblyProduct("TCPChat")]
-[assembly: AssemblyCopyright("Copyright © 39-80 2013-2014")]
+[assembly: AssemblyCopyright("Copyright © 39-80 2015")]
 [assembly: AssemblyTrademark("ThirtyNineEighty")]
 [assembly: AssemblyCulture("")]
 
@@ -51,5 +51,5 @@ using System.Windows;
 // Можно задать все значения или принять номер построения и номер редакции по умолчанию, 
 // используя "*", как показано ниже:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.3.1.*")]
-[assembly: AssemblyFileVersion("2.3.1.0")]
+[assembly: AssemblyVersion("2.4.0.0")]
+[assembly: AssemblyFileVersion("2.4.0.0")]

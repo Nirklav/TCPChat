@@ -1,11 +1,14 @@
 ﻿using Engine.Model.Common;
 using System;
 using System.Collections.Generic;
+using System.Security;
 
 namespace Engine.Model.Server
 {
+  [SecuritySafeCritical]
   public class ServerNotifier : Notifier
   {
+    [SecuritySafeCritical]
     public override object[] GetContexts()
     {
       var contexts = new List<object>(base.GetContexts());

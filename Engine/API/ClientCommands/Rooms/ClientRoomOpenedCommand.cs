@@ -3,12 +3,23 @@ using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Collections.Generic;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientRoomOpenedCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.RoomOpened;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -39,15 +50,27 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      Room room;
-      RoomType type;
-      List<User> users;
+      private Room room;
+      private RoomType type;
+      private List<User> users;
 
-      public Room Room { get { return room; } set { room = value; } }
-      public RoomType Type { get { return type; } set { type = value; } }
-      public List<User> Users { get { return users; } set { users = value; } }
+      public Room Room
+      {
+        get { return room; }
+        set { room = value; }
+      }
+
+      public RoomType Type
+      {
+        get { return type; }
+        set { type = value; }
+      }
+
+      public List<User> Users
+      {
+        get { return users; }
+        set { users = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.RoomOpened;
   }
 }

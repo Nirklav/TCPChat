@@ -1,15 +1,18 @@
-﻿using Engine.Model.Server;
+﻿using Engine.API;
+using Engine.Model.Server;
 using Engine.Network.Connections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security;
 using System.Security.Cryptography;
 using System.Threading;
 
 namespace Engine.Network
 {
+  [SecuritySafeCritical]
   public sealed class AsyncServer :
     MarshalByRefObject,
     IDisposable
@@ -27,6 +30,7 @@ namespace Engine.Network
     private ServerRequestQueue requestQueue;
     private bool isServerRunning;
     private long lastTempId;
+    private bool disposed;
 
     private object timerSync = new object();
     private Timer systemTimer;
@@ -38,6 +42,7 @@ namespace Engine.Network
     /// </summary>
     public bool IsServerRunning
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -50,6 +55,7 @@ namespace Engine.Network
     /// </summary>
     public P2PService P2PService
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -62,11 +68,13 @@ namespace Engine.Network
     /// </summary>
     public bool UsingIPv6
     {
+      [SecurityCritical]
       get { return listener.AddressFamily == AddressFamily.InterNetworkV6; }
     }
     #endregion
 
     #region constructors
+    [SecurityCritical]
     public AsyncServer()
     {
       connections = new Dictionary<string, ServerConnection>();
@@ -83,6 +91,7 @@ namespace Engine.Network
     /// <param name="p2pServicePort">Порт UDP P2P сервиса.</param>
     /// <param name="usingIPv6">Использовать ли IPv6, при ложном значении будет использован IPv4.</param>
     /// <exception cref="System.ArgumentException"/>
+    [SecurityCritical]
     public void Start(int serverPort, int p2pServicePort, bool usingIPv6)
     {
       ThrowIfDisposed();
@@ -90,7 +99,7 @@ namespace Engine.Network
       if (isServerRunning)
         return;
 
-      if (!Connection.TCPPortIsAvailable(serverPort))
+      if (!Connection.TcpPortIsAvailable(serverPort))
         throw new ArgumentException("port not available", "serverPort");
 
       p2pService = new P2PService(p2pServicePort, usingIPv6);
@@ -106,6 +115,13 @@ namespace Engine.Network
       isServerRunning = true;
     }
 
+    /// <summary>
+    /// Регистрирует соединение.
+    /// </summary>
+    /// <param name="tempId">Временный идентификатор соединения.</param>
+    /// <param name="id">Новый идентификатор соединения.</param>
+    /// <param name="openKey">Публичный ключ соединения.</param>
+    [SecurityCritical]
     public void RegisterConnection(string tempId, string id, RSAParameters openKey)
     {
       lock (connections)
@@ -124,6 +140,7 @@ namespace Engine.Network
     /// Закрывает соединение.
     /// </summary>
     /// <param name="id">Id cоединения, которое будет закрыто.</param>
+    [SecurityCritical]
     public void CloseConnection(string id)
     {
       P2PService.RemoveEndPoint(id);
@@ -145,6 +162,7 @@ namespace Engine.Network
     /// <param name="messageId">Тип сообщения. (Command.Id)</param>
     /// <param name="messageContent">Контект команды.</param>
     /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
+    [SecurityCritical]
     public void SendMessage(string connectionId, ushort messageId, object messageContent, bool allowTempConnections = false)
     {
       lock (connections)
@@ -162,6 +180,7 @@ namespace Engine.Network
     /// <param name="messageId">Тип сообщения. (Command.Id)</param>
     /// <param name="messageContent">Сериализованный контект команды.</param>
     /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
+    [SecurityCritical]
     public void SendMessage(string connectionId, ushort messageId, byte[] messageContent, bool allowTempConnections = false)
     {
       lock (connections)
@@ -176,6 +195,7 @@ namespace Engine.Network
     /// Возвращает список зарегестрированых Id соединений.
     /// </summary>
     /// <returns>Список зарегестрированых Id.</returns>
+    [SecurityCritical]
     public string[] GetConnetionsIds()
     {
       lock (connections)
@@ -187,6 +207,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="id">Идентификатор соединения.</param>
     /// <returns>Открытый ключ.</returns>
+    [SecurityCritical]
     public RSAParameters GetOpenKey(string id)
     {
       lock (connections)
@@ -201,6 +222,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="id">Id соединения.</param>
     /// <returns>Есть ли соединение.</returns>
+    [SecurityCritical]
     public bool ContainsConnection(string id)
     {
       lock (connections)
@@ -209,6 +231,7 @@ namespace Engine.Network
     #endregion
 
     #region private callback methods
+    [SecurityCritical]
     private void AcceptCallback(IAsyncResult result)
     {
       if (!isServerRunning)
@@ -221,7 +244,7 @@ namespace Engine.Network
         var handler = listener.EndAccept(result);
         var connection = new ServerConnection(handler, MaxDataSize, DataReceivedCallback);
 
-        connection.SendAPIName(ServerModel.API.Name);
+        connection.SendApiName(ServerModel.API.Name);
 
         lock (connections)
         {
@@ -235,6 +258,7 @@ namespace Engine.Network
       }
     }
 
+    [SecurityCritical]
     private void DataReceivedCallback(object sender, DataReceivedEventArgs e)
     {
       try
@@ -262,6 +286,7 @@ namespace Engine.Network
     }
 
     #region timer process
+    [SecurityCritical]
     private void TimerCallback(object arg)
     {
       RefreshConnections();
@@ -272,6 +297,7 @@ namespace Engine.Network
           systemTimer.Change(SystemTimerInterval, -1);
     }
 
+    [SecurityCritical]
     private void RefreshConnections()
     {
       List<string> removingUsers = null; // Prevent deadlock (in RemoveUser locked ServerModel)
@@ -319,6 +345,7 @@ namespace Engine.Network
         }
     }
 
+    [SecurityCritical]
     private void RefreshRooms()
     {
       if (ServerModel.IsInited)
@@ -339,6 +366,7 @@ namespace Engine.Network
     #endregion
 
     #region private methods
+    [SecurityCritical]
     private ServerConnection GetConnection(string connectionId, bool allowTempConnections = false)
     {
       if (connectionId.Contains(Connection.TempConnectionPrefix) && !allowTempConnections)
@@ -356,19 +384,16 @@ namespace Engine.Network
     #endregion
 
     #region IDisposable
-    bool disposed = false;
-
+    [SecurityCritical]
     private void ThrowIfDisposed()
     {
       if (disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
-    private void ReleaseManagedResource()
+    [SecurityCritical]
+    private void DisposeManagedResources()
     {
-      if (disposed)
-        return;
-
       isServerRunning = false;
 
       if (requestQueue != null)
@@ -395,16 +420,19 @@ namespace Engine.Network
 
       if (p2pService != null)
         p2pService.Dispose();
-
-      disposed = true;
     }
 
     /// <summary>
     /// Особождает все ресуры используемые сервером.
     /// </summary>
+    [SecuritySafeCritical]
     public void Dispose()
     {
-      ReleaseManagedResource();
+      if (disposed)
+        return;
+
+      disposed = true;
+      DisposeManagedResources();
     }
     #endregion
   }

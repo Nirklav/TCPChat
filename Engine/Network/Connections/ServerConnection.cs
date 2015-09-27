@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Server;
 using System;
 using System.Net.Sockets;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -10,6 +11,7 @@ namespace Engine.Network.Connections
   /// <summary>
   /// Серверное соединение с клиентом.
   /// </summary>
+  [SecuritySafeCritical]
   sealed class ServerConnection :
     Connection
   {
@@ -40,6 +42,7 @@ namespace Engine.Network.Connections
     /// <param name="maxReceivedDataSize">Максимальныйц размер сообщения получаемый от пользователя.</param>
     /// <param name="ConnectionLogger">Логгер.</param>
     /// <param name="receivedCallback">Функция оповещающая о полученнии сообщения, данным соединением.</param>
+    [SecurityCritical]
     public ServerConnection(Socket handler, int maxReceivedDataSize, EventHandler<DataReceivedEventArgs> receivedCallback)
     {
       Construct(handler, maxReceivedDataSize);
@@ -60,6 +63,7 @@ namespace Engine.Network.Connections
     /// </summary>
     public int IntervalOfSilence
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -72,6 +76,7 @@ namespace Engine.Network.Connections
     /// </summary>
     public int UnregisteredTimeInterval
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -84,6 +89,7 @@ namespace Engine.Network.Connections
     /// </summary>
     public bool IsRegistered
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -96,6 +102,7 @@ namespace Engine.Network.Connections
     /// </summary>
     public RSAParameters OpenKey
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -108,11 +115,12 @@ namespace Engine.Network.Connections
     /// <summary>
     /// Отправляет сообщение с именем API, которое использует сервер.
     /// </summary>
-    /// <param name="APIName">Название API.</param>
-    public void SendAPIName(string APIName)
+    /// <param name="apiName">Название API.</param>
+    [SecurityCritical]
+    public void SendApiName(string apiName)
     {
       ThrowIfDisposed();
-      SendMessage(Encoding.Unicode.GetBytes(APIName));
+      SendMessage(Encoding.Unicode.GetBytes(apiName));
     }
 
     /// <summary>
@@ -120,6 +128,7 @@ namespace Engine.Network.Connections
     /// </summary>
     /// <param name="id">Идентификатор соединения.</param>
     /// <param name="openKey">Открытый ключ соединения.</param>
+    [SecurityCritical]
     public void Register(string id, RSAParameters openKey)
     {
       ThrowIfDisposed();
@@ -129,11 +138,13 @@ namespace Engine.Network.Connections
     #endregion
 
     #region override methods
+    [SecuritySafeCritical]
     protected override void OnPackageReceived()
     {
       lastActivity = DateTime.Now;
     }
 
+    [SecuritySafeCritical]
     protected override void OnDataReceived(DataReceivedEventArgs args)
     {
       if (args.Error != null)
@@ -152,6 +163,7 @@ namespace Engine.Network.Connections
         temp(this, args);
     }
 
+    [SecuritySafeCritical]
     protected override void OnDataSended(DataSendedEventArgs args)
     {
       if (args.Error != null)

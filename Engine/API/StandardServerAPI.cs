@@ -1,18 +1,19 @@
 ﻿using Engine.API.ClientCommands;
 using Engine.API.ServerCommands;
-using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security;
 
 namespace Engine.API
 {
   /// <summary>
   /// Класс реазиующий стандартное серверное API.
   /// </summary>
-  class StandardServerAPI :
+  [SecuritySafeCritical]
+  sealed class StandardServerAPI :
     MarshalByRefObject,
     IServerAPI
   {
@@ -27,27 +28,34 @@ namespace Engine.API
     /// Создает экземпляр API.
     /// </summary>
     /// <param name="host">Сервер которому будет принадлежать данный API.</param>
+    [SecurityCritical]
     public StandardServerAPI()
     {
       commands = new Dictionary<ushort, ICommand<ServerCommandArgs>>();
 
-      commands.Add(ServerRegisterCommand.Id, new ServerRegisterCommand());
-      commands.Add(ServerUnregisterCommand.Id, new ServerUnregisterCommand());
-      commands.Add(ServerSendRoomMessageCommand.Id, new ServerSendRoomMessageCommand());
-      commands.Add(ServerSendPrivateMessageCommand.Id, new ServerSendPrivateMessageCommand());
-      commands.Add(ServerGetUserOpenKeyCommand.Id, new ServerGetUserOpenKeyCommand());
-      commands.Add(ServerCreateRoomCommand.Id, new ServerCreateRoomCommand());
-      commands.Add(ServerDeleteRoomCommand.Id, new ServerDeleteRoomCommand());
-      commands.Add(ServerInviteUsersCommand.Id, new ServerInviteUsersCommand());
-      commands.Add(ServerKickUsersCommand.Id, new ServerKickUsersCommand());
-      commands.Add(ServerExitFromRoomCommand.Id, new ServerExitFromRoomCommand());
-      commands.Add(ServerRefreshRoomCommand.Id, new ServerRefreshRoomCommand());
-      commands.Add(ServerSetRoomAdminCommand.Id, new ServerSetRoomAdminCommand());
-      commands.Add(ServerAddFileToRoomCommand.Id, new ServerAddFileToRoomCommand());
-      commands.Add(ServerRemoveFileFromRoomCommand.Id, new ServerRemoveFileFromRoomCommand());
-      commands.Add(ServerP2PConnectRequestCommand.Id, new ServerP2PConnectRequestCommand());
-      commands.Add(ServerP2PReadyAcceptCommand.Id, new ServerP2PReadyAcceptCommand());
-      commands.Add(ServerPingRequestCommand.Id, new ServerPingRequestCommand());
+      AddCommand(new ServerRegisterCommand());
+      AddCommand(new ServerUnregisterCommand());
+      AddCommand(new ServerSendRoomMessageCommand());
+      AddCommand(new ServerSendPrivateMessageCommand());
+      AddCommand(new ServerGetUserOpenKeyCommand());
+      AddCommand(new ServerCreateRoomCommand());
+      AddCommand(new ServerDeleteRoomCommand());
+      AddCommand(new ServerInviteUsersCommand());
+      AddCommand(new ServerKickUsersCommand());
+      AddCommand(new ServerExitFromRoomCommand());
+      AddCommand(new ServerRefreshRoomCommand());
+      AddCommand(new ServerSetRoomAdminCommand());
+      AddCommand(new ServerAddFileToRoomCommand());
+      AddCommand(new ServerRemoveFileFromRoomCommand());
+      AddCommand(new ServerP2PConnectRequestCommand());
+      AddCommand(new ServerP2PReadyAcceptCommand());
+      AddCommand(new ServerPingRequestCommand());
+    }
+
+    [SecurityCritical]
+    private void AddCommand(ICommand<ServerCommandArgs> command)
+    {
+      commands.Add(command.Id, command);
     }
 
     /// <summary>
@@ -55,6 +63,7 @@ namespace Engine.API
     /// </summary>
     public string Name
     {
+      [SecuritySafeCritical]
       get { return API; }
     }
 
@@ -63,9 +72,16 @@ namespace Engine.API
     /// </summary>
     /// <param name="message">Пришедшее сообщение, по которому будет определена необходимая для извлекания команда.</param>
     /// <returns>Команда для выполнения.</returns>
+    [SecuritySafeCritical]
     public ICommand<ServerCommandArgs> GetCommand(byte[] message)
     {
-      ushort id = BitConverter.ToUInt16(message, 0);
+      if (message == null)
+        throw new ArgumentNullException("message");
+
+      if (message.Length < 2)
+        throw new ArgumentException("message.Length < 2");
+
+      var id = BitConverter.ToUInt16(message, 0);
 
       ICommand<ServerCommandArgs> command;
       if (commands.TryGetValue(id, out command))
@@ -81,6 +97,7 @@ namespace Engine.API
     /// Напрямую соединяет пользователей.
     /// </summary>
     /// <param name="container"></param>
+    [SecuritySafeCritical]
     public void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint)
     {
       using (var context = ServerModel.Get())
@@ -92,7 +109,7 @@ namespace Engine.API
           RemoteInfo = context.Users[senderId],
         };
 
-        ServerModel.Server.SendMessage(requestId, ClientWaitPeerConnectionCommand.Id, content);
+        ServerModel.Server.SendMessage(requestId, ClientWaitPeerConnectionCommand.CommandId, content);
       }
     }
 
@@ -101,26 +118,29 @@ namespace Engine.API
     /// </summary>
     /// <param name="nick">Пользователь получащий сообщение.</param>
     /// <param name="message">Сообщение.</param>
+    [SecuritySafeCritical]
     public void SendSystemMessage(string nick, string message)
     {
       var sendingContent = new ClientOutSystemMessageCommand.MessageContent { Message = message };
-      ServerModel.Server.SendMessage(nick, ClientOutSystemMessageCommand.Id, sendingContent);
+      ServerModel.Server.SendMessage(nick, ClientOutSystemMessageCommand.CommandId, sendingContent);
     }
 
     /// <summary>
     /// Посылает клиенту запрос на подключение к P2PService
     /// </summary>
     /// <param name="nick">Пользователь получащий запрос.</param>
+    [SecuritySafeCritical]
     public void SendP2PConnectRequest(string nick, int servicePort)
     {
       var sendingContent = new ClientConnectToP2PServiceCommand.MessageContent { Port = servicePort };
-      ServerModel.Server.SendMessage(nick, ClientConnectToP2PServiceCommand.Id, sendingContent);
+      ServerModel.Server.SendMessage(nick, ClientConnectToP2PServiceCommand.CommandId, sendingContent);
     }
 
     /// <summary>
     /// Удаляет пользователя и закрывает соединение с ним.
     /// </summary>
     /// <param name="nick">Ник пользователя, соединение котрого будет закрыто.</param>
+    [SecuritySafeCritical]
     public void RemoveUser(string nick)
     {
       ServerModel.Server.CloseConnection(nick);
@@ -129,8 +149,7 @@ namespace Engine.API
       {
         foreach (string roomName in server.Rooms.Keys)
         {
-          Room room = server.Rooms[roomName];
-
+          var room = server.Rooms[roomName];
           if (!room.Users.Contains(nick))
             continue;
 
@@ -143,7 +162,7 @@ namespace Engine.API
 
             if (room.Admin != null)
             {
-              string message = string.Format("Вы назначены администратором комнаты {0}.", room.Name);
+              var message = string.Format("Вы назначены администратором комнаты {0}.", room.Name);
               ServerModel.API.SendSystemMessage(room.Admin, message);
             }
           }
@@ -159,7 +178,7 @@ namespace Engine.API
             if (user == null)
               continue;
 
-            ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.Id, sendingContent);
+            ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.CommandId, sendingContent);
           }
         }
       }

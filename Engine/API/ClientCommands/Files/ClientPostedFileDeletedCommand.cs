@@ -2,14 +2,24 @@
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientPostedFileDeletedCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.PostedFileDeleted;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -41,13 +51,20 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      FileDescription file;
-      string roomName;
+      private FileDescription file;
+      private string roomName;
 
-      public FileDescription File { get { return file; } set { file = value; } }
-      public string RoomName { get { return roomName; } set { roomName = value; } }
+      public FileDescription File
+      {
+        get { return file; }
+        set { file = value; }
+      }
+
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.PostedFileDeleted;
   }
 }

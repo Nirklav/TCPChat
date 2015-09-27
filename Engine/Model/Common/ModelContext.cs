@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Security;
 using System.Threading;
 
 namespace Engine.Model
 {
+  [SecurityCritical]
   public abstract class ModelContext<TModel> :
     MarshalByRefObject,
     IDisposable
@@ -24,6 +23,7 @@ namespace Engine.Model
     #endregion
 
     #region initialization
+    [SecurityCritical]
     protected ModelContext(TModel initialModel)
     {
       if (!Monitor.TryEnter(syncObject, TimeOut))
@@ -32,6 +32,7 @@ namespace Engine.Model
       model = initialModel;
     }
 
+    [SecuritySafeCritical]
     public void Dispose()
     {
       model = default(TModel);

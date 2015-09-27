@@ -2,14 +2,25 @@
 using Engine.Model.Client;
 using System;
 using System.IO;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientOutPrivateMessageCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.OutPrivateMessage;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -51,15 +62,27 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      byte[] key;
-      byte[] message;
-      string sender;
+      private byte[] key;
+      private byte[] message;
+      private string sender;
 
-      public byte[] Key { get { return key; } set { key = value; } }
-      public byte[] Message { get { return message; } set { message = value; } }
-      public string Sender { get { return sender; } set { sender = value; } }
+      public byte[] Key
+      {
+        get { return key; }
+        set { key = value; }
+      }
+
+      public byte[] Message
+      {
+        get { return message; }
+        set { message = value; }
+      }
+
+      public string Sender
+      {
+        get { return sender; }
+        set { sender = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.OutPrivateMessage;
   }
 }

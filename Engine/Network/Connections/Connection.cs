@@ -5,12 +5,14 @@ using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Security;
 
 namespace Engine.Network.Connections
 {
   /// <summary>
   /// Базовый класс соединения, реализовывает прием и передачу данных.
   /// </summary>
+  [SecuritySafeCritical]
   public abstract class Connection :
     MarshalByRefObject,
     IDisposable
@@ -31,6 +33,7 @@ namespace Engine.Network.Connections
     #endregion
 
     #region constructors
+    [SecurityCritical]
     protected void Construct(Socket handler, int maxReceivedDataSize)
     {
       if (handler == null)
@@ -58,7 +61,9 @@ namespace Engine.Network.Connections
     /// </summary>
     public string Id
     {
+      [SecurityCritical]
       get { return id; }
+      [SecurityCritical]
       set
       {
         ThrowIfDisposed();
@@ -71,6 +76,7 @@ namespace Engine.Network.Connections
     /// </summary>
     public IPEndPoint RemotePoint
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -83,6 +89,7 @@ namespace Engine.Network.Connections
     /// </summary>
     public IPEndPoint LocalPoint
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -97,6 +104,7 @@ namespace Engine.Network.Connections
     /// </summary>
     /// <param name="id">Индетификатор команды.</param>
     /// <param name="messageContent">Сериализованный параметр команды.</param>
+    [SecuritySafeCritical]
     public virtual void SendMessage(ushort id, byte[] messageContent)
     {
       ThrowIfDisposed();
@@ -131,6 +139,7 @@ namespace Engine.Network.Connections
     /// </summary>
     /// <param name="id">Индетификатор команды.</param>
     /// <param name="messageContent">Параметр команды.</param>
+    [SecuritySafeCritical]
     public virtual void SendMessage(ushort id, object messageContent)
     {
       ThrowIfDisposed();
@@ -165,6 +174,7 @@ namespace Engine.Network.Connections
       }
     }
 
+    [SecurityCritical]
     public void Disconnect()
     {
       ThrowIfDisposed();
@@ -177,6 +187,7 @@ namespace Engine.Network.Connections
     #endregion
 
     #region private callback methods
+    [SecurityCritical]
     private void ReceiveCallback(IAsyncResult result)
     {
       if (disposed)
@@ -208,6 +219,7 @@ namespace Engine.Network.Connections
       }
     }
 
+    [SecurityCritical]
     private void SendCallback(IAsyncResult result)
     {
       if (disposed)
@@ -230,6 +242,7 @@ namespace Engine.Network.Connections
       }
     }
 
+    [SecurityCritical]
     private void DisconnectCallback(IAsyncResult result)
     {
       if (disposed)
@@ -258,22 +271,26 @@ namespace Engine.Network.Connections
     /// Происходит когда получено полное сообщение.
     /// </summary>
     /// <param name="args">Инормация о данных, и данные.</param>
+    [SecuritySafeCritical]
     protected abstract void OnDataReceived(DataReceivedEventArgs args);
 
     /// <summary>
     /// Происходит при отправке данных. Или при возниконовении ошибки произошедшей во время передачи данных.
     /// </summary>
     /// <param name="args">Информация о отправленных данных.</param>
+    [SecuritySafeCritical]
     protected abstract void OnDataSended(DataSendedEventArgs args);
 
     /// <summary>
     /// Происходит при получении пакета данных.
     /// </summary>
+    [SecuritySafeCritical]
     protected virtual void OnPackageReceived() { }
 
     /// <summary>
     /// Происходит при отсоединении.
     /// </summary>
+    [SecuritySafeCritical]
     protected virtual void OnDisconnected(Exception e = null) { }
 
     /// <summary>
@@ -281,6 +298,7 @@ namespace Engine.Network.Connections
     /// </summary>
     /// <param name="se">Словленое исключение.</param>
     /// <returns>Вовзращает значение говорящее о том, нужно ли дальше выкидывать исключение, или оно обработано. true - обработано. false - не обработано.</returns>
+    [SecuritySafeCritical]
     protected virtual bool HandleSocketException(SocketException se)
     {
       return false;
@@ -288,6 +306,7 @@ namespace Engine.Network.Connections
     #endregion
 
     #region private methods
+    [SecurityCritical]
     private void TryProcessData()
     {
       if (IsDataReceived())
@@ -297,42 +316,44 @@ namespace Engine.Network.Connections
           throw new ModelException(ErrorCode.LargeReceivedData);
     }
 
+    [SecurityCritical]
     private byte[] GetData()
     {
       if (!IsDataReceived())
         return null;
 
-      int receivingDataSize = GetReceivingDataSize();
-      int restDataSize = (int)(receivedData.Position - receivingDataSize);
+      var receivingDataSize = GetReceivingDataSize();
+      var restDataSize = (int)(receivedData.Position - receivingDataSize);
 
-      byte[] resultData = new byte[receivingDataSize - sizeof(int)];
-      byte[] memoryStreamBuffer = receivedData.GetBuffer();
+      var resultData = new byte[receivingDataSize - sizeof(int)];
+      var buffer = receivedData.GetBuffer();
 
-      Buffer.BlockCopy(memoryStreamBuffer, sizeof(int), resultData, 0, resultData.Length);
+      Buffer.BlockCopy(buffer, sizeof(int), resultData, 0, resultData.Length);
 
       receivedData.Seek(0, SeekOrigin.Begin);
 
       if (restDataSize > 0)
-        receivedData.Write(memoryStreamBuffer, receivingDataSize, restDataSize);
+        receivedData.Write(buffer, receivingDataSize, restDataSize);
 
       TryProcessData();
 
       return resultData;
     }
 
+    [SecurityCritical]
     private bool IsDataReceived()
     {
-      int receivingDataSize = GetReceivingDataSize();
-
-      if (receivingDataSize == -1)
+      var size = GetReceivingDataSize();
+      if (size == -1)
         return false;
 
-      if (receivingDataSize > receivedData.Position)
+      if (size > receivedData.Position)
         return false;
 
       return true;
     }
 
+    [SecurityCritical]
     private int GetReceivingDataSize()
     {
       if (receivedData.Position < sizeof(int))
@@ -341,6 +362,7 @@ namespace Engine.Network.Connections
       return BitConverter.ToInt32(receivedData.GetBuffer(), 0);
     }
 
+    [SecurityCritical]
     protected virtual void SendMessage(byte[] data)
     {
       int messageSize = data.Length + sizeof(int);
@@ -370,32 +392,41 @@ namespace Engine.Network.Connections
     #endregion
 
     #region IDisposable
+    [SecurityCritical]
     protected void ThrowIfDisposed()
     {
       if (disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
-    public virtual void Dispose()
+    [SecuritySafeCritical]
+    protected virtual void DisposeManagedResources()
     {
-      if (disposed)
-        return;
-
-      disposed = true;
-
       if (handler != null)
       {
+        handler.Shutdown(SocketShutdown.Both);
+
         if (handler.Connected)
         {
           handler.Disconnect(false);
           OnDisconnected();
         }
 
-        handler.Close();
+        handler.Dispose();
       }
 
       if (receivedData != null)
         receivedData.Dispose();
+    }
+
+    [SecuritySafeCritical]
+    public void Dispose()
+    {
+      if (disposed)
+        return;
+
+      disposed = true;
+      DisposeManagedResources();
     }
     #endregion
 
@@ -405,26 +436,23 @@ namespace Engine.Network.Connections
     /// </summary>
     /// <param name="port">Порт который необходимо проверить.</param>
     /// <returns>Возвращает true если порт свободный.</returns>
-    public static bool TCPPortIsAvailable(int port)
+    [SecuritySafeCritical]
+    public static bool TcpPortIsAvailable(int port)
     {
       if (port < 0 || port > ushort.MaxValue)
         return false;
 
-      IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
-      TcpConnectionInformation[] tcpConnectionsInfo = ipGlobalProperties.GetActiveTcpConnections();
-      IPEndPoint[] listenersPoints = ipGlobalProperties.GetActiveTcpListeners();
+      var properties = IPGlobalProperties.GetIPGlobalProperties();
+      var connections = properties.GetActiveTcpConnections();
+      var listeners = properties.GetActiveTcpListeners();
 
-      foreach (TcpConnectionInformation tcpi in tcpConnectionsInfo)
-      {
-        if (tcpi.LocalEndPoint.Port == port)
+      foreach (var connection in connections)
+        if (connection.LocalEndPoint.Port == port)
           return false;
-      }
 
-      foreach (IPEndPoint ep in listenersPoints)
-      {
-        if (ep.Port == port)
+      foreach (var listener in listeners)
+        if (listener.Port == port)
           return false;
-      }
 
       return true;
     }
@@ -434,10 +462,15 @@ namespace Engine.Network.Connections
     /// </summary>
     /// <param name="type">Тип адреса.</param>
     /// <returns>IP адрес данного компьютера.</returns>
-    public static IPAddress GetIPAddress(AddressFamily type)
+    [SecuritySafeCritical]
+    public static IPAddress GetIpAddress(AddressFamily type)
     {
       IPAddress address = null;
-      foreach (IPAddress ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+
+      var hostName = Dns.GetHostName();
+      var entry = Dns.GetHostEntry(hostName);
+
+      foreach (var ip in entry.AddressList)
         if (ip.AddressFamily == type && !ip.IsIPv6LinkLocal && !ip.IsIPv6SiteLocal && !ip.IsIPv6Multicast)
           address = ip;
 

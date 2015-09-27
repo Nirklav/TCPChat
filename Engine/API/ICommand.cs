@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace Engine
+namespace Engine.API
 {
-  public interface ICommand<in TArgs>
+  public interface ICommand
+  {
+    ushort Id { get; }
+  }
+
+  public interface ICommand<in TArgs> : ICommand
   {
     void Run(TArgs args);
   }

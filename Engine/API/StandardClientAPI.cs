@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Threading;
 
 namespace Engine.API
@@ -15,7 +16,8 @@ namespace Engine.API
   /// <summary>
   /// Класс реализующий стандартный API для клиента.
   /// </summary>
-  class StandardClientAPI :
+  [SecuritySafeCritical]
+  sealed class StandardClientAPI :
     MarshalByRefObject,
     IClientAPI
   {
@@ -34,6 +36,7 @@ namespace Engine.API
     /// Создает экземпляр API.
     /// </summary>
     /// <param name="host">Клиент которому будет принадлежать данный API.</param>
+    [SecurityCritical]
     public StandardClientAPI()
     {
       commands = new Dictionary<ushort, ICommand<ClientCommandArgs>>();
@@ -42,31 +45,38 @@ namespace Engine.API
 
       ClientModel.Recorder.Recorded += OnRecorded;
 
-      commands.Add(ClientRegistrationResponseCommand.Id, new ClientRegistrationResponseCommand());
-      commands.Add(ClientRoomRefreshedCommand.Id, new ClientRoomRefreshedCommand());
-      commands.Add(ClientOutRoomMessageCommand.Id, new ClientOutRoomMessageCommand());
-      commands.Add(ClientOutPrivateMessageCommand.Id, new ClientOutPrivateMessageCommand());
-      commands.Add(ClientOutSystemMessageCommand.Id, new ClientOutSystemMessageCommand());
-      commands.Add(ClientFilePostedCommand.Id, new ClientFilePostedCommand());
-      commands.Add(ClientReceiveUserOpenKeyCommand.Id, new ClientReceiveUserOpenKeyCommand());
-      commands.Add(ClientRoomOpenedCommand.Id, new ClientRoomOpenedCommand());
-      commands.Add(ClientRoomClosedCommand.Id, new ClientRoomClosedCommand());
-      commands.Add(ClientPostedFileDeletedCommand.Id, new ClientPostedFileDeletedCommand());
-      commands.Add(ClientReadFilePartCommand.Id, new ClientReadFilePartCommand());
-      commands.Add(ClientWriteFilePartCommand.Id, new ClientWriteFilePartCommand());
-      commands.Add(ClientPingResponceCommand.Id, new ClientPingResponceCommand());
-      commands.Add(ClientConnectToPeerCommand.Id, new ClientConnectToPeerCommand());
-      commands.Add(ClientWaitPeerConnectionCommand.Id, new ClientWaitPeerConnectionCommand());
-      commands.Add(ClientConnectToP2PServiceCommand.Id, new ClientConnectToP2PServiceCommand());
-      commands.Add(ClientPlayVoiceCommand.Id, new ClientPlayVoiceCommand());
+      AddCommand(new ClientRegistrationResponseCommand());
+      AddCommand(new ClientRoomRefreshedCommand());
+      AddCommand(new ClientOutRoomMessageCommand());
+      AddCommand(new ClientOutPrivateMessageCommand());
+      AddCommand(new ClientOutSystemMessageCommand());
+      AddCommand(new ClientFilePostedCommand());
+      AddCommand(new ClientReceiveUserOpenKeyCommand());
+      AddCommand(new ClientRoomOpenedCommand());
+      AddCommand(new ClientRoomClosedCommand());
+      AddCommand(new ClientPostedFileDeletedCommand());
+      AddCommand(new ClientReadFilePartCommand());
+      AddCommand(new ClientWriteFilePartCommand());
+      AddCommand(new ClientPingResponceCommand());
+      AddCommand(new ClientConnectToPeerCommand());
+      AddCommand(new ClientWaitPeerConnectionCommand());
+      AddCommand(new ClientConnectToP2PServiceCommand());
+      AddCommand(new ClientPlayVoiceCommand());
     }
 
+    [SecurityCritical]
+    private void AddCommand(ICommand<ClientCommandArgs> command)
+    {
+      commands.Add(command.Id, command);
+    }
+
+    [SecurityCritical]
     private void OnRecorded(object sender, RecordedEventArgs e)
     {
       if (!ClientModel.IsInited)
         return;
 
-      byte[] data = new byte[e.DataSize];
+      var data = new byte[e.DataSize];
       Buffer.BlockCopy(e.Data, 0, data, 0, data.Length);
 
       ClientPlayVoiceCommand.MessageContent content = new ClientPlayVoiceCommand.MessageContent
@@ -83,7 +93,7 @@ namespace Engine.API
 
       using (var client = ClientModel.Get())
       {
-        List<string> receivers = client.Rooms.Values
+        var receivers = client.Rooms.Values
           .OfType<VoiceRoom>()
           .SelectMany(r => r.Users)
           .Distinct()
@@ -91,7 +101,7 @@ namespace Engine.API
 
         receivers.Remove(client.User.Nick);
 
-        ClientModel.Peer.SendMessageIfConnected(receivers, ClientPlayVoiceCommand.Id, content, true);
+        ClientModel.Peer.SendMessageIfConnected(receivers, ClientPlayVoiceCommand.CommandId, content, true);
       }
     }
 
@@ -100,6 +110,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="message">Пришедшее сообщение, по которому будет определена необходимая для извлекания команда.</param>
     /// <returns>Команда для выполнения.</returns>
+    [SecuritySafeCritical]
     public ICommand<ClientCommandArgs> GetCommand(byte[] message)
     {
       if (message == null)
@@ -108,7 +119,7 @@ namespace Engine.API
       if (message.Length < 2)
         throw new ArgumentException("message.Length < 2");
 
-      ushort id = BitConverter.ToUInt16(message, 0);
+      var id = BitConverter.ToUInt16(message, 0);
 
       ICommand<ClientCommandArgs> command;
       if (commands.TryGetValue(id, out command))
@@ -126,6 +137,7 @@ namespace Engine.API
     /// <param name="messageId">Идентификатор сообщения</param>
     /// <param name="message">Сообщение.</param>
     /// <param name="roomName">Название комнаты.</param>
+    [SecuritySafeCritical]
     public void SendMessage(long? messageId, string message, string roomName)
     {
       if (message == null)
@@ -135,7 +147,7 @@ namespace Engine.API
         throw new ArgumentException("roomName");
 
       var sendingContent = new ServerSendRoomMessageCommand.MessageContent { Message = message, RoomName = roomName, MessageId = messageId };
-      ClientModel.Client.SendMessage(ServerSendRoomMessageCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerSendRoomMessageCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -143,6 +155,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="receiver">Ник получателя.</param>
     /// <param name="message">Сообщение.</param>
+    [SecuritySafeCritical]
     public void SendPrivateMessage(string receiver, string message)
     {
       if (message == null)
@@ -155,7 +168,7 @@ namespace Engine.API
         waitingPrivateMessages.Add(new WaitingPrivateMessage { Receiver = receiver, Message = message });
 
       var sendingContent = new ServerGetUserOpenKeyCommand.MessageContent { Nick = receiver };
-      ClientModel.Client.SendMessage(ServerGetUserOpenKeyCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerGetUserOpenKeyCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -163,6 +176,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="receiver">Имя получателя.</param>
     /// <returns>Ожидающее отправки сообщение.</returns>
+    [SecuritySafeCritical]
     internal WaitingPrivateMessage GetWaitingMessage(string receiver)
     {
       lock (waitingPrivateMessages)
@@ -180,21 +194,23 @@ namespace Engine.API
     /// <summary>
     /// Асинхронно послыает запрос для регистрации на сервере.
     /// </summary>
+    [SecuritySafeCritical]
     public void Register()
     {
       using (var client = ClientModel.Get())
       {
         var sendingContent = new ServerRegisterCommand.MessageContent { User = client.User, OpenKey = ClientModel.Client.OpenKey };
-        ClientModel.Client.SendMessage(ServerRegisterCommand.Id, sendingContent);
+        ClientModel.Client.SendMessage(ServerRegisterCommand.CommandId, sendingContent);
       }
     }
 
     /// <summary>
     /// Асинхронно посылает запрос для отмены регистрации на сервере.
     /// </summary>
+    [SecuritySafeCritical]
     public void Unregister()
     {
-      ClientModel.Client.SendMessage(ServerUnregisterCommand.Id, null);
+      ClientModel.Client.SendMessage(ServerUnregisterCommand.CommandId, null);
     }
 
     /// <summary>
@@ -202,26 +218,28 @@ namespace Engine.API
     /// </summary>
     /// <param name="roomName">Название комнаты для создания.</param>
     /// <param name="type">Тип комнаты.</param>
+    [SecuritySafeCritical]
     public void CreateRoom(string roomName, RoomType type)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
       var sendingContent = new ServerCreateRoomCommand.MessageContent { RoomName = roomName, Type = type };
-      ClientModel.Client.SendMessage(ServerCreateRoomCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerCreateRoomCommand.CommandId, sendingContent);
     }
 
     /// <summary>
     /// Удаляет комнату на сервере. Необходимо являться создателем комнаты.
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
+    [SecuritySafeCritical]
     public void DeleteRoom(string roomName)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
       var sendingContent = new ServerDeleteRoomCommand.MessageContent { RoomName = roomName };
-      ClientModel.Client.SendMessage(ServerDeleteRoomCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerDeleteRoomCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -229,6 +247,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="users">Перечисление пользователей, которые будут приглашены.</param>
+    [SecuritySafeCritical]
     public void InviteUsers(string roomName, IEnumerable<User> users)
     {
       if (string.IsNullOrEmpty(roomName))
@@ -238,7 +257,7 @@ namespace Engine.API
         throw new ArgumentNullException("users");
 
       var sendingContent = new ServerInviteUsersCommand.MessageContent { RoomName = roomName, Users = users as List<User> ?? users.ToList() };
-      ClientModel.Client.SendMessage(ServerInviteUsersCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerInviteUsersCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -246,6 +265,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="users">Перечисление пользователей, которые будут удалены из комнаты.</param>
+    [SecuritySafeCritical]
     public void KickUsers(string roomName, IEnumerable<User> users)
     {
       if (string.IsNullOrEmpty(roomName))
@@ -255,33 +275,35 @@ namespace Engine.API
         throw new ArgumentNullException("users");
 
       var sendingContent = new ServerKickUsersCommand.MessageContent { RoomName = roomName, Users = users as List<User> ?? users.ToList() };
-      ClientModel.Client.SendMessage(ServerKickUsersCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerKickUsersCommand.CommandId, sendingContent);
     }
 
     /// <summary>
     /// Осуществляет выход из комнаты пользователя.
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
+    [SecuritySafeCritical]
     public void ExitFromRoom(string roomName)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
       var sendingContent = new ServerExitFromRoomCommand.MessageContent { RoomName = roomName };
-      ClientModel.Client.SendMessage(ServerExitFromRoomCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerExitFromRoomCommand.CommandId, sendingContent);
     }
 
     /// <summary>
     /// Отправляет запрос о необходимости получения списка пользователей комнаты.
     /// </summary>
     /// <param name="roomName">Название комнтаы.</param>
+    [SecuritySafeCritical]
     public void RefreshRoom(string roomName)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
       var sendingContent = new ServerRefreshRoomCommand.MessageContent { RoomName = roomName };
-      ClientModel.Client.SendMessage(ServerRefreshRoomCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerRefreshRoomCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -289,6 +311,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="newAdmin">Пользователь назначаемый администратором.</param>
+    [SecuritySafeCritical]
     public void SetRoomAdmin(string roomName, User newAdmin)
     {
       if (string.IsNullOrEmpty(roomName))
@@ -298,7 +321,7 @@ namespace Engine.API
         throw new ArgumentNullException("newAdmin");
 
       var sendingContent = new ServerSetRoomAdminCommand.MessageContent { RoomName = roomName, NewAdmin = newAdmin };
-      ClientModel.Client.SendMessage(ServerSetRoomAdminCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerSetRoomAdminCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -306,6 +329,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="roomName">Название комнаты в которую добавляется файл.</param>
     /// <param name="path">Путь к добовляемому файлу.</param>
+    [SecuritySafeCritical]
     public void AddFileToRoom(string roomName, string path)
     {
       if (string.IsNullOrEmpty(roomName))
@@ -314,15 +338,13 @@ namespace Engine.API
       if (string.IsNullOrEmpty(path))
         throw new ArgumentException("fileName");
 
-      FileInfo info = new FileInfo(path);
-
+      var info = new FileInfo(path);
       if (!info.Exists)
         return;
 
       using (var client = ClientModel.Get())
       {
-        PostedFile postedFile;
-        postedFile = client.PostedFiles.FirstOrDefault(posted =>
+        var postedFile = client.PostedFiles.FirstOrDefault(posted =>
           posted.File.Owner.Equals(client.User)
           && string.Equals(posted.ReadStream.Name, path)
           && string.Equals(posted.RoomName, roomName));
@@ -331,16 +353,16 @@ namespace Engine.API
         if (postedFile != null)
         {
           var oldSendingContent = new ServerAddFileToRoomCommand.MessageContent { RoomName = roomName, File = postedFile.File };
-          ClientModel.Client.SendMessage(ServerAddFileToRoomCommand.Id, oldSendingContent);
+          ClientModel.Client.SendMessage(ServerAddFileToRoomCommand.CommandId, oldSendingContent);
           return;
         }
 
         // Создаем новый файл
-        int id = 0;
+        var id = 0;
         while (client.PostedFiles.Exists(postFile => postFile.File.ID == id))
           id = idCreator.Next(int.MinValue, int.MaxValue);
 
-        FileDescription file = new FileDescription(client.User, info.Length, Path.GetFileName(path), id);
+        var file = new FileDescription(client.User, info.Length, Path.GetFileName(path), id);
 
         client.PostedFiles.Add(new PostedFile
         {
@@ -350,7 +372,7 @@ namespace Engine.API
         });
 
         var newSendingContent = new ServerAddFileToRoomCommand.MessageContent { RoomName = roomName, File = file };
-        ClientModel.Client.SendMessage(ServerAddFileToRoomCommand.Id, newSendingContent);
+        ClientModel.Client.SendMessage(ServerAddFileToRoomCommand.CommandId, newSendingContent);
       }
     }
 
@@ -359,6 +381,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="roomName">Название комнаты из которой удаляется файл.</param>
     /// <param name="file">Описание удаляемого файла.</param>
+    [SecuritySafeCritical]
     public void RemoveFileFromRoom(string roomName, FileDescription file)
     {
       if (string.IsNullOrEmpty(roomName))
@@ -369,8 +392,7 @@ namespace Engine.API
 
       using (var client = ClientModel.Get())
       {
-        PostedFile postedFile = client.PostedFiles.FirstOrDefault(current => current.File.Equals(file));
-
+        var postedFile = client.PostedFiles.FirstOrDefault(current => current.File.Equals(file));
         if (postedFile == null)
           return;
 
@@ -379,7 +401,7 @@ namespace Engine.API
       }
 
       var sendingContent = new ServerRemoveFileFromRoomCommand.MessageContent { RoomName = roomName, File = file };
-      ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -388,6 +410,7 @@ namespace Engine.API
     /// <param name="path">Путь для сохранения файла.</param>
     /// <param name="roomName">Название комнаты где находится файл.</param>
     /// <param name="file">Описание файла.</param>
+    [SecuritySafeCritical]
     public void DownloadFile(string path, string roomName, FileDescription file)
     {
       if (string.IsNullOrEmpty(roomName))
@@ -421,7 +444,7 @@ namespace Engine.API
         StartPartPosition = 0,
       };
 
-      ClientModel.Peer.SendMessage(file.Owner.Nick, ClientReadFilePartCommand.Id, sendingContent);
+      ClientModel.Peer.SendMessage(file.Owner.Nick, ClientReadFilePartCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -429,6 +452,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="file">Описание файла.</param>
     /// <param name="leaveLoadedPart">Если значение истино недогруженный файл не будет удалятся.</param>
+    [SecuritySafeCritical]
     public void CancelDownloading(FileDescription file, bool leaveLoadedPart = true)
     {
       if (file == null)
@@ -436,12 +460,11 @@ namespace Engine.API
 
       using (var client = ClientModel.Get())
       {
-        DownloadingFile downloadingFile = client.DownloadingFiles.FirstOrDefault(current => current.File.Equals(file));
-
+        var downloadingFile = client.DownloadingFiles.FirstOrDefault(current => current.File.Equals(file));
         if (downloadingFile == null)
           return;
 
-        string filePath = downloadingFile.FullName;
+        var filePath = downloadingFile.FullName;
         downloadingFile.Dispose();
 
         client.DownloadingFiles.Remove(downloadingFile);
@@ -455,18 +478,20 @@ namespace Engine.API
     /// Иницирует соединение к другому клиенту. Если уже соединен, то повторно соединение иницированно не будет.
     /// </summary>
     /// <param name="nick">Ник клиента к которму будет инцированно соединение.</param>
+    [SecuritySafeCritical]
     public void ConnectToPeer(string nick)
     {
       if (ClientModel.Peer.IsConnected(nick))
         return;
 
       var sendingContent = new ServerP2PConnectRequestCommand.MessageContent { Nick = nick };
-      ClientModel.Client.SendMessage(ServerP2PConnectRequestCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerP2PConnectRequestCommand.CommandId, sendingContent);
     }
 
+    [SecuritySafeCritical]
     public void PingRequest()
     {
-      ClientModel.Client.SendMessage(ServerPingRequestCommand.Id, null);
+      ClientModel.Client.SendMessage(ServerPingRequestCommand.CommandId, null);
     }
   }
 }

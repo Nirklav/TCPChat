@@ -1,16 +1,26 @@
 ﻿using Engine.API.ClientCommands;
 using Engine.Helpers;
-using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerRefreshRoomCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.RefreshRoom;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -39,18 +49,20 @@ namespace Engine.API.ServerCommands
           Room = room,
           Users = room.Users.Select(nick => server.Users[nick]).ToList()
         };
-        ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomRefreshedCommand.Id, roomRefreshedContent);
+        ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomRefreshedCommand.CommandId, roomRefreshedContent);
       }
     }
 
     [Serializable]
     public class MessageContent
     {
-      string roomName;
+      private string roomName;
 
-      public string RoomName { get { return roomName; } set { roomName = value; } }
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.RefreshRoom;
   }
 }

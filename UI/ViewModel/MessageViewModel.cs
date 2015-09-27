@@ -131,10 +131,8 @@ namespace UI.ViewModel
       time = DateTime.Now;
     }
 
-    public override void Dispose()
+    protected override void DisposeManagedResources()
     {
-      base.Dispose();
-
       if (NotifierContext == null)
         return;
 

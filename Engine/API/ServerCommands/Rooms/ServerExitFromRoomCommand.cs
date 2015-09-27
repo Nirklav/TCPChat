@@ -1,16 +1,26 @@
 ﻿using Engine.API.ClientCommands;
 using Engine.Helpers;
-using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerExitFromRoomCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.ExitFromRoom;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -39,7 +49,7 @@ namespace Engine.API.ServerCommands
 
         room.RemoveUser(args.ConnectionId);
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { Room = room };
-        ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomClosedCommand.Id, closeRoomContent);
+        ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
 
         if (string.Equals(room.Admin, args.ConnectionId))
         {
@@ -59,11 +69,13 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      string roomName;
+      private string roomName;
 
-      public string RoomName { get { return roomName; } set { roomName = value; } }
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.ExitFromRoom;
   }
 }

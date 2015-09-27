@@ -3,13 +3,24 @@ using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerRemoveFileFromRoomCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.RemoveFileFromRoom;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -56,7 +67,7 @@ namespace Engine.API.ServerCommands
             File = receivedContent.File,
             RoomName = room.Name,
           };
-          ServerModel.Server.SendMessage(user, ClientPostedFileDeletedCommand.Id, postedFileDeletedContent);
+          ServerModel.Server.SendMessage(user, ClientPostedFileDeletedCommand.CommandId, postedFileDeletedContent);
         }
       }
     }
@@ -64,13 +75,20 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      string roomName;
-      FileDescription file;
+      private string roomName;
+      private FileDescription file;
 
-      public string RoomName { get { return roomName; } set { roomName = value; } }
-      public FileDescription File { get { return file; } set { file = value; } }
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
+
+      public FileDescription File
+      {
+        get { return file; }
+        set { file = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.RemoveFileFromRoom;
   }
 }

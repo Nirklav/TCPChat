@@ -1,28 +1,31 @@
-﻿using Engine.Exceptions;
+﻿using Engine.API;
+using Engine.Exceptions;
 using Engine.Model.Server;
 using System;
-using System.Collections.Generic;
+using System.Security;
 
 namespace Engine.Plugins.Server
 {
-  public class ServerPluginManager : PluginManager<ServerPlugin, ServerModelWrapper>
+  [SecurityCritical]
+  public class ServerPluginManager :
+    PluginManager<ServerPlugin, ServerModelWrapper, ServerPluginCommand>
   {
-    private Dictionary<ushort, ServerPluginCommand> commands = new Dictionary<ushort, ServerPluginCommand>();
-
+    [SecurityCritical]
     public ServerPluginManager(string path)
       : base(path)
     {
 
     }
 
+    [SecurityCritical]
     internal bool TryGetCommand(ushort id, out ICommand<ServerCommandArgs> command)
     {
       command = null;
 
-      lock (syncObject)
+      lock (SyncObject)
       {
         ServerPluginCommand pluginCommand;
-        if (commands.TryGetValue(id, out pluginCommand))
+        if (Commands.TryGetValue(id, out pluginCommand))
         {
           command = pluginCommand;
           return true;
@@ -32,34 +35,10 @@ namespace Engine.Plugins.Server
       return false;
     }
 
-    protected override void OnPluginLoaded(PluginContainer loaded)
+    [SecurityCritical]
+    protected override void OnError(string message, Exception e)
     {
-      base.OnPluginLoaded(loaded);
-
-      foreach (var command in loaded.Plugin.Commands)
-        commands.Add(command.Id, command);
-    }
-
-    protected override void OnPluginUnlodaing(PluginContainer unloading)
-    {
-      base.OnPluginUnlodaing(unloading);
-
-      foreach (var command in unloading.Plugin.Commands)
-        commands.Remove(command.Id);
-    }
-
-    protected override void OnError(string pluginName, Exception e)
-    {
-      ServerModel.Logger.Write(new ModelException(ErrorCode.PluginError, string.Format("Error: {0}", pluginName), e));
-    }
-
-    protected override void Process()
-    {
-      lock (syncObject)
-      {
-        foreach (var command in commands.Values)
-          command.Process();
-      }
+      ServerModel.Logger.Write(new ModelException(ErrorCode.PluginError, string.Format("Error: {0}", message), e));
     }
   }
 }

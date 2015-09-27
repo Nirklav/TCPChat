@@ -5,14 +5,25 @@ using Engine.Model.Server;
 using Engine.Network.Connections;
 using System;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerRegisterCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.Register;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -48,7 +59,7 @@ namespace Engine.API.ServerCommands
 
           var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = true };
           ServerModel.Server.RegisterConnection(args.ConnectionId, receivedContent.User.Nick, receivedContent.OpenKey);
-          ServerModel.Server.SendMessage(receivedContent.User.Nick, ClientRegistrationResponseCommand.Id, regResponseContent);
+          ServerModel.Server.SendMessage(receivedContent.User.Nick, ClientRegistrationResponseCommand.CommandId, regResponseContent);
 
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent
           {
@@ -57,7 +68,7 @@ namespace Engine.API.ServerCommands
           };
 
           foreach (var connectionId in room.Users)
-            ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.Id, sendingContent);
+            ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.CommandId, sendingContent);
 
           ServerModel.Notifier.Registered(new ServerRegistrationEventArgs { Nick = receivedContent.User.Nick });
         }
@@ -67,20 +78,27 @@ namespace Engine.API.ServerCommands
     private void SendFail(string connectionId, string message)
     {
       var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
-      ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.Id, regResponseContent, true);
+      ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.CommandId, regResponseContent, true);
       ServerModel.API.RemoveUser(connectionId);
     }
 
     [Serializable]
     public class MessageContent
     {
-      RSAParameters openKey;
-      User user;
+      private RSAParameters openKey;
+      private User user;
 
-      public RSAParameters OpenKey { get { return openKey; } set { openKey = value; } }
-      public User User { get { return user; } set { user = value; } }
+      public RSAParameters OpenKey
+      {
+        get { return openKey; }
+        set { openKey = value; }
+      }
+
+      public User User
+      {
+        get { return user; }
+        set { user = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.Register;
   }
 }

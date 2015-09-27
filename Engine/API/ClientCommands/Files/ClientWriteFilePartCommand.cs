@@ -5,12 +5,23 @@ using Engine.Network;
 using System;
 using System.IO;
 using System.Linq;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientWriteFilePartCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.WriteFilePart;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       if (args.PeerConnectionId == null)
@@ -66,7 +77,7 @@ namespace Engine.API.ClientCommands
             StartPartPosition = downloadingFile.WriteStream.Position,
           };
 
-          ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientReadFilePartCommand.Id, sendingContent);
+          ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientReadFilePartCommand.CommandId, sendingContent);
           downloadEventArgs.Progress = (int)((downloadingFile.WriteStream.Position * 100) / receivedContent.File.Size);
         }
       }
@@ -77,17 +88,34 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      FileDescription file;
-      string roomName;
-      long startPartPosition;
-      byte[] part;
+      private FileDescription file;
+      private string roomName;
+      private long startPartPosition;
+      private byte[] part;
 
-      public FileDescription File { get { return file; } set { file = value; } }
-      public long StartPartPosition { get { return startPartPosition; } set { startPartPosition = value; } }
-      public string RoomName { get { return roomName; } set { roomName = value; } }
-      public byte[] Part { get { return part; } set { part = value; } }
+      public FileDescription File
+      {
+        get { return file; }
+        set { file = value; }
+      }
+
+      public long StartPartPosition
+      {
+        get { return startPartPosition; }
+        set { startPartPosition = value; }
+      }
+
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
+
+      public byte[] Part
+      {
+        get { return part; }
+        set { part = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.WriteFilePart;
   }
 }

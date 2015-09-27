@@ -1,4 +1,5 @@
-﻿using Engine.Audio;
+﻿using Engine.API;
+using Engine.Audio;
 using Engine.Audio.OpenAL;
 using Engine.Helpers;
 using Engine.Model.Common;
@@ -7,10 +8,12 @@ using Engine.Network;
 using Engine.Plugins.Client;
 using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Threading;
 
 namespace Engine.Model.Client
 {
+  [SecurityCritical]
   public class ClientModel
   {
     #region static model
@@ -20,48 +23,89 @@ namespace Engine.Model.Client
     private static IRecorder recorder = new OpenALRecorder();
     private static IClientNotifier notifier = NotifierGenerator.MakeInvoker<IClientNotifier>();
 
-    public static Logger Logger { get { return logger; } }
+    public static Logger Logger
+    {
+      [SecurityCritical]
+      get { return logger; }
+    }
 
     /// <summary>
     /// Клиентский API
     /// </summary>
-    public static IClientAPI API { get; set; }
+    public static IClientAPI API
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      set;
+    }
 
     /// <summary>
     /// Клиент
     /// </summary>
-    public static AsyncClient Client { get; private set; }
+    public static AsyncClient Client
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Пир 
     /// </summary>
-    public static AsyncPeer Peer { get; private set; }
+    public static AsyncPeer Peer
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Интерфейс для воспроизведения голоса.
     /// </summary>
-    public static IPlayer Player { get { return player; } }
+    public static IPlayer Player
+    {
+      [SecurityCritical]
+      get { return player; }
+    }
 
     /// <summary>
     /// Интерфейс для записи голоса с микрофона.
     /// </summary>
-    public static IRecorder Recorder { get { return recorder; } }
+    public static IRecorder Recorder
+    {
+      [SecurityCritical]
+      get { return recorder; }
+    }
 
     /// <summary>
     /// Менеджер плагинов.
     /// </summary>
-    public static ClientPluginManager Plugins { get; private set; }
+    public static ClientPluginManager Plugins
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Уведомитель.
     /// </summary>
-    public static IClientNotifier Notifier { get { return notifier; } }
+    public static IClientNotifier Notifier
+    {
+      [SecurityCritical]
+      get { return notifier; }
+    }
 
     /// <summary>
     /// Исользовать только с конструкцией using
     /// </summary>
     /// <example>using (var client = ClientModel.Get()) { ... }</example>
     /// <returns>Возвращает и блокирует модель.</returns>
+    [SecurityCritical]
     public static ClientContext Get()
     {
       if (Interlocked.CompareExchange(ref model, null, null) == null)
@@ -72,13 +116,41 @@ namespace Engine.Model.Client
     #endregion
 
     #region properties
-    public User User { get; private set; }
-    public Dictionary<string, Room> Rooms { get; private set; }
-    public List<DownloadingFile> DownloadingFiles { get; private set; }
-    public List<PostedFile> PostedFiles { get; private set; }
+    public User User
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
+
+    public Dictionary<string, Room> Rooms
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
+
+    public List<DownloadingFile> DownloadingFiles
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
+
+    public List<PostedFile> PostedFiles
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
     #endregion
 
     #region conctructor
+    [SecurityCritical]
     public ClientModel(User user)
     {
       User = user;
@@ -91,9 +163,11 @@ namespace Engine.Model.Client
     #region static methods
     public static bool IsInited
     {
+      [SecurityCritical]
       get { return Interlocked.CompareExchange(ref model, null, null) != null; }
     }
 
+    [SecurityCritical]
     public static void Init(ClientInitializer initializer)
     {
       var user = new User(initializer.Nick, initializer.NickColor);
@@ -108,6 +182,7 @@ namespace Engine.Model.Client
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
     }
 
+    [SecurityCritical]
     public static void Reset()
     {
       if (Interlocked.Exchange(ref model, null) == null)
@@ -124,6 +199,7 @@ namespace Engine.Model.Client
       API = null;
     }
 
+    [SecurityCritical]
     private static void Dispose(IDisposable disposable)
     {
       if (disposable == null)

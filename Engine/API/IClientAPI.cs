@@ -1,11 +1,7 @@
-﻿using Engine.Audio;
-using Engine.Model.Entities;
-using Engine.Network;
-using System;
+﻿using Engine.Model.Entities;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 
-namespace Engine
+namespace Engine.API
 {
   public interface IClientAPI
   {

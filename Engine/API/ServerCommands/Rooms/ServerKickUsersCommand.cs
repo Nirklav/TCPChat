@@ -4,14 +4,24 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerKickUsersCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.KickUsers;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -56,7 +66,7 @@ namespace Engine.API.ServerCommands
 
           room.RemoveUser(user.Nick);
 
-          ServerModel.Server.SendMessage(user.Nick, ClientRoomClosedCommand.Id, sendingContent);
+          ServerModel.Server.SendMessage(user.Nick, ClientRoomClosedCommand.CommandId, sendingContent);
         }
 
         RefreshRoom(server, room);
@@ -66,13 +76,20 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      string roomName;
-      List<User> users;
+      private string roomName;
+      private List<User> users;
 
-      public string RoomName { get { return roomName; } set { roomName = value; } }
-      public List<User> Users { get { return users; } set { users = value; } }
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
+
+      public List<User> Users
+      {
+        get { return users; }
+        set { users = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.KickUsers;
   }
 }

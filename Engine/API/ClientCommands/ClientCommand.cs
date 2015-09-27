@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Engine.API.ClientCommands
+﻿namespace Engine.API.ClientCommands
 {
   //Команды для клиента: (формат сообщений XX XX Serialized(this.MessageContent))
   //Расшифровка XX XX:

@@ -1,15 +1,25 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using Engine.Helpers;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientRoomRefreshedCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.RoomRefreshed;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -25,13 +35,20 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      Room room;
-      List<User> users;
+      private Room room;
+      private List<User> users;
  
-      public Room Room { get { return room; } set { room = value; } }
-      public List<User> Users { get { return users; } set { users = value; } }
-    }
+      public Room Room
+      {
+        get { return room; }
+        set { room = value; }
+      }
 
-    public const ushort Id = (ushort)ClientCommand.RoomRefreshed;
+      public List<User> Users
+      {
+        get { return users; }
+        set { users = value; }
+      }
+    }
   }
 }

@@ -1,15 +1,11 @@
-﻿using Engine.Model.Client;
-using System.Collections.Generic;
-
-namespace Engine.Plugins.Client
+﻿namespace Engine.Plugins.Client
 {
   /// <summary>
-  /// Представляет базовый класс для реализации плагина.
+  /// Представляет базовый класс для реализации клиентского плагина.
   /// </summary>
   public abstract class ClientPlugin :
-    Plugin<ClientModelWrapper>
+    Plugin<ClientModelWrapper, ClientPluginCommand>
   {
-    public abstract List<ClientPluginCommand> Commands { get; }
     public abstract string MenuCaption { get; }
     public abstract void InvokeMenuHandler();
   }

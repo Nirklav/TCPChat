@@ -27,11 +27,6 @@ namespace UI.ViewModel
       Refresh();
     }
 
-    public override void Dispose()
-    {
-      base.Dispose();
-    }
-
     public void Refresh()
     {
       Plugins.Clear();
@@ -45,6 +40,9 @@ namespace UI.ViewModel
 
     private void AddPlugins(Func<string, bool> isLoadedFunc, string[] plugins, PluginKindId kind)
     {
+      if (plugins == null)
+        return;
+
       foreach (var pluginName in plugins)
       {
         var plugin = new PluginSetting(pluginName, isLoadedFunc(pluginName));

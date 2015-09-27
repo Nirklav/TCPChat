@@ -2,13 +2,24 @@
 using Engine.Helpers;
 using Engine.Model.Server;
 using System;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerGetUserOpenKeyCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.GetUserOpenKeyRequest;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -28,17 +39,19 @@ namespace Engine.API.ServerCommands
         OpenKey = ServerModel.Server.GetOpenKey(receivedContent.Nick)
       };
 
-      ServerModel.Server.SendMessage(args.ConnectionId, ClientReceiveUserOpenKeyCommand.Id, sendingContent);
+      ServerModel.Server.SendMessage(args.ConnectionId, ClientReceiveUserOpenKeyCommand.CommandId, sendingContent);
     }
 
     [Serializable]
     public class MessageContent
     {
-      string nick;
+      private string nick;
 
-      public string Nick { get { return nick; } set { nick = value; } }
+      public string Nick
+      {
+        get { return nick; }
+        set { nick = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.GetUserOpenKeyRequest;
   }
 }

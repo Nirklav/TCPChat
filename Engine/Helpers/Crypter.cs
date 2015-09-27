@@ -1,15 +1,12 @@
 ﻿using System;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
 using System.Security;
-using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace Engine.Helpers
 {
-  public sealed class Crypter :
-      IDisposable
+  [SecuritySafeCritical]
+  public sealed class Crypter : IDisposable
   {
     #region Constats
     private const int HeadSize = 8;
@@ -19,6 +16,7 @@ namespace Engine.Helpers
     #region Private Values
     private SymmetricAlgorithm cryptAlgorithm;
     private int bufferCoefficient;
+    private bool disposed;
     #endregion
 
     #region Properties
@@ -27,11 +25,13 @@ namespace Engine.Helpers
     /// </summary>
     public int BufferCoefficient
     {
+      [SecuritySafeCritical]
       get
       {
         ThrowIfDisposed();
         return bufferCoefficient;
       }
+      [SecuritySafeCritical]
       set
       {
         ThrowIfDisposed();
@@ -44,6 +44,7 @@ namespace Engine.Helpers
     /// <summary>
     /// Создает экемпляр класса Crypter.
     /// </summary>
+    [SecuritySafeCritical]
     public Crypter(SymmetricAlgorithm symmetricAlg)
     {
       if (symmetricAlg == null)
@@ -60,6 +61,7 @@ namespace Engine.Helpers
     /// Генерирует ключ и вектор инициализации.
     /// </summary>
     /// <returns>Ключ.</returns>
+    [SecuritySafeCritical]
     public byte[] GenerateKey()
     {
       ThrowIfDisposed();
@@ -75,6 +77,7 @@ namespace Engine.Helpers
     /// </summary>
     /// <param name="inputStream">Поток, который будет зашифрован.</param>
     /// <param name="outputStream">Поток, в который будет записан результат шифрования.</param>
+    [SecuritySafeCritical]
     public void EncryptStream(Stream inputStream, Stream outputStream)
     {
       ThrowIfDisposed();
@@ -113,6 +116,7 @@ namespace Engine.Helpers
     /// <param name="inputStream">Поток, который будет дешифрован.</param>
     /// <param name="outputStream">Поток, в который будет записан результат дешифрования.</param>
     /// <param name="Key">Ключ для дешифрования.</param>
+    [SecuritySafeCritical]
     public void DecryptStream(Stream inputStream, Stream outputStream, byte[] Key)
     {
       ThrowIfDisposed();
@@ -149,6 +153,7 @@ namespace Engine.Helpers
     #endregion
 
     #region private methods
+    [SecurityCritical]
     private int CalculateDataSize(int dataSize, int maxDataSize)
     {
       if (dataSize == maxDataSize)
@@ -162,14 +167,14 @@ namespace Engine.Helpers
     #endregion
 
     #region IDisposable
-    private bool disposed = false;
-
+    [SecurityCritical]
     private void ThrowIfDisposed()
     {
       if (disposed)
         throw new ObjectDisposedException("Object Disposed");
     }
 
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (disposed == true) return;

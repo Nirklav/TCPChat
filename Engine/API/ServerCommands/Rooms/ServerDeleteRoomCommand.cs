@@ -1,15 +1,25 @@
 ﻿using Engine.API.ClientCommands;
 using Engine.Helpers;
-using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerDeleteRoomCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.DeleteRoom;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -39,18 +49,20 @@ namespace Engine.API.ServerCommands
 
         var sendingContent = new ClientRoomClosedCommand.MessageContent { Room = deletingRoom };
         foreach (string user in deletingRoom.Users)
-          ServerModel.Server.SendMessage(user, ClientRoomClosedCommand.Id, sendingContent);
+          ServerModel.Server.SendMessage(user, ClientRoomClosedCommand.CommandId, sendingContent);
       }
     }
 
     [Serializable]
     public class MessageContent
     {
-      string roomName;
+      private string roomName;
 
-      public string RoomName { get { return roomName; } set { roomName = value; } }
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.DeleteRoom;
   }
 }

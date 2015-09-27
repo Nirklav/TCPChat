@@ -2,12 +2,23 @@
 using Engine.Model.Client;
 using System;
 using System.Net;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientConnectToP2PServiceCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.ConnectToP2PService;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       if (args.PeerConnectionId != null)
@@ -24,11 +35,13 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      int port;
+      private int port;
 
-      public int Port { get { return port; } set { port = value; } }
+      public int Port
+      {
+        get { return port; }
+        set { port = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.ConnectToP2PService;
   }
 }

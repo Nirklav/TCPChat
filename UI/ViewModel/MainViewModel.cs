@@ -140,10 +140,8 @@ namespace UI.ViewModel
       OpenSettingsCommand = new Command(OpenSettings);
     }
 
-    public override void Dispose()
+    protected override void DisposeManagedResources()
     {
-      base.Dispose();
-
       KeyBoard.KeyDown -= OnKeyDown;
       KeyBoard.KeyUp -= OnKeyUp;
 

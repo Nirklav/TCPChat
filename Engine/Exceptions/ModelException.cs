@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Engine.Exceptions
 {
+  [Serializable]
   public class ModelException : Exception
   {
     public ErrorCode Code { get; private set; }

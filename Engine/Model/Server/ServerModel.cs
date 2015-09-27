@@ -6,10 +6,12 @@ using Engine.Network;
 using Engine.Plugins.Server;
 using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Threading;
 
 namespace Engine.Model.Server
 {
+  [SecurityCritical]
   public class ServerModel
   {
     #region static model
@@ -17,33 +19,60 @@ namespace Engine.Model.Server
     private static Logger logger = new Logger("Server.log");
     private static IServerNotifier notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
 
-    public static Logger Logger { get { return logger; } }
+    public static Logger Logger
+    {
+      [SecurityCritical]
+      get { return logger; }
+    }
 
     /// <summary>
     /// Серверный API
     /// </summary>
-    public static IServerAPI API { get; private set; }
+    public static IServerAPI API
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Сервер
     /// </summary>
-    public static AsyncServer Server { get; private set; }
+    public static AsyncServer Server
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Менеджер плагинов.
     /// </summary>
-    public static ServerPluginManager Plugins { get; private set; }
+    public static ServerPluginManager Plugins
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Уведомитель.
     /// </summary>
-    public static IServerNotifier Notifier { get { return notifier; } }
+    public static IServerNotifier Notifier
+    {
+      [SecurityCritical]
+      get { return notifier; }
+    }
 
     /// <summary>
     /// Исользовать только с конструкцией using
     /// </summary>
     /// <example>using (var server = SeeverModel.Get()) { ... }</example>
     /// <returns>Возвращает и блокирует модель.</returns>
+    [SecurityCritical]
     public static ServerContext Get()
     {
       if (Interlocked.CompareExchange(ref model, null, null) == null)
@@ -58,11 +87,24 @@ namespace Engine.Model.Server
     #endregion
 
     #region properties
-    public Dictionary<string, Room> Rooms { get; private set; }
-    public Dictionary<string, User> Users { get; private set; }
+    public Dictionary<string, Room> Rooms
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
+    public Dictionary<string, User> Users
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
     #endregion
 
     #region constructor
+    [SecurityCritical]
     public ServerModel()
     {
       Users = new Dictionary<string, User>();
@@ -73,11 +115,14 @@ namespace Engine.Model.Server
     #endregion
 
     #region static methods
+    
     public static bool IsInited
     {
+      [SecurityCritical]
       get { return Interlocked.CompareExchange(ref model, null, null) != null; }
     }
 
+    [SecurityCritical]
     public static void Init(ServerInitializer initializer)
     {
       if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
@@ -90,6 +135,7 @@ namespace Engine.Model.Server
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
     }
 
+    [SecurityCritical]
     public static void Reset()
     {
       if (Interlocked.Exchange(ref model, null) == null)
@@ -102,6 +148,7 @@ namespace Engine.Model.Server
       API = null;
     }
 
+    [SecurityCritical]
     private static void Dispose(IDisposable disposable)
     {
       if (disposable == null)

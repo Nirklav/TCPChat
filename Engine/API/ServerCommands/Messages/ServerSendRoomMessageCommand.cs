@@ -4,13 +4,24 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerSendRoomMessageCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.SendRoomMessage;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -58,7 +69,7 @@ namespace Engine.API.ServerCommands
         };
 
         foreach (string user in room.Users.Where(u => u != null))
-          ServerModel.Server.SendMessage(user, ClientOutRoomMessageCommand.Id, sendingContent);
+          ServerModel.Server.SendMessage(user, ClientOutRoomMessageCommand.CommandId, sendingContent);
       }
     }
 
@@ -69,11 +80,23 @@ namespace Engine.API.ServerCommands
       private string roomName;
       private long? messageId;
 
-      public string Message { get { return message; } set { message = value; } }
-      public string RoomName { get { return roomName; } set { roomName = value; } }
-      public long? MessageId { get { return messageId; } set { messageId = value; } }
-    }
+      public string Message
+      {
+        get { return message; }
+        set { message = value; }
+      }
 
-    public const ushort Id = (ushort)ServerCommand.SendRoomMessage;
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
+
+      public long? MessageId
+      {
+        get { return messageId; }
+        set { messageId = value; }
+      }
+    }
   }
 }

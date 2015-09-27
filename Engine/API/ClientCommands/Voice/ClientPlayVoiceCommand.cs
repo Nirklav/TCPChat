@@ -2,12 +2,23 @@
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientPlayVoiceCommand :
     ICommand<ClientCommandArgs>
   {
+    public static ushort CommandId = (ushort)ClientCommand.PlayVoice;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       if (args.PeerConnectionId == null)
@@ -20,13 +31,20 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      SoundPack pack;
-      long number;
+      private SoundPack pack;
+      private long number;
 
-      public SoundPack Pack { get { return pack; } set { pack = value; } }
-      public long Number { get { return number; } set { number = value; } }
+      public SoundPack Pack
+      {
+        get { return pack; }
+        set { pack = value; }
+      }
+
+      public long Number
+      {
+        get { return number; }
+        set { number = value; }
+      }
     }
-
-    public static ushort Id = (ushort)ClientCommand.PlayVoice;
   }
 }

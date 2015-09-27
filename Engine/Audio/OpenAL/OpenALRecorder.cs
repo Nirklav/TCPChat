@@ -4,10 +4,12 @@ using Engine.Model.Entities;
 using OpenAL;
 using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Threading;
 
 namespace Engine.Audio.OpenAL
 {
+  [SecuritySafeCritical]
   public sealed class OpenALRecorder :
     MarshalByRefObject,
     IRecorder
@@ -17,8 +19,10 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region fields
-    private object syncObj = new object();
+    private readonly object syncObj = new object();
+    private EventHandler<RecordedEventArgs> recorded;
 
+    private bool disposed;
     private Timer systemTimer;
     private AudioCapture capture;
     private byte[] buffer;
@@ -28,10 +32,17 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region event
-    public event EventHandler<RecordedEventArgs> Recorded;
+    public event EventHandler<RecordedEventArgs> Recorded
+    {
+      [SecuritySafeCritical]
+      add { recorded += value; }
+      [SecuritySafeCritical]
+      remove { recorded -= value; }
+    }
     #endregion
 
     #region constructor
+    [SecurityCritical]
     public OpenALRecorder(string deviceName = null)
     {
       if (string.IsNullOrEmpty(deviceName) || IsInited)
@@ -44,11 +55,13 @@ namespace Engine.Audio.OpenAL
     #region properties
     public bool IsInited
     {
+      [SecuritySafeCritical]
       get { return Interlocked.CompareExchange(ref capture, null, null) != null; }
     }
 
     public IList<string> Devices
     {
+      [SecuritySafeCritical]
       get
       {
         try
@@ -64,6 +77,7 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region methods
+    [SecurityCritical]
     private void Initialize(string deviceName, AudioQuality quality)
     {
       try
@@ -103,6 +117,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
+    [SecuritySafeCritical]
     public void Start()
     {
       if (capture == null || capture.IsRunning)
@@ -115,6 +130,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
+    [SecuritySafeCritical]
     public void SetOptions(string deviceName, AudioQuality quality)
     {
       if (IsInited)
@@ -126,6 +142,7 @@ namespace Engine.Audio.OpenAL
       Initialize(deviceName, quality);
     }
 
+    [SecurityCritical]
     private void RecordingCallback(object state)
     {
       lock (syncObj)
@@ -143,7 +160,7 @@ namespace Engine.Audio.OpenAL
 
           capture.ReadSamples(buffer, availableSamples);
 
-          var temp = Interlocked.CompareExchange(ref Recorded, null, null);
+          var temp = Interlocked.CompareExchange(ref recorded, null, null);
           if (temp != null)
             temp(this, new RecordedEventArgs(buffer, availableSamples, quality.Channels, quality.Bits, quality.Frequency));
         }
@@ -153,6 +170,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
+    [SecuritySafeCritical]
     public void Stop()
     {
       if (!IsInited)
@@ -168,6 +186,7 @@ namespace Engine.Audio.OpenAL
       }
     }
 
+    [SecurityCritical]
     private int GetTimerTimeOut()
     {
       double timeToBufferFilled = samplesSize / (quality.Frequency * 1000d);
@@ -176,15 +195,14 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region IDisposable
-    private bool disposed = false;
-
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (disposed)
         return;
 
       disposed = true;
-      Recorded = null;
+      recorded = null;
 
       lock (syncObj)
       {

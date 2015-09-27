@@ -3,12 +3,23 @@ using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Net;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientConnectToPeerCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.ConnectToPeer;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -25,13 +36,20 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      IPEndPoint peerPoint;
-      User remoteInfo;
+      private IPEndPoint peerPoint;
+      private User remoteInfo;
 
-      public IPEndPoint PeerPoint { get { return peerPoint; } set { peerPoint = value; } }
-      public User RemoteInfo { get { return remoteInfo; } set { remoteInfo = value; } }
+      public IPEndPoint PeerPoint
+      {
+        get { return peerPoint; }
+        set { peerPoint = value; }
+      }
+
+      public User RemoteInfo
+      {
+        get { return remoteInfo; }
+        set { remoteInfo = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.ConnectToPeer;
   }
 }

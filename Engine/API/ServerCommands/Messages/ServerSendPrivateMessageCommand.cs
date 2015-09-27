@@ -2,13 +2,24 @@
 using Engine.Helpers;
 using Engine.Model.Server;
 using System;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerSendPrivateMessageCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.SendPrivateMessage;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -35,21 +46,33 @@ namespace Engine.API.ServerCommands
         Sender = args.ConnectionId
       };
 
-      ServerModel.Server.SendMessage(receivedContent.Receiver, ClientOutPrivateMessageCommand.Id, sendingContent);
+      ServerModel.Server.SendMessage(receivedContent.Receiver, ClientOutPrivateMessageCommand.CommandId, sendingContent);
     }
 
     [Serializable]
     public class MessageContent
     {
-      string receiver;
-      byte[] key;
-      byte[] message;
+      private string receiver;
+      private byte[] key;
+      private byte[] message;
 
-      public string Receiver { get { return receiver; } set { receiver = value; } }
-      public byte[] Key { get { return key; } set { key = value; } }
-      public byte[] Message { get { return message; } set { message = value; } }
+      public string Receiver
+      {
+        get { return receiver; }
+        set { receiver = value; }
+      }
+
+      public byte[] Key
+      {
+        get { return key; }
+        set { key = value; }
+      }
+
+      public byte[] Message
+      {
+        get { return message; }
+        set { message = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.SendPrivateMessage;
   }
 }

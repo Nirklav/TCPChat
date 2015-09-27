@@ -2,34 +2,64 @@
 using Engine.Helpers;
 using Engine.Model.Client;
 using Engine.Network;
+using System.Security;
 
 namespace Engine.Plugins.Client
 {
+  [SecuritySafeCritical]
   public class ClientModelWrapper :
     CrossDomainObject
   {
-    public ClientAPIWrapper API { get; private set; }
-    public AsyncClient Client { get; private set; }
-    public AsyncPeer Peer { get; private set; }
-    public IPlayer Player { get; private set; }
-    public IRecorder Recorder { get; private set; }
-    public Logger Logger { get; private set; }
+    public ClientAPIWrapper API
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecuritySafeCritical]
+      private set;
+    }
+
+    public AsyncClient Client
+    {
+      [SecuritySafeCritical]
+      get { return ClientModel.Client; }
+    }
+
+    public AsyncPeer Peer
+    {
+      [SecuritySafeCritical]
+      get { return ClientModel.Peer; }
+    }
+
+    public IPlayer Player
+    {
+      [SecuritySafeCritical]
+      get { return ClientModel.Player; }
+    }
+
+    public IRecorder Recorder
+    {
+      [SecuritySafeCritical]
+      get { return ClientModel.Recorder; }
+    }
+
+    public Logger Logger
+    {
+      [SecuritySafeCritical]
+      get { return ClientModel.Logger; }
+    }
 
     /// <summary>
     /// Исользовать только с конструкцией using
     /// </summary>
     /// <example>using (var client = ClientModel.Get()) { ... }</example>
     /// <returns>Возвращает и блокирует модель.</returns>
+    [SecuritySafeCritical]
     public ClientContext Get() { return ClientModel.Get(); }
 
+    [SecuritySafeCritical]
     public ClientModelWrapper()
     {
       API = new ClientAPIWrapper();
-      Client = ClientModel.Client;
-      Peer = ClientModel.Peer;
-      Player = ClientModel.Player;
-      Recorder = ClientModel.Recorder;
-      Logger = ClientModel.Logger;
     }
   }
 }

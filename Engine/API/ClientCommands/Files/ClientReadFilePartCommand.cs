@@ -3,14 +3,24 @@ using Engine.Helpers;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
-using System.IO;
 using System.Linq;
+using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientReadFilePartCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.ReadFilePart;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       if (args.PeerConnectionId == null)
@@ -40,7 +50,7 @@ namespace Engine.API.ClientCommands
             RoomName = receivedContent.RoomName,
           };
 
-          ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.Id, fileNotPostContent);
+          ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.CommandId, fileNotPostContent);
           return;
         }
       }
@@ -67,23 +77,40 @@ namespace Engine.API.ClientCommands
         sendingFileStream.Read(sendingContent.Part, 0, sendingContent.Part.Length);
       }
 
-      ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientWriteFilePartCommand.Id, sendingContent);
+      ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientWriteFilePartCommand.CommandId, sendingContent);
     }
 
     [Serializable]
     public class MessageContent
     {
-      FileDescription file;
-      long startPartPosition;
-      long length;
-      string roomName;
+      private FileDescription file;
+      private long startPartPosition;
+      private long length;
+      private string roomName;
 
-      public FileDescription File { get { return file; } set { file = value; } }
-      public long StartPartPosition { get { return startPartPosition; } set { startPartPosition = value; } }
-      public long Length { get { return length; } set { length = value; } }
-      public string RoomName { get { return roomName; } set { roomName = value; } }
+      public FileDescription File
+      {
+        get { return file; }
+        set { file = value; }
+      }
+
+      public long StartPartPosition
+      {
+        get { return startPartPosition; }
+        set { startPartPosition = value; }
+      }
+
+      public long Length
+      {
+        get { return length; }
+        set { length = value; }
+      }
+
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.ReadFilePart;
   }
 }

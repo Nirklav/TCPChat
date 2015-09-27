@@ -17,13 +17,13 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         
-        <Label Content="Программист:"
+        <Label Content="Автор:"
                Padding="0"
                Margin="10, 10, 5, 5"
                Grid.Column="0"
                Grid.Row="0"/>
 
-        <Label Content="Антон Викторович"
+        <Label Content="Антон Оголь Викторович"
                Padding="0"
                Margin="5, 10, 10, 5"
                Grid.Column="1"

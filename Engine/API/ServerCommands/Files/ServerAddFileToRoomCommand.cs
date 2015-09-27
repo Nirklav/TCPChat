@@ -4,13 +4,24 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
+using System.Security;
 
 namespace Engine.API.ServerCommands
 {
+  [SecurityCritical]
   class ServerAddFileToRoomCommand :
-      BaseServerCommand,
-      ICommand<ServerCommandArgs>
+    BaseServerCommand,
+    ICommand<ServerCommandArgs>
   {
+    public const ushort CommandId = (ushort)ServerCommand.AddFileToRoom;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
       var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
@@ -44,20 +55,27 @@ namespace Engine.API.ServerCommands
         };
 
         foreach (string user in room.Users)
-          ServerModel.Server.SendMessage(user, ClientFilePostedCommand.Id, sendingContent);
+          ServerModel.Server.SendMessage(user, ClientFilePostedCommand.CommandId, sendingContent);
       }
     }
 
     [Serializable]
     public class MessageContent
     {
-      string roomName;
-      FileDescription file;
+      private string roomName;
+      private FileDescription file;
 
-      public string RoomName { get { return roomName; } set { roomName = value; } }
-      public FileDescription File { get { return file; } set { file = value; } }
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
+
+      public FileDescription File
+      {
+        get { return file; }
+        set { file = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ServerCommand.AddFileToRoom;
   }
 }

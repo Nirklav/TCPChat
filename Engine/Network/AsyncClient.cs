@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -15,6 +16,7 @@ namespace Engine.Network
   /// <summary>
   /// Клиентское соединение.
   /// </summary>
+  [SecuritySafeCritical]
   public sealed class AsyncClient : Connection
   {
     #region consts
@@ -26,7 +28,7 @@ namespace Engine.Network
     private const int PingInterval = 3000;
     private const string ClientId = "Client";
 
-    private static readonly SocketError[] reconnectErrors = new SocketError[] 
+    private static readonly SocketError[] reconnectErrors =
     { 
       SocketError.NetworkReset, SocketError.ConnectionAborted,
       SocketError.ConnectionReset, SocketError.TimedOut,
@@ -40,8 +42,8 @@ namespace Engine.Network
     private ClientRequestQueue requestQueue;
     private RSACryptoServiceProvider keyCryptor;
 
-    private bool waitingAPIName;
-    private string serverAPIVersion;
+    private bool waitingApiName;
+    private string serverApiVersion;
 
     private bool reconnect;
     private bool reconnecting;
@@ -56,12 +58,13 @@ namespace Engine.Network
     /// <summary>
     /// Создает клиентское подключение к серверу.
     /// </summary>
+    [SecurityCritical]
     public AsyncClient(string nick)
     {
       requestQueue = new ClientRequestQueue();
       keyCryptor = new RSACryptoServiceProvider(CryptorKeySize);
 
-      waitingAPIName = false;
+      waitingApiName = false;
       reconnecting = false;
       reconnect = true;
       Id = nick;
@@ -72,13 +75,18 @@ namespace Engine.Network
     /// <summary>
     /// Взвращает значение, характеризующее подключен ли клиент к серверу.
     /// </summary>
-    public bool IsConnected { get { return handler == null ? false : handler.Connected; } }
+    public bool IsConnected
+    {
+      [SecuritySafeCritical]
+      get { return handler == null ? false : handler.Connected; }
+    }
 
     /// <summary>
     /// Открытый ключ данного соединения.
     /// </summary>
     public RSAParameters OpenKey
     {
+      [SecuritySafeCritical]
       get
       {
         ThrowIfDisposed();
@@ -91,6 +99,7 @@ namespace Engine.Network
     /// </summary>
     public RSACryptoServiceProvider KeyCryptor
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
@@ -101,16 +110,17 @@ namespace Engine.Network
     /// <summary>
     /// Версия API используемая на сервере.
     /// </summary>
-    public string ServerAPIVersion
+    public string ServerApiVersion
     {
+      [SecuritySafeCritical]
       get
       {
         ThrowIfDisposed();
 
-        if (serverAPIVersion == null)
+        if (serverApiVersion == null)
           return string.Empty;
 
-        return serverAPIVersion;
+        return serverApiVersion;
       }
     }
 
@@ -120,11 +130,14 @@ namespace Engine.Network
     /// </summary>
     public bool Reconnect
     {
+      [SecurityCritical]
       get
       {
         ThrowIfDisposed();
         return reconnect;
       }
+
+      [SecurityCritical]
       set
       {
         ThrowIfDisposed();
@@ -139,6 +152,7 @@ namespace Engine.Network
     /// Асинхронно соединяет клиент с сервером.
     /// </summary>
     /// <param name="ServerAddress">Адресс сервера.</param>
+    [SecurityCritical]
     public void Connect(IPEndPoint serverAddress)
     {
       ThrowIfDisposed();
@@ -146,7 +160,7 @@ namespace Engine.Network
       if (handler != null && handler.Connected)
         throw new SocketException((int)SocketError.IsConnected);
 
-      waitingAPIName = true;
+      waitingApiName = true;
       hostAddress = serverAddress;
       systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
 
@@ -156,6 +170,7 @@ namespace Engine.Network
     #endregion
 
     #region private/protected override methods
+    [SecurityCritical]
     private void OnConnected(IAsyncResult result)
     {
       if (disposed)
@@ -186,6 +201,7 @@ namespace Engine.Network
       }
     }
 
+    [SecuritySafeCritical]
     protected override void OnDataReceived(DataReceivedEventArgs e)
     {
       try
@@ -193,7 +209,7 @@ namespace Engine.Network
         if (e.Error != null)
           throw e.Error;
 
-        if (TrySetAPI(e))
+        if (TrySetApi(e))
           return;
 
         var command = ClientModel.API.GetCommand(e.ReceivedData);
@@ -208,14 +224,15 @@ namespace Engine.Network
       }
     }
 
-    private bool TrySetAPI(DataReceivedEventArgs e)
+    [SecurityCritical]
+    private bool TrySetApi(DataReceivedEventArgs e)
     {
-      if (!waitingAPIName)
+      if (!waitingApiName)
         return false;
 
-      serverAPIVersion = Encoding.Unicode.GetString(e.ReceivedData);
+      serverApiVersion = Encoding.Unicode.GetString(e.ReceivedData);
 
-      switch (serverAPIVersion)
+      switch (serverApiVersion)
       {
         case StandardServerAPI.API:
           ClientModel.API = new StandardClientAPI();
@@ -225,14 +242,15 @@ namespace Engine.Network
       if (ClientModel.API != null)
       {
         ClientModel.Notifier.Connected(new ConnectEventArgs { Error = null });
-        waitingAPIName = false;
+        waitingApiName = false;
       }
       else
-        throw new ModelException(ErrorCode.APINotSupported, serverAPIVersion);
+        throw new ModelException(ErrorCode.APINotSupported, serverApiVersion);
 
       return true;
     }
 
+    [SecuritySafeCritical]
     protected override void OnDataSended(DataSendedEventArgs args)
     {
       if (args.Error == null)
@@ -242,6 +260,7 @@ namespace Engine.Network
       ClientModel.Logger.Write(args.Error);
     }
 
+    [SecuritySafeCritical]
     protected override bool HandleSocketException(SocketException se)
     {
       if (!reconnect)
@@ -255,6 +274,7 @@ namespace Engine.Network
       return true;
     }
 
+    [SecurityCritical]
     private void SystemTimerCallback(object state)
     {
       if (handler != null && IsConnected)
@@ -289,17 +309,18 @@ namespace Engine.Network
 
     #region IDisposable
 
-    public override void Dispose()
+    [SecuritySafeCritical]
+    protected override void DisposeManagedResources()
     {
+      base.DisposeManagedResources();
+
+      if (requestQueue != null)
+        requestQueue.Dispose();
+
+      keyCryptor.Dispose();
+
       lock (timerSync)
       {
-        if (requestQueue != null)
-          requestQueue.Dispose();
-
-        base.Dispose();
-
-        ((IDisposable)keyCryptor).Dispose();
-
         if (systemTimer != null)
           systemTimer.Dispose();
 

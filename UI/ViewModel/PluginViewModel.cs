@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Client;
 using Engine.Plugins.Client;
 using System;
+using System.Security.Permissions;
 using UI.Infrastructure;
 
 namespace UI.ViewModel

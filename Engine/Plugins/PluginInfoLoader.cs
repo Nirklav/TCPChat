@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
+using System.Security.Policy;
 
 namespace Engine.Plugins
 {
@@ -52,21 +52,25 @@ namespace Engine.Plugins
 
       var permmisions = new PermissionSet(PermissionState.None);
       permmisions.AddPermission(new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
-      permmisions.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
+      permmisions.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution | SecurityPermissionFlag.Infrastructure));
       permmisions.AddPermission(new UIPermission(UIPermissionWindow.AllWindows));
       permmisions.AddPermission(new FileIOPermission(FileIOPermissionAccess.PathDiscovery | FileIOPermissionAccess.Read, inputPluginLibs));
 
       List<PluginInfo> result;
 
-      var pluginLoader = AppDomain.CreateDomain("Plugin loader", null, domainSetup, permmisions);
+      var proxyType = typeof(Proxy);
+      var engineStrongName = proxyType.Assembly.Evidence.GetHostEvidence<StrongName>();
+      if (engineStrongName == null)
+        return null;
+
+      var pluginLoader = AppDomain.CreateDomain("Plugin loader", null, domainSetup, permmisions, engineStrongName);
       try
       {
-        var proxy = (Proxy)pluginLoader.CreateInstanceAndUnwrap(typeof(Proxy).Assembly.FullName, typeof(Proxy).FullName);
+        var proxy = (Proxy)pluginLoader.CreateInstanceAndUnwrap(proxyType.Assembly.FullName, proxyType.FullName);
 
         proxy.PluginInfos = new List<PluginInfo>();
         proxy.PluginLibs = inputPluginLibs;
         proxy.FullTypeName = typeName;
-
         proxy.LoadInfos();
 
         result = proxy.PluginInfos;

@@ -1,14 +1,13 @@
-﻿using Engine.Model.Server;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Engine.Plugins.Server
 {
   /// <summary>
-  /// Представляет базовый класс для реализации плагина.
+  /// Представляет базовый класс для реализации серверного плагина.
   /// </summary>
   public abstract class ServerPlugin :
-    Plugin<ServerModelWrapper>
+    Plugin<ServerModelWrapper, ServerPluginCommand>
   {
-    public abstract List<ServerPluginCommand> Commands { get; }
+
   }
 }

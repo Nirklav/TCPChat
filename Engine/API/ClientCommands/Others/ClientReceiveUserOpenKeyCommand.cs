@@ -4,14 +4,25 @@ using Engine.Model.Client;
 using Engine.Network;
 using System;
 using System.IO;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientReceiveUserOpenKeyCommand :
-      ICommand<ClientCommandArgs>
+    ICommand<ClientCommandArgs>
   {
+    public const ushort CommandId = (ushort)ClientCommand.ReceiveUserOpenKey;
+
+    public ushort Id
+    {
+      [SecuritySafeCritical]
+      get { return CommandId; }
+    }
+
+    [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
       var API = ClientModel.API as StandardClientAPI;
@@ -52,19 +63,26 @@ namespace Engine.API.ClientCommands
         }
       }
 
-      ClientModel.Client.SendMessage(ServerSendPrivateMessageCommand.Id, sendingContent);
+      ClientModel.Client.SendMessage(ServerSendPrivateMessageCommand.CommandId, sendingContent);
     }
 
     [Serializable]
     public class MessageContent
     {
-      string nick;
-      RSAParameters openKey;
+      private string nick;
+      private RSAParameters openKey;
 
-      public string Nick { get { return nick; } set { nick = value; } }
-      public RSAParameters OpenKey { get { return openKey; } set { openKey = value; } }
+      public string Nick
+      {
+        get { return nick; }
+        set { nick = value; }
+      }
+
+      public RSAParameters OpenKey
+      {
+        get { return openKey; }
+        set { openKey = value; }
+      }
     }
-
-    public const ushort Id = (ushort)ClientCommand.ReceiveUserOpenKey;
   }
 }

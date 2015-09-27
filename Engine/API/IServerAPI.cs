@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace Engine
+namespace Engine.API
 {
   public interface IServerAPI
   {

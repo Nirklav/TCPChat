@@ -5,19 +5,25 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using Engine.Helpers;
+using System.Security;
+using Engine.API;
 
 namespace Engine.Network
 {
+  [SecurityCritical]
   class ServerRequestQueue : RequestQueue<ServerCommandArgs>
   {
+    [SecurityCritical]
     protected override void OnError(Exception exc)
     {
       ServerModel.Logger.Write(exc);
     }
   }
 
+  [SecurityCritical]
   class ClientRequestQueue : RequestQueue<ClientCommandArgs>
   {
+    [SecurityCritical]
     protected override void OnError(Exception exc)
     {
       ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = exc });
@@ -25,6 +31,7 @@ namespace Engine.Network
     }
   }
 
+  [SecurityCritical]
   abstract class RequestQueue<TArgs> :
     MarshalByRefObject,
     IDisposable
@@ -33,6 +40,7 @@ namespace Engine.Network
 
     #region Nested Types
 
+    [SecurityCritical]
     private class QueueContainer : IDisposable
     {
       private readonly RequestQueue<TArgs> queue;
@@ -45,11 +53,13 @@ namespace Engine.Network
       private readonly ManualResetEvent disposeEvent = new ManualResetEvent(true);
       private bool disposed;
 
+      [SecurityCritical]
       public QueueContainer(RequestQueue<TArgs> queue)
       {
         this.queue = queue;
       }
 
+      [SecurityCritical]
       public void Enqueue(ICommand<TArgs> command, TArgs args)
       {
         using(new TryLock(syncObject, Timeout))
@@ -64,6 +74,7 @@ namespace Engine.Network
         }
       }
 
+      [SecurityCritical]
       private void Process(object o)
       {
         while (true)
@@ -93,6 +104,7 @@ namespace Engine.Network
         }
       }
 
+      [SecuritySafeCritical]
       public void Dispose()
       {
         if (disposed)
@@ -108,17 +120,20 @@ namespace Engine.Network
       }
     }
 
+    [SecurityCritical]
     private class CommandContainer
     {
       private ICommand<TArgs> command;
       private TArgs args;
 
+      [SecurityCritical]
       public CommandContainer(ICommand<TArgs> command, TArgs args)
       {
         this.command = command;
         this.args = args;
       }
 
+      [SecurityCritical]
       public void Run()
       {
         command.Run(args);
@@ -132,12 +147,14 @@ namespace Engine.Network
 
     private volatile bool disposed;
 
+    [SecurityCritical]
     public RequestQueue()
     {
       syncObject = new object();
       requests = new Dictionary<string, QueueContainer>();
     }
 
+    [SecurityCritical]
     internal void Add(string connectionId, ICommand<TArgs> command, TArgs args)
     {
       ThrowIfDisposed();
@@ -154,14 +171,17 @@ namespace Engine.Network
       queueContainer.Enqueue(command, args);
     }
 
+    [SecurityCritical]
     protected abstract void OnError(Exception e);
 
+    [SecurityCritical]
     private void ThrowIfDisposed()
     {
       if (disposed)
         throw new ObjectDisposedException("RequestQueue is disposed");
     }
 
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (disposed)
