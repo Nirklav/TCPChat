@@ -9,4 +9,5 @@ Supports:
   1. Private messages.
   2. Rooms.
   3. Voice chat.
-  4. Plugins (Example of simple plugin: https://github.com/Nirklav/ScreenshotPlugin).
+  4. Files sharing.
+  5. Plugins (Example of simple plugin: https://github.com/Nirklav/ScreenshotPlugin).
