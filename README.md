@@ -6,7 +6,7 @@
 Multi-user chat with mixed architecture (client-server, p2p)
 
 Supports:
-1. Private messages
-2. Rooms
-3. Voice chat
-4. Plugins (Example of simple plugin: https://github.com/Nirklav/ScreenshotPlugin)
+  1. Private messages.
+  2. Rooms.
+  3. Voice chat.
+  4. Plugins (Example of simple plugin: https://github.com/Nirklav/ScreenshotPlugin).
