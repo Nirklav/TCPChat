@@ -12,7 +12,6 @@ namespace Engine.API
   /// <summary>
   /// Класс реазиующий стандартное серверное API.
   /// </summary>
-  [SecuritySafeCritical]
   sealed class StandardServerAPI :
     MarshalByRefObject,
     IServerAPI

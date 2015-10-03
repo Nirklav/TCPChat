@@ -36,7 +36,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>EngineKey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>EngineStrongName.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -185,7 +185,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="EngineKey.pfx" />
+    <None Include="EngineStrongName.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

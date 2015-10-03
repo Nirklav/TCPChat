@@ -4,7 +4,6 @@ using System.Security;
 
 namespace Engine.Model.Server
 {
-  [SecurityCritical]
   public class ServerContext : ModelContext<ServerModel>
   {
     #region constructor
@@ -18,13 +17,13 @@ namespace Engine.Model.Server
     #region properties
     public Dictionary<string, User> Users
     {
-      [SecurityCritical]
+      [SecuritySafeCritical]
       get { return model.Users; }
     }
 
     public Dictionary<string, Room> Rooms
     {
-      [SecurityCritical]
+      [SecuritySafeCritical]
       get { return model.Rooms; }
     }
     #endregion

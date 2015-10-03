@@ -9,7 +9,6 @@ using System.Text;
 
 namespace Engine.Helpers
 {
-  [SecuritySafeCritical]
   public class Logger : MarshalByRefObject
   {
     private const string DebugMessageTemplate = "Time: {0} DEBUG: {1}";

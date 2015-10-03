@@ -6,7 +6,6 @@ using System.Security;
 
 namespace Engine.Plugins.Client
 {
-  [SecuritySafeCritical]
   public class ClientModelWrapper :
     CrossDomainObject
   {

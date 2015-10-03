@@ -5,7 +5,6 @@ using System.Security;
 
 namespace Engine.Plugins.Server
 {
-  [SecuritySafeCritical]
   public class ServerModelWrapper :
     CrossDomainObject
   {

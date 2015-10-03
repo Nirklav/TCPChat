@@ -58,7 +58,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>UIKey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>UIStrongName.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup>
     <NoWin32Manifest>true</NoWin32Manifest>
@@ -207,7 +207,7 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
-    <None Include="UIKey.pfx" />
+    <None Include="UIStrongName.snk" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

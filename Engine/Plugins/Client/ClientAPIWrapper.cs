@@ -6,7 +6,6 @@ using System.Security;
 
 namespace Engine.Plugins.Client
 {
-  [SecuritySafeCritical]
   public class ClientAPIWrapper :
     CrossDomainObject,
     IClientAPI

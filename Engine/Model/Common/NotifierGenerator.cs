@@ -8,7 +8,6 @@ using System.Security.Permissions;
 
 namespace Engine.Model.Common
 {
-  [SecuritySafeCritical]
   public static class NotifierGenerator
   {
     private const string InvokeEventPrefix = "invoke_";
@@ -49,7 +48,7 @@ namespace Engine.Model.Common
       if (!interfaceType.IsInterface)
         throw new InvalidOperationException("TInterface must be an interface");
 
-      var contextType = contexts.GetOrAdd(interfaceType, type => CreateContext(type));
+      var contextType = contexts.GetOrAdd(interfaceType, CreateContext);
       return (TInterface)Activator.CreateInstance(contextType);
     }
 
@@ -154,7 +153,7 @@ namespace Engine.Model.Common
       if (!interfaceType.IsInterface)
         throw new InvalidOperationException("TInterface must be an interface");
 
-      var invokerType = invokers.GetOrAdd(interfaceType, type => CreateInvoker(type));
+      var invokerType = invokers.GetOrAdd(interfaceType, CreateInvoker);
       var invoker = (Notifier)Activator.CreateInstance(invokerType);
       foreach (var ctx in context)
         invoker.Add(ctx);
@@ -182,7 +181,7 @@ namespace Engine.Model.Common
       var contextsGetMethod = notifierType.GetMethod("GetContexts", BindingFlags.Instance | BindingFlags.Public);
       var arrayGetMethod = typeof(object[]).GetMethod("Get", BindingFlags.Instance | BindingFlags.Public, null, new[] { typeof(int) }, null);
 
-      var contextType = contexts.GetOrAdd(invokerAttribute.Context, type => CreateContext(type));
+      var contextType = contexts.GetOrAdd(invokerAttribute.Context, CreateContext);
 
       var builder = moduleBuilder.DefineType(interfaceType.Name + GeneretedTypePostfix);
       builder.SetParent(notifierType);

@@ -16,7 +16,6 @@ namespace Engine.Network
   /// <summary>
   /// Клиентское соединение.
   /// </summary>
-  [SecuritySafeCritical]
   public sealed class AsyncClient : Connection
   {
     #region consts

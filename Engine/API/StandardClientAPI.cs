@@ -16,7 +16,6 @@ namespace Engine.API
   /// <summary>
   /// Класс реализующий стандартный API для клиента.
   /// </summary>
-  [SecuritySafeCritical]
   sealed class StandardClientAPI :
     MarshalByRefObject,
     IClientAPI
@@ -27,9 +26,9 @@ namespace Engine.API
       public string Message { get; set; }
     }
 
-    private List<WaitingPrivateMessage> waitingPrivateMessages;
-    private Dictionary<ushort, ICommand<ClientCommandArgs>> commands;
-    private Random idCreator;
+    private readonly List<WaitingPrivateMessage> waitingPrivateMessages;
+    private readonly Dictionary<ushort, ICommand<ClientCommandArgs>> commands;
+    private readonly Random idCreator;
     private long lastSendedNumber;
 
     /// <summary>
@@ -79,7 +78,7 @@ namespace Engine.API
       var data = new byte[e.DataSize];
       Buffer.BlockCopy(e.Data, 0, data, 0, data.Length);
 
-      ClientPlayVoiceCommand.MessageContent content = new ClientPlayVoiceCommand.MessageContent
+      var content = new ClientPlayVoiceCommand.MessageContent
       {
         Pack = new SoundPack
         {

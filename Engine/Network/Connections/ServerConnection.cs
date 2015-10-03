@@ -11,7 +11,6 @@ namespace Engine.Network.Connections
   /// <summary>
   /// Серверное соединение с клиентом.
   /// </summary>
-  [SecuritySafeCritical]
   sealed class ServerConnection :
     Connection
   {

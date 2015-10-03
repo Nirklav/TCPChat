@@ -4,7 +4,6 @@ using System.Threading;
 
 namespace Engine.Model
 {
-  [SecurityCritical]
   public abstract class ModelContext<TModel> :
     MarshalByRefObject,
     IDisposable

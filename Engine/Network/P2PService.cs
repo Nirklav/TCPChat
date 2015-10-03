@@ -9,7 +9,6 @@ using System.Threading;
 
 namespace Engine.Network
 {
-  [SecuritySafeCritical]
   public sealed class P2PService : IDisposable
   {
     #region nested types
@@ -73,8 +72,15 @@ namespace Engine.Network
       syncContext = new EngineSyncContext();
 
       server = new NetServer(config);
-      syncContext.Send(s => ((NetServer)s).RegisterReceivedCallback(ReceivedCallback), server);
+      syncContext.Send(RegisterReceivedCallback, server);
       server.Start();
+    }
+
+    [SecurityCritical]
+    private void RegisterReceivedCallback(object obj)
+    {
+      var server = (NetServer)obj;
+      server.RegisterReceivedCallback(ReceivedCallback);
     }
     #endregion
 
@@ -84,7 +90,7 @@ namespace Engine.Network
     /// </summary>
     public int Port
     {
-      [SecurityCritical]
+      [SecuritySafeCritical]
       get
       {
         ThrowIfDisposed();
@@ -99,7 +105,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="senderId">Соединение которое прислало запрос.</param>
     /// <param name="requestId">Соединение получащее ответ.</param>
-    [SecurityCritical]
+    [SecuritySafeCritical]
     public void Introduce(string senderId, string requestId)
     {
       ThrowIfDisposed();

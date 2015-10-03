@@ -12,7 +12,6 @@ using System.Threading;
 
 namespace Engine.Network
 {
-  [SecuritySafeCritical]
   public sealed class AsyncServer :
     MarshalByRefObject,
     IDisposable
@@ -24,10 +23,12 @@ namespace Engine.Network
     #endregion
 
     #region fields
-    private Dictionary<string, ServerConnection> connections;
-    private Socket listener;
+    private readonly Dictionary<string, ServerConnection> connections;
+    private readonly ServerRequestQueue requestQueue;
+
     private P2PService p2pService;
-    private ServerRequestQueue requestQueue;
+    private Socket listener;
+
     private bool isServerRunning;
     private long lastTempId;
     private bool disposed;
@@ -108,6 +109,7 @@ namespace Engine.Network
       var address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;
 
       listener = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+      listener.LingerState = new LingerOption(false, 0);
       listener.Bind(new IPEndPoint(address, serverPort));
       listener.Listen(ListenConnections);
       listener.BeginAccept(AcceptCallback, null);
@@ -140,7 +142,7 @@ namespace Engine.Network
     /// Закрывает соединение.
     /// </summary>
     /// <param name="id">Id cоединения, которое будет закрыто.</param>
-    [SecurityCritical]
+    [SecuritySafeCritical]
     public void CloseConnection(string id)
     {
       P2PService.RemoveEndPoint(id);
@@ -162,7 +164,7 @@ namespace Engine.Network
     /// <param name="messageId">Тип сообщения. (Command.Id)</param>
     /// <param name="messageContent">Контект команды.</param>
     /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
-    [SecurityCritical]
+    [SecuritySafeCritical]
     public void SendMessage(string connectionId, ushort messageId, object messageContent, bool allowTempConnections = false)
     {
       lock (connections)
@@ -180,7 +182,7 @@ namespace Engine.Network
     /// <param name="messageId">Тип сообщения. (Command.Id)</param>
     /// <param name="messageContent">Сериализованный контект команды.</param>
     /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
-    [SecurityCritical]
+    [SecuritySafeCritical]
     public void SendMessage(string connectionId, ushort messageId, byte[] messageContent, bool allowTempConnections = false)
     {
       lock (connections)
@@ -195,7 +197,7 @@ namespace Engine.Network
     /// Возвращает список зарегестрированых Id соединений.
     /// </summary>
     /// <returns>Список зарегестрированых Id.</returns>
-    [SecurityCritical]
+    [SecuritySafeCritical]
     public string[] GetConnetionsIds()
     {
       lock (connections)
@@ -207,7 +209,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="id">Идентификатор соединения.</param>
     /// <returns>Открытый ключ.</returns>
-    [SecurityCritical]
+    [SecuritySafeCritical]
     public RSAParameters GetOpenKey(string id)
     {
       lock (connections)
@@ -222,7 +224,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="id">Id соединения.</param>
     /// <returns>Есть ли соединение.</returns>
-    [SecurityCritical]
+    [SecuritySafeCritical]
     public bool ContainsConnection(string id)
     {
       lock (connections)
@@ -416,10 +418,16 @@ namespace Engine.Network
       }
 
       if (listener != null)
-        listener.Close();
+      {
+        listener.Dispose();
+        listener = null;
+      }
 
       if (p2pService != null)
+      {
         p2pService.Dispose();
+        p2pService = null;
+      }
     }
 
     /// <summary>

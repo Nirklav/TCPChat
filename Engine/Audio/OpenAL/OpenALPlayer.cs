@@ -9,7 +9,6 @@ using System.Threading;
 
 namespace Engine.Audio.OpenAL
 {
-  [SecuritySafeCritical]
   public sealed class OpenALPlayer :
     MarshalByRefObject,
     IPlayer
@@ -28,11 +27,13 @@ namespace Engine.Audio.OpenAL
       public int Id { get; private set; }
       public long LastPlayedNumber { get; set; }
 
+      [SecurityCritical]
       public SourceDescription(int soueceId)
       {
         Id = soueceId;
       }
 
+      [SecurityCritical]
       public ALFormat GetFormat(SoundPack pack)
       {
         if (pack.Channels != 2 && pack.Channels != 1)

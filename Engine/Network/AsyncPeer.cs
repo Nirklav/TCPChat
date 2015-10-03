@@ -20,7 +20,6 @@ namespace Engine.Network
     ConnectedToPeers = 2,
   }
 
-  [SecuritySafeCritical]
   public class AsyncPeer :
     MarshalByRefObject,
     IDisposable
@@ -75,7 +74,7 @@ namespace Engine.Network
     /// </summary>
     public PeerState State
     {
-      [SecurityCritical]
+      [SecuritySafeCritical]
       get { return (PeerState)state; }
     }
     #endregion
@@ -116,7 +115,7 @@ namespace Engine.Network
         config.LocalAddress = IPAddress.IPv6Any;
 
       handler = new NetPeer(config);
-      syncContext.Send(p => ((NetPeer)p).RegisterReceivedCallback(ReceivedCallback), handler);
+      syncContext.Send(RegisterReceivedCallback, handler);
       handler.Start();
 
       var hailMessage = handler.CreateMessage();
@@ -199,7 +198,7 @@ namespace Engine.Network
       if (handler == null || handler.Status != NetPeerStatus.Running)
         return false;
 
-      return handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId)) != null;
+      return FindConnection(peerId) != null;
     }
 
     #region Send message
@@ -234,7 +233,7 @@ namespace Engine.Network
         return;
       }
 
-      var connection = handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId));
+      var connection = FindConnection(peerId);
       if (connection == null)
       {
         SaveCommandAndConnect(peerId, commandId, messageContent, unreliable);
@@ -277,7 +276,7 @@ namespace Engine.Network
       if (handler == null || handler.Status != NetPeerStatus.Running)
         return false;
 
-      var connection = handler.Connections.SingleOrDefault(c => string.Equals((string)c.Tag, peerId));
+      var connection = FindConnection(peerId);
       if (connection == null)
         return false;
 
@@ -318,7 +317,7 @@ namespace Engine.Network
       if (handler == null || handler.Status != NetPeerStatus.Running)
         return;
 
-      var connections = handler.Connections.Where(c => peerIds.Contains((string)c.Tag)).ToList();
+      var connections = FindConnections(peerIds);
       if (connections.Count <= 0)
         return;
 
@@ -368,6 +367,55 @@ namespace Engine.Network
       {
         serviceConnection.Disconnect(string.Empty);
         serviceConnection = null;
+      }
+    }
+
+
+
+    [SecurityCritical]
+    private void RegisterReceivedCallback(object obj)
+    {
+      var server = (NetPeer)obj;
+      server.RegisterReceivedCallback(ReceivedCallback);
+    }
+
+    [SecurityCritical]
+    private NetConnection FindConnection(string id)
+    {
+      return handler.Connections.SingleOrDefault(new Finder(id).Equals);
+    }
+
+    [SecurityCritical]
+    private List<NetConnection> FindConnections(IEnumerable<string> ids)
+    {
+      return handler.Connections.Where(new Finder(ids).Contains).ToList();
+    }
+
+    private class Finder
+    {
+      private string id;
+      private IEnumerable<string> ids;
+
+      public Finder(string id)
+      {
+        this.id = id;
+      }
+
+      public Finder(IEnumerable<string> ids)
+      {
+        this.ids = ids;
+      }
+
+      [SecurityCritical]
+      public bool Equals(NetConnection connection)
+      {
+        return string.Equals((string)connection.Tag, id);
+      }
+
+      [SecurityCritical]
+      public bool Contains(NetConnection connection)
+      {
+        return ids.Contains((string)connection.Tag);
       }
     }
     #endregion
@@ -502,7 +550,7 @@ namespace Engine.Network
       if (requestQueue != null)
         requestQueue.Dispose();
 
-      if (handler != null && handler.Status == NetPeerStatus.Running)
+      if (handler != null)
         handler.Shutdown(string.Empty);
 
       lock (waitingCommands)

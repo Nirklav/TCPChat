@@ -52,7 +52,7 @@ namespace Engine.Plugins
 
       var permmisions = new PermissionSet(PermissionState.None);
       permmisions.AddPermission(new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
-      permmisions.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution | SecurityPermissionFlag.Infrastructure));
+      permmisions.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
       permmisions.AddPermission(new UIPermission(UIPermissionWindow.AllWindows));
       permmisions.AddPermission(new FileIOPermission(FileIOPermissionAccess.PathDiscovery | FileIOPermissionAccess.Read, inputPluginLibs));
 

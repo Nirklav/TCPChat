@@ -153,7 +153,7 @@ namespace Engine.Helpers
     #endregion
 
     #region private methods
-    [SecurityCritical]
+    [SecuritySafeCritical]
     private int CalculateDataSize(int dataSize, int maxDataSize)
     {
       if (dataSize == maxDataSize)
@@ -167,7 +167,7 @@ namespace Engine.Helpers
     #endregion
 
     #region IDisposable
-    [SecurityCritical]
+    [SecuritySafeCritical]
     private void ThrowIfDisposed()
     {
       if (disposed)

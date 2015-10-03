@@ -12,7 +12,6 @@ namespace Engine.Network.Connections
   /// <summary>
   /// Базовый класс соединения, реализовывает прием и передачу данных.
   /// </summary>
-  [SecuritySafeCritical]
   public abstract class Connection :
     MarshalByRefObject,
     IDisposable
@@ -404,10 +403,9 @@ namespace Engine.Network.Connections
     {
       if (handler != null)
       {
-        handler.Shutdown(SocketShutdown.Both);
-
         if (handler.Connected)
         {
+          handler.Shutdown(SocketShutdown.Both);
           handler.Disconnect(false);
           OnDisconnected();
         }
