@@ -3,16 +3,11 @@
 
 ![alt tag](https://raw.github.com/Nirklav/TCPChat/master/screen.png)
 
-Многопользовательский чат, с смешанной архитектурой.
+Multi-user chat with mixed architecture (client-server, p2p)
 
-Поддержка:
-  1. Личных сообщений (Анонимный обмен ключами)
-  2. Комнат
-  3. Передача файлов (напрямую между клиентами)
-  4. Голосовой чат (бета)
-    1. Активация микрофона кнопкой (выбирается в настройках).
-    2. Выбор типа комнаты при ее создании.
-  5. Поддержка плагинов. (Пример реализации плагина: https://github.com/Nirklav/ScreenshotPlugin)
-  
-Сервер и клиент обрабатывают информацию асинхронно.
-Для запуска необходим .NET Framework 3.5
+Supports:
+  1. Private messages.
+  2. Rooms.
+  3. Voice chat.
+  4. Files sharing.
+  5. Plugins (Example of simple plugin: https://github.com/Nirklav/ScreenshotPlugin).
