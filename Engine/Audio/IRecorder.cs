@@ -24,7 +24,7 @@ namespace Engine.Audio
     void Start();
 
     /// <summary>
-    /// Остонавливает запись с микрофона.
+    /// Останавливает запись с микрофона.
     /// </summary>
     void Stop();
 

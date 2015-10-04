@@ -7,7 +7,7 @@ namespace Engine.Model.Entities
   /// Класс описывающий комнату.
   /// </summary>
   [Serializable]
-  public class Room
+  public class Room : IEquatable<Room>
   {
     /// <summary>
     /// Идентификатор сообщений которые невозможно редактировать.
@@ -219,6 +219,12 @@ namespace Engine.Model.Entities
     /// <returns>Истина если объекты равны.</returns>
     public bool Equals(Room room)
     {
+      if (ReferenceEquals(room, null))
+        return false;
+
+      if (ReferenceEquals(room, this))
+        return true;
+
       return string.Equals(name, room.name);
     }
   }

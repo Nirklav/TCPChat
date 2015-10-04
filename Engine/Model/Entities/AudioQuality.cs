@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Engine.Model.Entities
 {
   [Serializable]
-  public class AudioQuality
+  public class AudioQuality : IEquatable<AudioQuality>
   {
     public int Channels { get; set; }
     public int Bits { get; set; }
@@ -38,10 +35,27 @@ namespace Engine.Model.Entities
       if (ReferenceEquals(obj, null))
         return false;
 
-      if (!(obj is AudioQuality))
+      if (ReferenceEquals(obj, this))
+        return true;
+
+      var quality = obj as AudioQuality;
+      if (ReferenceEquals(quality, null))
         return false;
 
-      return obj.GetHashCode() == GetHashCode();
+      return Equals(quality);
+    }
+
+    public bool Equals(AudioQuality other)
+    {
+      if (ReferenceEquals(other, null))
+        return false;
+
+      if (ReferenceEquals(other, this))
+        return true;
+
+      return Channels == other.Channels &&
+        Bits == other.Bits &&
+        Frequency == other.Frequency;
     }
 
     public override int GetHashCode()

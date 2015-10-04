@@ -33,7 +33,7 @@ namespace Engine.Network
     private long lastTempId;
     private bool disposed;
 
-    private object timerSync = new object();
+    private readonly object timerSync = new object();
     private Timer systemTimer;
     #endregion
 
@@ -306,7 +306,7 @@ namespace Engine.Network
 
       lock (connections)
       {
-        string[] keys = connections.Keys.ToArray();
+        var keys = connections.Keys.ToArray();
         foreach (string id in keys)
         {
           try
@@ -350,19 +350,22 @@ namespace Engine.Network
     [SecurityCritical]
     private void RefreshRooms()
     {
-      if (ServerModel.IsInited)
-        using (var server = ServerModel.Get())
-        {
-          string[] roomsNames = server.Rooms.Keys.ToArray();
-          foreach (string name in roomsNames)
-          {
-            if (string.Equals(name, ServerModel.MainRoomName))
-              continue;
+      if (!ServerModel.IsInited)
+        return;
 
-            if (server.Rooms[name].Count == 0)
-              server.Rooms.Remove(name);
-          }
+      using (var server = ServerModel.Get())
+      {
+        var roomsNames = server.Rooms.Keys.ToArray();
+
+        foreach (string name in roomsNames)
+        {
+          if (string.Equals(name, ServerModel.MainRoomName))
+            continue;
+
+          if (server.Rooms[name].Count == 0)
+            server.Rooms.Remove(name);
         }
+      }
     }
     #endregion
     #endregion

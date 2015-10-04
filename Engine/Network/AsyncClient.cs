@@ -72,7 +72,7 @@ namespace Engine.Network
 
     #region properties/events
     /// <summary>
-    /// Взвращает значение, характеризующее подключен ли клиент к серверу.
+    /// Подключен клиент к серверу, или нет.
     /// </summary>
     public bool IsConnected
     {
@@ -276,33 +276,47 @@ namespace Engine.Network
     [SecurityCritical]
     private void SystemTimerCallback(object state)
     {
-      if (handler != null && IsConnected)
-      {
-        if ((DateTime.Now - lastPingRequest).TotalMilliseconds >= PingInterval && ClientModel.API != null)
-        {
-          ClientModel.API.PingRequest();
-          lastPingRequest = DateTime.Now;
-        }
-      }
+      TrySendPingRequest();
 
-      if (reconnecting)
-      {
-        if ((DateTime.Now - lastReconnect).TotalMilliseconds >= ReconnectTimeInterval)
-        {
-          ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs { Message = "Попытка соединения с сервером...", Type = MessageType.System });
-
-          if (handler != null)
-            handler.Close();
-
-          Connect(hostAddress);
-
-          lastReconnect = DateTime.Now;
-        }
-      }
+      TryReconnect();
 
       lock (timerSync)
         if (systemTimer != null)
           systemTimer.Change(SystemTimerInterval, -1);
+    }
+
+    [SecurityCritical]
+    private void TrySendPingRequest()
+    {
+      if (!IsConnected || ClientModel.API == null)
+        return;
+
+      var interval = (DateTime.Now - lastPingRequest).TotalMilliseconds;
+      if (interval < PingInterval)
+        return;
+
+      lastPingRequest = DateTime.Now;
+      ClientModel.API.PingRequest();
+    }
+
+    [SecurityCritical]
+    private void TryReconnect()
+    {
+      if (!reconnecting)
+        return;
+
+      var interval = (DateTime.Now - lastReconnect).TotalMilliseconds;
+      if (interval < ReconnectTimeInterval)
+        return;
+
+      ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs { Message = "Попытка соединения с сервером...", Type = MessageType.System });
+
+      if (handler != null)
+        handler.Dispose();
+
+      Connect(hostAddress);
+
+      lastReconnect = DateTime.Now;
     }
     #endregion
 

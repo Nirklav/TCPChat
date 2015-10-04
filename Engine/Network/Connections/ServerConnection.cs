@@ -39,8 +39,7 @@ namespace Engine.Network.Connections
     /// </summary>
     /// <param name="handler">Подключенный к клиенту сокет.</param>
     /// <param name="maxReceivedDataSize">Максимальныйц размер сообщения получаемый от пользователя.</param>
-    /// <param name="ConnectionLogger">Логгер.</param>
-    /// <param name="receivedCallback">Функция оповещающая о полученнии сообщения, данным соединением.</param>
+    /// <param name="receivedCallback">Функция обратного вызова, для полученных данных.</param>
     [SecurityCritical]
     public ServerConnection(Socket handler, int maxReceivedDataSize, EventHandler<DataReceivedEventArgs> receivedCallback)
     {
@@ -148,7 +147,7 @@ namespace Engine.Network.Connections
     {
       if (args.Error != null)
       {
-        SocketException se = args.Error as SocketException;
+        var se = args.Error as SocketException;
         if (se != null && se.SocketErrorCode == SocketError.ConnectionReset)
           return;
 
@@ -157,7 +156,6 @@ namespace Engine.Network.Connections
       }
 
       var temp = Interlocked.CompareExchange(ref dataReceivedCallback, null, null);
-
       if (temp != null)
         temp(this, args);
     }

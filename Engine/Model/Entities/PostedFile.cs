@@ -1,9 +1,5 @@
-﻿using Engine.Model;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace Engine.Model.Entities
 {
@@ -14,6 +10,8 @@ namespace Engine.Model.Entities
     MarshalByRefObject,
     IDisposable
   {
+    private bool disposed;
+
     /// <summary>
     /// Описание файла.
     /// </summary>
@@ -28,8 +26,6 @@ namespace Engine.Model.Entities
     /// Поток для чтения файла.
     /// </summary>
     public FileStream ReadStream { get; set; }
-
-    bool disposed = false;
 
     /// <summary>
     /// Освобождает ресурсы.

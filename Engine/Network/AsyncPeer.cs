@@ -370,8 +370,6 @@ namespace Engine.Network
       }
     }
 
-
-
     [SecurityCritical]
     private void RegisterReceivedCallback(object obj)
     {

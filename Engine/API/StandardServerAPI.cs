@@ -21,12 +21,11 @@ namespace Engine.API
     /// </summary>
     public const string API = "StandardAPI v2.3";
 
-    private Dictionary<ushort, ICommand<ServerCommandArgs>> commands;
+    private readonly Dictionary<ushort, ICommand<ServerCommandArgs>> commands;
 
     /// <summary>
     /// Создает экземпляр API.
     /// </summary>
-    /// <param name="host">Сервер которому будет принадлежать данный API.</param>
     [SecurityCritical]
     public StandardServerAPI()
     {
@@ -69,8 +68,8 @@ namespace Engine.API
     /// <summary>
     /// Извлекает команду.
     /// </summary>
-    /// <param name="message">Пришедшее сообщение, по которому будет определена необходимая для извлекания команда.</param>
-    /// <returns>Команда для выполнения.</returns>
+    /// <param name="message">Cообщение, по которому будет определена команда.</param>
+    /// <returns>Команда.</returns>
     [SecuritySafeCritical]
     public ICommand<ServerCommandArgs> GetCommand(byte[] message)
     {
@@ -95,7 +94,10 @@ namespace Engine.API
     /// <summary>
     /// Напрямую соединяет пользователей.
     /// </summary>
-    /// <param name="container"></param>
+    /// <param name="senderId">Пользователь запросивший соединение.</param>
+    /// <param name="senderPoint">Адрес пользователя запросившего соединение.</param>
+    /// <param name="requestId">Запрвшиваемый пользователь.</param>
+    /// <param name="requestPoint">Адрес запрашиваемого пользователя.</param>
     [SecuritySafeCritical]
     public void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint)
     {
@@ -128,6 +130,7 @@ namespace Engine.API
     /// Посылает клиенту запрос на подключение к P2PService
     /// </summary>
     /// <param name="nick">Пользователь получащий запрос.</param>
+    /// <param name="servicePort">Порт сервиса.</param>
     [SecuritySafeCritical]
     public void SendP2PConnectRequest(string nick, int servicePort)
     {

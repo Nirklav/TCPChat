@@ -289,11 +289,12 @@ namespace Engine.Network.Connections
     /// <summary>
     /// Происходит при отсоединении.
     /// </summary>
+    /// <param name="e">Ошибка которая могла возникнуть в процессе отсоединения.</param>
     [SecuritySafeCritical]
     protected virtual void OnDisconnected(Exception e = null) { }
 
     /// <summary>
-    /// Происходит при ловле классом SocketException. Без переопределение возращает всегда false.
+    /// Происходит при SocketException. Без переопределение возращает всегда false.
     /// </summary>
     /// <param name="se">Словленое исключение.</param>
     /// <returns>Вовзращает значение говорящее о том, нужно ли дальше выкидывать исключение, или оно обработано. true - обработано. false - не обработано.</returns>

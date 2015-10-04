@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Engine.Model.Entities
 {
@@ -9,23 +6,24 @@ namespace Engine.Model.Entities
   /// Класс описывающий файл раздаваемый пользователем.
   /// </summary>
   [Serializable]
-  public class FileDescription
+  public class FileDescription : IEquatable<FileDescription>
   {
-    private User owner;
-    private int id;
-    private string name;
-    private long size;
+    private readonly User owner;
+    private readonly int id;
+    private readonly string name;
+    private readonly long size;
 
     /// <summary>
     /// Создает новый экземпляр класса.
     /// </summary>
     /// <param name="fileOwner">Пользователь раздающий файл.</param>
+    /// <param name="fileSize">Размер файла.</param>
     /// <param name="fileName">Короткое имя файла.</param>
-    /// <param name="fileID">Индетификатор файла. В пределах пользователя должен быть уникален.</param>
-    public FileDescription(User fileOwner, long fileSize, string fileName, int fileID)
+    /// <param name="fileId">Индетификатор файла. В пределах пользователя должен быть уникален.</param>
+    public FileDescription(User fileOwner, long fileSize, string fileName, int fileId)
     {
       owner = fileOwner;
-      id = fileID;
+      id = fileId;
       name = fileName;
       size = fileSize;
     }
@@ -57,19 +55,21 @@ namespace Engine.Model.Entities
     /// <summary>
     /// Идентификатор файла.
     /// </summary>
-    public int ID
+    public int Id
     {
       get { return id; }
     }
 
     public override bool Equals(object obj)
     {
-      if (obj == null)
+      if (ReferenceEquals(obj, null))
         return false;
 
-      FileDescription file = obj as FileDescription;
+      if (ReferenceEquals(obj, this))
+        return true;
 
-      if (file == null)
+      var file = obj as FileDescription;
+      if (ReferenceEquals(file, null))
         return false;
 
       return Equals(file);
@@ -77,15 +77,18 @@ namespace Engine.Model.Entities
 
     public bool Equals(FileDescription file)
     {
-      if (file == null)
+      if (ReferenceEquals(file, null))
         return false;
 
-      return owner.Equals(file.owner) && id.Equals(file.id);
+      if (ReferenceEquals(file, this))
+        return true;
+
+      return owner.Equals(file.owner) && id == file.id;
     }
 
     public override int GetHashCode()
     {
-      return owner.GetHashCode() ^ id.GetHashCode();
+      return (owner.GetHashCode() * 397) ^ id.GetHashCode();
     }
   }
 }

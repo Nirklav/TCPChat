@@ -34,7 +34,6 @@ namespace Engine.API
     /// <summary>
     /// Создает экземпляр API.
     /// </summary>
-    /// <param name="host">Клиент которому будет принадлежать данный API.</param>
     [SecurityCritical]
     public StandardClientAPI()
     {
@@ -107,8 +106,8 @@ namespace Engine.API
     /// <summary>
     /// Извлекает команду.
     /// </summary>
-    /// <param name="message">Пришедшее сообщение, по которому будет определена необходимая для извлекания команда.</param>
-    /// <returns>Команда для выполнения.</returns>
+    /// <param name="message">Сообщение, по которому будет определена команда.</param>
+    /// <returns>Команда.</returns>
     [SecuritySafeCritical]
     public ICommand<ClientCommandArgs> GetCommand(byte[] message)
     {
@@ -131,9 +130,9 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Редактирует сообщение.
+    /// Отправляет сообщение.
     /// </summary>
-    /// <param name="messageId">Идентификатор сообщения</param>
+    /// <param name="messageId">Идентификатор сообщения. (Если указан - сообщение будет отредактированно) </param>
     /// <param name="message">Сообщение.</param>
     /// <param name="roomName">Название комнаты.</param>
     [SecuritySafeCritical]
@@ -150,7 +149,7 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Асинхронно отправляет сообщение конкретному пользователю.
+    /// Отправляет сообщение конкретному пользователю.
     /// </summary>
     /// <param name="receiver">Ник получателя.</param>
     /// <param name="message">Сообщение.</param>
@@ -175,7 +174,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="receiver">Имя получателя.</param>
     /// <returns>Ожидающее отправки сообщение.</returns>
-    [SecuritySafeCritical]
+    [SecurityCritical]
     internal WaitingPrivateMessage GetWaitingMessage(string receiver)
     {
       lock (waitingPrivateMessages)
@@ -191,7 +190,7 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Асинхронно послыает запрос для регистрации на сервере.
+    /// Послыает запрос для регистрации на сервере.
     /// </summary>
     [SecuritySafeCritical]
     public void Register()
@@ -204,7 +203,7 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Асинхронно посылает запрос для отмены регистрации на сервере.
+    /// Посылает запрос для отмены регистрации на сервере.
     /// </summary>
     [SecuritySafeCritical]
     public void Unregister()
@@ -228,7 +227,7 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Удаляет комнату на сервере. Необходимо являться создателем комнаты.
+    /// Удаляет комнату на сервере. Необходимо быть администратором комнаты.
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
     [SecuritySafeCritical]
@@ -242,7 +241,7 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Приглашает в комнату пользователей. Необходимо являться создателем комнаты.
+    /// Приглашает в комнату пользователей. Необходимо быть администратором комнаты.
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="users">Перечисление пользователей, которые будут приглашены.</param>
@@ -260,10 +259,10 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Удаляет пользователей из комнаты. Необходимо являться создателем комнаты.
+    /// Удаляет пользователей из комнаты. Необходимо быть администратором комнаты.
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
-    /// <param name="users">Перечисление пользователей, которые будут удалены из комнаты.</param>
+    /// <param name="users">Пользотватели, которые будут удалены из комнаты.</param>
     [SecuritySafeCritical]
     public void KickUsers(string roomName, IEnumerable<User> users)
     {
@@ -278,7 +277,7 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Осуществляет выход из комнаты пользователя.
+    /// Осуществляет выход из комнаты.
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
     [SecuritySafeCritical]
@@ -292,7 +291,7 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Отправляет запрос о необходимости получения списка пользователей комнаты.
+    /// Отправляет запрос обновления комнаты.
     /// </summary>
     /// <param name="roomName">Название комнтаы.</param>
     [SecuritySafeCritical]
@@ -306,7 +305,7 @@ namespace Engine.API
     }
 
     /// <summary>
-    /// Изменяет администратора комнаты.
+    /// Изменяет администратора комнаты. Необходимо быть администратором комнаты.
     /// </summary>
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="newAdmin">Пользователь назначаемый администратором.</param>
@@ -358,7 +357,7 @@ namespace Engine.API
 
         // Создаем новый файл
         var id = 0;
-        while (client.PostedFiles.Exists(postFile => postFile.File.ID == id))
+        while (client.PostedFiles.Exists(postFile => postFile.File.Id == id))
           id = idCreator.Next(int.MinValue, int.MaxValue);
 
         var file = new FileDescription(client.User, info.Length, Path.GetFileName(path), id);
@@ -450,7 +449,7 @@ namespace Engine.API
     /// Останавлиает загрузку файла.
     /// </summary>
     /// <param name="file">Описание файла.</param>
-    /// <param name="leaveLoadedPart">Если значение истино недогруженный файл не будет удалятся.</param>
+    /// <param name="leaveLoadedPart">Осталять недокачанный файл или нет.</param>
     [SecuritySafeCritical]
     public void CancelDownloading(FileDescription file, bool leaveLoadedPart = true)
     {

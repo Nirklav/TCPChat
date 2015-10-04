@@ -44,6 +44,7 @@ namespace Engine.Helpers
     /// <summary>
     /// Создает экемпляр класса Crypter.
     /// </summary>
+    /// <param name="symmetricAlg">Алгоритм шифрования.</param>
     [SecuritySafeCritical]
     public Crypter(SymmetricAlgorithm symmetricAlg)
     {
@@ -115,13 +116,13 @@ namespace Engine.Helpers
     /// </summary>
     /// <param name="inputStream">Поток, который будет дешифрован.</param>
     /// <param name="outputStream">Поток, в который будет записан результат дешифрования.</param>
-    /// <param name="Key">Ключ для дешифрования.</param>
+    /// <param name="key">Ключ для дешифрования.</param>
     [SecuritySafeCritical]
-    public void DecryptStream(Stream inputStream, Stream outputStream, byte[] Key)
+    public void DecryptStream(Stream inputStream, Stream outputStream, byte[] key)
     {
       ThrowIfDisposed();
 
-      if (inputStream == null || outputStream == null || Key == null)
+      if (inputStream == null || outputStream == null || key == null)
         throw new ArgumentNullException("One of the arguments (or all) equals null");
 
       int maxBufferSizeValue = bufferCoefficient * ConstBufferCoefficient;
@@ -134,7 +135,7 @@ namespace Engine.Helpers
 
       long deltaLength = inputStream.Length - HeadSize - cryptAlgorithm.BlockSize / 8 - BitConverter.ToInt64(originFileLengthArray, 0);
 
-      using (var transform = cryptAlgorithm.CreateDecryptor(Key, iv))
+      using (var transform = cryptAlgorithm.CreateDecryptor(key, iv))
       {
         using (var csEncrypt = new CryptoStream(inputStream, transform, CryptoStreamMode.Read))
         {

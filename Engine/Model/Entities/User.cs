@@ -7,10 +7,12 @@ namespace Engine.Model.Entities
   /// Описание пользователя.
   /// </summary>
   [Serializable]
-  public class User
+  public class User : 
+    IEquatable<User>,
+    IEquatable<string>
   {
-    private string nick;
-    private Color nickColor;
+    private readonly string nick;
+    private readonly Color nickColor;
 
     /// <summary>
     /// Создает описание пользователя.
@@ -40,13 +42,17 @@ namespace Engine.Model.Entities
 
     public override bool Equals(object obj)
     {
-      if (obj == null)
+      if (ReferenceEquals(obj, null))
         return false;
 
-      if (!(obj is User))
+      if (ReferenceEquals(obj, this))
+        return true;
+
+      var user = obj as User;
+      if (ReferenceEquals(user, null))
         return false;
 
-      return Equals((User)obj);
+      return Equals(user);
     }
 
     public override int GetHashCode()
@@ -61,8 +67,11 @@ namespace Engine.Model.Entities
 
     public bool Equals(User user)
     {
-      if (user == null)
+      if (ReferenceEquals(user, null))
         return false;
+
+      if (ReferenceEquals(user, this))
+        return true;
 
       return Equals(Nick, user.Nick);
     }

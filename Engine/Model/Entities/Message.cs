@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Engine.Model.Entities
 {
@@ -14,7 +11,7 @@ namespace Engine.Model.Entities
     private const double ConcatTime = 1;
 
     /// <summary>
-    /// Ник.
+    /// Ник пользователя отправившего сообщение.
     /// </summary>
     public string Owner { get; private set; }
 

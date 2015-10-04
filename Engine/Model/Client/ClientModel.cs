@@ -30,7 +30,7 @@ namespace Engine.Model.Client
     }
 
     /// <summary>
-    /// Клиентский API
+    /// Клиентский API.
     /// </summary>
     public static IClientAPI API
     {
@@ -41,7 +41,7 @@ namespace Engine.Model.Client
     }
 
     /// <summary>
-    /// Клиент
+    /// Клиент.
     /// </summary>
     public static AsyncClient Client
     {
@@ -52,7 +52,7 @@ namespace Engine.Model.Client
     }
 
     /// <summary>
-    /// Пир 
+    /// Пир.
     /// </summary>
     public static AsyncPeer Peer
     {
@@ -63,7 +63,7 @@ namespace Engine.Model.Client
     }
 
     /// <summary>
-    /// Интерфейс для воспроизведения голоса.
+    /// Интерфейс для воспроизведения звука.
     /// </summary>
     public static IPlayer Player
     {
@@ -72,7 +72,7 @@ namespace Engine.Model.Client
     }
 
     /// <summary>
-    /// Интерфейс для записи голоса с микрофона.
+    /// Интерфейс для записи звука.
     /// </summary>
     public static IRecorder Recorder
     {
@@ -101,10 +101,10 @@ namespace Engine.Model.Client
     }
 
     /// <summary>
-    /// Исользовать только с конструкцией using
+    /// Создает контекст и блокирует модель данных клиента. Исользовать только с конструкцией using.
     /// </summary>
     /// <example>using (var client = ClientModel.Get()) { ... }</example>
-    /// <returns>Возвращает и блокирует модель.</returns>
+    /// <returns>Контекст данных модели.</returns>
     [SecurityCritical]
     public static ClientContext Get()
     {

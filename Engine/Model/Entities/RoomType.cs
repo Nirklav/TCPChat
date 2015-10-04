@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Engine.Model.Entities
+﻿namespace Engine.Model.Entities
 {
   public enum RoomType
   {
