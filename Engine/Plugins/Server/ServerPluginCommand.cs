@@ -6,7 +6,7 @@ namespace Engine.Plugins.Server
     CrossDomainObject,
     ICommand<ServerCommandArgs>
   {
-    public abstract ushort Id { get; }
+    public abstract long Id { get; }
     public abstract void Run(ServerCommandArgs args);
   }
 }

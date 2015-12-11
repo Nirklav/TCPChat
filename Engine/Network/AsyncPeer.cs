@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security;
+using System.Security.Cryptography;
 using System.Threading;
 
 namespace Engine.Network
@@ -25,47 +26,36 @@ namespace Engine.Network
     IDisposable
   {
     #region nested types
-
     private class WaitingCommandContainer
     {
-      public WaitingCommandContainer(ushort commandId, byte[] messageContent)
-        : this(commandId, messageContent, false)
-      { }
-
-      public WaitingCommandContainer(ushort commandId, byte[] messageContent, bool unreliable)
+      public WaitingCommandContainer(IPackage package, bool unreliable)
       {
-        CommandId = commandId;
-        MessageContent = messageContent;
+        Package = package;
         Unreliable = unreliable;
       }
 
-      public ushort CommandId { get; private set; }
-      public byte[] MessageContent { get; private set; }
+      public IPackage Package { get; private set; }
       public bool Unreliable { get; private set; }
     }
-
     #endregion
 
     #region consts
     public const string NetConfigString = "Peer TCPChat";
-
-    /// <summary>
-    /// Время неактивности соединения, после прошествия которого соединение будет закрыто.
-    /// </summary>
     public const int ConnectionTimeOut = 30 * 1000;
+    private const int KeySize = 256;
     #endregion
 
     #region private fields
+    private readonly object syncObject = new object();
     private Dictionary<string, List<WaitingCommandContainer>> waitingCommands;
-
+    private Dictionary<string, byte[]> keys;
     private NetConnection serviceConnection;
-
     private NetPeer handler;
     private int state; //PeerState
     private bool disposed;
-
     private SynchronizationContext syncContext;
     private ClientRequestQueue requestQueue;
+    private ECDiffieHellmanCng diffieHellman;
     #endregion
 
     #region events and properties
@@ -84,9 +74,13 @@ namespace Engine.Network
     internal AsyncPeer()
     {
       waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
-
+      keys = new Dictionary<string, byte[]>();
       syncContext = new EngineSyncContext();
       requestQueue = new ClientRequestQueue();
+
+      diffieHellman = new ECDiffieHellmanCng(KeySize);
+      diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+      diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
     }
     #endregion
 
@@ -115,21 +109,28 @@ namespace Engine.Network
         config.LocalAddress = IPAddress.IPv6Any;
 
       handler = new NetPeer(config);
-      syncContext.Send(RegisterReceivedCallback, handler);
+      syncContext.Send(RegisterReceived, handler);
       handler.Start();
 
-      var hailMessage = handler.CreateMessage();
+      var hail = handler.CreateMessage();
       using (var client = ClientModel.Get())
       {
         var localPoint = new IPEndPoint(Connection.GetIpAddress(remotePoint.AddressFamily), handler.Port);
 
-        hailMessage.Write(client.User.Nick);
-        hailMessage.Write(localPoint);
+        hail.Write(client.User.Nick);
+        hail.Write(localPoint);
       }
 
-      serviceConnection = handler.Connect(remotePoint, hailMessage);
+      serviceConnection = handler.Connect(remotePoint, hail);
 
       ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToService({0})", remotePoint);
+    }
+
+    [SecurityCritical]
+    private void RegisterReceived(object obj)
+    {
+      var server = (NetPeer)obj;
+      server.RegisterReceivedCallback(OnReceive);
     }
 
     /// <summary>
@@ -175,11 +176,7 @@ namespace Engine.Network
       if (handler == null)
         throw new InvalidOperationException("Handler not created.");
 
-      var hailMessage = handler.CreateMessage();
-      using (var client = ClientModel.Get())
-        hailMessage.Write(client.User.Nick);
-
-      handler.Connect(remotePoint, hailMessage);
+      handler.Connect(remotePoint, CreateHailMessage());
       
       DisconnectFromService();
 
@@ -205,43 +202,44 @@ namespace Engine.Network
     /// <summary>
     /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
     /// </summary>
+    /// <typeparam name="T">Тип параметра пакета.</typeparam>
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="commandId">Индетификатор команды.</param>
-    /// <param name="messageContent">Параметр команды.</param>
+    /// <param name="id">Индетификатор команды.</param>
+    /// <param name="content">Параметр пакета.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     [SecuritySafeCritical]
-    public void SendMessage(string peerId, ushort commandId, object messageContent, bool unreliable = false)
+    public void SendMessage<T>(string peerId, long id, T content, bool unreliable = false)
     {
-      SendMessage(peerId, commandId, Serializer.Serialize(messageContent), unreliable);
+      SendMessage(peerId, new Package<T>(id, content), unreliable);
     }
 
     /// <summary>
     /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
     /// </summary>
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="commandId">Индетификатор команды.</param>
-    /// <param name="messageContent">Параметр команды.</param>
+    /// <param name="package">Индетификатор пакета.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     [SecuritySafeCritical]
-    public void SendMessage(string peerId, ushort commandId, byte[] messageContent, bool unreliable = false)
+    public void SendMessage(string peerId, IPackage package, bool unreliable = false)
     {
       ThrowIfDisposed();
 
       if (handler == null || handler.Status != NetPeerStatus.Running)
       {
-        SaveCommandAndConnect(peerId, commandId, messageContent, unreliable);
+        SaveCommandAndConnect(peerId, package, unreliable);
         return;
       }
 
       var connection = FindConnection(peerId);
       if (connection == null)
       {
-        SaveCommandAndConnect(peerId, commandId, messageContent, unreliable);
+        SaveCommandAndConnect(peerId, package, unreliable);
         return;
       }
 
-      var message = CreateMessage(commandId, messageContent);
-      handler.SendMessage(message, connection, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
+      var deliveryMethod = unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered;
+      var message = CreateMessage(peerId, package);
+      handler.SendMessage(message, connection, deliveryMethod, 0);
     }
     #endregion
 
@@ -249,27 +247,27 @@ namespace Engine.Network
     /// <summary>
     /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
     /// </summary>
+    /// <typeparam name="T">Тип параметра пакета.</typeparam>
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="commandId">Индетификатор команды.</param>
-    /// <param name="messageContent">Параметр команды.</param>
+    /// <param name="id">Индетификатор команды.</param>
+    /// <param name="content">Параметр команды.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
     [SecuritySafeCritical]
-    public bool SendMessageIfConnected(string peerId, ushort commandId, object messageContent, bool unreliable = false)
+    public bool SendMessageIfConnected<T>(string peerId, long id, T content, bool unreliable = false)
     {
-      return SendMessageIfConnected(peerId, commandId, Serializer.Serialize(messageContent), unreliable);
+      return SendMessageIfConnected(peerId, new Package<T>(id, content), unreliable);
     }
 
     /// <summary>
     /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
     /// </summary>
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="commandId">Индетификатор команды.</param>
-    /// <param name="messageContent">Сериализованный параметр команды.</param>
+    /// <param name="package">Индетификатор пакета.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
     [SecuritySafeCritical]
-    public bool SendMessageIfConnected(string peerId, ushort commandId, byte[] messageContent, bool unreliable = false)
+    public bool SendMessageIfConnected(string peerId, IPackage package, bool unreliable = false)
     {
       ThrowIfDisposed();
 
@@ -280,71 +278,63 @@ namespace Engine.Network
       if (connection == null)
         return false;
 
-      var message = CreateMessage(commandId, messageContent);
-      handler.SendMessage(message, connection, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
+      var deliveryMethod = unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered;
+      var message = CreateMessage(peerId, package);
+      handler.SendMessage(message, connection, deliveryMethod, 0);
       return true;
-    }
-    #endregion
-
-    #region SendMessage if connected (multiple peers)
-    /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
-    /// </summary>
-    /// <param name="peerIds">Идентификаторы соединения, которым отправляется команда.</param>
-    /// <param name="commandId">Индетификатор команды.</param>
-    /// <param name="messageContent">Параметр команды.</param>
-    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
-    /// <returns>Отправлено ли сообщение.</returns>
-    [SecuritySafeCritical]
-    public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, object messageContent, bool unreliable = false)
-    {
-      SendMessageIfConnected(peerIds, commandId, Serializer.Serialize(messageContent), unreliable);
-    }
-
-    /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
-    /// </summary>
-    /// <param name="peerIds">Идентификаторы соединения, которым отправляется команда.</param>
-    /// <param name="commandId">Индетификатор команды.</param>
-    /// <param name="messageContent">Сериализованный параметр команды.</param>
-    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
-    /// <returns>Отправлено ли сообщение.</returns>
-    [SecuritySafeCritical]
-    public void SendMessageIfConnected(IList<string> peerIds, ushort commandId, byte[] messageContent, bool unreliable = false)
-    {
-      ThrowIfDisposed();
-
-      if (handler == null || handler.Status != NetPeerStatus.Running)
-        return;
-
-      var connections = FindConnections(peerIds);
-      if (connections.Count <= 0)
-        return;
-
-      var message = CreateMessage(commandId, messageContent);
-      handler.SendMessage(message, connections, unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered, 0);
     }
     #endregion
     #endregion
 
     #region private methods
     [SecurityCritical]
-    private NetOutgoingMessage CreateMessage(ushort commandId, byte[] messageContent)
+    private byte[] GetKey(string peerId)
     {
-      var message = handler.CreateMessage();
+      byte[] key;
+      lock (syncObject)
+        keys.TryGetValue(peerId, out key);
 
-      message.Write(commandId);
+      if (key == null)
+        throw new InvalidOperationException(string.Format("Key not set, for connection {0}", peerId));
 
-      if (messageContent != null)
-        message.Write(messageContent);
-
-      return message;
+      return key;
     }
 
     [SecurityCritical]
-    private void SaveCommandAndConnect(string peerId, ushort commandId, byte[] messageContent, bool unreliable)
+    private NetOutgoingMessage CreateMessage(string peerId, IPackage package)
     {
-      lock (waitingCommands)
+      byte[] pack;     
+      using (var crypter = new Crypter())
+      {
+        crypter.SetKey(GetKey(peerId));
+        pack = crypter.Encrypt(package);
+      }
+
+      var message = handler.CreateMessage(pack.Length);
+      message.Write(pack);
+      return message;
+    }
+    
+    [SecurityCritical]
+    private NetOutgoingMessage CreateHailMessage()
+    {
+      string nick;
+      using (var client = ClientModel.Get())
+        nick = client.User.Nick;
+
+      var publicKeyBlob = diffieHellman.PublicKey.ToByteArray();
+      var hailMessage = handler.CreateMessage();
+      hailMessage.Write(nick);
+      hailMessage.Write(publicKeyBlob.Length);
+      hailMessage.Write(publicKeyBlob);
+
+      return hailMessage;
+    }
+
+    [SecurityCritical]
+    private void SaveCommandAndConnect(string peerId, IPackage package, bool unreliable)
+    {
+      lock (syncObject)
       {
         List<WaitingCommandContainer> commands;
 
@@ -354,10 +344,10 @@ namespace Engine.Network
           waitingCommands.Add(peerId, commands);
         }
 
-        commands.Add(new WaitingCommandContainer(commandId, messageContent, unreliable));
+        commands.Add(new WaitingCommandContainer(package, unreliable));
       }
 
-      ClientModel.API.ConnectToPeer(peerId);
+      ClientModel.Api.ConnectToPeer(peerId);
     }
 
     [SecurityCritical]
@@ -368,13 +358,6 @@ namespace Engine.Network
         serviceConnection.Disconnect(string.Empty);
         serviceConnection = null;
       }
-    }
-
-    [SecurityCritical]
-    private void RegisterReceivedCallback(object obj)
-    {
-      var server = (NetPeer)obj;
-      server.RegisterReceivedCallback(ReceivedCallback);
     }
 
     [SecurityCritical]
@@ -420,7 +403,7 @@ namespace Engine.Network
 
     #region callback method
     [SecurityCritical]
-    private void ReceivedCallback(object obj)
+    private void OnReceive(object obj)
     {
       if (handler == null || handler.Status != NetPeerStatus.Running)
         return;
@@ -437,67 +420,74 @@ namespace Engine.Network
             break;
 
           case NetIncomingMessageType.ConnectionApproval:
-            Approve(message);
+            OnApprove(message);
             break;
 
           case NetIncomingMessageType.StatusChanged:
             NetConnectionStatus status = (NetConnectionStatus)message.ReadByte();
 
             if (status == NetConnectionStatus.Connected && state == (int)PeerState.ConnectedToPeers)
-              PeerConnected(message);
+              OnPeerConnected(message);
 
             if (status == NetConnectionStatus.Connected && state == (int)PeerState.ConnectedToService)
-              ClientModel.Logger.WriteDebug("AsyncPeer.ServiceConnect()");
+              OnServiceConnected(message);
 
             if (status == NetConnectionStatus.Disconnecting || status == NetConnectionStatus.Disconnected)
-              message.SenderConnection.Tag = null;
+              OnDisconnected(message);
             break;
 
           case NetIncomingMessageType.Data:
           case NetIncomingMessageType.UnconnectedData:
             if (state == (int)PeerState.ConnectedToPeers)
-              DataReceived(message);
+              OnPackageReceived(message);
             break;
         }
       }
     }
 
     [SecurityCritical]
-    private void Approve(NetIncomingMessage message)
+    private void OnApprove(NetIncomingMessage message)
     {
-      var userNick = string.Empty;
-      using (var client = ClientModel.Get())
-        userNick = client.User.Nick;
-
-      var hailMessage = handler.CreateMessage(userNick);
-      message.SenderConnection.Approve(hailMessage);
-
-      ClientModel.Logger.WriteDebug("AsyncPeer.Approve({0})", userNick);
+      message.SenderConnection.Approve(CreateHailMessage());
+      ClientModel.Logger.WriteDebug("AsyncPeer.Approve()");
     }
 
     [SecurityCritical]
-    private void PeerConnected(NetIncomingMessage message)
+    private void OnServiceConnected(NetIncomingMessage message)
     {
-      string connectionId = null;
+      ClientModel.Logger.WriteDebug("AsyncPeer.ServiceConnect()");
+    }
 
-      if (message.SenderConnection.RemoteHailMessage != null)
-        connectionId = message.SenderConnection.RemoteHailMessage.ReadString();
-
-      if (connectionId == null)
+    [SecurityCritical]
+    private void OnPeerConnected(NetIncomingMessage message)
+    {
+      var hailMessage = message.SenderConnection.RemoteHailMessage;
+      if (hailMessage == null)
       {
+        hailMessage.SenderConnection.Deny();
         ClientModel.Logger.WriteWarning("ConnectionId is null [Message: {0}, SenderEndPoint: {1}]", message.ToString(), message.SenderEndPoint);
         return;
       }
 
+      var connectionId = hailMessage.ReadString();
+      var publicKeySize = hailMessage.ReadInt32();
+      var publicKeyBlob = hailMessage.ReadBytes(publicKeySize);
+      var publicKey = CngKey.Import(publicKeyBlob, CngKeyBlobFormat.EccPublicBlob);
+      var key = diffieHellman.DeriveKeyMaterial(publicKey);
+
       message.SenderConnection.Tag = connectionId;
 
-      lock (waitingCommands)
+      lock (syncObject)
       {
+        // Add connection key
+        keys.Add(connectionId, key);
+
+        // Invoke waiting commands
         List<WaitingCommandContainer> commands;
         if (waitingCommands.TryGetValue(connectionId, out commands))
         {
           foreach (WaitingCommandContainer command in commands)
-            SendMessage(connectionId, command.CommandId, command.MessageContent, command.Unreliable);
+            SendMessage(connectionId, command.Package, command.Unreliable);
 
           waitingCommands.Remove(connectionId);
         }
@@ -507,19 +497,33 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private void DataReceived(NetIncomingMessage message)
+    private void OnDisconnected(NetIncomingMessage message)
+    {
+      var connectionId = (string) message.SenderConnection.Tag;
+      message.SenderConnection.Tag = null;
+
+      if (connectionId != null)
+        keys.Remove(connectionId);
+    }
+
+    [SecurityCritical]
+    private void OnPackageReceived(NetIncomingMessage message)
     {
       try
       {
-        var peerConnectionId = (string)message.SenderConnection.Tag;
-        var command = ClientModel.API.GetCommand(message.Data);
-        var args = new ClientCommandArgs
-        {
-          Message = message.Data,
-          PeerConnectionId = peerConnectionId
-        };
+        var peerId = (string)message.SenderConnection.Tag;
 
-        requestQueue.Add(peerConnectionId, command, args);
+        IPackage package;
+        using (var crypter = new Crypter())
+        {
+          crypter.SetKey(GetKey(peerId));
+          package = crypter.Decrypt<IPackage>(message.Data);
+        }
+
+        var command = ClientModel.Api.GetCommand(package.Id);
+        var args = new ClientCommandArgs(peerId, package);
+
+        requestQueue.Add(peerId, command, args);
       }
       catch (Exception exc)
       {
@@ -551,8 +555,14 @@ namespace Engine.Network
       if (handler != null)
         handler.Shutdown(string.Empty);
 
-      lock (waitingCommands)
+      if (diffieHellman != null)
+        diffieHellman.Dispose();
+
+      lock (syncObject)
+      {
         waitingCommands.Clear();
+        keys.Clear();
+      }
     }
     #endregion
   }

@@ -11,16 +11,16 @@ namespace Engine.Helpers
     {
       using (MemoryStream stream = new MemoryStream())
       {
-        BinaryFormatter formatter = new BinaryFormatter();
+        var formatter = new BinaryFormatter();
         formatter.Serialize(stream, obj);
         return stream.ToArray();
       }
     }
 
     [SecuritySafeCritical]
-    public static void Serialize<T>(T obj, MemoryStream stream)
+    public static void Serialize<T>(Stream stream, T obj)
     {
-      BinaryFormatter formatter = new BinaryFormatter();
+      var formatter = new BinaryFormatter();
       formatter.Serialize(stream, obj);
     }
 
@@ -29,16 +29,15 @@ namespace Engine.Helpers
     {
       using (MemoryStream stream = new MemoryStream(message))
       {
-        stream.Position = sizeof(ushort);
-        BinaryFormatter formatter = new BinaryFormatter();
+        var formatter = new BinaryFormatter();
         return (T)formatter.Deserialize(stream);
       }
     }
 
     [SecuritySafeCritical]
-    public static T Deserialize<T>(MemoryStream stream)
+    public static T Deserialize<T>(Stream stream)
     {
-      BinaryFormatter formatter = new BinaryFormatter();
+      var formatter = new BinaryFormatter();
       return (T)formatter.Deserialize(stream);
     }
   }

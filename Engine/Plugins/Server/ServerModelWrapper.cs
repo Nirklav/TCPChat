@@ -1,4 +1,5 @@
-﻿using Engine.Helpers;
+﻿using Engine.API;
+using Engine.Helpers;
 using Engine.Model.Server;
 using Engine.Network;
 using System.Security;
@@ -8,12 +9,10 @@ namespace Engine.Plugins.Server
   public class ServerModelWrapper :
     CrossDomainObject
   {
-    public ServerAPIWrapper API
+    public ServerApi Api
     {
       [SecuritySafeCritical]
-      get;
-      [SecuritySafeCritical]
-      private set;
+      get { return ServerModel.Api; }
     }
 
     public AsyncServer Server
@@ -37,12 +36,6 @@ namespace Engine.Plugins.Server
     public ServerContext Get()
     {
       return ServerModel.Get();
-    }
-
-    [SecuritySafeCritical]
-    public ServerModelWrapper()
-    {
-      API = new ServerAPIWrapper();
     }
   }
 }

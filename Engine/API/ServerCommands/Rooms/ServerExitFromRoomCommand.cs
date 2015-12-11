@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Server;
 using System;
 using System.Linq;
@@ -9,41 +8,38 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerExitFromRoomCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerExitFromRoomCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.ExitFromRoom;
+    public const long CommandId = (long)ServerCommandId.ExitFromRoom;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (string.Equals(receivedContent.RoomName, ServerModel.MainRoomName))
+      if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.API.SendSystemMessage(args.ConnectionId, "Невозможно выйти из основной комнаты.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Невозможно выйти из основной комнаты.");
         return;
       }
 
-      if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
+      if (!RoomExists(content.RoomName, args.ConnectionId))
         return;
 
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[content.RoomName];
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы и так не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы и так не входите в состав этой комнаты.");
           return;
         }
 
@@ -58,7 +54,7 @@ namespace Engine.API.ServerCommands
           if (room.Admin != null)
           {
             string message = string.Format("Вы назначены администратором комнаты \"{0}\".", room.Name);
-            ServerModel.API.SendSystemMessage(room.Admin, message);
+            ServerModel.Api.SendSystemMessage(room.Admin, message);
           }
         }
 

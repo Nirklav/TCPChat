@@ -237,14 +237,14 @@ namespace UI.ViewModel
 
       try
       {
-        if (ClientModel.API == null || !ClientModel.Client.IsConnected)
+        if (ClientModel.Api == null || !ClientModel.Client.IsConnected)
           return;
 
         if (ReferenceEquals(allInRoom, SelectedReceiver))
-          ClientModel.API.SendMessage(SelectedMessageId, Message, Name);
+          ClientModel.Api.SendMessage(SelectedMessageId, Message, Name);
         else
         {
-          ClientModel.API.SendPrivateMessage(SelectedReceiver.Nick, Message);
+          ClientModel.Api.SendPrivateMessage(SelectedReceiver.Nick, Message);
           var sender = MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id));
           AddPrivateMessage(sender, SelectedReceiver, Message);
         }
@@ -273,8 +273,8 @@ namespace UI.ViewModel
         var openDialog = new OpenFileDialog();
         openDialog.Filter = FileDialogFilter;
 
-        if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.API != null)
-          ClientModel.API.AddFileToRoom(Name, openDialog.FileName);
+        if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.Api != null)
+          ClientModel.Api.AddFileToRoom(Name, openDialog.FileName);
       }
       catch (SocketException se)
       {
@@ -294,8 +294,8 @@ namespace UI.ViewModel
         }
 
         var dialog = new UsersOperationDialog(InviteInRoomTitle, availableUsers);
-        if (dialog.ShowDialog() == true && ClientModel.API != null)
-          ClientModel.API.InviteUsers(Name, dialog.Users);
+        if (dialog.ShowDialog() == true && ClientModel.Api != null)
+          ClientModel.Api.InviteUsers(Name, dialog.Users);
       }
       catch (SocketException se)
       {
@@ -308,8 +308,8 @@ namespace UI.ViewModel
       try
       {
         var dialog = new UsersOperationDialog(KickFormRoomTitle, Users);
-        if (dialog.ShowDialog() == true && ClientModel.API != null)
-          ClientModel.API.KickUsers(Name, dialog.Users);
+        if (dialog.ShowDialog() == true && ClientModel.Api != null)
+          ClientModel.Api.KickUsers(Name, dialog.Users);
       }
       catch (SocketException se)
       {

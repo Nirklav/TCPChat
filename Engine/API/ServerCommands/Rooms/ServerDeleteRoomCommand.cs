@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Server;
 using System;
 using System.Security;
@@ -8,40 +7,37 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerDeleteRoomCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerDeleteRoomCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.DeleteRoom;
+    public const long CommandId = (long)ServerCommandId.DeleteRoom;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (string.Equals(receivedContent.RoomName, ServerModel.MainRoomName))
+      if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете удалить основную комнату.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не можете удалить основную комнату.");
         return;
       }
 
-      if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
+      if (!RoomExists(content.RoomName, args.ConnectionId))
         return;
 
       using (var context = ServerModel.Get())
       {
-        var deletingRoom = context.Rooms[receivedContent.RoomName];
+        var deletingRoom = context.Rooms[content.RoomName];
         if (!deletingRoom.Admin.Equals(args.ConnectionId))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
           return;
         }
 

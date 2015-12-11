@@ -72,15 +72,15 @@ namespace Engine.Network
       syncContext = new EngineSyncContext();
 
       server = new NetServer(config);
-      syncContext.Send(RegisterReceivedCallback, server);
+      syncContext.Send(RegisterReceived, server);
       server.Start();
     }
 
     [SecurityCritical]
-    private void RegisterReceivedCallback(object obj)
+    private void RegisterReceived(object obj)
     {
       var server = (NetServer)obj;
-      server.RegisterReceivedCallback(ReceivedCallback);
+      server.RegisterReceivedCallback(OnReceive);
     }
     #endregion
 
@@ -110,7 +110,7 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (ServerModel.API == null)
+      if (ServerModel.Api == null)
         throw new ArgumentNullException("API");
 
       if (requestId == null)
@@ -147,7 +147,7 @@ namespace Engine.Network
       }
 
       if (needSend)
-        ServerModel.API.SendP2PConnectRequest(connectionId, Port);
+        ServerModel.Api.SendP2PConnectRequest(connectionId, Port);
     }
 
     [SecurityCritical]
@@ -160,7 +160,7 @@ namespace Engine.Network
 
     #region private methods
     [SecurityCritical]
-    private void ReceivedCallback(object obj)
+    private void OnReceive(object obj)
     {
       NetIncomingMessage message;
 
@@ -261,7 +261,7 @@ namespace Engine.Network
           connectingClients.Remove(requestId);
         }
 
-        ServerModel.API.IntroduceConnections(senderId, senderEndPoint, requestId, requestEndPoint);
+        ServerModel.Api.IntroduceConnections(senderId, senderEndPoint, requestId, requestEndPoint);
       }
 
       return received;
@@ -286,7 +286,7 @@ namespace Engine.Network
             (removedIds ?? (removedIds = new List<string>())).Add(request.SenderId);
             (removedIds ?? (removedIds = new List<string>())).Add(request.RequestId);
 
-            ServerModel.API.IntroduceConnections(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint);
+            ServerModel.Api.IntroduceConnections(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint);
             requests.RemoveAt(i);
           }
         }

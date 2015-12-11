@@ -1,4 +1,5 @@
-﻿using Engine.Audio;
+﻿using Engine.API;
+using Engine.Audio;
 using Engine.Helpers;
 using Engine.Model.Client;
 using Engine.Network;
@@ -9,12 +10,10 @@ namespace Engine.Plugins.Client
   public class ClientModelWrapper :
     CrossDomainObject
   {
-    public ClientAPIWrapper API
+    public ClientApi Api
     {
       [SecuritySafeCritical]
-      get;
-      [SecuritySafeCritical]
-      private set;
+      get { return ClientModel.Api; }
     }
 
     public AsyncClient Client
@@ -54,11 +53,5 @@ namespace Engine.Plugins.Client
     /// <returns>Возвращает и блокирует модель.</returns>
     [SecuritySafeCritical]
     public ClientContext Get() { return ClientModel.Get(); }
-
-    [SecuritySafeCritical]
-    public ClientModelWrapper()
-    {
-      API = new ClientAPIWrapper();
-    }
   }
 }

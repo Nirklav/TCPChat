@@ -32,12 +32,12 @@ namespace Engine.Model.Client
     /// <summary>
     /// Клиентский API.
     /// </summary>
-    public static IClientAPI API
+    public static ClientApi Api
     {
       [SecurityCritical]
       get;
       [SecurityCritical]
-      set;
+      private set;
     }
 
     /// <summary>
@@ -175,9 +175,10 @@ namespace Engine.Model.Client
       if (Interlocked.CompareExchange(ref model, new ClientModel(user), null) != null)
         throw new InvalidOperationException("model already inited");
 
-      // API установится автоматически при подключении к серверу (согласно версии на сервере)
+      Api = new ClientApi();
       Client = new AsyncClient(initializer.Nick);
       Peer = new AsyncPeer();
+
       Plugins = new ClientPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
     }
@@ -196,7 +197,7 @@ namespace Engine.Model.Client
 
       Client = null;
       Peer = null;
-      API = null;
+      Api = null;
     }
 
     [SecurityCritical]

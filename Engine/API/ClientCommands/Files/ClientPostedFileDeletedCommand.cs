@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Linq;
@@ -9,30 +8,28 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientPostedFileDeletedCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientPostedFileDeletedCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.PostedFileDeleted;
+    public const long CommandId = (long)ClientCommandId.PostedFileDeleted;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.File == null)
+      if (content.File == null)
         throw new ArgumentNullException("file");
 
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("roomName");
 
       using (var client = ClientModel.Get())
       {
-        var downloadFiles = client.DownloadingFiles.Where((dFile) => dFile.File.Equals(receivedContent.File));
+        var downloadFiles = client.DownloadingFiles.Where((dFile) => dFile.File.Equals(content.File));
 
         foreach (var file in downloadFiles)
           file.Dispose();
@@ -40,9 +37,9 @@ namespace Engine.API.ClientCommands
 
       var downloadEventArgs = new FileDownloadEventArgs
       {
-        File = receivedContent.File,
+        File = content.File,
         Progress = 0,
-        RoomName = receivedContent.RoomName,
+        RoomName = content.RoomName,
       };
 
       ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);

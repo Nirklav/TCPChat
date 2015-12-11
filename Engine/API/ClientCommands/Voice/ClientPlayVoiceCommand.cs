@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Security;
@@ -8,24 +7,23 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientPlayVoiceCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientPlayVoiceCommand.MessageContent>
   {
-    public static ushort CommandId = (ushort)ClientCommand.PlayVoice;
+    public static long CommandId = (long)ClientCommandId.PlayVoice;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
       if (args.PeerConnectionId == null)
         return;
 
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-      ClientModel.Player.Enqueue(args.PeerConnectionId, receivedContent.Number, receivedContent.Pack);
+      ClientModel.Player.Enqueue(args.PeerConnectionId, content.Number, content.Pack);
     }
 
     [Serializable]

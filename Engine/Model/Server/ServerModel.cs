@@ -28,7 +28,7 @@ namespace Engine.Model.Server
     /// <summary>
     /// Серверный API
     /// </summary>
-    public static IServerAPI API
+    public static ServerApi Api
     {
       [SecurityCritical]
       get;
@@ -129,7 +129,7 @@ namespace Engine.Model.Server
         throw new InvalidOperationException("model already inited");
 
       Server = new AsyncServer();
-      API = initializer.API ?? new StandardServerAPI();
+      Api = new ServerApi();
 
       Plugins = new ServerPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
@@ -145,7 +145,7 @@ namespace Engine.Model.Server
       Dispose(Plugins);
 
       Server = null;
-      API = null;
+      Api = null;
     }
 
     [SecurityCritical]

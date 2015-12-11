@@ -1,5 +1,4 @@
 ﻿using Engine.API.ServerCommands;
-using Engine.Helpers;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
@@ -10,36 +9,34 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientWaitPeerConnectionCommand :
-      ICommand<ClientCommandArgs>
+    ClientCommand<ClientWaitPeerConnectionCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.WaitPeerConnection;
+    public const long CommandId = (long)ClientCommandId.WaitPeerConnection;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.RemoteInfo == null)
+      if (content.RemoteInfo == null)
         throw new ArgumentNullException("info");
 
-      if (receivedContent.RequestPoint == null)
+      if (content.RequestPoint == null)
         throw new ArgumentNullException("request point");
 
-      if (receivedContent.SenderPoint == null)
+      if (content.SenderPoint == null)
         throw new ArgumentNullException("sender point");
 
-      ClientModel.Peer.WaitConnection(receivedContent.SenderPoint);
+      ClientModel.Peer.WaitConnection(content.SenderPoint);
 
       var sendingContent = new ServerP2PReadyAcceptCommand.MessageContent
       {
-        PeerPoint = receivedContent.RequestPoint,
-        ReceiverNick = receivedContent.RemoteInfo.Nick
+        PeerPoint = content.RequestPoint,
+        ReceiverNick = content.RemoteInfo.Nick
       };
 
       using (var client = ClientModel.Get())

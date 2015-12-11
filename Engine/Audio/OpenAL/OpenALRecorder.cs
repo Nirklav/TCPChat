@@ -125,7 +125,7 @@ namespace Engine.Audio.OpenAL
       lock (syncObj)
       {
         capture.Start();
-        systemTimer = new Timer(RecordingCallback, null, GetTimerTimeOut(), -1);
+        systemTimer = new Timer(OnRecording, null, GetTimerTimeOut(), -1);
       }
     }
 
@@ -142,7 +142,7 @@ namespace Engine.Audio.OpenAL
     }
 
     [SecurityCritical]
-    private void RecordingCallback(object state)
+    private void OnRecording(object state)
     {
       lock (syncObj)
       {

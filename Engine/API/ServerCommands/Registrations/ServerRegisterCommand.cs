@@ -1,40 +1,35 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using Engine.Network.Connections;
 using System;
 using System.Linq;
 using System.Security;
-using System.Security.Cryptography;
 
 namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerRegisterCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerRegisterCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.Register;
+    public const long CommandId = (long)ServerCommandId.Register;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.User == null)
+      if (content.User == null)
         throw new ArgumentNullException("User");
 
-      if (receivedContent.User.Nick == null)
+      if (content.User.Nick == null)
         throw new ArgumentNullException("User.Nick");
 
-      if (receivedContent.User.Nick.Contains(Connection.TempConnectionPrefix))
+      if (content.User.Nick.Contains(Connection.TempConnectionPrefix))
       {
         SendFail(args.ConnectionId, "Соединение не может быть зарегистрировано с таким ником. Выберите другой.");
         return;
@@ -43,7 +38,7 @@ namespace Engine.API.ServerCommands
       using (var server = ServerModel.Get())
       {
         var room = server.Rooms[ServerModel.MainRoomName];    
-        var userExist = room.Users.Any(nick => string.Equals(receivedContent.User.Nick, nick));
+        var userExist = room.Users.Any(nick => string.Equals(content.User.Nick, nick));
 
         if (userExist)
         {
@@ -52,14 +47,15 @@ namespace Engine.API.ServerCommands
         }
         else
         {
-          ServerModel.Logger.WriteInfo("User login: {0}", receivedContent.User.Nick);
+          ServerModel.Logger.WriteInfo("User login: {0}", content.User.Nick);
 
-          server.Users.Add(receivedContent.User.Nick, receivedContent.User);
-          room.AddUser(receivedContent.User.Nick);
+          server.Users.Add(content.User.Nick, content.User);
+          room.AddUser(content.User.Nick);
 
           var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = true };
-          ServerModel.Server.RegisterConnection(args.ConnectionId, receivedContent.User.Nick, receivedContent.OpenKey);
-          ServerModel.Server.SendMessage(receivedContent.User.Nick, ClientRegistrationResponseCommand.CommandId, regResponseContent);
+
+          ServerModel.Server.RegisterConnection(args.ConnectionId, content.User.Nick);
+          ServerModel.Server.SendMessage(content.User.Nick, ClientRegistrationResponseCommand.CommandId, regResponseContent);
 
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent
           {
@@ -70,7 +66,7 @@ namespace Engine.API.ServerCommands
           foreach (var connectionId in room.Users)
             ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.CommandId, sendingContent);
 
-          ServerModel.Notifier.Registered(new ServerRegistrationEventArgs { Nick = receivedContent.User.Nick });
+          ServerModel.Notifier.Registered(new ServerRegistrationEventArgs { Nick = content.User.Nick });
         }
       }
     }
@@ -79,20 +75,13 @@ namespace Engine.API.ServerCommands
     {
       var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
       ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.CommandId, regResponseContent, true);
-      ServerModel.API.RemoveUser(connectionId);
+      ServerModel.Api.RemoveUser(connectionId);
     }
 
     [Serializable]
     public class MessageContent
     {
-      private RSAParameters openKey;
       private User user;
-
-      public RSAParameters OpenKey
-      {
-        get { return openKey; }
-        set { openKey = value; }
-      }
 
       public User User
       {

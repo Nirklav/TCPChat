@@ -6,9 +6,9 @@ namespace Engine.API.ServerCommands
   [SecurityCritical]
   class ServerUnregisterCommand : ICommand<ServerCommandArgs>
   {
-    public const ushort CommandId = (ushort)ServerCommand.Unregister;
+    public const long CommandId = (long)ServerCommandId.Unregister;
 
-    public ushort Id
+    public long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
@@ -17,7 +17,7 @@ namespace Engine.API.ServerCommands
     [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
-      ServerModel.API.RemoveUser(args.ConnectionId);
+      ServerModel.Api.RemoveUser(args.ConnectionId);
     }
   }
 }

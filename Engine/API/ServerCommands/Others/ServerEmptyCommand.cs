@@ -5,10 +5,10 @@ namespace Engine.API.ServerCommands
   [SecurityCritical]
   class ServerEmptyCommand : ICommand<ServerCommandArgs>
   {
-    public const ushort CommandId = (ushort)ServerCommand.Empty;
+    public const long CommandId = (long)ServerCommandId.Empty;
     public static readonly ServerEmptyCommand Empty = new ServerEmptyCommand();
 
-    public ushort Id
+    public long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }

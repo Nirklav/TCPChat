@@ -201,8 +201,8 @@ namespace UI.ViewModel
         saveDialog.Filter = FileDialogFilter;
         saveDialog.FileName = File.Name;
 
-        if (saveDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.API != null)
-          ClientModel.API.DownloadFile(saveDialog.FileName, roomViewModel.Name, File);
+        if (saveDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.Api != null)
+          ClientModel.Api.DownloadFile(saveDialog.FileName, roomViewModel.Name, File);
       }
       catch (ModelException me)
       {
@@ -213,9 +213,9 @@ namespace UI.ViewModel
         }
 
         bool result = MessageBox.Show(CancelDownloadingQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
-        if (result && ClientModel.API != null)
+        if (result && ClientModel.Api != null)
         {
-          ClientModel.API.CancelDownloading(File, true);
+          ClientModel.Api.CancelDownloading(File, true);
           Progress = 0;
         }
       }

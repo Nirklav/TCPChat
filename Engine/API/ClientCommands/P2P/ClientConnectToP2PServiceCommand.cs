@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using System;
 using System.Net;
 using System.Security;
@@ -8,26 +7,24 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientConnectToP2PServiceCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientConnectToP2PServiceCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.ConnectToP2PService;
+    public const long CommandId = (long)ClientCommandId.ConnectToP2PService;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
       if (args.PeerConnectionId != null)
         return;
 
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
       var address = ClientModel.Client.RemotePoint.Address;
-      var endPoint = new IPEndPoint(address, receivedContent.Port);
+      var endPoint = new IPEndPoint(address, content.Port);
 
       ClientModel.Peer.ConnectToService(endPoint);
     }

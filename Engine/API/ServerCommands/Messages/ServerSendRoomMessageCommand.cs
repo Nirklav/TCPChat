@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
@@ -10,60 +9,57 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerSendRoomMessageCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerSendRoomMessageCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.SendRoomMessage;
+    public const long CommandId = (long)ServerCommandId.SendRoomMessage;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.Message))
+      if (string.IsNullOrEmpty(content.Message))
         throw new ArgumentException("Message");
 
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
+      if (!RoomExists(content.RoomName, args.ConnectionId))
         return;
 
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[content.RoomName];
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете отправить сообщение, т.к. не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не можете отправить сообщение, т.к. не входите в состав этой комнаты.");
           return;
         }
 
-        if (receivedContent.MessageId != null && !room.IsMessageBelongToUser(args.ConnectionId, receivedContent.MessageId.Value))
+        if (content.MessageId != null && !room.IsMessageBelongToUser(args.ConnectionId, content.MessageId.Value))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете редактировать это сообщение.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не можете редактировать это сообщение.");
           return;
         }
 
         Message message = null;
-        if (receivedContent.MessageId == null)
-          message = room.AddMessage(args.ConnectionId, receivedContent.Message);
+        if (content.MessageId == null)
+          message = room.AddMessage(args.ConnectionId, content.Message);
         else
         {
-          message = room.GetMessage(receivedContent.MessageId.Value);
-          message.Text = receivedContent.Message;
+          message = room.GetMessage(content.MessageId.Value);
+          message.Text = content.Message;
         }
 
         var sendingContent = new ClientOutRoomMessageCommand.MessageContent
         {
           Message = message.Text,
-          RoomName = receivedContent.RoomName,
+          RoomName = content.RoomName,
           Sender = args.ConnectionId,
           MessageId = message.Id
         };

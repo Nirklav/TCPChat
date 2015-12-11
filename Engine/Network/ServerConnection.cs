@@ -2,8 +2,6 @@
 using System;
 using System.Net.Sockets;
 using System.Security;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 
 namespace Engine.Network.Connections
@@ -14,7 +12,7 @@ namespace Engine.Network.Connections
   sealed class ServerConnection :
     Connection
   {
-    #region public const
+    #region consts
     /// <summary>
     /// Время неактивности соединения, после прошествия которого соединение будет закрыто.
     /// </summary>
@@ -27,10 +25,10 @@ namespace Engine.Network.Connections
     #endregion
 
     #region private field
-    private RSAParameters openKey;
+    private string serverApiName;
     private DateTime lastActivity;
     private DateTime createTime;
-    private EventHandler<DataReceivedEventArgs> dataReceivedCallback;
+    private EventHandler<PackageReceivedEventArgs> dataReceivedCallback;
     #endregion
 
     #region constructors
@@ -41,15 +39,15 @@ namespace Engine.Network.Connections
     /// <param name="maxReceivedDataSize">Максимальныйц размер сообщения получаемый от пользователя.</param>
     /// <param name="receivedCallback">Функция обратного вызова, для полученных данных.</param>
     [SecurityCritical]
-    public ServerConnection(Socket handler, int maxReceivedDataSize, EventHandler<DataReceivedEventArgs> receivedCallback)
+    public ServerConnection(Socket handler, string apiName, EventHandler<PackageReceivedEventArgs> receivedCallback)
     {
-      Construct(handler, maxReceivedDataSize);
-
       if (receivedCallback == null)
         throw new ArgumentNullException();
 
-      dataReceivedCallback = receivedCallback;
+      Construct(handler);
 
+      serverApiName = apiName;
+      dataReceivedCallback = receivedCallback;
       lastActivity = DateTime.Now;
       createTime = DateTime.Now;
     }
@@ -94,64 +92,47 @@ namespace Engine.Network.Connections
         return id != null && !id.Contains(TempConnectionPrefix);
       }
     }
-
-    /// <summary>
-    /// Откртый ключ подключения.
-    /// </summary>
-    public RSAParameters OpenKey
-    {
-      [SecurityCritical]
-      get
-      {
-        ThrowIfDisposed();
-        return openKey;
-      }
-    }
     #endregion
 
     #region public methods
-    /// <summary>
-    /// Отправляет сообщение с именем API, которое использует сервер.
-    /// </summary>
-    /// <param name="apiName">Название API.</param>
-    [SecurityCritical]
-    public void SendApiName(string apiName)
-    {
-      ThrowIfDisposed();
-      SendMessage(Encoding.Unicode.GetBytes(apiName));
-    }
-
     /// <summary>
     /// Регистрирует данное соединение.
     /// </summary>
     /// <param name="id">Идентификатор соединения.</param>
     /// <param name="openKey">Открытый ключ соединения.</param>
     [SecurityCritical]
-    public void Register(string id, RSAParameters openKey)
+    public void Register(string id)
     {
       ThrowIfDisposed();
       this.id = id;
-      this.openKey = openKey;
     }
     #endregion
 
     #region override methods
     [SecuritySafeCritical]
-    protected override void OnPackageReceived()
+    protected override ConnectionInfo CreateConnectionInfo()
+    {
+      var info = new ServerConnectionInfo();
+      info.ApiName = serverApiName;
+      return info;
+    }
+
+    [SecuritySafeCritical]
+    protected override void OnPackagePartReceived()
     {
       lastActivity = DateTime.Now;
     }
 
     [SecuritySafeCritical]
-    protected override void OnDataReceived(DataReceivedEventArgs args)
+    protected override void OnPackageReceived(PackageReceivedEventArgs args)
     {
-      if (args.Error != null)
+      if (args.Exception != null)
       {
-        var se = args.Error as SocketException;
+        var se = args.Exception as SocketException;
         if (se != null && se.SocketErrorCode == SocketError.ConnectionReset)
           return;
 
-        ServerModel.Logger.Write(args.Error);
+        ServerModel.Logger.Write(args.Exception);
         return;
       }
 
@@ -161,10 +142,10 @@ namespace Engine.Network.Connections
     }
 
     [SecuritySafeCritical]
-    protected override void OnDataSended(DataSendedEventArgs args)
+    protected override void OnPackageSent(PackageSendedEventArgs args)
     {
-      if (args.Error != null)
-        ServerModel.Logger.Write(args.Error);
+      if (args.Exception != null)
+        ServerModel.Logger.Write(args.Exception);
       else
         lastActivity = DateTime.Now;
     }

@@ -64,8 +64,8 @@ namespace UI.ViewModel
     {
       try
       {
-        if (ClientModel.API != null)
-          ClientModel.API.SetRoomAdmin(RoomViewModel.MainViewModel.SelectedRoom.Name, Info);
+        if (ClientModel.Api != null)
+          ClientModel.Api.SetRoomAdmin(RoomViewModel.MainViewModel.SelectedRoom.Name, Info);
       }
       catch (SocketException se)
       {

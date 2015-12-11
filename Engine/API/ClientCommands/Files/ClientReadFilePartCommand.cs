@@ -1,5 +1,4 @@
 ﻿using Engine.API.ServerCommands;
-using Engine.Helpers;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
@@ -10,44 +9,42 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientReadFilePartCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientReadFilePartCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.ReadFilePart;
+    public const long CommandId = (long)ClientCommandId.ReadFilePart;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
       if (args.PeerConnectionId == null)
         return;
 
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.File == null)
+      if (content.File == null)
         throw new ArgumentNullException("File");
 
-      if (receivedContent.Length <= 0)
+      if (content.Length <= 0)
         throw new ArgumentException("Length <= 0");
 
-      if (receivedContent.StartPartPosition < 0)
+      if (content.StartPartPosition < 0)
         throw new ArgumentException("StartPartPosition < 0");
 
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("roomName");
 
       using(var client = ClientModel.Get())
       {
-        if (!client.PostedFiles.Exists((current) => current.File.Equals(receivedContent.File)))
+        if (!client.PostedFiles.Exists((current) => current.File.Equals(content.File)))
         {
           var fileNotPostContent = new ServerRemoveFileFromRoomCommand.MessageContent
           {
-            File = receivedContent.File,
-            RoomName = receivedContent.RoomName,
+            File = content.File,
+            RoomName = content.RoomName,
           };
 
           ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.CommandId, fileNotPostContent);
@@ -57,23 +54,23 @@ namespace Engine.API.ClientCommands
 
       var sendingContent = new ClientWriteFilePartCommand.MessageContent
       {
-        File = receivedContent.File,
-        StartPartPosition = receivedContent.StartPartPosition,
-        RoomName = receivedContent.RoomName,
+        File = content.File,
+        StartPartPosition = content.StartPartPosition,
+        RoomName = content.RoomName,
       };
 
       long partSize;
-      if (receivedContent.File.Size < receivedContent.StartPartPosition + receivedContent.Length)
-        partSize = receivedContent.File.Size - receivedContent.StartPartPosition;
+      if (content.File.Size < content.StartPartPosition + content.Length)
+        partSize = content.File.Size - content.StartPartPosition;
       else
-        partSize = receivedContent.Length;
+        partSize = content.Length;
 
       sendingContent.Part = new byte[partSize];
 
       using (var client = ClientModel.Get())
       {
-        var sendingFileStream = client.PostedFiles.First(c => c.File.Equals(receivedContent.File)).ReadStream;
-        sendingFileStream.Position = receivedContent.StartPartPosition;
+        var sendingFileStream = client.PostedFiles.First(c => c.File.Equals(content.File)).ReadStream;
+        sendingFileStream.Position = content.StartPartPosition;
         sendingFileStream.Read(sendingContent.Part, 0, sendingContent.Part.Length);
       }
 

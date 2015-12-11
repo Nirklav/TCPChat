@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
@@ -10,43 +9,40 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerCreateRoomCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerCreateRoomCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.CreateRoom;
+    public const long CommandId = (long)ServerCommandId.CreateRoom;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentNullException("RoomName");
 
       using(var server = ServerModel.Get())
       {
-        if (server.Rooms.ContainsKey(receivedContent.RoomName))
+        if (server.Rooms.ContainsKey(content.RoomName))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Комната с таким именем уже создана, выберите другое имя.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Комната с таким именем уже создана, выберите другое имя.");
           return;
         }
 
-        var creatingRoom = receivedContent.Type == RoomType.Chat
-          ? new Room(args.ConnectionId, receivedContent.RoomName)
-          : new VoiceRoom(args.ConnectionId, receivedContent.RoomName);
+        var creatingRoom = content.Type == RoomType.Chat
+          ? new Room(args.ConnectionId, content.RoomName)
+          : new VoiceRoom(args.ConnectionId, content.RoomName);
 
-        server.Rooms.Add(receivedContent.RoomName, creatingRoom);
+        server.Rooms.Add(content.RoomName, creatingRoom);
 
         var sendingContent = new ClientRoomOpenedCommand.MessageContent 
         {
           Room = creatingRoom,
-          Type = receivedContent.Type,
+          Type = content.Type,
           Users = creatingRoom.Users.Select(nick => server.Users[nick]).ToList()
         };
 

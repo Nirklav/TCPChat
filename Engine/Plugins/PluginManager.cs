@@ -41,7 +41,7 @@ namespace Engine.Plugins
 
     protected readonly object SyncObject = new object();
     protected readonly Dictionary<string, PluginContainer> Plugins = new Dictionary<string, PluginContainer>();
-    protected readonly Dictionary<ushort, TCommand> Commands = new Dictionary<ushort, TCommand>();
+    protected readonly Dictionary<long, TCommand> Commands = new Dictionary<long, TCommand>();
     protected readonly Dictionary<string, object> NotifierContexts = new Dictionary<string, object>();
 
     private string path;

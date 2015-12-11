@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Collections.Generic;
@@ -9,26 +8,25 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientRoomOpenedCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientRoomOpenedCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.RoomOpened;
+    public const long CommandId = (long)ClientCommandId.RoomOpened;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-      if (receivedContent.Room == null)
+      if (content.Room == null)
         throw new ArgumentNullException("room");
 
-      if (receivedContent.Type == RoomType.Voice)
+      if (content.Type == RoomType.Voice)
       {
-        var room = receivedContent.Room as VoiceRoom;
+        var room = content.Room as VoiceRoom;
         if (room == null)
           throw new ArgumentException("type");
 
@@ -38,13 +36,13 @@ namespace Engine.API.ClientCommands
           mapForUser = room.ConnectionMap[client.User.Nick];
 
         foreach (string nick in mapForUser)
-          ClientModel.API.ConnectToPeer(nick);
+          ClientModel.Api.ConnectToPeer(nick);
       }
 
       using (var client = ClientModel.Get())
-        client.Rooms.Add(receivedContent.Room.Name, receivedContent.Room);
+        client.Rooms.Add(content.Room.Name, content.Room);
 
-      ClientModel.Notifier.RoomOpened(new RoomEventArgs { Room = receivedContent.Room, Users = receivedContent.Users });
+      ClientModel.Notifier.RoomOpened(new RoomEventArgs { Room = content.Room, Users = content.Users });
     }
 
     [Serializable]

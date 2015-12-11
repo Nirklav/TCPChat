@@ -35,6 +35,7 @@ namespace Engine.Network
   abstract class RequestQueue<TArgs> :
     MarshalByRefObject,
     IDisposable
+    where TArgs : CommandArgs
   {
     private const int Timeout = 1000;
 

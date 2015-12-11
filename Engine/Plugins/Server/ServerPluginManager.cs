@@ -18,7 +18,7 @@ namespace Engine.Plugins.Server
     }
 
     [SecurityCritical]
-    internal bool TryGetCommand(ushort id, out ICommand<ServerCommandArgs> command)
+    internal bool TryGetCommand(long id, out ICommand<ServerCommandArgs> command)
     {
       command = null;
 

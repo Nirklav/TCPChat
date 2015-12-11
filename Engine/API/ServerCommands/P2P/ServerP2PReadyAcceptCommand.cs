@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
@@ -10,43 +9,41 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerP2PReadyAcceptCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerP2PReadyAcceptCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.P2PReadyAccept;
+    public const long CommandId = (long)ServerCommandId.P2PReadyAccept;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.RemoteInfo == null)
+      if (content.RemoteInfo == null)
         throw new ArgumentNullException("Info");
 
-      if (receivedContent.PeerPoint == null)
+      if (content.PeerPoint == null)
         throw new ArgumentNullException("PeerPoint");
 
-      if (string.IsNullOrEmpty(receivedContent.ReceiverNick))
+      if (string.IsNullOrEmpty(content.ReceiverNick))
         throw new ArgumentException("receiverNick");
 
-      if (!ServerModel.Server.ContainsConnection(receivedContent.ReceiverNick))
+      if (!ServerModel.Server.ContainsConnection(content.ReceiverNick))
       {
-        ServerModel.API.SendSystemMessage(args.ConnectionId, "Данного пользователя не существует.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Данного пользователя не существует.");
         return;
       }
 
       var connectContent = new ClientConnectToPeerCommand.MessageContent
       {
-        PeerPoint = receivedContent.PeerPoint,
-        RemoteInfo = receivedContent.RemoteInfo,
+        PeerPoint = content.PeerPoint,
+        RemoteInfo = content.RemoteInfo,
       };
-      ServerModel.Server.SendMessage(receivedContent.ReceiverNick, ClientConnectToPeerCommand.CommandId, connectContent);
+
+      ServerModel.Server.SendMessage(content.ReceiverNick, ClientConnectToPeerCommand.CommandId, connectContent);
     }
 
     [Serializable]

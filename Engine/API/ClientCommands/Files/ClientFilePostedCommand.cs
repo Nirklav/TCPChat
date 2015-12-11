@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Security;
@@ -8,35 +7,33 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientFilePostedCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientFilePostedCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.FilePosted;
+    public const long CommandId = (long)ClientCommandId.FilePosted;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.File == null)
+      if (content.File == null)
         throw new ArgumentNullException("file");
 
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("roomName");
 
       var receiveMessageArgs = new ReceiveMessageEventArgs
       {
         Type = MessageType.File,
         MessageId = Room.SpecificMessageId,
-        Message = receivedContent.File.Name,
-        Sender = receivedContent.File.Owner.Nick,
-        RoomName = receivedContent.RoomName,
-        State = receivedContent.File,
+        Message = content.File.Name,
+        Sender = content.File.Owner.Nick,
+        RoomName = content.RoomName,
+        State = content.File,
       };
 
       ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);

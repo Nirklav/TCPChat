@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using Engine.Network;
 using System;
@@ -11,57 +10,55 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientWriteFilePartCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientWriteFilePartCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.WriteFilePart;
+    public const long CommandId = (long)ClientCommandId.WriteFilePart;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
       if (args.PeerConnectionId == null)
         return;
 
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.File == null)
+      if (content.File == null)
         throw new ArgumentNullException("File");
 
-      if (receivedContent.Part == null)
+      if (content.Part == null)
         throw new ArgumentNullException("Part");
 
-      if (receivedContent.StartPartPosition < 0)
+      if (content.StartPartPosition < 0)
         throw new ArgumentException("StartPartPosition < 0");
 
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("roomName");
 
       var downloadEventArgs = new FileDownloadEventArgs
       {
-        RoomName = receivedContent.RoomName,
-        File = receivedContent.File,
+        RoomName = content.RoomName,
+        File = content.File,
       };
 
       using (var client = ClientModel.Get())
       {
-        var downloadingFile = client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(receivedContent.File));
+        var downloadingFile = client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(content.File));
         if (downloadingFile == null)
           return;
 
         if (downloadingFile.WriteStream == null)
           downloadingFile.WriteStream = File.Create(downloadingFile.FullName);
 
-        if (downloadingFile.WriteStream.Position == receivedContent.StartPartPosition)
-          downloadingFile.WriteStream.Write(receivedContent.Part, 0, receivedContent.Part.Length);
+        if (downloadingFile.WriteStream.Position == content.StartPartPosition)
+          downloadingFile.WriteStream.Write(content.Part, 0, content.Part.Length);
 
-        downloadingFile.File = receivedContent.File;
+        downloadingFile.File = content.File;
 
-        if (downloadingFile.WriteStream.Position >= receivedContent.File.Size)
+        if (downloadingFile.WriteStream.Position >= content.File.Size)
         {
           client.DownloadingFiles.Remove(downloadingFile);
           downloadingFile.WriteStream.Dispose();
@@ -71,14 +68,14 @@ namespace Engine.API.ClientCommands
         {
           var sendingContent = new ClientReadFilePartCommand.MessageContent
           {
-            File = receivedContent.File,
+            File = content.File,
             Length = AsyncClient.DefaultFilePartSize,
-            RoomName = receivedContent.RoomName,
+            RoomName = content.RoomName,
             StartPartPosition = downloadingFile.WriteStream.Position,
           };
 
           ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientReadFilePartCommand.CommandId, sendingContent);
-          downloadEventArgs.Progress = (int)((downloadingFile.WriteStream.Position * 100) / receivedContent.File.Size);
+          downloadEventArgs.Progress = (int)((downloadingFile.WriteStream.Position * 100) / content.File.Size);
         }
       }
 

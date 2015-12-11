@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
@@ -10,57 +9,54 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerKickUsersCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerKickUsersCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.KickUsers;
+    public const long CommandId = (long)ServerCommandId.KickUsers;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (receivedContent.Users == null)
+      if (content.Users == null)
         throw new ArgumentNullException("Users");
 
-      if (string.Equals(receivedContent.RoomName, ServerModel.MainRoomName))
+      if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.API.SendSystemMessage(args.ConnectionId, "Невозможно удалить пользователей из основной комнаты.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Невозможно удалить пользователей из основной комнаты.");
         return;
       }
 
-      if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
+      if (!RoomExists(content.RoomName, args.ConnectionId))
         return;
 
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[receivedContent.RoomName];
+        Room room = server.Rooms[content.RoomName];
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
           return;
         }
 
         var sendingContent = new ClientRoomClosedCommand.MessageContent { Room = room };
 
-        foreach (var user in receivedContent.Users)
+        foreach (var user in content.Users)
         {
           if (!room.Users.Contains(user.Nick))
             continue;
 
           if (user.Equals(room.Admin))
           {
-            ServerModel.API.SendSystemMessage(args.ConnectionId, "Невозможно удалить из комнаты администратора.");
+            ServerModel.Api.SendSystemMessage(args.ConnectionId, "Невозможно удалить из комнаты администратора.");
             continue;
           }
 

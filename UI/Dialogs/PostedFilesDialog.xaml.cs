@@ -50,8 +50,8 @@ namespace UI.Dialogs
     {
       var postedFile = (PostedFile)((Button)sender).Tag;
 
-      if (ClientModel.API != null)
-        ClientModel.API.RemoveFileFromRoom(postedFile.RoomName, postedFile.File);
+      if (ClientModel.Api != null)
+        ClientModel.Api.RemoveFileFromRoom(postedFile.RoomName, postedFile.File);
 
       RefreshFiles();
     }

@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using System;
 using System.Security;
 
@@ -7,25 +6,27 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientOutSystemMessageCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientOutSystemMessageCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.OutSystemMessage;
+    public const long CommandId = (long)ClientCommandId.OutSystemMessage;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.Message))
+      if (string.IsNullOrEmpty(content.Message))
         throw new ArgumentException("message");
 
-      ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs { Message = receivedContent.Message, Type = MessageType.System });
+      ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs
+      {
+        Message = content.Message,
+        Type = MessageType.System
+      });
     }
 
     [Serializable]

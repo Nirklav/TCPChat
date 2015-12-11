@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Net;
@@ -9,28 +8,26 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientConnectToPeerCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientConnectToPeerCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.ConnectToPeer;
+    public const long CommandId = (long)ClientCommandId.ConnectToPeer;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.RemoteInfo == null)
+      if (content.RemoteInfo == null)
         throw new ArgumentNullException("info");
 
-      if (receivedContent.PeerPoint == null)
+      if (content.PeerPoint == null)
         throw new ArgumentNullException("PeerPoint");
 
-      ClientModel.Peer.ConnectToPeer(receivedContent.RemoteInfo.Nick, receivedContent.PeerPoint);
+      ClientModel.Peer.ConnectToPeer(content.RemoteInfo.Nick, content.PeerPoint);
     }
 
     [Serializable]

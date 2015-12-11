@@ -7,8 +7,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 
 namespace Engine.Network
@@ -19,9 +17,7 @@ namespace Engine.Network
   public sealed class AsyncClient : Connection
   {
     #region consts
-    public const int CryptorKeySize = 2048;
     public const long DefaultFilePartSize = 500 * 1024;
-    private const int MaxReceivedDataSize = 1024 * 1024;
     private const int SystemTimerInterval = 1000;
     private const int ReconnectTimeInterval = 10 * 1000;
     private const int PingInterval = 3000;
@@ -37,20 +33,14 @@ namespace Engine.Network
     #endregion
 
     #region private fields
+    private readonly object syncObject = new object();
     private IPEndPoint hostAddress;
     private ClientRequestQueue requestQueue;
-    private RSACryptoServiceProvider keyCryptor;
-
-    private bool waitingApiName;
-    private string serverApiVersion;
-
+    private Timer timer;
     private bool reconnect;
     private bool reconnecting;
     private DateTime lastReconnect;
     private DateTime lastPingRequest;
-
-    private readonly object timerSync = new object();
-    private Timer systemTimer;
     #endregion
 
     #region constructors
@@ -61,9 +51,6 @@ namespace Engine.Network
     public AsyncClient(string nick)
     {
       requestQueue = new ClientRequestQueue();
-      keyCryptor = new RSACryptoServiceProvider(CryptorKeySize);
-
-      waitingApiName = false;
       reconnecting = false;
       reconnect = true;
       Id = nick;
@@ -78,49 +65,6 @@ namespace Engine.Network
     {
       [SecuritySafeCritical]
       get { return handler == null ? false : handler.Connected; }
-    }
-
-    /// <summary>
-    /// Открытый ключ данного соединения.
-    /// </summary>
-    public RSAParameters OpenKey
-    {
-      [SecuritySafeCritical]
-      get
-      {
-        ThrowIfDisposed();
-        return keyCryptor.ExportParameters(false);
-      }
-    }
-
-    /// <summary>
-    /// Ассиметричный алгоритм шифрования, данного соединения.
-    /// </summary>
-    public RSACryptoServiceProvider KeyCryptor
-    {
-      [SecurityCritical]
-      get
-      {
-        ThrowIfDisposed();
-        return keyCryptor;
-      }
-    }
-
-    /// <summary>
-    /// Версия API используемая на сервере.
-    /// </summary>
-    public string ServerApiVersion
-    {
-      [SecuritySafeCritical]
-      get
-      {
-        ThrowIfDisposed();
-
-        if (serverApiVersion == null)
-          return string.Empty;
-
-        return serverApiVersion;
-      }
     }
 
     /// <summary>
@@ -157,11 +101,10 @@ namespace Engine.Network
       ThrowIfDisposed();
 
       if (handler != null && handler.Connected)
-        throw new SocketException((int)SocketError.IsConnected);
+        throw new InvalidOperationException("Client already connected");
 
-      waitingApiName = true;
       hostAddress = serverAddress;
-      systemTimer = new Timer(SystemTimerCallback, null, SystemTimerInterval, -1);
+      timer = new Timer(OnTimer, null, SystemTimerInterval, -1);
 
       handler = new Socket(serverAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       handler.BeginConnect(serverAddress, OnConnected, null);
@@ -179,10 +122,9 @@ namespace Engine.Network
       {
         handler.EndConnect(result);
 
-        Construct(handler, MaxReceivedDataSize);
+        Construct(handler);
         reconnecting = false;
       }
-      catch (ObjectDisposedException) { return; }
       catch (SocketException se)
       {
         if (se.SocketErrorCode == SocketError.ConnectionRefused)
@@ -201,66 +143,49 @@ namespace Engine.Network
     }
 
     [SecuritySafeCritical]
-    protected override void OnDataReceived(DataReceivedEventArgs e)
+    protected override void OnPackageReceived(PackageReceivedEventArgs e)
     {
       try
       {
-        if (e.Error != null)
-          throw e.Error;
-
-        if (TrySetApi(e))
+        if (e.Exception != null)
+        {
+          OnError(e.Exception);
           return;
+        }
 
-        var command = ClientModel.API.GetCommand(e.ReceivedData);
-        var args = new ClientCommandArgs { Message = e.ReceivedData };
+        var command = ClientModel.Api.GetCommand(e.Package.Id);
+        var args = new ClientCommandArgs(null, e.Package);
 
         requestQueue.Add(ClientId, command, args);
       }
       catch (Exception exc)
       {
-        ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = exc });
-        ClientModel.Logger.Write(exc);
+        OnError(exc);
       }
-    }
-
-    [SecurityCritical]
-    private bool TrySetApi(DataReceivedEventArgs e)
-    {
-      if (!waitingApiName)
-        return false;
-
-      serverApiVersion = Encoding.Unicode.GetString(e.ReceivedData);
-
-      switch (serverApiVersion)
-      {
-        case StandardServerAPI.API:
-          ClientModel.API = new StandardClientAPI();
-          break;
-      }
-
-      if (ClientModel.API != null)
-      {
-        ClientModel.Notifier.Connected(new ConnectEventArgs { Error = null });
-        waitingApiName = false;
-      }
-      else
-        throw new ModelException(ErrorCode.APINotSupported, serverApiVersion);
-
-      return true;
     }
 
     [SecuritySafeCritical]
-    protected override void OnDataSended(DataSendedEventArgs args)
+    protected override void OnInfoReceived(ConnectionInfo info)
     {
-      if (args.Error == null)
-        return;
+      var clientInfo = info as ServerConnectionInfo;
+      if (clientInfo == null)
+        throw new InvalidOperationException("info isn't ClientConnectionInfo");
 
-      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = args.Error });
-      ClientModel.Logger.Write(args.Error);
+      if (!string.Equals(clientInfo.ApiName, ClientModel.Api.Name, StringComparison.OrdinalIgnoreCase))
+        throw new ModelException(ErrorCode.APINotSupported, clientInfo.ApiName);
+
+      ClientModel.Notifier.Connected(new ConnectEventArgs());
     }
 
     [SecuritySafeCritical]
-    protected override bool HandleSocketException(SocketException se)
+    protected override void OnPackageSent(PackageSendedEventArgs args)
+    {
+      if (args.Exception != null)
+        OnError(args.Exception);
+    }
+
+    [SecuritySafeCritical]
+    protected override bool OnSocketException(SocketException se)
     {
       if (!reconnect)
         return false;
@@ -274,21 +199,21 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private void SystemTimerCallback(object state)
+    private void OnTimer(object state)
     {
       TrySendPingRequest();
 
       TryReconnect();
 
-      lock (timerSync)
-        if (systemTimer != null)
-          systemTimer.Change(SystemTimerInterval, -1);
+      lock (syncObject)
+        if (timer != null)
+          timer.Change(SystemTimerInterval, -1);
     }
 
     [SecurityCritical]
     private void TrySendPingRequest()
     {
-      if (!IsConnected || ClientModel.API == null)
+      if (!IsConnected || ClientModel.Api == null)
         return;
 
       var interval = (DateTime.Now - lastPingRequest).TotalMilliseconds;
@@ -296,7 +221,7 @@ namespace Engine.Network
         return;
 
       lastPingRequest = DateTime.Now;
-      ClientModel.API.PingRequest();
+      ClientModel.Api.PingRequest();
     }
 
     [SecurityCritical]
@@ -318,6 +243,13 @@ namespace Engine.Network
 
       lastReconnect = DateTime.Now;
     }
+
+    [SecurityCritical]
+    private void OnError(Exception e)
+    {
+      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = e });
+      ClientModel.Logger.Write(e);
+    }
     #endregion
 
     #region IDisposable
@@ -330,14 +262,12 @@ namespace Engine.Network
       if (requestQueue != null)
         requestQueue.Dispose();
 
-      keyCryptor.Dispose();
-
-      lock (timerSync)
+      lock (syncObject)
       {
-        if (systemTimer != null)
-          systemTimer.Dispose();
+        if (timer != null)
+          timer.Dispose();
 
-        systemTimer = null;
+        timer = null;
       }
     }
 

@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
@@ -10,48 +9,45 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerAddFileToRoomCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerAddFileToRoomCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.AddFileToRoom;
+    public const long CommandId = (long)ServerCommandId.AddFileToRoom;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.File == null)
+      if (content.File == null)
         throw new ArgumentNullException("File");
 
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
+      if (!RoomExists(content.RoomName, args.ConnectionId))
         return;
 
       using (var context = ServerModel.Get())
       {
-        var room = context.Rooms[receivedContent.RoomName];
+        var room = context.Rooms[content.RoomName];
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
           return;
         }
 
-        if (room.Files.FirstOrDefault(file => file.Equals(receivedContent.File)) == null)
-          room.Files.Add(receivedContent.File);
+        if (room.Files.FirstOrDefault(file => file.Equals(content.File)) == null)
+          room.Files.Add(content.File);
 
         var sendingContent = new ClientFilePostedCommand.MessageContent
         {
-          File = receivedContent.File,
-          RoomName = receivedContent.RoomName
+          File = content.File,
+          RoomName = content.RoomName
         };
 
         foreach (string user in room.Users)

@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
@@ -11,49 +10,46 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerInviteUsersCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerInviteUsersCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.InvateUsers;
+    public const long CommandId = (long)ServerCommandId.InvateUsers;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (receivedContent.Users == null)
+      if (content.Users == null)
         throw new ArgumentNullException("Users");
 
-      if (string.Equals(receivedContent.RoomName, ServerModel.MainRoomName))
+      if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.API.SendSystemMessage(args.ConnectionId, "Невозможно пригласить пользователей в основную комнату. Они и так все здесь.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Невозможно пригласить пользователей в основную комнату. Они и так все здесь.");
         return;
       }
 
-      if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
+      if (!RoomExists(content.RoomName, args.ConnectionId))
         return;
 
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[content.RoomName];
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
           return;
         }
 
         var invitedUsers = new List<User>();
-        foreach (var user in receivedContent.Users)
+        foreach (var user in content.Users)
         {
           if (room.Users.Contains(user.Nick))
             continue;

@@ -7,9 +7,9 @@ namespace Engine.API.ServerCommands
   [SecurityCritical]
   class ServerPingRequestCommand : ICommand<ServerCommandArgs>
   {
-    public const ushort CommandId = (ushort)ServerCommand.PingRequest;
+    public const long CommandId = (long)ServerCommandId.PingRequest;
 
-    public ushort Id
+    public long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
@@ -18,7 +18,7 @@ namespace Engine.API.ServerCommands
     [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
-      ServerModel.Server.SendMessage(args.ConnectionId, ClientPingResponceCommand.CommandId, null, true);
+      ServerModel.Server.SendMessage(args.ConnectionId, ClientPingResponceCommand.CommandId, true);
     }
   }
 }

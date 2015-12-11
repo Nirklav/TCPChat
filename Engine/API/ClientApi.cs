@@ -4,6 +4,7 @@ using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using Engine.Network;
+using Engine.Plugins;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,9 +17,9 @@ namespace Engine.API
   /// <summary>
   /// Класс реализующий стандартный API для клиента.
   /// </summary>
-  sealed class StandardClientAPI :
-    MarshalByRefObject,
-    IClientAPI
+  public sealed class ClientApi :
+    CrossDomainObject,
+    IApi<ClientCommandArgs>
   {
     internal class WaitingPrivateMessage
     {
@@ -26,8 +27,7 @@ namespace Engine.API
       public string Message { get; set; }
     }
 
-    private readonly List<WaitingPrivateMessage> waitingPrivateMessages;
-    private readonly Dictionary<ushort, ICommand<ClientCommandArgs>> commands;
+    private readonly Dictionary<long, ICommand<ClientCommandArgs>> commands;
     private readonly Random idCreator;
     private long lastSendedNumber;
 
@@ -35,21 +35,19 @@ namespace Engine.API
     /// Создает экземпляр API.
     /// </summary>
     [SecurityCritical]
-    public StandardClientAPI()
+    public ClientApi()
     {
-      commands = new Dictionary<ushort, ICommand<ClientCommandArgs>>();
-      waitingPrivateMessages = new List<WaitingPrivateMessage>();
+      commands = new Dictionary<long, ICommand<ClientCommandArgs>>();
       idCreator = new Random(DateTime.Now.Millisecond);
 
       ClientModel.Recorder.Recorded += OnRecorded;
 
       AddCommand(new ClientRegistrationResponseCommand());
       AddCommand(new ClientRoomRefreshedCommand());
-      AddCommand(new ClientOutRoomMessageCommand());
       AddCommand(new ClientOutPrivateMessageCommand());
+      AddCommand(new ClientOutRoomMessageCommand());
       AddCommand(new ClientOutSystemMessageCommand());
       AddCommand(new ClientFilePostedCommand());
-      AddCommand(new ClientReceiveUserOpenKeyCommand());
       AddCommand(new ClientRoomOpenedCommand());
       AddCommand(new ClientRoomClosedCommand());
       AddCommand(new ClientPostedFileDeletedCommand());
@@ -99,8 +97,18 @@ namespace Engine.API
 
         receivers.Remove(client.User.Nick);
 
-        ClientModel.Peer.SendMessageIfConnected(receivers, ClientPlayVoiceCommand.CommandId, content, true);
+        foreach (var peerId in receivers)
+          ClientModel.Peer.SendMessageIfConnected(peerId, ClientPlayVoiceCommand.CommandId, content, true);
       }
+    }
+
+    /// <summary>
+    /// Версия и имя данного API.
+    /// </summary>
+    public string Name
+    {
+      [SecuritySafeCritical]
+      get { return Api.Name; }
     }
 
     /// <summary>
@@ -109,16 +117,8 @@ namespace Engine.API
     /// <param name="message">Сообщение, по которому будет определена команда.</param>
     /// <returns>Команда.</returns>
     [SecuritySafeCritical]
-    public ICommand<ClientCommandArgs> GetCommand(byte[] message)
+    public ICommand<ClientCommandArgs> GetCommand(long id)
     {
-      if (message == null)
-        throw new ArgumentNullException("message");
-
-      if (message.Length < 2)
-        throw new ArgumentException("message.Length < 2");
-
-      var id = BitConverter.ToUInt16(message, 0);
-
       ICommand<ClientCommandArgs> command;
       if (commands.TryGetValue(id, out command))
         return command;
@@ -162,31 +162,8 @@ namespace Engine.API
       if (string.IsNullOrEmpty(receiver))
         throw new ArgumentException("receiver");
 
-      lock (waitingPrivateMessages)
-        waitingPrivateMessages.Add(new WaitingPrivateMessage { Receiver = receiver, Message = message });
-
-      var sendingContent = new ServerGetUserOpenKeyCommand.MessageContent { Nick = receiver };
-      ClientModel.Client.SendMessage(ServerGetUserOpenKeyCommand.CommandId, sendingContent);
-    }
-
-    /// <summary>
-    /// Возвращает ожидающее отправки сообщение.
-    /// </summary>
-    /// <param name="receiver">Имя получателя.</param>
-    /// <returns>Ожидающее отправки сообщение.</returns>
-    [SecurityCritical]
-    internal WaitingPrivateMessage GetWaitingMessage(string receiver)
-    {
-      lock (waitingPrivateMessages)
-      {
-        var waitingMessage = waitingPrivateMessages.Find(m => m.Receiver.Equals(receiver));
-        if (waitingMessage == null)
-          return null;
-
-        waitingPrivateMessages.Remove(waitingMessage);
-
-        return waitingMessage;
-      }
+      var sendingContent = new ClientOutPrivateMessageCommand.MessageContent { Message = message };
+      ClientModel.Peer.SendMessage(receiver, ClientOutPrivateMessageCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -197,7 +174,7 @@ namespace Engine.API
     {
       using (var client = ClientModel.Get())
       {
-        var sendingContent = new ServerRegisterCommand.MessageContent { User = client.User, OpenKey = ClientModel.Client.OpenKey };
+        var sendingContent = new ServerRegisterCommand.MessageContent { User = client.User };
         ClientModel.Client.SendMessage(ServerRegisterCommand.CommandId, sendingContent);
       }
     }
@@ -208,7 +185,7 @@ namespace Engine.API
     [SecuritySafeCritical]
     public void Unregister()
     {
-      ClientModel.Client.SendMessage(ServerUnregisterCommand.CommandId, null);
+      ClientModel.Client.SendMessage(ServerUnregisterCommand.CommandId);
     }
 
     /// <summary>
@@ -489,7 +466,7 @@ namespace Engine.API
     [SecuritySafeCritical]
     public void PingRequest()
     {
-      ClientModel.Client.SendMessage(ServerPingRequestCommand.CommandId, null);
+      ClientModel.Client.SendMessage(ServerPingRequestCommand.CommandId);
     }
   }
 }

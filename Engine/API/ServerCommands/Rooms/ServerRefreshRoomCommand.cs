@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Server;
 using System;
 using System.Linq;
@@ -9,38 +8,35 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerRefreshRoomCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerRefreshRoomCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.RefreshRoom;
+    public const long CommandId = (long)ServerCommandId.RefreshRoom;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (string.Equals(receivedContent.RoomName, ServerModel.MainRoomName))
+      if (string.Equals(content.RoomName, ServerModel.MainRoomName))
         return;
 
-      if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
+      if (!RoomExists(content.RoomName, args.ConnectionId))
         return;
 
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[content.RoomName];
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
           return;
         }
 

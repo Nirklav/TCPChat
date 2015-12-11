@@ -18,7 +18,7 @@ namespace Engine.Plugins.Client
     }
 
     [SecurityCritical]
-    internal bool TryGetCommand(ushort id, out ICommand<ClientCommandArgs> command)
+    internal bool TryGetCommand(long id, out ICommand<ClientCommandArgs> command)
     {
       command = null;
 

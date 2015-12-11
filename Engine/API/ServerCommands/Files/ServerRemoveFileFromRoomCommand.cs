@@ -1,5 +1,4 @@
 ﻿using Engine.API.ClientCommands;
-using Engine.Helpers;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
@@ -9,66 +8,62 @@ namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
   class ServerRemoveFileFromRoomCommand :
-    BaseServerCommand,
-    ICommand<ServerCommandArgs>
+    ServerCommand<ServerRemoveFileFromRoomCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ServerCommand.RemoveFileFromRoom;
+    public const long CommandId = (long)ServerCommandId.RemoveFileFromRoom;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public override void Run(MessageContent content, ServerCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (receivedContent.File == null)
+      if (content.File == null)
         throw new ArgumentNullException("File");
 
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (!RoomExists(receivedContent.RoomName, args.ConnectionId))
+      if (!RoomExists(content.RoomName, args.ConnectionId))
         return;
 
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[receivedContent.RoomName];
+        var room = server.Rooms[content.RoomName];
 
-        if (!room.Files.Exists(file => file.Equals(receivedContent.File)))
+        if (!room.Files.Exists(file => file.Equals(content.File)))
           return;
 
         if (!room.ContainsUser(args.ConnectionId))
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
           return;
         }
 
         bool access = false;
         if (room.Admin != null)
           access |= args.ConnectionId.Equals(room.Admin);
-        access |= args.ConnectionId.Equals(receivedContent.File.Owner.Nick);
+        access |= args.ConnectionId.Equals(content.File.Owner.Nick);
         if (!access)
         {
-          ServerModel.API.SendSystemMessage(args.ConnectionId, "Вы не можете удалить данный файл. Не хватает прав.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не можете удалить данный файл. Не хватает прав.");
           return;
         }
 
-        room.Files.Remove(receivedContent.File);
-        ServerModel.API.SendSystemMessage(args.ConnectionId, string.Format("Файл \"{0}\" удален с раздачи.", receivedContent.File.Name));
+        room.Files.Remove(content.File);
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, string.Format("Файл \"{0}\" удален с раздачи.", content.File.Name));
+
+        var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent()
+        {
+          File = content.File,
+          RoomName = room.Name,
+        };
 
         foreach (string user in room.Users)
-        {
-          var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent()
-          {
-            File = receivedContent.File,
-            RoomName = room.Name,
-          };
           ServerModel.Server.SendMessage(user, ClientPostedFileDeletedCommand.CommandId, postedFileDeletedContent);
-        }
       }
     }
 

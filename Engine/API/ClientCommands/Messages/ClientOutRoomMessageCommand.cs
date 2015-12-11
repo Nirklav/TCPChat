@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using System;
 using System.Security;
 
@@ -7,43 +6,41 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientOutRoomMessageCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientOutRoomMessageCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.OutRoomMessage;
+    public const long CommandId = (long)ClientCommandId.OutRoomMessage;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
-      if (string.IsNullOrEmpty(receivedContent.Sender))
+      if (string.IsNullOrEmpty(content.Sender))
         throw new ArgumentException("sender");
 
-      if (string.IsNullOrEmpty(receivedContent.Message))
+      if (string.IsNullOrEmpty(content.Message))
         throw new ArgumentException("message");
 
-      if (string.IsNullOrEmpty(receivedContent.RoomName))
+      if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("roomName");
 
       using (var client = ClientModel.Get())
       {
-        var room = client.Rooms[receivedContent.RoomName];
-        room.AddMessage(receivedContent.Sender, receivedContent.MessageId, receivedContent.Message);
+        var room = client.Rooms[content.RoomName];
+        room.AddMessage(content.Sender, content.MessageId, content.Message);
       }
 
       var receiveMessageArgs = new ReceiveMessageEventArgs
       {
         Type = MessageType.Common,
-        Message = receivedContent.Message,
-        Sender = receivedContent.Sender,
-        RoomName = receivedContent.RoomName,
-        MessageId = receivedContent.MessageId,
+        Message = content.Message,
+        Sender = content.Sender,
+        RoomName = content.RoomName,
+        MessageId = content.MessageId,
       };
 
       ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);

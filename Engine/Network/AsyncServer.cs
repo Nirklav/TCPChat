@@ -7,7 +7,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security;
-using System.Security.Cryptography;
 using System.Threading;
 
 namespace Engine.Network
@@ -104,7 +103,7 @@ namespace Engine.Network
         throw new ArgumentException("port not available", "serverPort");
 
       p2pService = new P2PService(p2pServicePort, usingIPv6);
-      systemTimer = new Timer(TimerCallback, null, SystemTimerInterval, -1);
+      systemTimer = new Timer(OnTimer, null, SystemTimerInterval, -1);
 
       var address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;
 
@@ -112,7 +111,7 @@ namespace Engine.Network
       listener.LingerState = new LingerOption(false, 0);
       listener.Bind(new IPEndPoint(address, serverPort));
       listener.Listen(ListenConnections);
-      listener.BeginAccept(AcceptCallback, null);
+      listener.BeginAccept(OnAccept, null);
 
       isServerRunning = true;
     }
@@ -124,7 +123,7 @@ namespace Engine.Network
     /// <param name="id">Новый идентификатор соединения.</param>
     /// <param name="openKey">Публичный ключ соединения.</param>
     [SecurityCritical]
-    public void RegisterConnection(string tempId, string id, RSAParameters openKey)
+    public void RegisterConnection(string tempId, string id)
     {
       lock (connections)
       {
@@ -134,7 +133,7 @@ namespace Engine.Network
 
         connections.Remove(tempId);
         connections.Add(id, connection);
-        connection.Register(id, openKey);
+        connection.Register(id);
       }
     }
 
@@ -158,38 +157,44 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отсправляет сообщение по индетификатору соединения.
+    /// Отсправляет пакет клиенту.
     /// </summary>
     /// <param name="connectionId">Id соединения.</param>
-    /// <param name="messageId">Тип сообщения. (Command.Id)</param>
-    /// <param name="messageContent">Контект команды.</param>
+    /// <param name="id">Тип пакета. (Command.Id)</param>
     /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
     [SecuritySafeCritical]
-    public void SendMessage(string connectionId, ushort messageId, object messageContent, bool allowTempConnections = false)
+    public void SendMessage(string connectionId, long id, bool allowTempConnections = false)
     {
-      lock (connections)
-      {
-        var connection = GetConnection(connectionId, allowTempConnections);
-        if (connection != null)
-          connection.SendMessage(messageId, messageContent);
-      }
+      SendMessage(connectionId, new Package(id), allowTempConnections);
     }
 
     /// <summary>
-    /// Отсправляет сообщение по индетификатору соединения.
+    /// Отсправляет пакет клиенту.
     /// </summary>
     /// <param name="connectionId">Id соединения.</param>
-    /// <param name="messageId">Тип сообщения. (Command.Id)</param>
-    /// <param name="messageContent">Сериализованный контект команды.</param>
+    /// <param name="id">Тип пакета. (Command.Id)</param>
+    /// <param name="content">Контект команды.</param>
     /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
     [SecuritySafeCritical]
-    public void SendMessage(string connectionId, ushort messageId, byte[] messageContent, bool allowTempConnections = false)
+    public void SendMessage<T>(string connectionId, long id, T content, bool allowTempConnections = false)
+    {
+      SendMessage(connectionId, new Package<T>(id, content), allowTempConnections);
+    }
+
+    /// <summary>
+    /// Отсправляет пакет клиенту.
+    /// </summary>
+    /// <param name="connectionId">Id соединения.</param>
+    /// <param name="package">Отправляемый пакет.</param>
+    /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
+    [SecuritySafeCritical]
+    public void SendMessage(string connectionId, IPackage package, bool allowTempConnections = false)
     {
       lock (connections)
       {
         var connection = GetConnection(connectionId, allowTempConnections);
         if (connection != null)
-          connection.SendMessage(messageId, messageContent);
+          connection.SendMessage(package);
       }
     }
 
@@ -202,21 +207,6 @@ namespace Engine.Network
     {
       lock (connections)
         return connections.Keys.Where(id => !id.Contains(Connection.TempConnectionPrefix)).ToArray();
-    }
-
-    /// <summary>
-    /// Возвращает открытый ключ соединения.
-    /// </summary>
-    /// <param name="id">Идентификатор соединения.</param>
-    /// <returns>Открытый ключ.</returns>
-    [SecuritySafeCritical]
-    public RSAParameters GetOpenKey(string id)
-    {
-      lock (connections)
-      {
-        var connection = GetConnection(id);
-        return connection.OpenKey;
-      }
     }
 
     /// <summary>
@@ -234,19 +224,19 @@ namespace Engine.Network
 
     #region private callback methods
     [SecurityCritical]
-    private void AcceptCallback(IAsyncResult result)
+    private void OnAccept(IAsyncResult result)
     {
       if (!isServerRunning)
         return;
 
       try
       {
-        listener.BeginAccept(AcceptCallback, null);
+        listener.BeginAccept(OnAccept, null);
 
         var handler = listener.EndAccept(result);
-        var connection = new ServerConnection(handler, MaxDataSize, DataReceivedCallback);
+        var connection = new ServerConnection(handler, ServerModel.Api.Name, OnPackageReceived);
 
-        connection.SendApiName(ServerModel.API.Name);
+        connection.SendInfo();
 
         lock (connections)
         {
@@ -261,23 +251,22 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private void DataReceivedCallback(object sender, DataReceivedEventArgs e)
+    private void OnPackageReceived(object sender, PackageReceivedEventArgs e)
     {
       try
       {
-        if (e.Error != null)
-          throw e.Error;
+        if (e.Exception != null)
+        {
+          ServerModel.Logger.Write(e.Exception);
+          return;
+        }
 
         if (!isServerRunning)
           return;
 
         var connectionId = ((ServerConnection)sender).Id;
-        var command = ServerModel.API.GetCommand(e.ReceivedData);
-        var args = new ServerCommandArgs
-        {
-          Message = e.ReceivedData,
-          ConnectionId = connectionId,
-        };
+        var command = ServerModel.Api.GetCommand(e.Package.Id);
+        var args = new ServerCommandArgs(connectionId, e.Package);
 
         requestQueue.Add(connectionId, command, args);
       }
@@ -289,7 +278,7 @@ namespace Engine.Network
 
     #region timer process
     [SecurityCritical]
-    private void TimerCallback(object arg)
+    private void OnTimer(object arg)
     {
       RefreshConnections();
       RefreshRooms();
@@ -332,19 +321,21 @@ namespace Engine.Network
         }
       }
 
-      if (removingUsers != null)
-        foreach (var id in removingUsers)
+      if (removingUsers == null)
+        return;
+
+      foreach (var id in removingUsers)
+      {
+        try
         {
-          try
-          {
-            ServerModel.API.RemoveUser(id);
-          }
-          catch(Exception e)
-          {
-            ServerModel.Logger.Write(e);
-            CloseConnection(id);
-          }
+          ServerModel.Api.RemoveUser(id);
         }
+        catch(Exception e)
+        {
+          ServerModel.Logger.Write(e);
+          CloseConnection(id);
+        }
+      }
     }
 
     [SecurityCritical]

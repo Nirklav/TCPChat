@@ -221,8 +221,8 @@ namespace UI.ViewModel
     {
       try
       {
-        if (ClientModel.API != null)
-          ClientModel.API.Unregister();
+        if (ClientModel.Api != null)
+          ClientModel.Api.Unregister();
       }
       catch (Exception) { }
 
@@ -237,8 +237,8 @@ namespace UI.ViewModel
       try
       {
         CreateRoomDialog dialog = new CreateRoomDialog();
-        if (dialog.ShowDialog() == true && ClientModel.API != null)
-          ClientModel.API.CreateRoom(dialog.Name, dialog.Type);
+        if (dialog.ShowDialog() == true && ClientModel.Api != null)
+          ClientModel.Api.CreateRoom(dialog.Name, dialog.Type);
       }
       catch (SocketException se)
       {
@@ -253,8 +253,8 @@ namespace UI.ViewModel
         if (MessageBox.Show(RoomCloseQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
           return;
 
-        if (ClientModel.API != null)
-          ClientModel.API.DeleteRoom(SelectedRoom.Name);
+        if (ClientModel.Api != null)
+          ClientModel.Api.DeleteRoom(SelectedRoom.Name);
       }
       catch (SocketException se)
       {
@@ -269,8 +269,8 @@ namespace UI.ViewModel
         if (MessageBox.Show(RoomExitQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
           return;
 
-        if (ClientModel.API != null)
-          ClientModel.API.ExitFromRoom(SelectedRoom.Name);
+        if (ClientModel.Api != null)
+          ClientModel.Api.ExitFromRoom(SelectedRoom.Name);
       }
       catch (SocketException se)
       {
@@ -313,8 +313,8 @@ namespace UI.ViewModel
           return;
         }
 
-        if (ClientModel.API != null)
-          ClientModel.API.Register();
+        if (ClientModel.Api != null)
+          ClientModel.Api.Register();
       }), e);
     }
 
@@ -496,8 +496,8 @@ namespace UI.ViewModel
       {
         try
         {
-          if (ClientModel.API != null)
-            ClientModel.API.Unregister();
+          if (ClientModel.Api != null)
+            ClientModel.Api.Unregister();
         }
         catch (Exception) { }
 

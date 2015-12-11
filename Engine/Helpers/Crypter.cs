@@ -2,6 +2,7 @@
 using System.IO;
 using System.Security;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Engine.Helpers
 {
@@ -9,38 +10,28 @@ namespace Engine.Helpers
   public sealed class Crypter : IDisposable
   {
     #region Constats
-    private const int HeadSize = 8;
-    private const int ConstBufferCoefficient = 256 * 1024;
+    private const int BufferSize = 4096;
     #endregion
 
     #region Private Values
-    private SymmetricAlgorithm cryptAlgorithm;
-    private int bufferCoefficient;
+    private SymmetricAlgorithm algorithm;
     private bool disposed;
     #endregion
 
-    #region Properties
-    /// <summary>
-    /// Получает коэфициент, определяющий размер буффера (в пределах 10-100).
-    /// </summary>
-    public int BufferCoefficient
-    {
-      [SecuritySafeCritical]
-      get
-      {
-        ThrowIfDisposed();
-        return bufferCoefficient;
-      }
-      [SecuritySafeCritical]
-      set
-      {
-        ThrowIfDisposed();
-        bufferCoefficient = (value >= 10 && value <= 100) ? value : 20;
-      }
-    }
-    #endregion
-
     #region Constructors
+    /// <summary>
+    /// Создает экемпляр класса Crypter. C алгоритмом AES-256
+    /// </summary>
+    public Crypter()
+    {
+      algorithm = new AesCryptoServiceProvider()
+      {
+        KeySize = 256,
+        Mode = CipherMode.CBC,
+        Padding = PaddingMode.PKCS7
+      };
+    }
+
     /// <summary>
     /// Создает экемпляр класса Crypter.
     /// </summary>
@@ -51,9 +42,7 @@ namespace Engine.Helpers
       if (symmetricAlg == null)
         throw new ArgumentNullException();
 
-      cryptAlgorithm = symmetricAlg;
-
-      bufferCoefficient = 10;
+      algorithm = symmetricAlg;
     }
     #endregion
 
@@ -67,10 +56,23 @@ namespace Engine.Helpers
     {
       ThrowIfDisposed();
 
-      cryptAlgorithm.GenerateKey();
-      cryptAlgorithm.GenerateIV();
+      algorithm.GenerateKey();
+      algorithm.GenerateIV();
 
-      return cryptAlgorithm.Key;
+      return algorithm.Key;
+    }
+
+    /// <summary>
+    /// Устанавливает ключ и генерирует вектор инициализации.
+    /// </summary>
+    /// <param name="key">Ключ шифрования.</param>
+    [SecuritySafeCritical]
+    public void SetKey(byte[] key)
+    {
+      ThrowIfDisposed();
+
+      algorithm.Key = key;
+      algorithm.GenerateIV();
     }
 
     /// <summary>
@@ -79,35 +81,73 @@ namespace Engine.Helpers
     /// <param name="inputStream">Поток, который будет зашифрован.</param>
     /// <param name="outputStream">Поток, в который будет записан результат шифрования.</param>
     [SecuritySafeCritical]
-    public void EncryptStream(Stream inputStream, Stream outputStream)
+    public void Encrypt(Stream inputStream, Stream outputStream)
     {
       ThrowIfDisposed();
 
-      if (inputStream == null || outputStream == null)
-        throw new ArgumentNullException("One of the arguments (or two) equals null");
+      if (inputStream == null)
+        throw new ArgumentNullException("Input stream is null");
 
-      using (var transform = cryptAlgorithm.CreateEncryptor(cryptAlgorithm.Key, cryptAlgorithm.IV))
+      if (outputStream == null)
+        throw new ArgumentNullException("Output stream is null");
+
+      using (var transform = algorithm.CreateEncryptor())
+      using (var encrypter = new CryptoStream(outputStream, transform, CryptoStreamMode.Write))
+      using (var writer = new BinaryWriter(outputStream, Encoding.Unicode, true))
       {
-        int maxBufferSizeValue = bufferCoefficient * ConstBufferCoefficient;
+        writer.Write(algorithm.IV);
 
-        using (var csEncrypt = new CryptoStream(outputStream, transform, CryptoStreamMode.Write))
+        var dataBuffer = new byte[BufferSize];
+
+        while (inputStream.Position < inputStream.Length)
         {
-          outputStream.Write(BitConverter.GetBytes(inputStream.Length), 0, sizeof(long));
-          outputStream.Write(cryptAlgorithm.IV, 0, cryptAlgorithm.BlockSize / 8);
-
-          inputStream.Position = 0;
-          var dataBuffer = new byte[maxBufferSizeValue];
-
-          while (inputStream.Position < inputStream.Length)
-          {
-            int dataSize = (inputStream.Length - inputStream.Position > maxBufferSizeValue) ? maxBufferSizeValue : (int)(inputStream.Length - inputStream.Position);
-
-            int writedDataSize = CalculateDataSize(dataSize, maxBufferSizeValue);
-
-            inputStream.Read(dataBuffer, 0, dataSize);
-            csEncrypt.Write(dataBuffer, 0, writedDataSize);
-          }
+          var readed = inputStream.Read(dataBuffer, 0, BufferSize);
+          encrypter.Write(dataBuffer, 0, readed);
         }
+      }
+    }
+
+    /// <summary>
+    /// Шифрует объект в поток.
+    /// </summary>
+    /// <typeparam name="T">Тип объекта, который будет зашифрован.</typeparam>
+    /// <param name="obj">Объект который будет зашифрован.</param>
+    /// <param name="outputStream">Поток в который будет зашифрован объект.</param>
+    [SecuritySafeCritical]
+    public void Encrypt<T>(T obj, Stream outputStream)
+    {
+      ThrowIfDisposed();
+
+      if (obj == null)
+        throw new ArgumentNullException("Input object is null");
+
+      if (outputStream == null)
+        throw new ArgumentNullException("Output stream is null");
+
+      using (var transform = algorithm.CreateEncryptor())
+      using (var encrypter = new CryptoStream(outputStream, transform, CryptoStreamMode.Write))
+      using (var writer = new BinaryWriter(outputStream, Encoding.Unicode, true))
+      {
+        writer.Write(algorithm.IV);
+        Serializer.Serialize(encrypter, obj);
+      }
+    }
+
+    /// <summary>
+    /// Шифрует объект в массив байт.
+    /// </summary>
+    /// <typeparam name="T">Тип объекта, который будет зашифрован.</typeparam>
+    /// <param name="obj">Объект который будет зашифрован.</param>
+    /// <returns>Зашифрованный объект.</returns>
+    [SecuritySafeCritical]
+    public byte[] Encrypt<T>(T obj)
+    {
+      ThrowIfDisposed();
+
+      using (var outputStream = new MemoryStream())
+      {
+        Encrypt(obj, outputStream);
+        return outputStream.ToArray();
       }
     }
 
@@ -118,52 +158,71 @@ namespace Engine.Helpers
     /// <param name="outputStream">Поток, в который будет записан результат дешифрования.</param>
     /// <param name="key">Ключ для дешифрования.</param>
     [SecuritySafeCritical]
-    public void DecryptStream(Stream inputStream, Stream outputStream, byte[] key)
+    public void Decrypt(Stream inputStream, Stream outputStream)
     {
       ThrowIfDisposed();
 
-      if (inputStream == null || outputStream == null || key == null)
-        throw new ArgumentNullException("One of the arguments (or all) equals null");
+      if (inputStream == null)
+        throw new ArgumentNullException("Input stream is null");
 
-      int maxBufferSizeValue = bufferCoefficient * ConstBufferCoefficient;
+      if (outputStream == null)
+        throw new ArgumentNullException("Output stream is null");
 
-      byte[] originFileLengthArray = new byte[sizeof(long)];
-      byte[] iv = new byte[cryptAlgorithm.BlockSize / 8];
-
-      inputStream.Read(originFileLengthArray, 0, sizeof(long));
-      inputStream.Read(iv, 0, cryptAlgorithm.BlockSize / 8);
-
-      long deltaLength = inputStream.Length - HeadSize - cryptAlgorithm.BlockSize / 8 - BitConverter.ToInt64(originFileLengthArray, 0);
-
-      using (var transform = cryptAlgorithm.CreateDecryptor(key, iv))
+      using (var reader = new BinaryReader(inputStream, Encoding.Unicode, true))
       {
-        using (var csEncrypt = new CryptoStream(inputStream, transform, CryptoStreamMode.Read))
+        algorithm.IV = reader.ReadBytes(algorithm.BlockSize / 8);
+
+        using (var transform = algorithm.CreateDecryptor())
+        using (var decryptor = new CryptoStream(inputStream, transform, CryptoStreamMode.Read))
         {
-          var dataBuffer = new byte[maxBufferSizeValue];
+          var dataBuffer = new byte[BufferSize];
 
           while (inputStream.Position < inputStream.Length)
           {
-            int dataSize = (inputStream.Length - inputStream.Position > maxBufferSizeValue) ? maxBufferSizeValue : (int)(inputStream.Length - inputStream.Position - deltaLength);
-
-            csEncrypt.Read(dataBuffer, 0, dataSize);
-            outputStream.Write(dataBuffer, 0, dataSize);
+            var readed = decryptor.Read(dataBuffer, 0, BufferSize);
+            outputStream.Write(dataBuffer, 0, readed);
           }
         }
       }
     }
-    #endregion
 
-    #region private methods
+    /// <summary>
+    /// Расшифровывает из потока 1 объект.
+    /// </summary>
+    /// <typeparam name="T">Тип объекта который будет расшифрован.</typeparam>
+    /// <param name="inputStream">Поток с входными данными.</param>
+    /// <returns>Расшифрованый объект.</returns>
     [SecuritySafeCritical]
-    private int CalculateDataSize(int dataSize, int maxDataSize)
+    public T Decrypt<T>(Stream inputStream)
     {
-      if (dataSize == maxDataSize)
-        return dataSize;
+      ThrowIfDisposed();
 
-      int blockSize = cryptAlgorithm.BlockSize / 8;
-      dataSize = (int)Math.Ceiling((double)dataSize / blockSize) * blockSize;
+      if (inputStream == null)
+        throw new ArgumentNullException("Input stream is null");
 
-      return dataSize;
+      using (var reader = new BinaryReader(inputStream, Encoding.Unicode, true))
+      {
+        algorithm.IV = reader.ReadBytes(algorithm.BlockSize / 8);
+
+        using (var transform = algorithm.CreateDecryptor())
+        using (var decryptor = new CryptoStream(inputStream, transform, CryptoStreamMode.Read))
+          return Serializer.Deserialize<T>(decryptor);
+      }
+    }
+
+    /// <summary>
+    /// Расшифровывает из потока 1 объект.
+    /// </summary>
+    /// <typeparam name="T">Тип объекта который будет расшифрован.</typeparam>
+    /// <param name="input">Массив с входными данными.</param>
+    /// <returns>Расшифрованый объект.</returns>
+    [SecuritySafeCritical]
+    public T Decrypt<T>(byte[] input)
+    {
+      ThrowIfDisposed();
+
+      using (var inputStream = new MemoryStream(input))
+        return Decrypt<T>(inputStream);
     }
     #endregion
 
@@ -178,9 +237,10 @@ namespace Engine.Helpers
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed == true) return;
+      if (disposed == true)
+        return;
 
-      cryptAlgorithm.Clear();
+      algorithm.Clear();
 
       disposed = true;
     }

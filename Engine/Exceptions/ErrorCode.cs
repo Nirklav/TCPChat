@@ -10,5 +10,7 @@
     AudioNotEnabled = 100,
 
     PluginError = 200,
+
+    WrongContentType = 1000,
   }
 }

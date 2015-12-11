@@ -1,5 +1,4 @@
-﻿using Engine.Helpers;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using System;
 using System.Security;
 
@@ -7,25 +6,23 @@ namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
   class ClientRegistrationResponseCommand :
-    ICommand<ClientCommandArgs>
+    ClientCommand<ClientRegistrationResponseCommand.MessageContent>
   {
-    public const ushort CommandId = (ushort)ClientCommand.RegistrationResponse;
+    public const long CommandId = (long)ClientCommandId.RegistrationResponse;
 
-    public ushort Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public override void Run(MessageContent content, ClientCommandArgs args)
     {
-      var receivedContent = Serializer.Deserialize<MessageContent>(args.Message);
-
       var eventArgs = new RegistrationEventArgs
       {
-        Registered = receivedContent.Registered,
-        Message = receivedContent.Message
+        Registered = content.Registered,
+        Message = content.Message
       };
 
       ClientModel.Notifier.ReceiveRegistrationResponse(eventArgs);

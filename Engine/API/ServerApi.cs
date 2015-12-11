@@ -1,6 +1,7 @@
 ﻿using Engine.API.ClientCommands;
 using Engine.API.ServerCommands;
 using Engine.Model.Server;
+using Engine.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,30 +13,23 @@ namespace Engine.API
   /// <summary>
   /// Класс реазиующий стандартное серверное API.
   /// </summary>
-  sealed class StandardServerAPI :
-    MarshalByRefObject,
-    IServerAPI
+  public sealed class ServerApi :
+    CrossDomainObject,
+    IApi<ServerCommandArgs>
   {
-    /// <summary>
-    /// Версия и имя данного API.
-    /// </summary>
-    public const string API = "StandardAPI v2.3";
-
-    private readonly Dictionary<ushort, ICommand<ServerCommandArgs>> commands;
+    private readonly Dictionary<long, ICommand<ServerCommandArgs>> commands;
 
     /// <summary>
     /// Создает экземпляр API.
     /// </summary>
     [SecurityCritical]
-    public StandardServerAPI()
+    public ServerApi()
     {
-      commands = new Dictionary<ushort, ICommand<ServerCommandArgs>>();
+      commands = new Dictionary<long, ICommand<ServerCommandArgs>>();
 
       AddCommand(new ServerRegisterCommand());
       AddCommand(new ServerUnregisterCommand());
       AddCommand(new ServerSendRoomMessageCommand());
-      AddCommand(new ServerSendPrivateMessageCommand());
-      AddCommand(new ServerGetUserOpenKeyCommand());
       AddCommand(new ServerCreateRoomCommand());
       AddCommand(new ServerDeleteRoomCommand());
       AddCommand(new ServerInviteUsersCommand());
@@ -62,7 +56,7 @@ namespace Engine.API
     public string Name
     {
       [SecuritySafeCritical]
-      get { return API; }
+      get { return Api.Name; }
     }
 
     /// <summary>
@@ -71,16 +65,8 @@ namespace Engine.API
     /// <param name="message">Cообщение, по которому будет определена команда.</param>
     /// <returns>Команда.</returns>
     [SecuritySafeCritical]
-    public ICommand<ServerCommandArgs> GetCommand(byte[] message)
+    public ICommand<ServerCommandArgs> GetCommand(long id)
     {
-      if (message == null)
-        throw new ArgumentNullException("message");
-
-      if (message.Length < 2)
-        throw new ArgumentException("message.Length < 2");
-
-      var id = BitConverter.ToUInt16(message, 0);
-
       ICommand<ServerCommandArgs> command;
       if (commands.TryGetValue(id, out command))
         return command;
@@ -165,7 +151,7 @@ namespace Engine.API
             if (room.Admin != null)
             {
               var message = string.Format("Вы назначены администратором комнаты {0}.", room.Name);
-              ServerModel.API.SendSystemMessage(room.Admin, message);
+              ServerModel.Api.SendSystemMessage(room.Admin, message);
             }
           }
 
