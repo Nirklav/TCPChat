@@ -17,7 +17,7 @@ namespace Engine.API.ClientCommands
     }
 
     [SecuritySafeCritical]
-    public override void Run(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       var eventArgs = new RegistrationEventArgs
       {

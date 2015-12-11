@@ -20,7 +20,7 @@ namespace Engine.API.ServerCommands
     }
 
     [SecuritySafeCritical]
-    public override void Run(MessageContent content, ServerCommandArgs args)
+    protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentNullException("RoomName");

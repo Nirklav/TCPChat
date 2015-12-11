@@ -18,11 +18,8 @@ namespace Engine.API.ClientCommands
     }
 
     [SecuritySafeCritical]
-    public override void Run(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      if (args.PeerConnectionId != null)
-        return;
-
       var address = ClientModel.Client.RemotePoint.Address;
       var endPoint = new IPEndPoint(address, content.Port);
 

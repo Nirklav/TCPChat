@@ -12,5 +12,6 @@
     PluginError = 200,
 
     WrongContentType = 1000,
+    IllegalInvoker = 1001,
   }
 }

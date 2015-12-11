@@ -1,4 +1,5 @@
 ﻿using Engine.API.ClientCommands;
+using Engine.Exceptions;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System.Linq;
@@ -6,10 +7,21 @@ using System.Security;
 
 namespace Engine.API.ServerCommands
 {
-  [SecurityCritical]
   abstract class ServerCommand<TContent>
     : Command<TContent, ServerCommandArgs>
   {
+    [SecuritySafeCritical]
+    protected sealed override void Run(TContent content, ServerCommandArgs args)
+    {
+      if (args.ConnectionId == null)
+        throw new ModelException(ErrorCode.IllegalInvoker, string.Format("For the server command ConnectionId is required {0}", GetType().FullName));
+
+      OnRun(content, args);
+    }
+
+    [SecuritySafeCritical]
+    protected abstract void OnRun(TContent content, ServerCommandArgs args);
+
     #region Helpers
     /// <summary>
     /// Проверяет существует ли комната. Если нет отправляет вызвавщему команду соединению сообщение об ошибке. 

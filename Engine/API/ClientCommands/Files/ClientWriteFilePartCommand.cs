@@ -20,12 +20,15 @@ namespace Engine.API.ClientCommands
       get { return CommandId; }
     }
 
-    [SecuritySafeCritical]
-    public override void Run(MessageContent content, ClientCommandArgs args)
+    protected override bool IsPeerCommand
     {
-      if (args.PeerConnectionId == null)
-        return;
+      [SecuritySafeCritical]
+      get { return true; }
+    }
 
+    [SecuritySafeCritical]
+    protected override void OnRun(MessageContent content, ClientCommandArgs args)
+    {
       if (content.File == null)
         throw new ArgumentNullException("File");
 
