@@ -1,5 +1,4 @@
-﻿using Engine.API;
-using Engine.Exceptions;
+﻿using Engine.Exceptions;
 using Engine.Model.Client;
 using System;
 using System.Security;
@@ -15,24 +14,6 @@ namespace Engine.Plugins.Client
       : base(path)
     {
 
-    }
-
-    [SecurityCritical]
-    internal bool TryGetCommand(long id, out ICommand<ClientCommandArgs> command)
-    {
-      command = null;
-
-      lock (SyncObject)
-      {
-        ClientPluginCommand pluginCommand;
-        if (Commands.TryGetValue(id, out pluginCommand))
-        {
-          command = pluginCommand;
-          return true;
-        }
-      }
-
-      return false;
     }
 
     [SecurityCritical]

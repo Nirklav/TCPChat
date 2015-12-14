@@ -51,9 +51,9 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Сервис использующийся для прямого соединения пользователей.
+    /// Сервис используемый для прямого соединения пользователей.
     /// </summary>
-    public P2PService P2PService
+    internal P2PService P2PService
     {
       [SecurityCritical]
       get

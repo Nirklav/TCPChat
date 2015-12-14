@@ -3,12 +3,12 @@
 namespace Engine.API.ServerCommands
 {
   [SecurityCritical]
-  class ServerEmptyCommand : ICommand<ServerCommandArgs>
+  class ServerEmptyCommand : ServerCommand
   {
     public const long CommandId = (long)ServerCommandId.Empty;
     public static readonly ServerEmptyCommand Empty = new ServerEmptyCommand();
 
-    public long Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
@@ -21,7 +21,7 @@ namespace Engine.API.ServerCommands
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    protected override void OnRun(ServerCommandArgs args)
     {
 
     }

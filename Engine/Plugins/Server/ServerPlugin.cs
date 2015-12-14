@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Engine.Plugins.Server
+﻿namespace Engine.Plugins.Server
 {
   /// <summary>
   /// Представляет базовый класс для реализации серверного плагина.
@@ -8,6 +6,5 @@ namespace Engine.Plugins.Server
   public abstract class ServerPlugin :
     Plugin<ServerModelWrapper, ServerPluginCommand>
   {
-
   }
 }

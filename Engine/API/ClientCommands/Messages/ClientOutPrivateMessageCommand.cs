@@ -4,6 +4,7 @@ using System.Security;
 
 namespace Engine.API.ClientCommands
 {
+  [SecurityCritical]
   class ClientOutPrivateMessageCommand
     : ClientCommand<ClientOutPrivateMessageCommand.MessageContent>
   {

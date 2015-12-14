@@ -1,10 +1,13 @@
 ﻿using Engine.Exceptions;
+using Engine.Network.Connections;
+using Engine.Plugins;
 using System.Security;
 
 namespace Engine.API.ClientCommands
 {
-  abstract class ClientCommand<TContent>
-    : Command<TContent, ClientCommandArgs>
+  public abstract class ClientCommand : 
+    CrossDomainObject, 
+    ICommand<ClientCommandArgs>
   {
     protected virtual bool IsPeerCommand
     {
@@ -12,8 +15,14 @@ namespace Engine.API.ClientCommands
       get { return false; }
     }
 
+    public abstract long Id
+    {
+      [SecuritySafeCritical]
+      get;
+    }
+  
     [SecuritySafeCritical]
-    protected sealed override void Run(TContent content, ClientCommandArgs args)
+    public void Run(ClientCommandArgs args)
     {
       if (IsPeerCommand)
       {
@@ -26,7 +35,23 @@ namespace Engine.API.ClientCommands
           throw new ModelException(ErrorCode.IllegalInvoker, string.Format("Command cannot be runned from peer package. {0}", GetType().FullName));
       }
 
-      OnRun(content, args);
+      OnRun(args);
+    }
+
+    [SecuritySafeCritical]
+    protected abstract void OnRun(ClientCommandArgs args);
+  }
+
+  public abstract class ClientCommand<TContent> : ClientCommand
+  {
+    [SecuritySafeCritical]
+    protected sealed override void OnRun(ClientCommandArgs args)
+    {
+      var package = args.Package as IPackage<TContent>;
+      if (package == null)
+        throw new ModelException(ErrorCode.WrongContentType);
+
+      OnRun(package.Content, args);
     }
 
     [SecuritySafeCritical]

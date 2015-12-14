@@ -48,17 +48,20 @@ namespace Engine.API.ServerCommands
           return;
         }
 
-        var invitedUsers = new List<User>();
+        var invitedUsers = new HashSet<string>();
         foreach (var user in content.Users)
         {
-          if (room.Users.Contains(user.Nick))
+          if (room.ContainsUser(user.Nick))
             continue;
 
           room.AddUser(user.Nick);
-          invitedUsers.Add(user);
+          invitedUsers.Add(user.Nick);
         }
 
-        var users = room.Users.Select(nick => server.Users[nick]).ToList();
+        var users = room.Users
+          .Select(nick => server.Users[nick])
+          .ToList();
+
         var roomOpenContent = new ClientRoomOpenedCommand.MessageContent
         {
           Room = room,
@@ -72,12 +75,12 @@ namespace Engine.API.ServerCommands
           Users = users
         };
 
-        foreach (var user in room.Users)
+        foreach (var userId in room.Users)
         {
-          if (invitedUsers.Contains(server.Users[user]))
-            ServerModel.Server.SendMessage(user, ClientRoomOpenedCommand.CommandId, roomOpenContent);
+          if (invitedUsers.Contains(userId))
+            ServerModel.Server.SendMessage(userId, ClientRoomOpenedCommand.CommandId, roomOpenContent);
           else
-            ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.CommandId, roomRefreshContent);
+            ServerModel.Server.SendMessage(userId, ClientRoomRefreshedCommand.CommandId, roomRefreshContent);
         }
       }
     }

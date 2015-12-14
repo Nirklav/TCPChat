@@ -53,7 +53,7 @@ namespace Engine.API.ServerCommands
 
           if (room.Admin != null)
           {
-            string message = string.Format("Вы назначены администратором комнаты \"{0}\".", room.Name);
+            var message = string.Format("Вы назначены администратором комнаты \"{0}\".", room.Name);
             ServerModel.Api.SendSystemMessage(room.Admin, message);
           }
         }

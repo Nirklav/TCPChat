@@ -217,6 +217,18 @@ namespace Engine.Network
     /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
     /// </summary>
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
+    /// <param name="id">Индетификатор команды.</param>
+    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    [SecuritySafeCritical]
+    public void SendMessage(string peerId, long id, bool unreliable = false)
+    {
+      SendMessage(peerId, new Package(id), unreliable);
+    }
+
+    /// <summary>
+    /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
+    /// </summary>
+    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
     /// <param name="package">Индетификатор пакета.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     [SecuritySafeCritical]

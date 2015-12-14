@@ -39,7 +39,7 @@ namespace Engine.API.ServerCommands
 
       using (var server = ServerModel.Get())
       {
-        Room room = server.Rooms[content.RoomName];
+        var room = server.Rooms[content.RoomName];
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
@@ -51,7 +51,7 @@ namespace Engine.API.ServerCommands
 
         foreach (var user in content.Users)
         {
-          if (!room.Users.Contains(user.Nick))
+          if (!room.ContainsUser(user.Nick))
             continue;
 
           if (user.Equals(room.Admin))

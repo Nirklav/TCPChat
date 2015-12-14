@@ -69,7 +69,6 @@
   <ItemGroup>
     <Compile Include="API\ClientCommands\ClientCommand.cs" />
     <Compile Include="API\ClientCommands\Messages\ClientOutPrivateMessageCommand.cs" />
-    <Compile Include="API\Command.cs" />
     <Compile Include="API\IApi.cs" />
     <Compile Include="API\ICommand.cs" />
     <Compile Include="API\ClientCommands\ClientCommandId.cs" />
@@ -163,13 +162,13 @@
     <Compile Include="Network\RequestQueue.cs" />
     <Compile Include="Plugins\Client\ClientModelWrapper.cs" />
     <Compile Include="Plugins\Client\ClientPlugin.cs" />
+    <Compile Include="Plugins\Client\ClientPluginCommand.cs" />
     <Compile Include="Plugins\Client\ClientPluginManager.cs" />
     <Compile Include="Plugins\CrossDomainObject.cs" />
     <Compile Include="Plugins\Plugin.cs" />
     <Compile Include="Plugins\PluginInfo.cs" />
     <Compile Include="Plugins\Server\ServerModelWrapper.cs" />
     <Compile Include="Plugins\Server\ServerPlugin.cs" />
-    <Compile Include="Plugins\Client\ClientPluginCommand.cs" />
     <Compile Include="Plugins\PluginInfoLoader.cs" />
     <Compile Include="Plugins\PluginManager.cs" />
     <Compile Include="Plugins\Server\ServerPluginCommand.cs" />

@@ -368,11 +368,13 @@ namespace UI.ViewModel
           AllUsers.Clear();
 
           using (var client = ClientModel.Get())
+          {
             foreach (string nick in args.Room.Users)
             {
-              User user = args.Users.Single(u => u.Equals(nick));
+              var user = args.Users.Single(u => u.Equals(nick));
               AllUsers.Add(new UserViewModel(user, null) { IsClient = user.Equals(client.User) });
             }
+          }
         }
       }), e);
     }

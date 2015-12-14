@@ -47,7 +47,7 @@ namespace Engine.API.ServerCommands
 
         room.Admin = content.NewAdmin.Nick;
 
-        var message = string.Format("Вы назначены администратором комнаты {0}.", room.Name);
+        var message = string.Format("Вы назначены администратором комнаты \"{0}\".", room.Name);
         ServerModel.Api.SendSystemMessage(content.NewAdmin.Nick, message);
       }
     }

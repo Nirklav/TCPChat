@@ -2,21 +2,46 @@
 using Engine.Exceptions;
 using Engine.Model.Entities;
 using Engine.Model.Server;
+using Engine.Network.Connections;
+using Engine.Plugins;
 using System.Linq;
 using System.Security;
 
 namespace Engine.API.ServerCommands
 {
-  abstract class ServerCommand<TContent>
-    : Command<TContent, ServerCommandArgs>
+  public abstract class ServerCommand :
+    CrossDomainObject,
+    ICommand<ServerCommandArgs>
   {
+    public abstract long Id
+    {
+      [SecuritySafeCritical]
+      get;
+    }
+
     [SecuritySafeCritical]
-    protected sealed override void Run(TContent content, ServerCommandArgs args)
+    public void Run(ServerCommandArgs args)
     {
       if (args.ConnectionId == null)
         throw new ModelException(ErrorCode.IllegalInvoker, string.Format("For the server command ConnectionId is required {0}", GetType().FullName));
 
-      OnRun(content, args);
+      OnRun(args);
+    }
+
+    [SecuritySafeCritical]
+    protected abstract void OnRun(ServerCommandArgs args);
+  }
+
+  public abstract class ServerCommand<TContent> : ServerCommand
+  {
+    [SecuritySafeCritical]
+    protected sealed override void OnRun(ServerCommandArgs args)
+    {
+      var package = args.Package as IPackage<TContent>;
+      if (package == null)
+        throw new ModelException(ErrorCode.WrongContentType);
+
+      OnRun(package.Content, args);
     }
 
     [SecuritySafeCritical]

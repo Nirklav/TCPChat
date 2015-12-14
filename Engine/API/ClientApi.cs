@@ -5,6 +5,7 @@ using Engine.Model.Client;
 using Engine.Model.Entities;
 using Engine.Network;
 using Engine.Plugins;
+using Engine.Plugins.Client;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -123,8 +124,9 @@ namespace Engine.API
       if (commands.TryGetValue(id, out command))
         return command;
 
-      if (ClientModel.Plugins.TryGetCommand(id, out command))
-        return command;
+      ClientPluginCommand pluginCommand;
+      if (ClientModel.Plugins.TryGetCommand(id, out pluginCommand))
+        return pluginCommand;
 
       return ClientEmptyCommand.Empty;
     }

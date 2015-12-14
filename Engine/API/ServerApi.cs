@@ -2,7 +2,7 @@
 using Engine.API.ServerCommands;
 using Engine.Model.Server;
 using Engine.Plugins;
-using System;
+using Engine.Plugins.Server;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -71,8 +71,9 @@ namespace Engine.API
       if (commands.TryGetValue(id, out command))
         return command;
 
-      if (ServerModel.Plugins.TryGetCommand(id, out command))
-        return command;
+      ServerPluginCommand pluginCommand;
+      if (ServerModel.Plugins.TryGetCommand(id, out pluginCommand))
+        return pluginCommand;
 
       return ServerEmptyCommand.Empty;
     }

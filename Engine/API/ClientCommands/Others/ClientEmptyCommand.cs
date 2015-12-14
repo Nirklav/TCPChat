@@ -3,19 +3,19 @@
 namespace Engine.API.ClientCommands
 {
   [SecurityCritical]
-  class ClientEmptyCommand : ICommand<ClientCommandArgs>
+  class ClientEmptyCommand : ClientCommand
   {
     public const long CommandId = (long)ClientCommandId.Empty;
     public static readonly ClientEmptyCommand Empty = new ClientEmptyCommand();
 
-    public long Id
+    public override long Id
     {
       [SecuritySafeCritical]
       get { return CommandId; }
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    protected override void OnRun(ClientCommandArgs args)
     {
 
     }

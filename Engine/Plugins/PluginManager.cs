@@ -16,8 +16,6 @@ namespace Engine.Plugins
     where TModel : CrossDomainObject, new()
     where TCommand : CrossDomainObject, ICommand
   {
-    private const int ProcessTimeout = 10000; // 10 sec
-
     #region nested types
 
     protected class PluginContainer
@@ -248,6 +246,19 @@ namespace Engine.Plugins
     #region helpers
 
     [SecurityCritical]
+    internal bool TryGetCommand(long id, out TCommand command)
+    {
+      lock (SyncObject)
+        return Commands.TryGetValue(id, out command);
+    }
+
+    [SecurityCritical]
+    internal IEnumerable GetNotifierContexts()
+    {
+      return NotifierContexts.Values;
+    }
+
+    [SecurityCritical]
     public bool IsLoaded(string name)
     {
       return Plugins.ContainsKey(name);
@@ -259,12 +270,6 @@ namespace Engine.Plugins
       if (infos == null)
         return null;
       return infos.Select(pi => pi.Name).ToArray();
-    }
-
-    [SecurityCritical]
-    internal IEnumerable GetNotifierContexts()
-    {
-      return NotifierContexts.Values;
     }
 
     [SecurityCritical]
