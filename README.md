@@ -6,7 +6,7 @@
 Multi-user chat with mixed architecture (client-server, p2p)
 
 Supports:
-  1. Encryption. Diffie–Hellman key exchange.
+  1. Encryption. Diffie–Hellman key exchange. AES-256.
   2. Private messages.
   3. Rooms.
   4. Voice chat.
