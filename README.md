@@ -6,8 +6,9 @@
 Multi-user chat with mixed architecture (client-server, p2p)
 
 Supports:
-  1. Private messages.
-  2. Rooms.
-  3. Voice chat.
-  4. Files sharing.
-  5. Plugins (Example of simple plugin: https://github.com/Nirklav/ScreenshotPlugin).
+  1. Encryption. Diffie–Hellman key exchange.
+  2. Private messages.
+  3. Rooms.
+  4. Voice chat.
+  5. Files sharing.
+  6. Plugins (Example of simple plugin: https://github.com/Nirklav/ScreenshotPlugin).
