@@ -248,6 +248,8 @@
   <PropertyGroup>
     <PostBuildEvent>copy $(ProjectDir)\Infrastructure\Settings.xml $(TargetDir)\Settings.xml
 
+md $(TargetDir)\Engine.dll $(TargetDir)\bin
+
 move $(TargetDir)\Engine.dll $(TargetDir)\bin\Engine.dll
 move $(TargetDir)\OpenAL.dll $(TargetDir)\bin\OpenAL.dll
 move $(TargetDir)\Lidgren.Network.dll $(TargetDir)\bin\Lidgren.Network.dll</PostBuildEvent>

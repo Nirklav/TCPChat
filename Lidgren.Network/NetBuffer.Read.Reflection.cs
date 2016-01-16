@@ -76,8 +76,6 @@ namespace Lidgren.Network
 			if (target == null)
 				throw new ArgumentNullException("target");
 
-			if (target == null)
-				return;
 			Type tp = target.GetType();
 
 			PropertyInfo[] fields = tp.GetProperties(flags);

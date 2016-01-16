@@ -140,12 +140,9 @@ namespace Lidgren.Network
 		{
 			if (m_size == 0)
 			{
-				if (m_size == 0)
-				{
-					m_items = new T[newCapacity];
-					m_head = 0;
-					return;
-				}
+				m_items = new T[newCapacity];
+				m_head = 0;
+				return;
 			}
 
 			T[] newItems = new T[newCapacity];
