@@ -5,6 +5,12 @@
 
 Multi-user chat with mixed architecture (client-server, p2p)
 
+Server address: 
+'''
+IP:   93.170.176.160
+Port: 10021
+'''
+
 Supports:
   1. Encryption. Diffie–Hellman key exchange. AES-256.
   2. Private messages.

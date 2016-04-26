@@ -17,7 +17,15 @@ namespace Engine.Model.Common
     }
   }
 
-  public abstract class Notifier : CrossDomainObject
+  public interface INotifier
+  {
+    void Add(object context);
+    bool Remove(object context);
+  }
+
+  public abstract class Notifier : 
+    CrossDomainObject, 
+    INotifier
   {
     private readonly List<object> contexts = new List<object>();
 

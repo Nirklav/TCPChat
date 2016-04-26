@@ -536,7 +536,7 @@ namespace Engine.Network.Connections
 
       foreach (var ip in Dns.GetHostAddresses(hostName))
       {
-        if (ip.AddressFamily == type && !ip.IsIPv6LinkLocal && !ip.IsIPv6SiteLocal && !ip.IsIPv6Multicast)
+        if (ip.AddressFamily == type && !IPAddress.IsLoopback(ip) && !ip.IsIPv6LinkLocal && !ip.IsIPv6SiteLocal && !ip.IsIPv6Multicast)
           return ip;
       }
 

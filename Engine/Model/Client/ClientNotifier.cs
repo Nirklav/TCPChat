@@ -21,7 +21,7 @@ namespace Engine.Model.Client
   }
 
   [Notifier(typeof(IClientNotifierContext), BaseNotifier = typeof(ClientNotifier))]
-  public interface IClientNotifier
+  public interface IClientNotifier : INotifier
   {
     void Connected(ConnectEventArgs args);
     void ReceiveRegistrationResponse(RegistrationEventArgs args);

@@ -21,7 +21,7 @@ namespace Engine.Model.Server
   }
 
   [Notifier(typeof(IServerNotifierContext), BaseNotifier = typeof(ServerNotifier))]
-  public interface IServerNotifier
+  public interface IServerNotifier : INotifier
   {
     void Registered(ServerRegistrationEventArgs args);
     void Unregistered(ServerRegistrationEventArgs args);

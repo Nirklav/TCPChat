@@ -24,18 +24,14 @@ namespace UI.ViewModel
       if (initializeNotifier)
       {
         NotifierContext = NotifierGenerator.MakeContext<IClientNotifierContext>();
-        var notifier = (Notifier)ClientModel.Notifier;
-        notifier.Add(NotifierContext);
+        ClientModel.Notifier.Add(NotifierContext);
       }
     }
 
     protected virtual void DisposeManagedResources()
     {
       if (NotifierContext != null)
-      {
-        var notifier = (Notifier)ClientModel.Notifier;
-        notifier.Remove(NotifierContext);
-      }
+        ClientModel.Notifier.Remove(NotifierContext);
     }
 
     public void Dispose()
