@@ -7,7 +7,7 @@ Multi-user chat with mixed architecture (client-server, p2p)
 
 Server address: 
 ```
-IP:   93.170.176.160
+IP:   93.170.186.160
 Port: 10021
 ```
 
