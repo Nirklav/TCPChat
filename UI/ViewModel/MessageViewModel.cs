@@ -145,18 +145,16 @@ namespace UI.ViewModel
     }
     #endregion
 
-    #region methods
-
-    #endregion
-
     #region client events
     private void ClientDownloadProgress(object sender, FileDownloadEventArgs e)
     {
+      if (e.RoomName != roomViewModel.Name 
+        || !e.File.Equals(File) 
+        || Progress == e.Progress)
+        return;
+          
       roomViewModel.MainViewModel.Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
       {
-        if (args.RoomName != roomViewModel.Name || !args.File.Equals(File))
-          return;
-
         if (args.Progress < 100)
           Progress = args.Progress;
         else
@@ -169,11 +167,11 @@ namespace UI.ViewModel
 
     private void ClientPostedFileDeleted(object sender, FileDownloadEventArgs e)
     {
+      if (e.RoomName != roomViewModel.Name || !e.File.Equals(File))
+        return;
+
       roomViewModel.MainViewModel.Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
       {
-        if (args.RoomName != roomViewModel.Name || !args.File.Equals(File))
-          return;
-
         Progress = 0;
         File = null;
       }), e);

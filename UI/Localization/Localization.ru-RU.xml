@@ -104,7 +104,7 @@
   <row key="mainViewModel-allInRoom" value="Все в комнате"/>
   <row key="mainViewModel-audioInitializationFailed" value="Аудио устройства не инициализированны. Голосовая связь будет не активна."/>
 
-  <row key="messageViewModel-from" value="[{0}] от:"/>
+  <row key="messageViewModel-from" value="[{0}] от: "/>
   <row key="messageViewModel-pmForm" value="[{0}] ЛС от: "/>
   <row key="messageViewModel-byteStr" value="байт"/>
   <row key="messageViewModel-kbyteStr" value="Кб"/>
