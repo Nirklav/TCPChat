@@ -465,7 +465,7 @@
       </MenuItem>
 
       <MenuItem Header="{Infrastructure:Localized menu-header-File}">
-        <MenuItem Header="{Infrastructure:Localized menu-distributetFiles}"
+        <MenuItem Header="{Infrastructure:Localized menu-distributedFiles}"
                   Command="{Binding Path=OpenFilesDialogCommand}"/>
         <Separator/>
         <MenuItem Header="{Infrastructure:Localized menu-addFileToRoom}"

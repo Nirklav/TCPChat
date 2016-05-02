@@ -157,10 +157,13 @@ namespace UI.ViewModel
         ClientModel.Player.Dispose();
         ClientModel.Recorder.Dispose();
 
-        if (me.Code == ErrorCode.AudioNotEnabled)
-          MessageBox.Show(MainViewModel.AudioInitializationFailed, MainViewModel.ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
-        else
+        if (me.Code != ErrorCode.AudioNotEnabled)
           throw;
+        else
+        {
+          var msg = Localizer.Instance.Localize(MainViewModel.AudioInitializationFailedKey);
+          MessageBox.Show(msg, MainViewModel.ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
       }
     }
   }

@@ -1,5 +1,6 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Entities;
+using System;
 using System.Net.Sockets;
 using System.Windows.Input;
 using UI.Infrastructure;
@@ -11,6 +12,7 @@ namespace UI.ViewModel
   {
     #region fields
     private bool isClient;
+    private string nickKey;
     #endregion
 
     #region properties
@@ -20,13 +22,29 @@ namespace UI.ViewModel
 
     #region constructors
     public UserViewModel(User info, RoomViewModel roomViewModel)
+      : this(null, info, roomViewModel)
+    {
+
+    }
+
+    public UserViewModel(string nickLocKey, User info, RoomViewModel roomViewModel)
       : base(false)
     {
       Info = info;
       RoomViewModel = roomViewModel;
+      nickKey = nickLocKey;
 
-      SetRoomAdminCommand = new Command(SetRoomAdmin, Obj => ClientModel.Client != null);
+      SetRoomAdminCommand = new Command(SetRoomAdmin, _ => ClientModel.Client != null);
       UserClickCommand = new Command(UserClick);
+
+      Localizer.Instance.LocaleChanged += RefreshNick;
+    }
+
+    protected override void DisposeManagedResources()
+    {
+      base.DisposeManagedResources();
+
+      Localizer.Instance.LocaleChanged -= RefreshNick;
     }
     #endregion
 
@@ -43,7 +61,18 @@ namespace UI.ViewModel
 
     public string Nick
     {
-      get { return Info.Nick; }
+      get
+      {
+        if (nickKey != null)
+          return Localizer.Instance.Localize(nickKey);
+
+        return Info.Nick;
+      }
+    }
+
+    private void RefreshNick(object sender, EventArgs args)
+    {
+      OnPropertyChanged("Nick");
     }
 
     public bool IsClient

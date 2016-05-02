@@ -26,7 +26,7 @@
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Редактировать"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>
-  <row key="userTemplate-SetRoom" value="AdminНазначить администратором"/>
+  <row key="userTemplate-SetRoomAdmin" value="Назначить администратором"/>
   <row key="menu-header-connect" value="Соединение"/>
   <row key="menu-connect" value="Подключиться"/>
   <row key="menu-disconnect" value="Разорвать соединение"/>
@@ -35,14 +35,14 @@
   <row key="menu-exit" value="Выход"/>
 
   <row key="menu-header-rooms" value="Комнаты"/>
-  <row key="menu-createRoom" value="Создать комнату"/>
-  <row key="menu-closeRoom" value="Закрыть комнату"/>
-  <row key="menu-inviteInRoom" value="Пригласить в комнату"/>
-  <row key="menu-kickFromRoom" value="Кикнуть из комнаты"/>
-  <row key="menu-exitFromRoom" value="Выйти из комнаты"/>
+  <row key="menu-createRoom" value="Создать"/>
+  <row key="menu-closeRoom" value="Закрыть"/>
+  <row key="menu-inviteInRoom" value="Пригласить"/>
+  <row key="menu-kickFromRoom" value="Кикнуть"/>
+  <row key="menu-exitFromRoom" value="Выйти"/>
 
   <row key="menu-header-File" value="Файлы"/>
-  <row key="menu-distributetFiles" value="Распространяемые файлы"/>
+  <row key="menu-distributedFiles" value="Распространяемые файлы"/>
   <row key="menu-addFileToRoom" value="Добавить файл в комнату"/>
 
   <row key="menu-header-plugins" value="Плагины"/>
@@ -93,5 +93,28 @@
   <row key="createRoomDialog-audioRoom" value="Голосовая"/>
 
   <row key="postedFilesDialog-title" value="Распространяемые файлы"/>
-  <row key="userOperationDialog-title" value="Пользователи"/>
+
+  <row key="mainViewModel-paramsError" value="Ошибка входных данных."/>
+  <row key="mainViewModel-clientNotCreated" value="Клинет не соединен ни с каким сервером. Установите соединение."/>
+  <row key="mainViewModel-apiNotSupported" value="Приложение не поддерживает эту версию API ({0}). Соединение разорвано."/>
+  <row key="mainViewModel-roomExitQuestion" value="Вы действительно хотите выйти из комнаты?"/>
+  <row key="mainViewModel-roomCloseQuestion" value="Вы точно хотите закрыть комнату?"/>
+  <row key="mainViewModel-serverDisableQuestion" value="Вы точно хотите выключить сервер?"/>
+  <row key="mainViewModel-fileMustDontExist" value="Необходимо выбрать несуществующий файл."/>
+  <row key="mainViewModel-allInRoom" value="Все в комнате"/>
+  <row key="mainViewModel-audioInitializationFailed" value="Аудио устройства не инициализированны. Голосовая связь будет не активна."/>
+
+  <row key="messageViewModel-from" value="[{0}] от:"/>
+  <row key="messageViewModel-pmForm" value="[{0}] ЛС от: "/>
+  <row key="messageViewModel-byteStr" value="байт"/>
+  <row key="messageViewModel-kbyteStr" value="Кб"/>
+  <row key="messageViewModel-mbyteStr" value="Мб"/>
+  <row key="messageViewModel-fileNotFound" value="Файл недоступен"/>
+  <row key="messageViewModel-cantDownloadItsFile" value="Нельзя скачивать свой файл."/>
+  <row key="messageViewModel-cancelDownloadingQuestion" value="Вы уже загружаете этот файл. Вы хотите отменить загрузку?"/>
+
+  <row key="roomViewModel-inviteInRoomTitle" value="Пригласить в комнату"/>
+  <row key="roomViewModel-kickFormRoomTitle" value="Удалить из комнаты"/>
+  <row key="roomViewModel-nobodyToInvite" value="Некого пригласить. Все и так в комнате."/>
+  <row key="roomViewModel-allInRoom" value="Все в комнате"/>
 </Localization>

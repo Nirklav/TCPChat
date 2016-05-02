@@ -13,6 +13,7 @@ using System.Windows.Shapes;
 using Engine;
 using UI.ViewModel;
 using Engine.Model.Entities;
+using UI.Infrastructure;
 
 namespace UI.Dialogs
 {
@@ -32,12 +33,11 @@ namespace UI.Dialogs
 
     public IEnumerable<User> Users { get; set; }
 
-    public UsersOperationDialog(string title, IEnumerable<UserViewModel> users)
+    public UsersOperationDialog(string titleKey, IEnumerable<UserViewModel> users)
     {
       InitializeComponent();
 
-      Title = title;
-
+      Title = Localizer.Instance.Localize(titleKey);
       foreach (var user in users)
         UserList.Items.Add(new UserListItem(user));
     }

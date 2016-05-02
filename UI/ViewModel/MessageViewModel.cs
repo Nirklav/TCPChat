@@ -13,20 +13,22 @@ namespace UI.ViewModel
 {
   public class MessageViewModel : BaseViewModel
   {
-    #region fields
-    private const string ProgramName = "TCPChat";
-    private const string From = "[{0}] от: ";
-    private const string PMForm = "[{0}] ЛС от: ";
+    #region consts
+    private const string FromKey = "messageViewModel-from";
+    private const string PMFormKey = "messageViewModel-pmForm";
+    private const string ByteStrKey = "messageViewModel-byteStr";
+    private const string KByteStrKey = "messageViewModel-kbyteStr";
+    private const string MByteStrKey = "messageViewModel-mbyteStr";
+    private const string FileNotFoundKey = "messageViewModel-fileNotFound";
+    private const string CantDownloadItsFileKey = "messageViewModel-cantDownloadItsFile";
+    private const string CancelDownloadingQuestionKey = "messageViewModel-cancelDownloadingQuestion";
+
     private const string TimeFormat = "hh:mm";
     private const string SizeFormat = " ({0:#,##0.0} {1})";
-    private const string ByteStr = "байт";
-    private const string KByteStr = "Кб";
-    private const string MByteStr = "Мб";
-    private const string FileNotFound = "Файл недоступен";
-    private const string CantDownloadItsFile = "Нельзя скачивать свой файл.";
-    private const string CancelDownloadingQuestion = "Вы уже загружаете этот файл. Вы хотите отменить загрузку?";
     private const string FileDialogFilter = "Все файлы|*.*";
+    #endregion
 
+    #region fields
     private int progress;
     private string text;
     private FileDescription file;
@@ -82,32 +84,32 @@ namespace UI.ViewModel
       Sender = sender;
       File = fileDescription;
       Progress = 0;
-      Title = string.Format(From, DateTime.Now.ToString(TimeFormat));
+      Title = Localizer.Instance.Localize(FromKey, DateTime.Now.ToString(TimeFormat));
 
       string sizeDim = string.Empty;
       float size = 0;
 
       if (fileDescription.Size < 1024)
       {
-        sizeDim = ByteStr;
+        sizeDim = Localizer.Instance.Localize(ByteStrKey);
         size = fileDescription.Size;
       }
 
       if (fileDescription.Size >= 1024 && fileDescription.Size < 1024 * 1024)
       {
-        sizeDim = KByteStr;
+        sizeDim = Localizer.Instance.Localize(KByteStrKey);
         size = fileDescription.Size / 1024.0f;
       }
 
       if (fileDescription.Size >= 1024 * 1024)
       {
-        sizeDim = MByteStr;
+        sizeDim = Localizer.Instance.Localize(MByteStrKey);
         size = fileDescription.Size / (1024.0f * 1024.0f);
       }
       
       Text = fileName + string.Format(SizeFormat, size, sizeDim);
       Type = MessageType.File;
-      DownloadFileCommand = new Command(DownloadFile, Obj => ClientModel.Client != null);
+      DownloadFileCommand = new Command(DownloadFile, _ => ClientModel.Client != null);
     }
 
     public MessageViewModel(long messageId, UserViewModel sender, UserViewModel receiver, string message, bool isPrivate, RoomViewModel room)
@@ -120,7 +122,7 @@ namespace UI.ViewModel
 
       EditMessageCommand = new Command(EditMessage, Obj => ClientModel.Client != null);
 
-      Title = string.Format(isPrivate ? PMForm : From, DateTime.Now.ToString(TimeFormat));
+      Title = Localizer.Instance.Localize(isPrivate ? PMFormKey : FromKey, DateTime.Now.ToString(TimeFormat));
     }
 
     private MessageViewModel(long messageId, RoomViewModel room, bool initializeNotifier)
@@ -133,11 +135,13 @@ namespace UI.ViewModel
 
     protected override void DisposeManagedResources()
     {
-      if (NotifierContext == null)
-        return;
+      base.DisposeManagedResources();
 
-      NotifierContext.DownloadProgress -= ClientDownloadProgress;
-      NotifierContext.PostedFileDeleted -= ClientPostedFileDeleted;
+      if (NotifierContext != null)
+      {
+        NotifierContext.DownloadProgress -= ClientDownloadProgress;
+        NotifierContext.PostedFileDeleted -= ClientPostedFileDeleted;
+      }
     }
     #endregion
 
@@ -181,7 +185,7 @@ namespace UI.ViewModel
     {
       if (File == null)
       {
-        roomViewModel.AddSystemMessage(FileNotFound);
+        roomViewModel.AddSystemMessage(Localizer.Instance.Localize(FileNotFoundKey));
         return;
       }
 
@@ -193,7 +197,7 @@ namespace UI.ViewModel
             throw new ModelException(ErrorCode.FileAlreadyDownloading, File);
 
           if (client.User.Equals(File.Owner))
-            throw new ArgumentException(CantDownloadItsFile);
+            throw new ArgumentException(Localizer.Instance.Localize(CantDownloadItsFileKey));
         }
 
         var saveDialog = new SaveFileDialog();
@@ -212,8 +216,9 @@ namespace UI.ViewModel
           return;
         }
 
-        bool result = MessageBox.Show(CancelDownloadingQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
-        if (result && ClientModel.Api != null)
+        var msg = Localizer.Instance.Localize(CancelDownloadingQuestionKey);
+        var result = MessageBox.Show(msg, MainViewModel.ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result == MessageBoxResult.Yes && ClientModel.Api != null)
         {
           ClientModel.Api.CancelDownloading(File, true);
           Progress = 0;

@@ -1,19 +1,120 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Localization>
-  <row key="systemMessage-ApiNotSupported" value="API not supported by server."/>
-  <row key="systemMessage-ConnectionRetryAttempt" value="1 Попытка соединения с сервером..."/>
-  <row key="systemMessage-NotRegisteredBadName" value="1 Соединение не может быть зарегистрировано с таким ником. Выберите другой."/>
-  <row key="systemMessage-NotRegisteredNameAlreadyExist" value="1 Соединение не может быть зарегистрировано с таким ником. Он занят."/>
-  <row key="systemMessage-RoomAdminChanged" value="1 Вы назначены администратором {0} комнаты."/>
-  <row key="systemMessage-RoomAccessDenied" value="1 Не хватает прав для соверешения этого действия в этой комнате."/>
-  <row key="systemMessage-RoomAlreadyExist" value="1 Комната с таким именем уже создана, выберите другое имя."/>
-  <row key="systemMessage-RoomCantLeaveMainRoom" value="1 Невозможно выйти из основной комнаты."/>
-  <row key="systemMessage-RoomItsMainRoom" value="1 Невозможно произвести это действие с основной комнатой."/>
-  <row key="systemMessage-RoomNotExist" value="1 Команата с таким именем не существует."/>
-  <row key="systemMessage-FileRemoveAccessDenied" value="1 Вы не можете удалить данный файл. Не хватает прав."/>
-  <row key="systemMessage-FileRemoved" value="1 Файл {0} удален."/>
-  <row key="systemMessage-MessageEditAccessDenied" value="1 Вы не можете редактировать это сообщение."/>
-  <row key="systemMessage-P2PUserNotExist" value="1 Данного пользователя не существует."/>
+  <row key="accept" value="Accept"/>
+  <row key="cancel" value="Cancel"/>
+  <row key="ok" value="Ok"/>
+  <row key="delete" value="Delete"/>
+  <row key="nick" value="Nick"/>
+  <row key="nickColor" value="Color settings"/>
+  <row key="port" value="Port"/>
+  <row key="protocol" value="Protocol"/>
 
-  <row key="commonMessageTemplate-contextMenu-edit" value="1 Редактировать"/>
+  <row key="systemMessage-ApiNotSupported" value="API not supported by server."/>
+  <row key="systemMessage-ConnectionRetryAttempt" value="Attempt to connect to server..."/>
+  <row key="systemMessage-NotRegisteredBadName" value="Connection cannot be registered with this nick."/>
+  <row key="systemMessage-NotRegisteredNameAlreadyExist" value="Connection cannot be registered with this nick. It's already in use."/>
+  <row key="systemMessage-RoomAdminChanged" value="You are now administrator of {0} room."/>
+  <row key="systemMessage-RoomAccessDenied" value="Access denied for this action."/>
+  <row key="systemMessage-RoomAlreadyExist" value="Room with this name already exist. Select other name."/>
+  <row key="systemMessage-RoomCantLeaveMainRoom" value="Can't exit from main room."/>
+  <row key="systemMessage-RoomItsMainRoom" value="This action not available for main room."/>
+  <row key="systemMessage-RoomNotExist" value="Room with this name not exist."/>
+  <row key="systemMessage-FileRemoveAccessDenied" value="You can't delete the file. Access denied."/>
+  <row key="systemMessage-FileRemoved" value="File {0} was deleted."/>
+  <row key="systemMessage-MessageEditAccessDenied" value="You can't edit this message."/>
+  <row key="systemMessage-P2PUserNotExist" value="User with this nick not exist."/>
+
+  <row key="commonMessageTemplate-contextMenu-edit" value="Edit"/>
+  <row key="commonMessageTemplate-contextMenu-copy" value="Copy"/>
+  <row key="userTemplate-SetRoomAdmin" value="Assign as administrator."/>
+  <row key="menu-header-connect" value="Connection"/>
+  <row key="menu-connect" value="Connect"/>
+  <row key="menu-disconnect" value="Disconnect"/>
+  <row key="menu-enableServer" value="Enable server"/>
+  <row key="menu-disableServer" value="Disable server"/>
+  <row key="menu-exit" value="Exit"/>
+
+  <row key="menu-header-rooms" value="Rooms"/>
+  <row key="menu-createRoom" value="Create"/>
+  <row key="menu-closeRoom" value="Close"/>
+  <row key="menu-inviteInRoom" value="Invite"/>
+  <row key="menu-kickFromRoom" value="Kick"/>
+  <row key="menu-exitFromRoom" value="Exit"/>
+
+  <row key="menu-header-File" value="Files"/>
+  <row key="menu-distributedFiles" value="Distributed files"/>
+  <row key="menu-addFileToRoom" value="Add file to room"/>
+
+  <row key="menu-header-plugins" value="Plugins"/>
+
+  <row key="menu-header-other" value="Other"/>
+  <row key="menu-notifications" value="Notifications"/>
+  <row key="menu-settings" value="Settings"/>
+  <row key="menu-about" value="About program"/>
+
+  <row key="main-reciver" value="Reciver"/>
+
+  <row key="serverTemplate-p2pPort" value="Port P2P"/>
+  <row key="serverTemplate-p2pPort-default" value="Default"/>
+
+  <row key="audioTemplate-microphone" value="Microphone"/>
+  <row key="audioTemplate-audioQuality" value="Audio quality"/>
+  <row key="audioTemplate-microphoneActivation" value="Microphone activation"/>
+  <row key="audioTemplate-speakers" value="Speakers"/>
+
+  <row key="clientTemplate-Language" value="Language"/>
+
+  <row key="pluginsTemplate-nameHeader" value="Name"/>
+  <row key="pluginsTemplate-enabledHeader" value="Enabled"/>
+  <row key="pluginsTemplate-typeHeader" value="Type"/>
+  <row key="pluginsTemplate-unloadPlugin" value="Unload"/>
+  <row key="pluginsTemplate-loadPlugin" value="Load"/>
+
+  <row key="settings-title" value="Settings"/>
+  <row key="settings-Categories" value="Categories"/>
+  <row key="settings-done" value="Done"/>
+
+  <row key="settingsTabCategory-client" value="Client"/>
+  <row key="settingsTabCategory-server" value="Server"/>
+  <row key="settingsTabCategory-audio" value="Audio"/>
+  <row key="settingsTabCategory-plugins" value="Plugins"/>
+
+  <row key="settingsTab-audio-pressTheKey" value="Click on the button"/>
+
+  <row key="aboutProgram-title" value="About program"/>
+  <row key="aboutProgram-author" value="Author"/>
+  <row key="aboutProgram-feedback" value="Feedback"/>
+
+  <row key="connectDialog-title" value="Connection"/>
+  <row key="connectDialog-ipAddress" value="IP - address"/>
+
+  <row key="createRoomDialog-title" value="Room creation"/>
+  <row key="createRoomDialog-roomName" value="Name"/>
+  <row key="createRoomDialog-audioRoom" value="Audio room"/>
+
+  <row key="postedFilesDialog-title" value="Distributed files"/>
+
+  <row key="mainViewModel-paramsError" value="Error in input values."/>
+  <row key="mainViewModel-clientNotCreated" value="Client not connected to any server. Connect to server first."/>
+  <row key="mainViewModel-apiNotSupported" value="Appliaction not supported this version of Api ({0}). Connection refused."/>
+  <row key="mainViewModel-roomExitQuestion" value="Do you want to leave the room?"/>
+  <row key="mainViewModel-roomCloseQuestion" value="Do you want to close the room?"/>
+  <row key="mainViewModel-serverDisableQuestion" value="Do you want to disable the server"/>
+  <row key="mainViewModel-fileMustDontExist" value="You must select not existing file."/>
+  <row key="mainViewModel-allInRoom" value="All in room"/>
+  <row key="mainViewModel-audioInitializationFailed" value="Audio system not initialized. Voice chat disabled."/>
+
+  <row key="messageViewModel-from" value="[{0}] from:"/>
+  <row key="messageViewModel-pmForm" value="[{0}] PM from: "/>
+  <row key="messageViewModel-byteStr" value="byte"/>
+  <row key="messageViewModel-kbyteStr" value="Kb"/>
+  <row key="messageViewModel-mbyteStr" value="Mb"/>
+  <row key="messageViewModel-fileNotFound" value="File not availavle"/>
+  <row key="messageViewModel-cantDownloadItsFile" value="You must not download own file."/>
+  <row key="messageViewModel-cancelDownloadingQuestion" value="You aleady download this file. Cancel downloading?"/>
+
+  <row key="roomViewModel-inviteInRoomTitle" value="Invite in room"/>
+  <row key="roomViewModel-kickFormRoomTitle" value="Kick from room"/>
+  <row key="roomViewModel-nobodyToInvite" value="Nobody to invite. All already in the room."/>
+  <row key="roomViewModel-allInRoom" value="All in room"/>
 </Localization>

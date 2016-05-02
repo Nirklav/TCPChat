@@ -19,10 +19,11 @@ namespace UI.ViewModel
   public class RoomViewModel : BaseViewModel
   {
     #region consts
-    private const string ProgramName = "TCPChat";
-    private const string InviteInRoomTitle = "Пригласить в комнату";
-    private const string KickFormRoomTitle = "Удалить из комнаты";
-    private const string NoBodyToInvite = "Некого пригласить. Все и так в комнате.";
+    private const string InviteInRoomTitleKey = "roomViewModel-inviteInRoomTitle";
+    private const string KickFormRoomTitleKey = "roomViewModel-kickFormRoomTitle";
+    private const string NoBodyToInviteKey = "roomViewModel-nobodyToInvite";
+    private const string AllInRoomKey = "roomViewModel-allInRoom";
+
     private const string FileDialogFilter = "Все файлы|*.*";
 
     private const int MessagesLimit = 200;
@@ -43,7 +44,7 @@ namespace UI.ViewModel
     private long? SelectedMessageId
     {
       get { return messageId; }
-      set { SetValue<long?>(value, "IsMessageSelected", v => messageId = v); }
+      set { SetValue(value, "IsMessageSelected", v => messageId = v); }
     }
     #endregion
 
@@ -134,18 +135,19 @@ namespace UI.ViewModel
       Description = room;
       MainViewModel = mainViewModel;
       Messages = new ObservableCollection<MessageViewModel>();
-      allInRoom = new UserViewModel(new User("Все в комнате", Color.Black), this);
+
+      allInRoom = new UserViewModel(AllInRoomKey, new User(string.Empty, Color.Black), this);
       messageIds = new HashSet<long>();
       Users = new ObservableCollection<UserViewModel>(users == null
         ? Enumerable.Empty<UserViewModel>()
-        : room.Users.Select(user => new UserViewModel(users.Single(u => u.Equals(user)), this)));
+        : users.Select(user => new UserViewModel(user, this)));
 
-      SendMessageCommand = new Command(SendMessage, Obj => ClientModel.Client != null);
+      SendMessageCommand = new Command(SendMessage, _ => ClientModel.Client != null);
       PastReturnCommand = new Command(PastReturn);
-      AddFileCommand = new Command(AddFile, Obj => ClientModel.Client != null);
-      InviteInRoomCommand = new Command(InviteInRoom, Obj => ClientModel.Client != null);
-      KickFromRoomCommand = new Command(KickFromRoom, Obj => ClientModel.Client != null);
-      ClearSelectedMessageCommand = new Command(ClearSelectedMessage, Obj => ClientModel.Client != null);
+      AddFileCommand = new Command(AddFile, _ => ClientModel.Client != null);
+      InviteInRoomCommand = new Command(InviteInRoom, _ => ClientModel.Client != null);
+      KickFromRoomCommand = new Command(KickFromRoom, _ => ClientModel.Client != null);
+      ClearSelectedMessageCommand = new Command(ClearSelectedMessage, _ => ClientModel.Client != null);
 
       MainViewModel.AllUsers.CollectionChanged += AllUsersCollectionChanged;
       NotifierContext.ReceiveMessage += ClientReceiveMessage;
@@ -154,20 +156,23 @@ namespace UI.ViewModel
 
     protected override void DisposeManagedResources()
     {
-      base.Dispose();
+      base.DisposeManagedResources();
 
-      foreach (UserViewModel user in Users)
+      foreach (var user in Users)
         user.Dispose();
-
-      foreach (MessageViewModel message in Messages)
-        message.Dispose();
-
       Users.Clear();
+
+      foreach (var message in Messages)
+        message.Dispose(); 
       Messages.Clear();
 
       MainViewModel.AllUsers.CollectionChanged -= AllUsersCollectionChanged;
-      NotifierContext.ReceiveMessage -= ClientReceiveMessage;
-      NotifierContext.RoomRefreshed -= ClientRoomRefreshed;
+
+      if (NotifierContext != null)
+      {
+        NotifierContext.ReceiveMessage -= ClientReceiveMessage;
+        NotifierContext.RoomRefreshed -= ClientRoomRefreshed;
+      }
     }
     #endregion
 
@@ -289,11 +294,11 @@ namespace UI.ViewModel
         var availableUsers = MainViewModel.AllUsers.Except(Users);
         if (!availableUsers.Any())
         {
-          AddSystemMessage(NoBodyToInvite);
+          AddSystemMessage(Localizer.Instance.Localize(NoBodyToInviteKey));
           return;
         }
 
-        var dialog = new UsersOperationDialog(InviteInRoomTitle, availableUsers);
+        var dialog = new UsersOperationDialog(InviteInRoomTitleKey, availableUsers);
         if (dialog.ShowDialog() == true && ClientModel.Api != null)
           ClientModel.Api.InviteUsers(Name, dialog.Users);
       }
@@ -307,7 +312,7 @@ namespace UI.ViewModel
     {
       try
       {
-        var dialog = new UsersOperationDialog(KickFormRoomTitle, Users);
+        var dialog = new UsersOperationDialog(KickFormRoomTitleKey, Users);
         if (dialog.ShowDialog() == true && ClientModel.Api != null)
           ClientModel.Api.KickUsers(Name, dialog.Users);
       }

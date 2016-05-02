@@ -2,7 +2,6 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:Infrastructure="clr-namespace:UI.Infrastructure"
-        Title="{Infrastructure:Localized userOperationDialog-title}" 
         MinWidth="230"
         MinHeight="300"
         ResizeMode="NoResize"

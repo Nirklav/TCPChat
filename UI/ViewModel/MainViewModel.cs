@@ -23,15 +23,13 @@ namespace UI.ViewModel
   {
     #region consts
     public const string ProgramName = "TCPChat";
-    public const string ParamsError = "Ошибка входных данных.";
-    public const string ClientNotCreated = "Клинет не соединен ни с каким сервером. Установите соединение.";
-    public const string APINotSupported = "Приложение не поддерживает эту версию API ({0}). Соединение разорвано.";
-    public const string RoomExitQuestion = "Вы действительно хотите выйти из комнаты?";
-    public const string RoomCloseQuestion = "Вы точно хотите закрыть комнату?";
-    public const string ServerDisableQuestion = "Вы точно хотите выключить сервер?";
-    public const string FileMustDontExist = "Необходимо выбрать несуществующий файл.";
-    public const string AllInRoom = "Все в комнате";
-    public const string AudioInitializationFailed = "Аудио устройства не инициализированны. Голосовая связь будет не активна.";
+
+    public const string ParamsErrorKey = "mainViewModel-paramsError";
+    public const string APINotSupportedKey = "mainViewModel-apiNotSupported";
+    public const string RoomExitQuestionKey = "mainViewModel-roomExitQuestion";
+    public const string RoomCloseQuestionKey = "mainViewModel-roomCloseQuestion";
+    public const string ServerDisableQuestionKey = "mainViewModel-serverDisableQuestion";
+    public const string AudioInitializationFailedKey = "mainViewModel-audioInitializationFailed";
 
     private const int ClientMaxMessageLength = 100 * 1024;
     #endregion
@@ -127,33 +125,38 @@ namespace UI.ViewModel
 
       ClearTabs();
 
-      EnableServerCommand = new Command(EnableServer, obj => ServerModel.Server == null);
-      DisableServerCommand = new Command(DisableServer, obj => ServerModel.Server != null);
-      ConnectCommand = new Command(Connect, obj => ClientModel.Client == null);
-      DisconnectCommand = new Command(Disconnect, obj => ClientModel.Client != null);
-      ExitCommand = new Command(obj => window.Close());
-      CreateRoomCommand = new Command(CreateRoom, obj => ClientModel.Client != null);
-      DeleteRoomCommand = new Command(DeleteRoom, obj => ClientModel.Client != null);
-      ExitFromRoomCommand = new Command(ExitFromRoom, obj => ClientModel.Client != null);
-      OpenFilesDialogCommand = new Command(OpenFilesDialog, obj => ClientModel.Client != null);
+      EnableServerCommand = new Command(EnableServer, _ => ServerModel.Server == null);
+      DisableServerCommand = new Command(DisableServer, _ => ServerModel.Server != null);
+      ConnectCommand = new Command(Connect, _ => ClientModel.Client == null);
+      DisconnectCommand = new Command(Disconnect, _ => ClientModel.Client != null);
+      ExitCommand = new Command(_ => window.Close());
+      CreateRoomCommand = new Command(CreateRoom, _ => ClientModel.Client != null);
+      DeleteRoomCommand = new Command(DeleteRoom, _ => ClientModel.Client != null);
+      ExitFromRoomCommand = new Command(ExitFromRoom, _ => ClientModel.Client != null);
+      OpenFilesDialogCommand = new Command(OpenFilesDialog, _ => ClientModel.Client != null);
       OpenAboutProgramCommand = new Command(OpenAboutProgram);
       OpenSettingsCommand = new Command(OpenSettings);
     }
 
     protected override void DisposeManagedResources()
     {
+      base.DisposeManagedResources();
+
       KeyBoard.KeyDown -= OnKeyDown;
       KeyBoard.KeyUp -= OnKeyUp;
 
-      NotifierContext.Connected -= ClientConnect;
-      NotifierContext.ReceiveMessage -= ClientReceiveMessage;
-      NotifierContext.ReceiveRegistrationResponse -= ClientRegistration;
-      NotifierContext.RoomRefreshed -= ClientRoomRefreshed;
-      NotifierContext.RoomClosed -= ClientRoomClosed;
-      NotifierContext.RoomOpened -= ClientRoomOpened;
-      NotifierContext.AsyncError -= ClientAsyncError;
-      NotifierContext.PluginLoaded -= ClientPluginLoaded;
-      NotifierContext.PluginUnloading -= ClientPluginUnloading;
+      if (NotifierContext != null)
+      {
+        NotifierContext.Connected -= ClientConnect;
+        NotifierContext.ReceiveMessage -= ClientReceiveMessage;
+        NotifierContext.ReceiveRegistrationResponse -= ClientRegistration;
+        NotifierContext.RoomRefreshed -= ClientRoomRefreshed;
+        NotifierContext.RoomClosed -= ClientRoomClosed;
+        NotifierContext.RoomOpened -= ClientRoomOpened;
+        NotifierContext.AsyncError -= ClientAsyncError;
+        NotifierContext.PluginLoaded -= ClientPluginLoaded;
+        NotifierContext.PluginUnloading -= ClientPluginUnloading;
+      }
     }
     #endregion
 
@@ -184,7 +187,7 @@ namespace UI.ViewModel
         }
         catch (ArgumentException)
         {
-          SelectedRoom.AddSystemMessage(ParamsError);
+          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
 
           if (ClientModel.IsInited)
             ClientModel.Reset();
@@ -197,7 +200,8 @@ namespace UI.ViewModel
 
     private void DisableServer(object obj)
     {
-      if (MessageBox.Show(ServerDisableQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+      var msg = Localizer.Instance.Localize(ServerDisableQuestionKey);
+      if (MessageBox.Show(msg, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
         return;
 
       if (ClientModel.IsInited)
@@ -250,7 +254,8 @@ namespace UI.ViewModel
     {
       try
       {
-        if (MessageBox.Show(RoomCloseQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+        var msg = Localizer.Instance.Localize(RoomCloseQuestionKey);
+        if (MessageBox.Show(msg, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
           return;
 
         if (ClientModel.Api != null)
@@ -266,7 +271,8 @@ namespace UI.ViewModel
     {
       try
       {
-        if (MessageBox.Show(RoomExitQuestion, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+        var msg = Localizer.Instance.Localize(RoomExitQuestionKey);
+        if (MessageBox.Show(msg, ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
           return;
 
         if (ClientModel.Api != null)
@@ -424,7 +430,7 @@ namespace UI.ViewModel
           {
             case ErrorCode.APINotSupported:
               ClientModel.Reset();
-              SelectedRoom.AddSystemMessage(string.Format(APINotSupported, modelException.Message));
+              SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(APINotSupportedKey, modelException.Message));
               return;
           }
       }), e);
@@ -482,10 +488,13 @@ namespace UI.ViewModel
         ClientModel.Player.Dispose();
         ClientModel.Recorder.Dispose();
 
-        if (me.Code == ErrorCode.AudioNotEnabled)
-          MessageBox.Show(AudioInitializationFailed, ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
-        else
+        if (me.Code != ErrorCode.AudioNotEnabled)
           throw;
+        else
+        {
+          var msg = Localizer.Instance.Localize(AudioInitializationFailedKey);
+          MessageBox.Show(msg, ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }      
       }
 
       IPAddress address = loopback
