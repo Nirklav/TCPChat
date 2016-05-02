@@ -1,5 +1,6 @@
 ﻿using Engine.API.ClientCommands;
 using Engine.API.ServerCommands;
+using Engine.Model.Entities;
 using Engine.Model.Server;
 using Engine.Plugins;
 using Engine.Plugins.Server;
@@ -17,6 +18,7 @@ namespace Engine.API
     CrossDomainObject,
     IApi<ServerCommandArgs>
   {
+    [SecurityCritical]
     private readonly Dictionary<long, ICommand<ServerCommandArgs>> commands;
 
     /// <summary>
@@ -105,11 +107,12 @@ namespace Engine.API
     /// Посылает системное сообщение клиенту.
     /// </summary>
     /// <param name="nick">Пользователь получащий сообщение.</param>
+    /// <param name="roomName">Имя комнаты, для которой предназначено системное сообщение.</param>
     /// <param name="message">Сообщение.</param>
     [SecuritySafeCritical]
-    public void SendSystemMessage(string nick, string message)
+    public void SendSystemMessage(string nick, MessageId message, params string[] formatParams)
     {
-      var sendingContent = new ClientOutSystemMessageCommand.MessageContent { Message = message };
+      var sendingContent = new ClientOutSystemMessageCommand.MessageContent { Message = message, FormatParams = formatParams };
       ServerModel.Server.SendMessage(nick, ClientOutSystemMessageCommand.CommandId, sendingContent);
     }
 
@@ -148,12 +151,8 @@ namespace Engine.API
           if (string.Equals(room.Admin, nick))
           {
             room.Admin = room.Users.FirstOrDefault();
-
             if (room.Admin != null)
-            {
-              var message = string.Format("Вы назначены администратором комнаты {0}.", room.Name);
-              ServerModel.Api.SendSystemMessage(room.Admin, message);
-            }
+              ServerModel.Api.SendSystemMessage(room.Admin, MessageId.RoomAdminChanged, room.Name);
           }
 
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent

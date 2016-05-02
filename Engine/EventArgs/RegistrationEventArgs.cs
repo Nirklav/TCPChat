@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Engine.Model.Entities;
+using System;
 
 namespace Engine
 {
@@ -6,6 +7,6 @@ namespace Engine
   public class RegistrationEventArgs : EventArgs
   {
     public bool Registered { get; set; }
-    public string Message { get; set; }
+    public MessageId Message { get; set; }
   }
 }

@@ -31,15 +31,15 @@ namespace Engine.Network.Connections
     #endregion
 
     #region fields
-    protected string id;
-    protected ConnectionInfo remoteInfo;
-    private bool connectionInfoSent;
-    protected byte[] buffer;
-    protected Socket handler;
-    protected MemoryStream received;
-    private ECDiffieHellmanCng diffieHellman;
-    private byte[] key;
-    protected volatile bool disposed;
+    [SecurityCritical] protected string id;
+    [SecurityCritical] protected ConnectionInfo remoteInfo;
+    [SecurityCritical] private bool connectionInfoSent;
+    [SecurityCritical] protected byte[] buffer;
+    [SecurityCritical] protected Socket handler;
+    [SecurityCritical] protected MemoryStream received;
+    [SecurityCritical] private ECDiffieHellmanCng diffieHellman;
+    [SecurityCritical] private byte[] key;
+    [SecurityCritical] protected volatile bool disposed;
     #endregion
 
     #region constructors
@@ -536,7 +536,11 @@ namespace Engine.Network.Connections
 
       foreach (var ip in Dns.GetHostAddresses(hostName))
       {
-        if (ip.AddressFamily == type && !IPAddress.IsLoopback(ip) && !ip.IsIPv6LinkLocal && !ip.IsIPv6SiteLocal && !ip.IsIPv6Multicast)
+        if (ip.AddressFamily == type 
+          && !IPAddress.IsLoopback(ip) 
+          && !ip.IsIPv6LinkLocal 
+          && !ip.IsIPv6SiteLocal 
+          && !ip.IsIPv6Multicast)
           return ip;
       }
 

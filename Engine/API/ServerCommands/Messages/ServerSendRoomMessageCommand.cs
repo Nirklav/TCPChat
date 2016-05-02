@@ -37,13 +37,13 @@ namespace Engine.API.ServerCommands
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не можете отправить сообщение, т.к. не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
           return;
         }
 
         if (content.MessageId != null && !room.IsMessageBelongToUser(args.ConnectionId, content.MessageId.Value))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не можете редактировать это сообщение.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.MessageEditAccessDenied);
           return;
         }
 

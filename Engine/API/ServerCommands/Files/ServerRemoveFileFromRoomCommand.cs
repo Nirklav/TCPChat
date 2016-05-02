@@ -39,7 +39,7 @@ namespace Engine.API.ServerCommands
 
         if (!room.ContainsUser(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
           return;
         }
 
@@ -49,12 +49,12 @@ namespace Engine.API.ServerCommands
         access |= args.ConnectionId.Equals(content.File.Owner.Nick);
         if (!access)
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не можете удалить данный файл. Не хватает прав.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.FileRemoveAccessDenied);
           return;
         }
 
         room.Files.Remove(content.File);
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, string.Format("Файл \"{0}\" удален с раздачи.", content.File.Name));
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.FileRemoved, content.File.Name);
 
         var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent()
         {

@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Localization>
+  <row key="systemMessage-ApiNotSupported" value="API not supported by server."/>
+  <row key="systemMessage-ConnectionRetryAttempt" value="1 Попытка соединения с сервером..."/>
+  <row key="systemMessage-NotRegisteredBadName" value="1 Соединение не может быть зарегистрировано с таким ником. Выберите другой."/>
+  <row key="systemMessage-NotRegisteredNameAlreadyExist" value="1 Соединение не может быть зарегистрировано с таким ником. Он занят."/>
+  <row key="systemMessage-RoomAdminChanged" value="1 Вы назначены администратором {0} комнаты."/>
+  <row key="systemMessage-RoomAccessDenied" value="1 Не хватает прав для соверешения этого действия в этой комнате."/>
+  <row key="systemMessage-RoomAlreadyExist" value="1 Комната с таким именем уже создана, выберите другое имя."/>
+  <row key="systemMessage-RoomCantLeaveMainRoom" value="1 Невозможно выйти из основной комнаты."/>
+  <row key="systemMessage-RoomItsMainRoom" value="1 Невозможно произвести это действие с основной комнатой."/>
+  <row key="systemMessage-RoomNotExist" value="1 Команата с таким именем не существует."/>
+  <row key="systemMessage-FileRemoveAccessDenied" value="1 Вы не можете удалить данный файл. Не хватает прав."/>
+  <row key="systemMessage-FileRemoved" value="1 Файл {0} удален."/>
+  <row key="systemMessage-MessageEditAccessDenied" value="1 Вы не можете редактировать это сообщение."/>
+  <row key="systemMessage-P2PUserNotExist" value="1 Данного пользователя не существует."/>
+
+  <row key="commonMessageTemplate-contextMenu-edit" value="1 Редактировать"/>
+</Localization>

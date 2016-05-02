@@ -25,11 +25,10 @@ namespace UI.Infrastructure
           if (current == null)
           {
             var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, FileName);
-            var serializer = new XmlSerializer(typeof(Settings));
-
             if (!File.Exists(fileName))
               return current = GetDefault();
 
+            var serializer = new XmlSerializer(typeof(Settings));
             using (var stream = File.Open(fileName, FileMode.Open))
               current = (Settings)serializer.Deserialize(stream);
           }
@@ -43,6 +42,8 @@ namespace UI.Infrastructure
     {
       return new Settings
       {
+        Locale = "en-US",
+
         Nick = "User",
         NickColor = Color.FromArgb(170, 50, 50),
         RandomColor = true,
@@ -74,6 +75,8 @@ namespace UI.Infrastructure
     }
 
     #region properties
+    public string Locale { get; set; }
+
     public string Nick { get; set; }
     public SavedColor NickColor { get; set; }
     public bool RandomColor { get; set; }

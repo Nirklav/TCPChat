@@ -29,7 +29,7 @@ namespace Engine.API.ServerCommands
       {
         if (server.Rooms.ContainsKey(content.RoomName))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Комната с таким именем уже создана, выберите другое имя.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAlreadyExist);
           return;
         }
 

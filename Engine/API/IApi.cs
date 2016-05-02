@@ -13,6 +13,6 @@
     /// <summary>
     /// Версия и имя API.
     /// </summary>
-    public const string Name = "StandardAPI v3.0";
+    public const string Name = "StandardAPI v3.1";
   }
 }

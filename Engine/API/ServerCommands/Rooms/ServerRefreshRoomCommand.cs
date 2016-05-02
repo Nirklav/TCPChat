@@ -1,4 +1,5 @@
 ﻿using Engine.API.ClientCommands;
+using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
@@ -36,7 +37,7 @@ namespace Engine.API.ServerCommands
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
           return;
         }
 

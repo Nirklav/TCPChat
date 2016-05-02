@@ -18,7 +18,7 @@ namespace UI.Dialogs
 {
   public partial class UsersOperationDialog : Window
   {
-    class UserListItem
+    private class UserListItem
     {
       public UserListItem(UserViewModel user)
       {

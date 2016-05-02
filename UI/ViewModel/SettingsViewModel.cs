@@ -34,10 +34,10 @@ namespace UI.ViewModel
 
       Tabs = new SettingsTabViewModel[] 
       {
-        new ClientTabViewModel("Клиент"),
-        new ServerTabViewModel("Сервер"),
-        new AudioTabViewModel("Звук"),
-        new PluginSettingTabViewModel("Плагины")
+        new ClientTabViewModel(),
+        new ServerTabViewModel(),
+        new AudioTabViewModel(),
+        new PluginSettingTabViewModel()
       };
 
       SelectedTab = Tabs[0];

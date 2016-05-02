@@ -1,4 +1,5 @@
 ﻿using Engine.API.ClientCommands;
+using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
@@ -25,7 +26,7 @@ namespace Engine.API.ServerCommands
 
       if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не можете удалить основную комнату.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
         return;
       }
 
@@ -37,7 +38,7 @@ namespace Engine.API.ServerCommands
         var deletingRoom = context.Rooms[content.RoomName];
         if (!deletingRoom.Admin.Equals(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
           return;
         }
 

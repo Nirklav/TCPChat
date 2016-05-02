@@ -38,16 +38,16 @@ namespace Engine.Network
     #endregion
 
     #region fields
-    private readonly object syncObject = new object();
+    [SecurityCritical] private readonly object syncObject = new object();
 
-    private readonly Dictionary<string, ClientDescription> clientsEndPoints;
-    private readonly HashSet<string> connectingClients;
-    private readonly List<RequestPair> requests;
+    [SecurityCritical] private readonly Dictionary<string, ClientDescription> clientsEndPoints;
+    [SecurityCritical] private readonly HashSet<string> connectingClients;
+    [SecurityCritical] private readonly List<RequestPair> requests;
 
-    private NetServer server;
-    private bool disposed;
+    [SecurityCritical] private NetServer server;
+    [SecurityCritical] private bool disposed;
 
-    private SynchronizationContext syncContext;
+    [SecurityCritical] private SynchronizationContext syncContext;
     #endregion
 
     #region constructors

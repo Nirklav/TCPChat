@@ -31,7 +31,7 @@ namespace Engine.API.ServerCommands
 
       if (content.User.Nick.Contains(Connection.TempConnectionPrefix))
       {
-        SendFail(args.ConnectionId, "Соединение не может быть зарегистрировано с таким ником. Выберите другой.");
+        SendFail(args.ConnectionId, MessageId.NotRegisteredBadName);
         return;
       }
       
@@ -42,7 +42,7 @@ namespace Engine.API.ServerCommands
 
         if (userExist)
         {
-          SendFail(args.ConnectionId, "Соединение не может быть зарегистрировано с таким ником. Он занят.");
+          SendFail(args.ConnectionId, MessageId.NotRegisteredNameAlreadyExist);
           return;
         }
         else
@@ -71,7 +71,7 @@ namespace Engine.API.ServerCommands
       }
     }
 
-    private void SendFail(string connectionId, string message)
+    private void SendFail(string connectionId, MessageId message)
     {
       var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
       ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.CommandId, regResponseContent, true);

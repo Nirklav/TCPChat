@@ -44,15 +44,15 @@ namespace Engine.Network
     [SecurityCritical]
     private class QueueContainer : IDisposable
     {
-      private readonly RequestQueue<TArgs> queue;
+      [SecurityCritical] private readonly RequestQueue<TArgs> queue;
 
-      private readonly object syncObject = new object();
-      private readonly Queue<CommandContainer> commands = new Queue<CommandContainer>();
-      private volatile bool inProcess;
+      [SecurityCritical] private readonly object syncObject = new object();
+      [SecurityCritical] private readonly Queue<CommandContainer> commands = new Queue<CommandContainer>();
+      [SecurityCritical] private volatile bool inProcess;
 
-      private static readonly TimeSpan disposeEventTimeout = TimeSpan.FromSeconds(10);
-      private readonly ManualResetEvent disposeEvent = new ManualResetEvent(true);
-      private bool disposed;
+      [SecurityCritical] private static readonly TimeSpan disposeEventTimeout = TimeSpan.FromSeconds(10);
+      [SecurityCritical] private readonly ManualResetEvent disposeEvent = new ManualResetEvent(true);
+      [SecurityCritical] private bool disposed;
 
       [SecurityCritical]
       public QueueContainer(RequestQueue<TArgs> queue)
@@ -124,8 +124,8 @@ namespace Engine.Network
     [SecurityCritical]
     private class CommandContainer
     {
-      private ICommand<TArgs> command;
-      private TArgs args;
+      [SecurityCritical] private ICommand<TArgs> command;
+      [SecurityCritical] private TArgs args;
 
       [SecurityCritical]
       public CommandContainer(ICommand<TArgs> command, TArgs args)
@@ -143,10 +143,10 @@ namespace Engine.Network
 
     #endregion
 
-    private readonly object syncObject;
-    private readonly Dictionary<string, QueueContainer> requests;
+    [SecurityCritical] private readonly object syncObject;
+    [SecurityCritical] private readonly Dictionary<string, QueueContainer> requests;
 
-    private volatile bool disposed;
+    [SecurityCritical] private volatile bool disposed;
 
     [SecurityCritical]
     public RequestQueue()

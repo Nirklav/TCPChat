@@ -46,16 +46,16 @@ namespace Engine.Network
     #endregion
 
     #region private fields
-    private readonly object syncObject = new object();
-    private Dictionary<string, List<WaitingCommandContainer>> waitingCommands;
-    private Dictionary<string, byte[]> keys;
-    private NetConnection serviceConnection;
-    private NetPeer handler;
-    private int state; //PeerState
-    private bool disposed;
-    private SynchronizationContext syncContext;
-    private ClientRequestQueue requestQueue;
-    private ECDiffieHellmanCng diffieHellman;
+    [SecurityCritical] private readonly object syncObject = new object();
+    [SecurityCritical] private Dictionary<string, List<WaitingCommandContainer>> waitingCommands;
+    [SecurityCritical] private Dictionary<string, byte[]> keys;
+    [SecurityCritical] private NetConnection serviceConnection;
+    [SecurityCritical] private NetPeer handler;
+    [SecurityCritical] private int state; //PeerState
+    [SecurityCritical] private bool disposed;
+    [SecurityCritical] private SynchronizationContext syncContext;
+    [SecurityCritical] private ClientRequestQueue requestQueue;
+    [SecurityCritical] private ECDiffieHellmanCng diffieHellman;
     #endregion
 
     #region events and properties

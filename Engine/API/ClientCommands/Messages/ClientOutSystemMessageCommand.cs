@@ -1,4 +1,5 @@
 ﻿using Engine.Model.Client;
+using Engine.Model.Entities;
 using System;
 using System.Security;
 
@@ -19,12 +20,13 @@ namespace Engine.API.ClientCommands
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      if (string.IsNullOrEmpty(content.Message))
+      if (content.Message == MessageId.None)
         throw new ArgumentException("message");
 
       ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs
       {
-        Message = content.Message,
+        SystemMessage = content.Message,
+        SystemMessageFormat = content.FormatParams,
         Type = MessageType.System
       });
     }
@@ -32,12 +34,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private string message;
+      private MessageId message;
+      private string[] formatParams;
 
-      public string Message
+      public MessageId Message
       {
         get { return message; }
         set { message = value; }
+      }
+
+      public string[] FormatParams
+      {
+        get { return formatParams; }
+        set { formatParams = value; }
       }
     }
   }

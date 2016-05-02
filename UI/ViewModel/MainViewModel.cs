@@ -292,9 +292,12 @@ namespace UI.ViewModel
 
     private void OpenSettings(object obj)
     {
+      SettingsViewModel viewModel;
       SettingsView settings = new SettingsView();
-      settings.DataContext = new SettingsViewModel(settings);
+      settings.DataContext = viewModel = new SettingsViewModel(settings);
       settings.ShowDialog();
+
+      viewModel.Dispose();
     }
     #endregion
 
@@ -324,7 +327,7 @@ namespace UI.ViewModel
       {
         if (!args.Registered)
         {
-          SelectedRoom.AddSystemMessage(args.Message);
+          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(args.Message));
 
           if (ClientModel.IsInited)
             ClientModel.Reset();
@@ -351,7 +354,7 @@ namespace UI.ViewModel
             break;
 
           case MessageType.System:
-            SelectedRoom.AddSystemMessage(args.Message);
+            SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(args.SystemMessage, args.SystemMessageFormat));
             break;
         }
 
@@ -501,7 +504,10 @@ namespace UI.ViewModel
           if (ClientModel.Api != null)
             ClientModel.Api.Unregister();
         }
-        catch (Exception) { }
+        catch (Exception)
+        {
+          // program will be closed and the exception will not affect it.
+        }
 
         ClientModel.Reset();
       }

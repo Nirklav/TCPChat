@@ -25,10 +25,10 @@ namespace Engine.Network.Connections
     #endregion
 
     #region private field
-    private string serverApiName;
-    private DateTime lastActivity;
-    private DateTime createTime;
-    private EventHandler<PackageReceivedEventArgs> dataReceivedCallback;
+    [SecurityCritical] private string serverApiName;
+    [SecurityCritical] private DateTime lastActivity;
+    [SecurityCritical] private DateTime createTime;
+    [SecurityCritical] private EventHandler<PackageReceivedEventArgs> dataReceivedCallback;
     #endregion
 
     #region constructors

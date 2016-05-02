@@ -12,7 +12,8 @@ namespace UI.ViewModel
 {
   public class AudioTabViewModel : SettingsTabViewModel
   {
-    const string PressTheKey = "Нажмите на клавишу";
+    private const string NameKey = "settingsTabCategory-audio";
+    private const string PressTheKeyKey = "settingsTab-audio-pressTheKey";
 
     #region fields
     private IList<string> outputDevices;
@@ -75,8 +76,8 @@ namespace UI.ViewModel
 
     #endregion
 
-    public AudioTabViewModel(string name)
-      : base(name)
+    public AudioTabViewModel()
+      : base(NameKey, SettingsTabCategory.Audio)
     {
       OutputDevices = ClientModel.Player.Devices;
       InputDevices = ClientModel.Recorder.Devices;
@@ -112,7 +113,7 @@ namespace UI.ViewModel
         return;
 
       selectingKey = true;
-      SelectButtonName = PressTheKey;
+      SelectButtonName = Localizer.Instance.Localize(PressTheKeyKey);
       KeyBoard.KeyDown += KeyDown;
     }
 
@@ -143,7 +144,7 @@ namespace UI.ViewModel
       if (InputDevices.Count > 0 && SelectedInputIndex >= 0 && SelectedInputIndex < InputDevices.Count)
         Settings.Current.InputAudioDevice = InputDevices[selectedInputIndex];
 
-      if (!string.Equals(PressTheKey, SelectButtonName))
+      if (!string.Equals(Localizer.Instance.Localize(PressTheKeyKey), SelectButtonName))
         Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectButtonName);
 
       try

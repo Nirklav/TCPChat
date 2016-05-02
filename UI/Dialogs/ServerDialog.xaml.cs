@@ -13,7 +13,7 @@ namespace UI.Dialogs
 
       NickField.Text = Settings.Current.Nick;
 
-      Random colorRandom = new Random();
+      var colorRandom = new Random();
       RedColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.R;
       GreenColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.G;
       BlueColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.B;

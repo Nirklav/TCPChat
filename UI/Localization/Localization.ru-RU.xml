@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Localization>
+  <row key="accept" value="Принять"/>
+  <row key="cancel" value="Отмена"/>
+  <row key="ok" value="Ок"/>
+  <row key="delete" value="Удалить"/>
+  <row key="nick" value="Ник"/>
+  <row key="nickColor" value="Настройка цвета"/>
+  <row key="port" value="Порт"/>
+  <row key="protocol" value="Протокол"/>
+
+  <row key="systemMessage-ApiNotSupported" value="Данный API не поддерживается сервером."/>
+  <row key="systemMessage-ConnectionRetryAttempt" value="Попытка соединения с сервером..."/>
+  <row key="systemMessage-NotRegisteredBadName" value="Соединение не может быть зарегистрировано с таким ником. Выберите другой."/>
+  <row key="systemMessage-NotRegisteredNameAlreadyExist" value="Соединение не может быть зарегистрировано с таким ником. Он занят."/>
+  <row key="systemMessage-RoomAdminChanged" value="Вы назначены администратором {0} комнаты."/>
+  <row key="systemMessage-RoomAccessDenied" value="Не хватает прав для соверешения этого действия в этой комнате."/>
+  <row key="systemMessage-RoomAlreadyExist" value="Комната с таким именем уже создана, выберите другое имя."/>
+  <row key="systemMessage-RoomCantLeaveMainRoom" value="Невозможно выйти из основной комнаты."/>
+  <row key="systemMessage-RoomItsMainRoom" value="Невозможно произвести это действие с основной комнатой."/>
+  <row key="systemMessage-RoomNotExist" value="Команата с таким именем не существует."/>
+  <row key="systemMessage-FileRemoveAccessDenied" value="Вы не можете удалить данный файл. Не хватает прав."/>
+  <row key="systemMessage-FileRemoved" value="Файл {0} удален."/>
+  <row key="systemMessage-MessageEditAccessDenied" value="Вы не можете редактировать это сообщение."/>
+  <row key="systemMessage-P2PUserNotExist" value="Данного пользователя не существует."/>
+
+  <row key="commonMessageTemplate-contextMenu-edit" value="Редактировать"/>
+  <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>
+  <row key="userTemplate-SetRoom" value="AdminНазначить администратором"/>
+  <row key="menu-header-connect" value="Соединение"/>
+  <row key="menu-connect" value="Подключиться"/>
+  <row key="menu-disconnect" value="Разорвать соединение"/>
+  <row key="menu-enableServer" value="Включить сервер"/>
+  <row key="menu-disableServer" value="Выключить сервер"/>
+  <row key="menu-exit" value="Выход"/>
+
+  <row key="menu-header-rooms" value="Комнаты"/>
+  <row key="menu-createRoom" value="Создать комнату"/>
+  <row key="menu-closeRoom" value="Закрыть комнату"/>
+  <row key="menu-inviteInRoom" value="Пригласить в комнату"/>
+  <row key="menu-kickFromRoom" value="Кикнуть из комнаты"/>
+  <row key="menu-exitFromRoom" value="Выйти из комнаты"/>
+
+  <row key="menu-header-File" value="Файлы"/>
+  <row key="menu-distributetFiles" value="Распространяемые файлы"/>
+  <row key="menu-addFileToRoom" value="Добавить файл в комнату"/>
+
+  <row key="menu-header-plugins" value="Плагины"/>
+
+  <row key="menu-header-other" value="Другое"/>
+  <row key="menu-notifications" value="Оповещения"/>
+  <row key="menu-settings" value="Настройки"/>
+  <row key="menu-about" value="О программе"/>
+
+  <row key="main-reciver" value="Получатель"/>
+ 
+  <row key="serverTemplate-p2pPort" value="Порт P2P"/>
+  <row key="serverTemplate-p2pPort-default" value="По умолчанию"/>
+
+  <row key="audioTemplate-microphone" value="Микрофон"/>
+  <row key="audioTemplate-audioQuality" value="Качество записи"/>
+  <row key="audioTemplate-microphoneActivation" value="Активация"/>
+  <row key="audioTemplate-speakers" value="Динамики"/>
+
+  <row key="clientTemplate-Language" value="Язык"/>
+  
+  <row key="pluginsTemplate-nameHeader" value="Название"/>
+  <row key="pluginsTemplate-enabledHeader" value="Включен"/>
+  <row key="pluginsTemplate-typeHeader" value="Тип"/>
+  <row key="pluginsTemplate-unloadPlugin" value="Выгрузить"/>
+  <row key="pluginsTemplate-loadPlugin" value="Загрузить"/>
+
+  <row key="settings-title" value="Настройки"/>
+  <row key="settings-Categories" value="Категории"/>
+  <row key="settings-done" value="Готово"/>
+
+  <row key="settingsTabCategory-client" value="Клиент"/>
+  <row key="settingsTabCategory-server" value="Сервер"/>
+  <row key="settingsTabCategory-audio" value="Звук"/>
+  <row key="settingsTabCategory-plugins" value="Плагины"/>
+
+  <row key="settingsTab-audio-pressTheKey" value="Нажмите на клавишу"/>
+
+  <row key="aboutProgram-title" value="О программе"/>
+  <row key="aboutProgram-author" value="Автор"/>
+  <row key="aboutProgram-feedback" value="Обратная связь"/>
+
+  <row key="connectDialog-title" value="Соединение"/>
+  <row key="connectDialog-ipAddress" value="IP - Адрес"/>
+
+  <row key="createRoomDialog-title" value="Создание комнаты"/>
+  <row key="createRoomDialog-roomName" value="Название комнаты"/>
+  <row key="createRoomDialog-audioRoom" value="Голосовая"/>
+
+  <row key="postedFilesDialog-title" value="Распространяемые файлы"/>
+  <row key="userOperationDialog-title" value="Пользователи"/>
+</Localization>

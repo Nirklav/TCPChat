@@ -1,4 +1,5 @@
 ﻿using Engine.Model.Client;
+using Engine.Model.Entities;
 using System;
 using System.Security;
 
@@ -32,7 +33,7 @@ namespace Engine.API.ClientCommands
     public class MessageContent
     {
       private bool registered;
-      private string message;
+      private MessageId message;
 
       public bool Registered
       {
@@ -40,7 +41,7 @@ namespace Engine.API.ClientCommands
         set { registered = value; }
       }
 
-      public string Message
+      public MessageId Message
       {
         get { return message; }
         set { message = value; }

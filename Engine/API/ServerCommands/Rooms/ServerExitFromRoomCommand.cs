@@ -1,4 +1,5 @@
 ﻿using Engine.API.ClientCommands;
+using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace Engine.API.ServerCommands
 
       if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Невозможно выйти из основной комнаты.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomCantLeaveMainRoom);
         return;
       }
 
@@ -39,7 +40,7 @@ namespace Engine.API.ServerCommands
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы и так не входите в состав этой комнаты.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
           return;
         }
 
@@ -50,12 +51,8 @@ namespace Engine.API.ServerCommands
         if (string.Equals(room.Admin, args.ConnectionId))
         {
           room.Admin = room.Users.FirstOrDefault();
-
           if (room.Admin != null)
-          {
-            var message = string.Format("Вы назначены администратором комнаты \"{0}\".", room.Name);
-            ServerModel.Api.SendSystemMessage(room.Admin, message);
-          }
+            ServerModel.Api.SendSystemMessage(room.Admin, MessageId.RoomAdminChanged, room.Name);
         }
 
         RefreshRoom(server, room);

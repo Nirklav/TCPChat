@@ -1,6 +1,7 @@
 ﻿using Engine.API;
 using Engine.Exceptions;
 using Engine.Model.Client;
+using Engine.Model.Entities;
 using Engine.Network.Connections;
 using System;
 using System.Linq;
@@ -33,14 +34,14 @@ namespace Engine.Network
     #endregion
 
     #region private fields
-    private readonly object syncObject = new object();
-    private IPEndPoint hostAddress;
-    private ClientRequestQueue requestQueue;
-    private Timer timer;
-    private bool reconnect;
-    private bool reconnecting;
-    private DateTime lastReconnect;
-    private DateTime lastPingRequest;
+    [SecurityCritical] private readonly object syncObject = new object();
+    [SecurityCritical] private IPEndPoint hostAddress;
+    [SecurityCritical] private ClientRequestQueue requestQueue;
+    [SecurityCritical] private Timer timer;
+    [SecurityCritical] private bool reconnect;
+    [SecurityCritical] private bool reconnecting;
+    [SecurityCritical] private DateTime lastReconnect;
+    [SecurityCritical] private DateTime lastPingRequest;
     #endregion
 
     #region constructors
@@ -234,7 +235,7 @@ namespace Engine.Network
       if (interval < ReconnectTimeInterval)
         return;
 
-      ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs { Message = "Попытка соединения с сервером...", Type = MessageType.System });
+      ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs { SystemMessage = MessageId.ConnectionRetryAttempt, Type = MessageType.System });
 
       if (handler != null)
         handler.Dispose();

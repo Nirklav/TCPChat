@@ -10,7 +10,7 @@ using System.Security;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("39-80")]
 [assembly: AssemblyProduct("TCP Chat Engine")]
-[assembly: AssemblyCopyright("Copyright © 39-80 2015")]
+[assembly: AssemblyCopyright("Copyright © 39-80 2016")]
 [assembly: AssemblyTrademark("ThirtyNineEighty")]
 [assembly: AssemblyCulture("")]
 

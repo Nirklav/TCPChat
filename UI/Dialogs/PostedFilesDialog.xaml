@@ -1,7 +1,8 @@
 ﻿<Window x:Class="UI.Dialogs.PostedFilesDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Раздающиеся файлы"
+        xmlns:Infrastructure="clr-namespace:UI.Infrastructure"
+        Title="{Infrastructure:Localized postedFilesDialog-title}"
         MinHeight="300"
         MinWidth="300"
         Icon="/TCPChat;component/Images/chat.ico"
@@ -9,52 +10,52 @@
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
 
-    <Window.Resources>
-        <DataTemplate x:Key="PostedFileTemplate">
-            <DockPanel HorizontalAlignment="Stretch">
-                <TextBlock DockPanel.Dock="Left"
-                           Text="{Binding Path=PostedFile.File.Name}"
-                           VerticalAlignment="Center"
-                           Padding="0"
-                           Margin="5, 2.5, 2.5, 2.5"/>
-                
-                <Button DockPanel.Dock="Right"
-                        Content="Убрать"
-                        Click="RemoveFile_Click"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Right"
-                        MinWidth="70"
-                        Tag="{Binding Path=PostedFile}"
-                        Margin="2.5, 2.5, 5, 2.5"/>
-            </DockPanel>
-        </DataTemplate>
-    </Window.Resources>
+  <Window.Resources>
+    <DataTemplate x:Key="PostedFileTemplate">
+      <DockPanel HorizontalAlignment="Stretch">
+        <TextBlock DockPanel.Dock="Left"
+                   Text="{Binding Path=PostedFile.File.Name}"
+                   VerticalAlignment="Center"
+                   Padding="0"
+                   Margin="5, 2.5, 2.5, 2.5"/>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
-        <TreeView x:Name="files"
-                  Grid.Row="0"
-                  Margin="10, 10, 10, 5">
-            <TreeView.ItemContainerStyle>
-                <Style TargetType="TreeViewItem">
-                    <Setter Property="ItemTemplate" 
-                            Value="{StaticResource ResourceKey=PostedFileTemplate}"/>
-                </Style>
-            </TreeView.ItemContainerStyle>
-        </TreeView>
-
-        <Button x:Name="okBtn"
-                Content="Ок"
-                Grid.Row="1"
-                MinWidth="100"
-                MinHeight="25"
-                HorizontalAlignment="Right"
+        <Button DockPanel.Dock="Right"
+                Content="{Infrastructure:Localized delete}"
+                Click="RemoveFile_Click"
                 VerticalAlignment="Center"
-                Margin="10, 5, 10, 10"
-                Click="okBtn_Click"/>
-    </Grid>
+                HorizontalAlignment="Right"
+                MinWidth="70"
+                Tag="{Binding Path=PostedFile}"
+                Margin="2.5, 2.5, 5, 2.5"/>
+      </DockPanel>
+    </DataTemplate>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <TreeView x:Name="files"
+              Grid.Row="0"
+              Margin="10, 10, 10, 5">
+      <TreeView.ItemContainerStyle>
+        <Style TargetType="TreeViewItem">
+          <Setter Property="ItemTemplate" 
+                  Value="{StaticResource ResourceKey=PostedFileTemplate}"/>
+        </Style>
+      </TreeView.ItemContainerStyle>
+    </TreeView>
+
+    <Button x:Name="okBtn"
+            Content="{Infrastructure:Localized ok}"
+            Grid.Row="1"
+            MinWidth="100"
+            MinHeight="25"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Margin="10, 5, 10, 10"
+            Click="okBtn_Click"/>
+  </Grid>
 </Window>

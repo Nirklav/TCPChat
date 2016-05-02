@@ -1,6 +1,8 @@
 ﻿using Engine.Helpers;
+using Engine.Model.Entities;
 using System;
 using System.Windows;
+using UI.Infrastructure;
 using UI.View;
 using UI.ViewModel;
 
@@ -12,8 +14,13 @@ namespace UI
     {
       base.OnStartup(e);
 
+      // Logger
       AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
+      // Set localization
+      Localizer.Instance.Set(Settings.Current.Locale);
+
+      // Create window
       var window = new MainWindow();
       var viewModel = new MainViewModel(window);
       window.DataContext = viewModel;

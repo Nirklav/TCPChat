@@ -28,7 +28,7 @@ namespace Engine.API.ServerCommands
 
       if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Невозможно назначить администратора для главной комнаты.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
         return;
       }
 
@@ -41,14 +41,12 @@ namespace Engine.API.ServerCommands
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
           return;
         }
 
         room.Admin = content.NewAdmin.Nick;
-
-        var message = string.Format("Вы назначены администратором комнаты \"{0}\".", room.Name);
-        ServerModel.Api.SendSystemMessage(content.NewAdmin.Nick, message);
+        ServerModel.Api.SendSystemMessage(content.NewAdmin.Nick, MessageId.RoomAdminChanged, room.Name);
       }
     }
 

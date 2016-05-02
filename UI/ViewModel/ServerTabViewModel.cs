@@ -8,6 +8,8 @@ namespace UI.ViewModel
 {
   public class ServerTabViewModel : SettingsTabViewModel
   {
+    private const string NameKey = "settingsTabCategory-server";
+
     #region fields
     private int serverPort;
     private int servicePort;
@@ -54,7 +56,8 @@ namespace UI.ViewModel
     }
     #endregion
 
-    public ServerTabViewModel(string name) : base(name)
+    public ServerTabViewModel() 
+      : base(NameKey, SettingsTabCategory.Server)
     {
       ServerPort = Settings.Current.Port;
       ServicePort = Settings.Current.ServicePort;

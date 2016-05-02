@@ -10,7 +10,11 @@ namespace UI.ViewModel
 {
   public class ClientTabViewModel : SettingsTabViewModel
   {
+    private const string NameKey = "settingsTabCategory-client";
+
     #region fields
+    private string locale;
+
     private string nick;
 
     private byte redValue;
@@ -19,6 +23,17 @@ namespace UI.ViewModel
     #endregion
 
     #region properties
+    public string Locale
+    {
+      get { return locale; }
+      set { SetValue(value, "Locale", v => locale = v); }
+    }
+
+    public string[] Locales
+    {
+      get { return LocalizerStorage.Languages; }
+    }
+
     public string Nick
     {
       get { return nick; }
@@ -50,8 +65,11 @@ namespace UI.ViewModel
 
     #endregion
 
-    public ClientTabViewModel(string name) : base(name)
+    public ClientTabViewModel() 
+      : base(NameKey, SettingsTabCategory.Client)
     {
+      Locale = Settings.Current.Locale;
+
       Nick = Settings.Current.Nick;
 
       RedValue = Settings.Current.NickColor.R;
@@ -61,6 +79,9 @@ namespace UI.ViewModel
 
     public override void SaveSettings()
     {
+      Localizer.Instance.Set(locale);
+
+      Settings.Current.Locale = Locale;
       Settings.Current.Nick = Nick;
       Settings.Current.NickColor = Color.FromArgb(RedValue, GreenValue, BlueValue);
     }

@@ -1,4 +1,5 @@
-﻿using Engine.Model.Server;
+﻿using Engine.Model.Entities;
+using Engine.Model.Server;
 using System;
 using System.Security;
 
@@ -24,7 +25,7 @@ namespace Engine.API.ServerCommands
 
       if (!ServerModel.Server.ContainsConnection(content.Nick))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Данного пользователя не существует.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.P2PUserNotExist);
         return;
       }
 

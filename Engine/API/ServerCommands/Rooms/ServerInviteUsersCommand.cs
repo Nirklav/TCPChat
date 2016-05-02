@@ -31,7 +31,7 @@ namespace Engine.API.ServerCommands
 
       if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, "Невозможно пригласить пользователей в основную комнату. Они и так все здесь.");
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomItsMainRoom);
         return;
       }
 
@@ -44,7 +44,7 @@ namespace Engine.API.ServerCommands
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, "Вы не являетесь администратором комнаты. Операция отменена.");
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
           return;
         }
 

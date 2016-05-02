@@ -11,7 +11,7 @@ namespace UI.Dialogs
   /// </summary>
   public partial class PostedFilesDialog : Window
   {
-    class Container
+    private class Container
     {
       public PostedFile PostedFile { get; set; }
     }
@@ -29,7 +29,7 @@ namespace UI.Dialogs
 
       using (var client = ClientModel.Get())
       {
-        foreach (PostedFile current in client.PostedFiles)
+        foreach (var current in client.PostedFiles)
         {
           var roomItem = files.Items
             .Cast<TreeViewItem>()

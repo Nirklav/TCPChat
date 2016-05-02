@@ -123,6 +123,7 @@
     <Compile Include="Model\Common\NotifierGenerator.cs" />
     <Compile Include="Model\Entities\AudioQuality.cs" />
     <Compile Include="Model\Entities\Message.cs" />
+    <Compile Include="Model\Entities\MessageId.cs" />
     <Compile Include="Model\Entities\SoundPack.cs" />
     <Compile Include="EventArgs\RecordedEventArgs.cs" />
     <Compile Include="Exceptions\ErrorCode.cs" />

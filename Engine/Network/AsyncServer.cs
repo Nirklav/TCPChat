@@ -22,18 +22,18 @@ namespace Engine.Network
     #endregion
 
     #region fields
-    private readonly Dictionary<string, ServerConnection> connections;
-    private readonly ServerRequestQueue requestQueue;
+    [SecurityCritical] private readonly Dictionary<string, ServerConnection> connections;
+    [SecurityCritical] private readonly ServerRequestQueue requestQueue;
 
-    private P2PService p2pService;
-    private Socket listener;
+    [SecurityCritical] private P2PService p2pService;
+    [SecurityCritical] private Socket listener;
 
-    private bool isServerRunning;
-    private long lastTempId;
-    private bool disposed;
+    [SecurityCritical] private bool isServerRunning;
+    [SecurityCritical] private long lastTempId;
+    [SecurityCritical] private bool disposed;
 
-    private readonly object timerSync = new object();
-    private Timer systemTimer;
+    [SecurityCritical] private readonly object timerSync = new object();
+    [SecurityCritical] private Timer systemTimer;
     #endregion
 
     #region properties and events

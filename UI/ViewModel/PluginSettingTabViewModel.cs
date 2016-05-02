@@ -11,13 +11,16 @@ namespace UI.ViewModel
 {
   public class PluginSettingTabViewModel : SettingsTabViewModel
   {
+    private const string NameKey = "settingsTabCategory-plugins";
+
     public PluginInfoViewModel SelectedPlugin { get; set; }
     public ObservableCollection<PluginInfoViewModel> Plugins { get; private set; }
 
     public Command LoadCommand { get; private set; }
     public Command UnloadCommand { get; private set; }
 
-    public PluginSettingTabViewModel(string name) : base(name) 
+    public PluginSettingTabViewModel()
+      : base(NameKey, SettingsTabCategory.Plugins) 
     {
       Plugins = new ObservableCollection<PluginInfoViewModel>();
 
