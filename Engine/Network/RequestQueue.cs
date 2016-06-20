@@ -172,6 +172,20 @@ namespace Engine.Network
       queueContainer.Enqueue(command, args);
     }
 
+    internal void Clean()
+    {
+      QueueContainer[] queues;
+
+      lock (syncObject)
+      {
+        queues = requests.Values.ToArray();
+        requests.Clear();
+      }
+
+      foreach (var queue in queues)
+        queue.Dispose();
+    }
+
     [SecurityCritical]
     protected abstract void OnError(Exception e);
 
@@ -189,17 +203,7 @@ namespace Engine.Network
         return;
 
       disposed = true;
-
-      QueueContainer[] queues;
-
-      lock (syncObject)
-      {
-        queues = requests.Values.ToArray();
-        requests.Clear();
-      }
-
-      foreach (var queue in queues)
-        queue.Dispose();
+      Clean();
     }
   }
 }

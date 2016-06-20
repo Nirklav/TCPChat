@@ -15,12 +15,16 @@ namespace UI.ViewModel
     IDisposable
   {
     private bool disposed;
+    protected Dispatcher Dispatcher;
     protected IClientNotifierContext NotifierContext;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
-    public BaseViewModel(bool initializeNotifier)
+    public BaseViewModel(BaseViewModel parent, bool initializeNotifier)
     {
+      if (parent != null)
+        Dispatcher = parent.Dispatcher;
+
       if (initializeNotifier)
       {
         NotifierContext = NotifierGenerator.MakeContext<IClientNotifierContext>();

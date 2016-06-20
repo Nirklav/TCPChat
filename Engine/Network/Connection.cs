@@ -462,8 +462,11 @@ namespace Engine.Network.Connections
         throw new ObjectDisposedException("Object disposed");
     }
 
+    /// <summary>
+    /// Очишает соединение. После вызова класс может быть переиспользован.
+    /// </summary>
     [SecuritySafeCritical]
-    protected virtual void DisposeManagedResources()
+    protected virtual void Clean()
     {
       if (handler != null)
       {
@@ -475,15 +478,34 @@ namespace Engine.Network.Connections
         }
 
         handler.Dispose();
+        handler = null;
       }
 
       if (diffieHellman != null)
+      {
         diffieHellman.Dispose();
+        diffieHellman = null;
+      }
 
       if (received != null)
+      {
         received.Dispose();
+        received = null;
+      }
 
       key = null;
+      connectionInfoSent = false;
+      remoteInfo = null;
+    }
+
+    /// <summary>
+    /// Освобождает управляемые ресурсы соедиенения.
+    /// Не может быть переиспользован после вызова.
+    /// </summary>
+    [SecuritySafeCritical]
+    protected virtual void DisposeManagedResources()
+    {
+      Clean();
     }
 
     [SecuritySafeCritical]

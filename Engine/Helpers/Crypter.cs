@@ -9,6 +9,42 @@ namespace Engine.Helpers
   [SecuritySafeCritical]
   public sealed class Crypter : IDisposable
   {
+    #region Nested types
+    /// <summary>
+    /// CryptoStream closes outputStream, this class avoids this behaviour
+    /// </summary>
+    /// <typeparam name="TStream">Real stream type</typeparam>
+    private class NotDisposableStream<TStream> : Stream
+      where TStream: Stream
+    {
+      private TStream real;
+
+      public NotDisposableStream(TStream stream)
+      {
+        if (stream == null)
+          throw new ArgumentNullException("stream");
+        real = stream;
+      }
+
+      public override bool CanRead { get { return real.CanRead; } }
+      public override bool CanSeek { get { return real.CanSeek; } }
+      public override bool CanWrite { get { return real.CanWrite; } }
+      public override long Length { get { return real.Length; } }
+
+      public override long Position
+      {
+        get { return real.Position; }
+        set { real.Position = value; }
+      }
+
+      public override void Flush() { real.Flush(); }
+      public override int Read(byte[] buffer, int offset, int count) { return real.Read(buffer, offset, count); }
+      public override long Seek(long offset, SeekOrigin origin) { return real.Seek(offset, origin); }
+      public override void SetLength(long value) { real.SetLength(value); }
+      public override void Write(byte[] buffer, int offset, int count) { real.Write(buffer, offset, count); }
+    }
+    #endregion
+
     #region Constats
     private const int BufferSize = 4096;
     #endregion
@@ -91,9 +127,11 @@ namespace Engine.Helpers
       if (outputStream == null)
         throw new ArgumentNullException("Output stream is null");
 
+      var outputWrapper = new NotDisposableStream<Stream>(outputStream);
+
       using (var transform = algorithm.CreateEncryptor())
-      using (var encrypter = new CryptoStream(outputStream, transform, CryptoStreamMode.Write))
-      using (var writer = new BinaryWriter(outputStream, Encoding.Unicode, true))
+      using (var encrypter = new CryptoStream(outputWrapper, transform, CryptoStreamMode.Write))
+      using (var writer = new BinaryWriter(outputWrapper, Encoding.Unicode, true))
       {
         writer.Write(algorithm.IV);
 
@@ -124,9 +162,11 @@ namespace Engine.Helpers
       if (outputStream == null)
         throw new ArgumentNullException("Output stream is null");
 
+      var outputWrapper = new NotDisposableStream<Stream>(outputStream);
+
       using (var transform = algorithm.CreateEncryptor())
-      using (var encrypter = new CryptoStream(outputStream, transform, CryptoStreamMode.Write))
-      using (var writer = new BinaryWriter(outputStream, Encoding.Unicode, true))
+      using (var encrypter = new CryptoStream(outputWrapper, transform, CryptoStreamMode.Write))
+      using (var writer = new BinaryWriter(outputWrapper, Encoding.Unicode, true))
       {
         writer.Write(algorithm.IV);
         Serializer.Serialize(encrypter, obj);
@@ -140,15 +180,14 @@ namespace Engine.Helpers
     /// <param name="obj">Объект который будет зашифрован.</param>
     /// <returns>Зашифрованный объект.</returns>
     [SecuritySafeCritical]
-    public byte[] Encrypt<T>(T obj)
+    public MemoryStream Encrypt<T>(T obj)
     {
       ThrowIfDisposed();
 
-      using (var outputStream = new MemoryStream())
-      {
-        Encrypt(obj, outputStream);
-        return outputStream.ToArray();
-      }
+      var outputStream = new MemoryStream();
+      Encrypt(obj, outputStream);
+      outputStream.Seek(0, SeekOrigin.Begin);
+      return outputStream;
     }
 
     /// <summary>

@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace Engine.Helpers
 {
-  public sealed class TryLock : IDisposable
+  public struct TryLock : IDisposable
   {
     private volatile bool lockTaken;
     private readonly object syncObject;

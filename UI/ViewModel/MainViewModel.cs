@@ -43,8 +43,6 @@ namespace UI.ViewModel
     #endregion
 
     #region properties
-    public Dispatcher Dispatcher { get; private set; }
-
     public bool Alerts
     {
       get { return Settings.Current.Alerts; }
@@ -101,7 +99,7 @@ namespace UI.ViewModel
 
     #region constructors
     public MainViewModel(MainWindow mainWindow)
-      : base(true)
+      : base(null, true)
     {
       window = mainWindow;
       window.Closed += WindowClosed;

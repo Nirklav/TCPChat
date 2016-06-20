@@ -255,27 +255,38 @@ namespace Engine.Plugins
     [SecurityCritical]
     internal IEnumerable GetNotifierContexts()
     {
-      return NotifierContexts.Values;
+      lock (SyncObject)
+        return NotifierContexts.Values.ToArray();
     }
 
     [SecurityCritical]
     public bool IsLoaded(string name)
     {
-      return Plugins.ContainsKey(name);
+      lock (SyncObject)
+        return Plugins.ContainsKey(name);
     }
 
     [SecurityCritical]
     public string[] GetPlugins()
     {
-      if (infos == null)
-        return null;
-      return infos.Select(pi => pi.Name).ToArray();
+      lock (SyncObject)
+      {
+        if (infos == null)
+          return null;
+        return infos.Select(pi => pi.Name).ToArray();
+      }
     }
 
     [SecurityCritical]
     private static string[] FindLibraries(string path)
     {
-      return Directory.GetFiles(path).Where(f => f.Contains(".dll")).ToArray();
+      if (!Directory.Exists(path))
+        return new string[0];
+
+      return Directory
+        .GetFiles(path)
+        .Where(f => string.Equals(Path.GetExtension(f), "dll", StringComparison.OrdinalIgnoreCase))
+        .ToArray();
     }
 
     #endregion

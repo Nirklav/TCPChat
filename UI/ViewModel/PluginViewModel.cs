@@ -13,7 +13,7 @@ namespace UI.ViewModel
     public Command InvokeCommand { get; private set;} 
 
     public PluginViewModel(string pluginName)
-      : base(false)
+      : base(null, false)
     {
       try
       {

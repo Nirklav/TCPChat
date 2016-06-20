@@ -27,7 +27,7 @@ namespace UI.ViewModel
 
     #region constructors
     public SettingsViewModel(SettingsView view)
-      : base(false)
+      : base(null, false)
     {
       window = view;
       CloseSettingsCommand = new Command(CloseSettings);

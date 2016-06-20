@@ -36,7 +36,7 @@ namespace UI.ViewModel
     #endregion
 
     public SettingsTabViewModel(string nameKey, SettingsTabCategory category)
-      : base(false)
+      : base(null, false)
     {
       this.nameKey = nameKey;
       this.category = category;

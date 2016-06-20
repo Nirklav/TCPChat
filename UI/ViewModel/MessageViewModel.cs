@@ -126,7 +126,7 @@ namespace UI.ViewModel
     }
 
     private MessageViewModel(long messageId, RoomViewModel room, bool initializeNotifier)
-      : base(initializeNotifier)
+      : base(room, initializeNotifier)
     {
       MessageId = messageId;
       roomViewModel = room;
@@ -153,7 +153,7 @@ namespace UI.ViewModel
         || Progress == e.Progress)
         return;
           
-      roomViewModel.MainViewModel.Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
       {
         if (args.Progress < 100)
           Progress = args.Progress;
@@ -170,7 +170,7 @@ namespace UI.ViewModel
       if (e.RoomName != roomViewModel.Name || !e.File.Equals(File))
         return;
 
-      roomViewModel.MainViewModel.Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
       {
         Progress = 0;
         File = null;

@@ -5,6 +5,7 @@ using Engine.Network.Connections;
 using Lidgren.Network;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -315,18 +316,20 @@ namespace Engine.Network
     [SecurityCritical]
     private NetOutgoingMessage CreateMessage(string peerId, IPackage package)
     {
-      byte[] pack;     
+      MemoryStream pack;     
       using (var crypter = new Crypter())
       {
         crypter.SetKey(GetKey(peerId));
         pack = crypter.Encrypt(package);
       }
 
-      var message = handler.CreateMessage(pack.Length);
-      message.Write(pack);
+      var buffer = pack.GetBuffer();
+      var length = (int)pack.Length;
+      var message = handler.CreateMessage(length);
+      message.Write(buffer, 0, length);
       return message;
     }
-    
+
     [SecurityCritical]
     private NetOutgoingMessage CreateHailMessage()
     {

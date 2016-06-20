@@ -129,11 +129,11 @@ namespace UI.ViewModel
     #endregion
 
     #region constructors
-    public RoomViewModel(MainViewModel mainViewModel, Room room, IList<User> users)
-      : base(true)
+    public RoomViewModel(MainViewModel main, Room room, IList<User> users)
+      : base(main, true)
     {
       Description = room;
-      MainViewModel = mainViewModel;
+      MainViewModel = main;
       Messages = new ObservableCollection<MessageViewModel>();
 
       allInRoom = new UserViewModel(AllInRoomKey, new User(string.Empty, Color.Black), this);
@@ -343,7 +343,7 @@ namespace UI.ViewModel
       if (e.RoomName != Name)
         return;
 
-      MainViewModel.Dispatcher.BeginInvoke(new Action<ReceiveMessageEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<ReceiveMessageEventArgs>(args =>
       {
         var senderUser = MainViewModel.AllUsers.Single(uvm => uvm.Info.Nick == args.Sender);
 
@@ -370,7 +370,7 @@ namespace UI.ViewModel
       if (e.Room.Name != Name)
         return;
 
-      MainViewModel.Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
+      Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
       {
         Description = args.Room;
 

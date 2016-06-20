@@ -13,25 +13,25 @@ namespace UI.ViewModel
     #region fields
     private bool isClient;
     private string nickKey;
+    private RoomViewModel parent;
     #endregion
 
     #region properties
     public User Info { get; private set; }
-    public RoomViewModel RoomViewModel { get; private set; }
     #endregion
 
     #region constructors
-    public UserViewModel(User info, RoomViewModel roomViewModel)
-      : this(null, info, roomViewModel)
+    public UserViewModel(User info, RoomViewModel parentViewModel)
+      : this(null, info, parentViewModel)
     {
 
     }
 
-    public UserViewModel(string nickLocKey, User info, RoomViewModel roomViewModel)
-      : base(false)
+    public UserViewModel(string nickLocKey, User info, RoomViewModel parentViewModel)
+      : base(parentViewModel, false)
     {
       Info = info;
-      RoomViewModel = roomViewModel;
+      parent = parentViewModel;
       nickKey = nickLocKey;
 
       SetRoomAdminCommand = new Command(SetRoomAdmin, _ => ClientModel.Client != null);
@@ -85,8 +85,8 @@ namespace UI.ViewModel
     #region command methods
     private void UserClick(object obj)
     {
-      RoomViewModel.Message += Nick + ", ";
-      RoomViewModel.MessageCaretIndex = RoomViewModel.Message.Length;
+      parent.Message += Nick + ", ";
+      parent.MessageCaretIndex = parent.Message.Length;
     }
 
     private void SetRoomAdmin(object obj)
@@ -94,11 +94,11 @@ namespace UI.ViewModel
       try
       {
         if (ClientModel.Api != null)
-          ClientModel.Api.SetRoomAdmin(RoomViewModel.MainViewModel.SelectedRoom.Name, Info);
+          ClientModel.Api.SetRoomAdmin(parent.MainViewModel.SelectedRoom.Name, Info);
       }
       catch (SocketException se)
       {
-        RoomViewModel.AddSystemMessage(se.Message);
+        parent.AddSystemMessage(se.Message);
       }
     }
     #endregion

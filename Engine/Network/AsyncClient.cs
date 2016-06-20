@@ -25,10 +25,15 @@ namespace Engine.Network
     private const string ClientId = "Client";
 
     private static readonly SocketError[] reconnectErrors =
-    { 
-      SocketError.NetworkReset, SocketError.ConnectionAborted,
-      SocketError.ConnectionReset, SocketError.TimedOut,
-      SocketError.HostDown
+    {
+      SocketError.NetworkUnreachable,
+      SocketError.NetworkDown,
+      SocketError.NetworkReset,
+      SocketError.ConnectionAborted,
+      SocketError.ConnectionReset,
+      SocketError.TimedOut,
+      SocketError.HostDown,
+      SocketError.HostUnreachable    
     };
 
     #endregion
@@ -52,6 +57,7 @@ namespace Engine.Network
     public AsyncClient(string nick)
     {
       requestQueue = new ClientRequestQueue();
+      timer = new Timer(OnTimer, null, SystemTimerInterval, -1);
       reconnecting = false;
       reconnect = true;
       Id = nick;
@@ -105,7 +111,6 @@ namespace Engine.Network
         throw new InvalidOperationException("Client already connected");
 
       hostAddress = serverAddress;
-      timer = new Timer(OnTimer, null, SystemTimerInterval, -1);
 
       handler = new Socket(serverAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       handler.BeginConnect(serverAddress, OnConnected, null);
@@ -124,11 +129,10 @@ namespace Engine.Network
         handler.EndConnect(result);
 
         Construct(handler);
-        reconnecting = false;
       }
       catch (SocketException se)
       {
-        if (se.SocketErrorCode == SocketError.ConnectionRefused)
+        if (reconnectErrors.Contains(se.SocketErrorCode))
           reconnecting = true;
         else
         {
@@ -203,7 +207,6 @@ namespace Engine.Network
     private void OnTimer(object state)
     {
       TrySendPingRequest();
-
       TryReconnect();
 
       lock (syncObject)
@@ -235,13 +238,18 @@ namespace Engine.Network
       if (interval < ReconnectTimeInterval)
         return;
 
-      ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs { SystemMessage = MessageId.ConnectionRetryAttempt, Type = MessageType.System });
+      var args = new ReceiveMessageEventArgs
+      {
+        SystemMessage = MessageId.ConnectionRetryAttempt,
+        Type = MessageType.System
+      };
 
-      if (handler != null)
-        handler.Dispose();
+      ClientModel.Notifier.ReceiveMessage(args);
 
+      Clean();
       Connect(hostAddress);
 
+      reconnecting = false;
       lastReconnect = DateTime.Now;
     }
 
@@ -256,12 +264,23 @@ namespace Engine.Network
     #region IDisposable
 
     [SecuritySafeCritical]
+    protected override void Clean()
+    {
+      base.Clean();
+
+      requestQueue.Clean();
+    }
+
+    [SecuritySafeCritical]
     protected override void DisposeManagedResources()
     {
       base.DisposeManagedResources();
 
       if (requestQueue != null)
+      {
         requestQueue.Dispose();
+        requestQueue = null;
+      }
 
       lock (syncObject)
       {
