@@ -12,9 +12,11 @@ Port: 10021
 ```
 
 Supports:
-  1. Encryption. Diffie–Hellman key exchange. AES-256.
-  2. Private messages.
+  1. Full trafic encryption. Diffie–Hellman key exchange. AES-256.
+  2. Private messages. (P2P)
   3. Rooms.
-  4. Voice chat.
-  5. Files sharing.
+  4. Voice chat. (P2P)
+  5. Files sharing. (P2P)
   6. Plugins (Example of simple plugin: https://github.com/Nirklav/ScreenshotPlugin).
+
+P2P means that connection is established directly between clients without server.
