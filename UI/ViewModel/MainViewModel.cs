@@ -123,15 +123,15 @@ namespace UI.ViewModel
 
       ClearTabs();
 
-      EnableServerCommand = new Command(EnableServer, _ => ServerModel.Server == null);
-      DisableServerCommand = new Command(DisableServer, _ => ServerModel.Server != null);
-      ConnectCommand = new Command(Connect, _ => ClientModel.Client == null);
-      DisconnectCommand = new Command(Disconnect, _ => ClientModel.Client != null);
+      EnableServerCommand = new Command(EnableServer, _ => !ServerModel.IsInited && !ClientModel.IsInited);
+      DisableServerCommand = new Command(DisableServer, _ => ServerModel.IsInited);
+      ConnectCommand = new Command(Connect, _ => !ClientModel.IsInited);
+      DisconnectCommand = new Command(Disconnect, _ => ClientModel.IsInited);
       ExitCommand = new Command(_ => window.Close());
-      CreateRoomCommand = new Command(CreateRoom, _ => ClientModel.Client != null);
-      DeleteRoomCommand = new Command(DeleteRoom, _ => ClientModel.Client != null);
-      ExitFromRoomCommand = new Command(ExitFromRoom, _ => ClientModel.Client != null);
-      OpenFilesDialogCommand = new Command(OpenFilesDialog, _ => ClientModel.Client != null);
+      CreateRoomCommand = new Command(CreateRoom, _ => ClientModel.IsInited);
+      DeleteRoomCommand = new Command(DeleteRoom, _ => ClientModel.IsInited);
+      ExitFromRoomCommand = new Command(ExitFromRoom, _ => ClientModel.IsInited);
+      OpenFilesDialogCommand = new Command(OpenFilesDialog, _ => ClientModel.IsInited);
       OpenAboutProgramCommand = new Command(OpenAboutProgram);
       OpenSettingsCommand = new Command(OpenSettings);
     }
