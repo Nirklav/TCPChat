@@ -27,25 +27,20 @@ namespace UI.ViewModel
     private const string FileDialogFilter = "Все файлы|*.*";
 
     private const int MessagesLimit = 200;
-    private const int CountToDelete = 100;
+    private const int ShrinkSize = 100;
     #endregion
 
     #region fields
     private bool updated;
     private bool messagesAutoScroll;
     private string message;
+    private long? messageId;
     private int messageCaretIndex;
     private UserViewModel allInRoom;
+    private UserViewModel selectedReciver;
 
     private ObservableCollection<MessageViewModel> messages;
     private HashSet<long> messageIds;
-
-    private long? messageId;
-    private long? SelectedMessageId
-    {
-      get { return messageId; }
-      set { SetValue(value, "IsMessageSelected", v => messageId = v); }
-    }
     #endregion
 
     #region commands
@@ -59,9 +54,54 @@ namespace UI.ViewModel
 
     #region properties
     public Room Description { get; private set; }
-    public UserViewModel SelectedReceiver { get; set; }
     public MainViewModel MainViewModel { get; private set; }
     public bool IsMessageSelected { get { return SelectedMessageId != null; } } // OnProperyChanged called from SelectedMessageId
+    public ObservableCollection<UserViewModel> Users { get; private set; }
+
+    public ObservableCollection<MessageViewModel> Messages
+    {
+      get { return messages; }
+      set { SetValue(value, "Messages", v => messages = v); }
+    }
+
+    public string Message
+    {
+      get { return message; }
+      set
+      {
+        SetValue(value, "Message", v => message = v);
+        if (value == string.Empty)
+          SelectedMessageId = null;
+      }
+    }
+
+    private long? SelectedMessageId
+    {
+      get { return messageId; }
+      set { SetValue(value, "IsMessageSelected", v => messageId = v); }
+    }
+
+    public string Name
+    {
+      get { return Description.Name; }
+    }
+
+    public RoomType Type
+    {
+      get { return Description.Type; }
+    }
+
+    public bool Updated
+    {
+      get { return updated; }
+      set { SetValue(value, "Updated", v => updated = v); }
+    }
+
+    public int MessageCaretIndex
+    {
+      get { return messageCaretIndex; }
+      set { SetValue(value, "MessageCaretIndex", v => messageCaretIndex = v); }
+    }
 
     public bool MessagesAutoScroll
     {
@@ -76,35 +116,11 @@ namespace UI.ViewModel
       }
     }
 
-    public bool Updated
+    public UserViewModel SelectedReceiver
     {
-      get { return updated; }
-      set { SetValue(value, "Updated", v => updated = v); }
+      get { return selectedReciver; }
+      set { SetValue(value, "SelectedReceiver", v => selectedReciver = v); }
     }
-
-    public string Name
-    {
-      get { return Description.Name; }
-    }
-
-    public string Message
-    {
-      get { return message; }
-      set 
-      { 
-        SetValue(value, "Message", v => message = v);
-        if (value == string.Empty)
-          SelectedMessageId = null;
-      }
-    }
-
-    public int MessageCaretIndex
-    {
-      get { return messageCaretIndex; }
-      set { SetValue(value, "MessageCaretIndex", v => messageCaretIndex = v); }
-    }
-
-    public RoomType Type { get { return Description is VoiceRoom ? RoomType.Voice : RoomType.Chat; } }
 
     public IEnumerable<UserViewModel> Receivers
     {
@@ -114,18 +130,8 @@ namespace UI.ViewModel
         foreach (var user in MainViewModel.AllUsers)
           if (!user.IsClient)
             yield return user;
-
-        SelectedReceiver = allInRoom;
       }
     }
-
-    public ObservableCollection<MessageViewModel> Messages
-    {
-      get { return messages; }
-      set { SetValue(value, "Messages", v => messages = v); }
-    }
-
-    public ObservableCollection<UserViewModel> Users { get; private set; }
     #endregion
 
     #region constructors
@@ -135,8 +141,8 @@ namespace UI.ViewModel
       Description = room;
       MainViewModel = main;
       Messages = new ObservableCollection<MessageViewModel>();
+      SelectedReceiver = allInRoom = new UserViewModel(AllInRoomKey, new User(string.Empty, Color.Black), this);
 
-      allInRoom = new UserViewModel(AllInRoomKey, new User(string.Empty, Color.Black), this);
       messageIds = new HashSet<long>();
       Users = new ObservableCollection<UserViewModel>(users == null
         ? Enumerable.Empty<UserViewModel>()
@@ -148,6 +154,7 @@ namespace UI.ViewModel
       InviteInRoomCommand = new Command(InviteInRoom, _ => ClientModel.Client != null);
       KickFromRoomCommand = new Command(KickFromRoom, _ => ClientModel.Client != null);
       ClearSelectedMessageCommand = new Command(ClearSelectedMessage, _ => ClientModel.Client != null);
+      
 
       MainViewModel.AllUsers.CollectionChanged += AllUsersCollectionChanged;
       NotifierContext.ReceiveMessage += ClientReceiveMessage;
@@ -205,7 +212,7 @@ namespace UI.ViewModel
 
     private void AddMessage(MessageViewModel message)
     {
-      TryClearMessages();
+      TryShrinkMessages();
 
       if (message.MessageId == Room.SpecificMessageId || messageIds.Add(message.MessageId))
         Messages.Add(message);
@@ -218,16 +225,16 @@ namespace UI.ViewModel
       MessagesAutoScroll = true;
     }
 
-    private void TryClearMessages()
+    private void TryShrinkMessages()
     {
       if (Messages.Count < MessagesLimit)
         return;
 
-      for (int i = 0; i < CountToDelete; i++)
+      for (int i = 0; i < ShrinkSize; i++)
         Messages[i].Dispose();
 
-      var leftMessages = Messages.Skip(CountToDelete);
-      var deletingMessages = Messages.Take(CountToDelete);
+      var leftMessages = Messages.Skip(ShrinkSize);
+      var deletingMessages = Messages.Take(ShrinkSize);
 
       messageIds.ExceptWith(deletingMessages.Select(m => m.MessageId));
       Messages = new ObservableCollection<MessageViewModel>(leftMessages);
@@ -336,6 +343,9 @@ namespace UI.ViewModel
     private void AllUsersCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
       OnPropertyChanged("Receivers");
+
+      if (SelectedReceiver == null)
+        SelectedReceiver = allInRoom;
     }
 
     private void ClientReceiveMessage(object sender, ReceiveMessageEventArgs e)

@@ -65,7 +65,7 @@ namespace Engine.API.ServerCommands
         var roomOpenContent = new ClientRoomOpenedCommand.MessageContent
         {
           Room = room,
-          Type = room is VoiceRoom ? RoomType.Voice : RoomType.Chat,
+          Type = room.Type,
           Users = users
         };
 

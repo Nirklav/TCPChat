@@ -372,14 +372,26 @@ namespace UI.ViewModel
       {
         if (args.Room.Name == ServerModel.MainRoomName)
         {
-          AllUsers.Clear();
-
           using (var client = ClientModel.Get())
           {
-            foreach (string nick in args.Room.Users)
+            // Remove items
+            for (int i = AllUsers.Count - 1; i >= 0; i--)
             {
-              var user = args.Users.Single(u => u.Equals(nick));
-              AllUsers.Add(new UserViewModel(user, null) { IsClient = user.Equals(client.User) });
+              var uvm = AllUsers[i];
+              if (args.Users.Exists(u => u.Nick == uvm.Nick))
+                continue;
+              AllUsers.RemoveAt(i);
+            }
+
+            // Add unexisting items
+            foreach (var user in args.Users)
+            {
+              if (AllUsers.Any(uvm => uvm.Nick == user.Nick))
+                continue;
+
+              var userViewModel = new UserViewModel(user, null);
+              userViewModel.IsClient = user.Equals(client.User);
+              AllUsers.Add(userViewModel);
             }
           }
         }

@@ -59,6 +59,14 @@ namespace Engine.Model.Entities
     }
 
     /// <summary>
+    /// Тип комнаты.
+    /// </summary>
+    public virtual RoomType Type
+    {
+      get { return RoomType.Chat; }
+    }
+
+    /// <summary>
     /// Название комнаты.
     /// </summary>
     public string Name

@@ -49,6 +49,14 @@ namespace Engine.Model.Entities
     }
 
     /// <summary>
+    /// Тип комнаты.
+    /// </summary>
+    public override RoomType Type
+    {
+      get { return RoomType.Voice; }
+    }
+
+    /// <summary>
     /// Добавляет пользователя в комнату.
     /// </summary>
     /// <param name="nick">Ник пользователя.</param>
