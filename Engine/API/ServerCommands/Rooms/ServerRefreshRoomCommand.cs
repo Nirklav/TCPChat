@@ -44,7 +44,9 @@ namespace Engine.API.ServerCommands
         var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
         {
           Room = room,
-          Users = room.Users.Select(nick => server.Users[nick]).ToList()
+          Users = room.Users
+            .Select(n => server.Users[n])
+            .ToList()
         };
         ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomRefreshedCommand.CommandId, roomRefreshedContent);
       }

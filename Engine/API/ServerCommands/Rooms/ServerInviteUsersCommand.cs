@@ -59,7 +59,7 @@ namespace Engine.API.ServerCommands
         }
 
         var users = room.Users
-          .Select(nick => server.Users[nick])
+          .Select(n => server.Users[n])
           .ToList();
 
         var roomOpenContent = new ClientRoomOpenedCommand.MessageContent

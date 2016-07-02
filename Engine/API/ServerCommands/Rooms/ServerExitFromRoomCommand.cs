@@ -37,7 +37,6 @@ namespace Engine.API.ServerCommands
       using (var server = ServerModel.Get())
       {
         var room = server.Rooms[content.RoomName];
-
         if (!room.Users.Contains(args.ConnectionId))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
@@ -48,7 +47,7 @@ namespace Engine.API.ServerCommands
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { Room = room };
         ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
 
-        if (string.Equals(room.Admin, args.ConnectionId))
+        if (room.Admin == args.ConnectionId)
         {
           room.Admin = room.Users.FirstOrDefault();
           if (room.Admin != null)

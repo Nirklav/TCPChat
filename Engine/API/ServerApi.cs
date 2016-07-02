@@ -135,20 +135,16 @@ namespace Engine.API
     [SecuritySafeCritical]
     public void RemoveUser(string nick)
     {
-      ServerModel.Server.CloseConnection(nick);
-
       using (var server = ServerModel.Get())
       {
-        foreach (string roomName in server.Rooms.Keys)
+        foreach (var room in server.Rooms.Values)
         {
-          var room = server.Rooms[roomName];
           if (!room.Users.Contains(nick))
             continue;
 
           room.RemoveUser(nick);
-          server.Users.Remove(nick);
 
-          if (string.Equals(room.Admin, nick))
+          if (room.Admin == nick)
           {
             room.Admin = room.Users.FirstOrDefault();
             if (room.Admin != null)
@@ -158,19 +154,21 @@ namespace Engine.API
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent
           {
             Room = room,
-            Users = room.Users.Select(n => server.Users[n]).ToList()
+            Users = room.Users
+              .Select(n => server.Users[n])
+              .ToList()
           };
 
-          foreach (string user in room.Users)
-          {
-            if (user == null)
-              continue;
-
+          foreach (var user in room.Users)
             ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.CommandId, sendingContent);
-          }
         }
+
+        // Removing user from model after all rooms
+        server.Users.Remove(nick);
       }
 
+      // Closing the connection after model clearing
+      ServerModel.Server.CloseConnection(nick);
       ServerModel.Notifier.Unregistered(new ServerRegistrationEventArgs { Nick = nick });
     }
   }

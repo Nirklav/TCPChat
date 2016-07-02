@@ -83,10 +83,12 @@ namespace Engine.API.ServerCommands
       var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
       {
         Room = room,
-        Users = room.Users.Select(nick => server.Users[nick]).ToList()
+        Users = room.Users
+          .Select(n => server.Users[n])
+          .ToList()
       };
 
-      foreach (string user in room.Users)
+      foreach (var user in room.Users)
         ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.CommandId, roomRefreshedContent);
     }
     #endregion

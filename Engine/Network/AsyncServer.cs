@@ -291,28 +291,29 @@ namespace Engine.Network
     [SecurityCritical]
     private void RefreshConnections()
     {
-      List<string> removingUsers = null; // Prevent deadlock (in RemoveUser locked ServerModel)
+      HashSet<string> removingUsers = null; // Prevent deadlock (in RemoveUser locked ServerModel)
 
       lock (connections)
       {
         var keys = connections.Keys.ToArray();
-        foreach (string id in keys)
+        foreach (var id in keys)
         {
           try
           {
-            if (connections[id].UnregisteredTimeInterval >= ServerConnection.UnregisteredTimeOut)
+            var connection = connections[id];
+            if (connection.UnregisteredTimeInterval >= ServerConnection.UnregisteredTimeOut)
             {
               CloseConnection(id);
               continue;
             }
 
-#if !DEBUG
-            if (connections[id].IntervalOfSilence >= ServerConnection.ConnectionTimeOut)
+            if (connection.IntervalOfSilence >= ServerConnection.ConnectionTimeOut)
             {
-              (removingUsers ?? (removingUsers = new List<string>())).Add(id);
+              if (removingUsers == null)
+                removingUsers = new HashSet<string>();
+              removingUsers.Add(id);
               continue;
             }
-#endif
           }
           catch (Exception e)
           {
@@ -321,19 +322,19 @@ namespace Engine.Network
         }
       }
 
-      if (removingUsers == null)
-        return;
-
-      foreach (var id in removingUsers)
+      if (removingUsers != null)
       {
-        try
+        foreach (var id in removingUsers)
         {
-          ServerModel.Api.RemoveUser(id);
-        }
-        catch(Exception e)
-        {
-          ServerModel.Logger.Write(e);
-          CloseConnection(id);
+          try
+          {
+            ServerModel.Api.RemoveUser(id);
+          }
+          catch (Exception e)
+          {
+            ServerModel.Logger.Write(e);
+            CloseConnection(id);
+          }
         }
       }
     }
@@ -347,13 +348,13 @@ namespace Engine.Network
       using (var server = ServerModel.Get())
       {
         var roomsNames = server.Rooms.Keys.ToArray();
-
-        foreach (string name in roomsNames)
+        foreach (var name in roomsNames)
         {
-          if (string.Equals(name, ServerModel.MainRoomName))
+          if (name == ServerModel.MainRoomName)
             continue;
 
-          if (server.Rooms[name].Count == 0)
+          var room = server.Rooms[name];
+          if (room.Count == 0)
             server.Rooms.Remove(name);
         }
       }
