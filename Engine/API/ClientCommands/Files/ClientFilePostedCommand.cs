@@ -26,6 +26,16 @@ namespace Engine.API.ClientCommands
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("roomName");
 
+      using (var client = ClientModel.Get())
+      {
+        Room room;
+        if (!client.Rooms.TryGetValue(content.RoomName, out room))
+          return;
+
+        room.Files.RemoveAll(f => f.Id == content.File.Id);
+        room.Files.Add(content.File);
+      }
+
       var receiveMessageArgs = new ReceiveMessageEventArgs
       {
         Type = MessageType.File,
@@ -33,7 +43,7 @@ namespace Engine.API.ClientCommands
         Message = content.File.Name,
         Sender = content.File.Owner.Nick,
         RoomName = content.RoomName,
-        State = content.File,
+        FileId = content.File.Id,
       };
 
       ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);

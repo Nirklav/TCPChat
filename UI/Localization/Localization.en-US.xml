@@ -117,4 +117,5 @@
   <row key="roomViewModel-kickFormRoomTitle" value="Kick from room"/>
   <row key="roomViewModel-nobodyToInvite" value="Nobody to invite. All already in the room."/>
   <row key="roomViewModel-allInRoom" value="All in room"/>
+  <row key="userViewModel-userNotExist" value="User does not exist."/>
 </Localization>

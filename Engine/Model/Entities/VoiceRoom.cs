@@ -23,6 +23,7 @@ namespace Engine.Model.Entities
     public VoiceRoom(string admin, string name)
       : base(admin, name) 
     {
+      enabled = true;
       connectionMap = new Dictionary<string, List<string>>();
       connectionMap.Add(admin, new List<string>());
     }
@@ -36,6 +37,7 @@ namespace Engine.Model.Entities
     public VoiceRoom(string admin, string name, IEnumerable<User> initialUsers)
       : base(admin, name, initialUsers) 
     {
+      enabled = true;
       connectionMap = new Dictionary<string, List<string>>();
 
       for (int i = 0; i < users.Count; i++)
@@ -88,6 +90,7 @@ namespace Engine.Model.Entities
 
     /// <summary>
     /// Включено ли вещание для этой комнаты.
+    /// 
     /// </summary>
     public bool Enabled
     {

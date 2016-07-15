@@ -28,12 +28,11 @@ namespace Engine.API.ServerCommands
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
-      using (var context = ServerModel.Get())
+      using (var server = ServerModel.Get())
       {
-        var room = context.Rooms[content.RoomName];
+        Room room;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+          return;
 
         if (!room.Users.Contains(args.ConnectionId))
         {

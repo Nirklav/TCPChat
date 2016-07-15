@@ -31,12 +31,12 @@ namespace Engine.API.ServerCommands
         return;
       }
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[content.RoomName];
+        Room room;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+          return;
+
         if (!room.Users.Contains(args.ConnectionId))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);

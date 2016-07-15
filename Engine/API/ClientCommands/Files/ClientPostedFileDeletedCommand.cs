@@ -1,7 +1,7 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Security;
 
 namespace Engine.API.ClientCommands
@@ -21,23 +21,35 @@ namespace Engine.API.ClientCommands
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      if (content.File == null)
-        throw new ArgumentNullException("file");
-
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("roomName");
 
       using (var client = ClientModel.Get())
       {
-        var downloadFiles = client.DownloadingFiles.Where((dFile) => dFile.File.Equals(content.File));
+        // Remove file from room
+        Room room;
+        if (client.Rooms.TryGetValue(content.RoomName, out room))
+          room.Files.RemoveAll(f => f.Id == content.FileId);
 
-        foreach (var file in downloadFiles)
+        // Remove downloading files
+        var removed = new List<DownloadingFile>();
+        client.DownloadingFiles.RemoveAll(f =>
+        {
+          if (f.File.Id == content.FileId)
+          {
+            removed.Add(f);
+            return true;
+          }
+          return false;
+        });
+
+        foreach (var file in removed)
           file.Dispose();
       }
 
       var downloadEventArgs = new FileDownloadEventArgs
       {
-        File = content.File,
+        FileId = content.FileId,
         Progress = 0,
         RoomName = content.RoomName,
       };
@@ -48,13 +60,13 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private FileDescription file;
+      private int fileId;
       private string roomName;
 
-      public FileDescription File
+      public int FileId
       {
-        get { return file; }
-        set { file = value; }
+        get { return fileId; }
+        set { fileId = value; }
       }
 
       public string RoomName

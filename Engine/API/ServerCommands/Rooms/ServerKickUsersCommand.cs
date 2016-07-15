@@ -34,12 +34,11 @@ namespace Engine.API.ServerCommands
         return;
       }
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[content.RoomName];
+        Room room;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+          return;
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
@@ -49,20 +48,20 @@ namespace Engine.API.ServerCommands
 
         var sendingContent = new ClientRoomClosedCommand.MessageContent { Room = room };
 
-        foreach (var user in content.Users)
+        foreach (var userNick in content.Users)
         {
-          if (!room.ContainsUser(user.Nick))
+          if (!room.ContainsUser(userNick))
             continue;
 
-          if (user.Equals(room.Admin))
+          if (userNick.Equals(room.Admin))
           {
             ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
             continue;
           }
 
-          room.RemoveUser(user.Nick);
+          room.RemoveUser(userNick);
 
-          ServerModel.Server.SendMessage(user.Nick, ClientRoomClosedCommand.CommandId, sendingContent);
+          ServerModel.Server.SendMessage(userNick, ClientRoomClosedCommand.CommandId, sendingContent);
         }
 
         RefreshRoom(server, room);
@@ -73,7 +72,7 @@ namespace Engine.API.ServerCommands
     public class MessageContent
     {
       private string roomName;
-      private List<User> users;
+      private List<string> users;
 
       public string RoomName
       {
@@ -81,7 +80,7 @@ namespace Engine.API.ServerCommands
         set { roomName = value; }
       }
 
-      public List<User> Users
+      public List<string> Users
       {
         get { return users; }
         set { users = value; }

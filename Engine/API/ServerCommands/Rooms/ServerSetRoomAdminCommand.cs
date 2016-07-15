@@ -23,7 +23,7 @@ namespace Engine.API.ServerCommands
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (content.NewAdmin == null)
+      if (string.IsNullOrEmpty(content.NewAdmin))
         throw new ArgumentNullException("NewAdmin");
 
       if (string.Equals(content.RoomName, ServerModel.MainRoomName))
@@ -32,12 +32,11 @@ namespace Engine.API.ServerCommands
         return;
       }
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[content.RoomName];
+        Room room;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+          return;
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
@@ -45,8 +44,14 @@ namespace Engine.API.ServerCommands
           return;
         }
 
-        room.Admin = content.NewAdmin.Nick;
-        ServerModel.Api.SendSystemMessage(content.NewAdmin.Nick, MessageId.RoomAdminChanged, room.Name);
+        if (!room.Users.Contains(content.NewAdmin))
+        {
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomUserNotExist);
+          return;
+        }
+
+        room.Admin = content.NewAdmin;
+        ServerModel.Api.SendSystemMessage(content.NewAdmin, MessageId.RoomAdminChanged, room.Name);
       }
     }
 
@@ -54,7 +59,7 @@ namespace Engine.API.ServerCommands
     public class MessageContent
     {
       private string roomName;
-      private User newAdmin;
+      private string newAdmin;
 
       public string RoomName
       {
@@ -62,7 +67,7 @@ namespace Engine.API.ServerCommands
         set { roomName = value; }
       }
 
-      public User NewAdmin
+      public string NewAdmin
       {
         get { return newAdmin; }
         set { newAdmin = value; }

@@ -12,7 +12,7 @@
 
   <Window.Resources>
     <DataTemplate x:Key="UserListItemTemplate">
-      <CheckBox Content="{Binding Path=User.Nick}"
+      <CheckBox Content="{Binding Path=Nick}"
                 IsChecked="{Binding Path=Invite, UpdateSourceTrigger=PropertyChanged}"/>
     </DataTemplate>
   </Window.Resources>

@@ -4,7 +4,6 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using Engine.Network.Connections;
 using Engine.Plugins;
-using System.Linq;
 using System.Security;
 
 namespace Engine.API.ServerCommands
@@ -56,19 +55,15 @@ namespace Engine.API.ServerCommands
     /// <param name="connectionId">Id соединения.</param>
     /// <returns>Возвращает false если комнаты не существует.</returns>
     [SecurityCritical]
-    protected static bool RoomExists(string roomName, string connectionId)
+    protected static bool TryGetRoom(ServerContext server, string roomName, string connectionId, out Room room)
     {
-      bool result;
-      using(var context = ServerModel.Get())
-        result = context.Rooms.ContainsKey(roomName);
-
+      var result = server.Rooms.TryGetValue(roomName, out room);
       if (!result)
       {
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { Room = new Room(null, roomName) };
         ServerModel.Server.SendMessage(connectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
         ServerModel.Api.SendSystemMessage(connectionId, MessageId.RoomNotExist);
       }
-
       return result;
     }
 
@@ -83,9 +78,7 @@ namespace Engine.API.ServerCommands
       var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
       {
         Room = room,
-        Users = room.Users
-          .Select(n => server.Users[n])
-          .ToList()
+        Users = ServerModel.Api.GetRoomUsers(server, room)
       };
 
       foreach (var user in room.Users)

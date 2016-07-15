@@ -79,7 +79,6 @@ namespace UI.ViewModel
     }
 
     public ObservableCollection<RoomViewModel> Rooms { get; private set; }
-    public ObservableCollection<UserViewModel> AllUsers { get; private set; }
     public ObservableCollection<PluginViewModel> Plugins { get; private set; }
     #endregion
 
@@ -104,24 +103,20 @@ namespace UI.ViewModel
       window = mainWindow;
       window.Closed += WindowClosed;
       Rooms = new ObservableCollection<RoomViewModel>();
-      AllUsers = new ObservableCollection<UserViewModel>();
       Plugins = new ObservableCollection<PluginViewModel>();
       Dispatcher = mainWindow.Dispatcher;
 
       KeyBoard.KeyDown += OnKeyDown;
       KeyBoard.KeyUp += OnKeyUp;
 
-      NotifierContext.Connected += ClientConnect;
-      NotifierContext.ReceiveMessage += ClientReceiveMessage;
-      NotifierContext.ReceiveRegistrationResponse += ClientRegistration;
-      NotifierContext.RoomRefreshed += ClientRoomRefreshed;
-      NotifierContext.RoomClosed += ClientRoomClosed;
-      NotifierContext.RoomOpened += ClientRoomOpened;
-      NotifierContext.AsyncError += ClientAsyncError;
-      NotifierContext.PluginLoaded += ClientPluginLoaded;
-      NotifierContext.PluginUnloading += ClientPluginUnloading;
-
-      ClearTabs();
+      NotifierContext.Connected += CreateSubscriber<ConnectEventArgs>(ClientConnect);
+      NotifierContext.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
+      NotifierContext.ReceiveRegistrationResponse += CreateSubscriber<RegistrationEventArgs>(ClientRegistration);
+      NotifierContext.RoomClosed += CreateSubscriber<RoomEventArgs>(ClientRoomClosed);
+      NotifierContext.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
+      NotifierContext.AsyncError += CreateSubscriber<AsyncErrorEventArgs>(ClientAsyncError);
+      NotifierContext.PluginLoaded += CreateSubscriber<PluginEventArgs>(ClientPluginLoaded);
+      NotifierContext.PluginUnloading += CreateSubscriber<PluginEventArgs>(ClientPluginUnloading);
 
       EnableServerCommand = new Command(EnableServer, _ => !ServerModel.IsInited && !ClientModel.IsInited);
       DisableServerCommand = new Command(DisableServer, _ => ServerModel.IsInited);
@@ -134,6 +129,8 @@ namespace UI.ViewModel
       OpenFilesDialogCommand = new Command(OpenFilesDialog, _ => ClientModel.IsInited);
       OpenAboutProgramCommand = new Command(OpenAboutProgram);
       OpenSettingsCommand = new Command(OpenSettings);
+
+      ClearTabs();
     }
 
     protected override void DisposeManagedResources()
@@ -142,19 +139,6 @@ namespace UI.ViewModel
 
       KeyBoard.KeyDown -= OnKeyDown;
       KeyBoard.KeyUp -= OnKeyUp;
-
-      if (NotifierContext != null)
-      {
-        NotifierContext.Connected -= ClientConnect;
-        NotifierContext.ReceiveMessage -= ClientReceiveMessage;
-        NotifierContext.ReceiveRegistrationResponse -= ClientRegistration;
-        NotifierContext.RoomRefreshed -= ClientRoomRefreshed;
-        NotifierContext.RoomClosed -= ClientRoomClosed;
-        NotifierContext.RoomOpened -= ClientRoomOpened;
-        NotifierContext.AsyncError -= ClientAsyncError;
-        NotifierContext.PluginLoaded -= ClientPluginLoaded;
-        NotifierContext.PluginUnloading -= ClientPluginUnloading;
-      }
     }
     #endregion
 
@@ -213,8 +197,7 @@ namespace UI.ViewModel
 
     private void Connect(object obj)
     {
-      ConnectDialog dialog = new ConnectDialog();
-
+      var dialog = new ConnectDialog();
       if (dialog.ShowDialog() == true)
         InitializeClient(false);
     }
@@ -238,7 +221,7 @@ namespace UI.ViewModel
     {
       try
       {
-        CreateRoomDialog dialog = new CreateRoomDialog();
+        var dialog = new CreateRoomDialog();
         if (dialog.ShowDialog() == true && ClientModel.Api != null)
           ClientModel.Api.CreateRoom(dialog.Name, dialog.Type);
       }
@@ -284,20 +267,20 @@ namespace UI.ViewModel
 
     private void OpenFilesDialog(object obj)
     {
-      PostedFilesDialog dialog = new PostedFilesDialog();
+      var dialog = new PostedFilesDialog();
       dialog.ShowDialog();
     }
 
     private void OpenAboutProgram(object obj)
     {
-      AboutProgramDialog dialog = new AboutProgramDialog();
+      var dialog = new AboutProgramDialog();
       dialog.ShowDialog();
     }
 
     private void OpenSettings(object obj)
     {
       SettingsViewModel viewModel;
-      SettingsView settings = new SettingsView();
+      var settings = new SettingsView();
       settings.DataContext = viewModel = new SettingsViewModel(settings);
       settings.ShowDialog();
 
@@ -306,165 +289,104 @@ namespace UI.ViewModel
     #endregion
 
     #region client events
-    private void ClientConnect(object sender, ConnectEventArgs e)
+    private void ClientConnect(ConnectEventArgs args)
     {
-      Dispatcher.BeginInvoke(new Action<ConnectEventArgs>(args =>
+      if (args.Error != null)
       {
-        if (args.Error != null)
-        {
-          SelectedRoom.AddSystemMessage(args.Error.Message);
+        SelectedRoom.AddSystemMessage(args.Error.Message);
 
-          if (ClientModel.IsInited)
-            ClientModel.Reset();
+        if (ClientModel.IsInited)
+          ClientModel.Reset();
 
-          return;
-        }
+        return;
+      }
 
-        if (ClientModel.Api != null)
-          ClientModel.Api.Register();
-      }), e);
+      if (ClientModel.Api != null)
+        ClientModel.Api.Register();
     }
 
-    private void ClientRegistration(object sender, RegistrationEventArgs e)
+    private void ClientRegistration(RegistrationEventArgs e)
     {
-      Dispatcher.BeginInvoke(new Action<RegistrationEventArgs>(args =>
+      if (!e.Registered)
       {
-        if (!args.Registered)
-        {
-          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(args.Message));
+        SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(e.Message));
 
-          if (ClientModel.IsInited)
-            ClientModel.Reset();
-        }
-      }), e);
+        if (ClientModel.IsInited)
+          ClientModel.Reset();
+      }
     }
 
-    private void ClientReceiveMessage(object sender, ReceiveMessageEventArgs e)
+    private void ClientReceiveMessage(ReceiveMessageEventArgs e)
     {
       if (e.Type != MessageType.System && e.Type != MessageType.Private)
         return;
 
-      Dispatcher.BeginInvoke(new Action<ReceiveMessageEventArgs>(args =>
+      switch (e.Type)
       {
-        switch (args.Type)
+        case MessageType.Private:
+          SelectedRoom.AddPrivateMessage(e.Sender, ClientModel.Client.Id, e.Message);
+          break;
+
+        case MessageType.System:
+          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(e.SystemMessage, e.SystemMessageFormat));
+          break;
+      }
+
+      Alert();
+    }
+
+    private void ClientRoomOpened(RoomEventArgs e)
+    {
+      if (Rooms.Any(vm => vm.Name == e.RoomName))
+        return;
+
+      var roomViewModel = new RoomViewModel(this, e.RoomName, e.Users);
+      roomViewModel.Updated = true;
+      Rooms.Add(roomViewModel);
+
+      window.Alert();
+    }
+
+    private void ClientRoomClosed(RoomEventArgs e)
+    {
+      var roomViewModel = Rooms.FirstOrDefault(vm => vm.Name == e.RoomName);
+      if (roomViewModel == null)
+        return;
+
+      Rooms.Remove(roomViewModel);
+      roomViewModel.Dispose();
+
+      window.Alert();
+    }
+
+    private void ClientAsyncError(AsyncErrorEventArgs e)
+    {
+      var modelException = e.Error as ModelException;
+      if (modelException != null)
+      {
+        switch (modelException.Code)
         {
-          case MessageType.Private:
-            using (var client = ClientModel.Get())
-            {
-              UserViewModel senderUser = AllUsers.Single(uvm => string.Equals(uvm.Info.Nick, args.Sender));
-              UserViewModel receiverUser = AllUsers.Single(uvm => string.Equals(uvm.Info.Nick, client.User.Nick));
-              SelectedRoom.AddPrivateMessage(senderUser, receiverUser, args.Message);
-            }
-            break;
-
-          case MessageType.System:
-            SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(args.SystemMessage, args.SystemMessageFormat));
-            break;
+          case ErrorCode.APINotSupported:
+            ClientModel.Reset();
+            SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(APINotSupportedKey, modelException.Message));
+            return;
         }
-
-        Alert();
-      }), e);
+      }
     }
 
-    private void ClientRoomRefreshed(object sender, RoomEventArgs e)
+    private void ClientPluginLoaded(PluginEventArgs e)
     {
-      Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
-      {
-        if (args.Room.Name == ServerModel.MainRoomName)
-        {
-          using (var client = ClientModel.Get())
-          {
-            // Remove items
-            for (int i = AllUsers.Count - 1; i >= 0; i--)
-            {
-              var uvm = AllUsers[i];
-              if (args.Users.Exists(u => u.Nick == uvm.Nick))
-                continue;
-              AllUsers.RemoveAt(i);
-            }
-
-            // Add unexisting items
-            foreach (var user in args.Users)
-            {
-              if (AllUsers.Any(uvm => uvm.Nick == user.Nick))
-                continue;
-
-              var userViewModel = new UserViewModel(user, null);
-              userViewModel.IsClient = user.Equals(client.User);
-              AllUsers.Add(userViewModel);
-            }
-          }
-        }
-      }), e);
+      Plugins.Add(new PluginViewModel(e.PluginName));
     }
 
-    private void ClientRoomOpened(object sender, RoomEventArgs e)
+    private void ClientPluginUnloading(PluginEventArgs e)
     {
-      Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
+      var pluginViewModel = Plugins.FirstOrDefault(pvm => pvm.PluginName == e.PluginName);
+      if (pluginViewModel != null)
       {
-        if (Rooms.FirstOrDefault(roomVM => roomVM.Name == args.Room.Name) != null)
-          return;
-
-        RoomViewModel roomViewModel = new RoomViewModel(this, args.Room, args.Users);
-        roomViewModel.Updated = true;
-        Rooms.Add(roomViewModel);
-
-        window.Alert();
-      }), e);
-    }
-
-    private void ClientRoomClosed(object sender, RoomEventArgs e)
-    {
-      Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
-      {
-        RoomViewModel roomViewModel = Rooms.FirstOrDefault(roomVM => roomVM.Name == args.Room.Name);
-
-        if (roomViewModel == null)
-          return;
-
-        Rooms.Remove(roomViewModel);
-        roomViewModel.Dispose();
-
-        window.Alert();
-      }), e);
-    }
-
-    private void ClientAsyncError(object sender, AsyncErrorEventArgs e)
-    {
-      Dispatcher.BeginInvoke(new Action<AsyncErrorEventArgs>(args =>
-      {
-        ModelException modelException = args.Error as ModelException;
-
-        if (modelException != null)
-          switch (modelException.Code)
-          {
-            case ErrorCode.APINotSupported:
-              ClientModel.Reset();
-              SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(APINotSupportedKey, modelException.Message));
-              return;
-          }
-      }), e);
-    }
-
-    private void ClientPluginLoaded(object sender, PluginEventArgs e)
-    {
-      Dispatcher.BeginInvoke(new Action<PluginEventArgs>(args =>
-      {
-        Plugins.Add(new PluginViewModel(args.PluginName));
-      }), e);
-    }
-
-    private void ClientPluginUnloading(object sender, PluginEventArgs e)
-    {
-      Dispatcher.BeginInvoke(new Action<PluginEventArgs>(args =>
-      {
-        var pluginViewModel = Plugins.FirstOrDefault(pvm => pvm.PluginName == e.PluginName);
-        if (pluginViewModel != null)
-        {
-          Plugins.Remove(pluginViewModel);
-          pluginViewModel.Dispose();
-        }
-      }), e);
+        Plugins.Remove(pluginViewModel);
+        pluginViewModel.Dispose();
+      }
     }
 
     #endregion
@@ -507,7 +429,7 @@ namespace UI.ViewModel
         }      
       }
 
-      IPAddress address = loopback
+      var address = loopback
         ? Settings.Current.StateOfIPv6Protocol ? IPAddress.IPv6Loopback : IPAddress.Loopback
         : IPAddress.Parse(Settings.Current.Address);
 
@@ -544,13 +466,11 @@ namespace UI.ViewModel
 
     private void ClearTabs()
     {
-      AllUsers.Clear();
-
       foreach (var room in Rooms)
         room.Dispose();
 
       Rooms.Clear();
-      Rooms.Add(new RoomViewModel(this, new Room(null, ServerModel.MainRoomName), null));
+      Rooms.Add(new RoomViewModel(this, ServerModel.MainRoomName, null));
       SelectedRoomIndex = 0;
     }
     #endregion

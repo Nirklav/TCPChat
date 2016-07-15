@@ -43,9 +43,7 @@ namespace Engine.API.ServerCommands
         {
           Room = creatingRoom,
           Type = content.Type,
-          Users = creatingRoom.Users
-            .Select(n => server.Users[n])
-            .ToList()
+          Users = ServerModel.Api.GetRoomUsers(server, creatingRoom)
         };
 
         ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomOpenedCommand.CommandId, sendingContent);

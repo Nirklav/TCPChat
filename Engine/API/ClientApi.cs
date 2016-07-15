@@ -22,13 +22,8 @@ namespace Engine.API
     CrossDomainObject,
     IApi<ClientCommandArgs>
   {
-    internal class WaitingPrivateMessage
-    {
-      public string Receiver { get; set; }
-      public string Message { get; set; }
-    }
-
     private readonly Dictionary<long, ICommand<ClientCommandArgs>> commands;
+    private readonly Dictionary<string, int> interlocutors;
     private readonly Random idCreator;
     private long lastSendedNumber;
 
@@ -39,6 +34,7 @@ namespace Engine.API
     public ClientApi()
     {
       commands = new Dictionary<long, ICommand<ClientCommandArgs>>();
+      interlocutors = new Dictionary<string, int>();
       idCreator = new Random(DateTime.Now.Millisecond);
 
       ClientModel.Recorder.Recorded += OnRecorded;
@@ -88,19 +84,115 @@ namespace Engine.API
         Number = Interlocked.Increment(ref lastSendedNumber)
       };
 
+      string userNick;
+      using (var client = ClientModel.Get())
+        userNick = client.User.Nick;
+
+      lock (interlocutors)
+      {
+        foreach (var kvp in interlocutors)
+        {
+          var nick = kvp.Key;
+          var count = kvp.Value;
+
+          if (count <= 0)
+            continue;
+
+          if (nick.Equals(userNick))
+            continue;
+
+          ClientModel.Peer.SendMessageIfConnected(nick, ClientPlayVoiceCommand.CommandId, content, true);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Добавляет собеседника.
+    /// </summary>
+    /// <param name="nick">Ник собеседника.</param>
+    [SecuritySafeCritical]
+    public void AddInterlocutor(string nick)
+    {
+      lock (interlocutors)
+      {
+        int count;
+        interlocutors.TryGetValue(nick, out count);
+        interlocutors[nick] = count + 1;
+      }
+    }
+
+    /// <summary>
+    /// Удаляет собеседника.
+    /// </summary>
+    /// <param name="nick">Ник собеседника.</param>
+    [SecuritySafeCritical]
+    public void RemoveInterlocutor(string nick)
+    {
+      lock (interlocutors)
+      {
+        int count;
+        interlocutors.TryGetValue(nick, out count);
+        if (count == 0)
+          throw new InvalidOperationException("Can't remove interlocutor");
+
+        if (count == 1)
+        {
+          interlocutors.Remove(nick);
+          return;
+        }
+
+        interlocutors[nick] = count - 1;
+      }
+    }
+
+    /// <summary>
+    /// Включает звуковую комнату.
+    /// </summary>
+    /// <param name="name">Название комнаты.</param>
+    [SecuritySafeCritical]
+    public void EnableVoiceRoom(string name)
+    {
       using (var client = ClientModel.Get())
       {
-        var receivers = client.Rooms.Values
-          .OfType<VoiceRoom>()
-          .SelectMany(r => r.Users)
-          .Distinct()
-          .ToList();
-
-        receivers.Remove(client.User.Nick);
-
-        foreach (var peerId in receivers)
-          ClientModel.Peer.SendMessageIfConnected(peerId, ClientPlayVoiceCommand.CommandId, content, true);
+        var room = GetVoiceRoom(client, name);
+        if (!room.Enabled)
+        {
+          room.Enabled = true;
+          foreach (var nick in room.Users)
+            AddInterlocutor(nick);
+        }
       }
+    }
+
+    /// <summary>
+    /// Выключает звуковую комнату.
+    /// </summary>
+    /// <param name="name">Название комнаты.</param>
+    [SecuritySafeCritical]
+    public void DisableVoiceRoom(string name)
+    {
+      using (var client = ClientModel.Get())
+      {
+        var room = GetVoiceRoom(client, name);
+        if (room.Enabled)
+        {
+          room.Enabled = false;
+          foreach (var nick in room.Users)
+            RemoveInterlocutor(nick);
+        }
+      }
+    }
+
+    [SecurityCritical]
+    private VoiceRoom GetVoiceRoom(ClientContext client, string name)
+    {
+      Room room;
+      if (!client.Rooms.TryGetValue(name, out room))
+        throw new ArgumentException("Room does not exist");
+      var voiceRoom = room as VoiceRoom;
+      if (voiceRoom == null)
+        throw new ArgumentException("This room not voice");
+      return voiceRoom;
     }
 
     /// <summary>
@@ -225,7 +317,7 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="users">Перечисление пользователей, которые будут приглашены.</param>
     [SecuritySafeCritical]
-    public void InviteUsers(string roomName, IEnumerable<User> users)
+    public void InviteUsers(string roomName, IEnumerable<string> users)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
@@ -233,7 +325,7 @@ namespace Engine.API
       if (users == null)
         throw new ArgumentNullException("users");
 
-      var sendingContent = new ServerInviteUsersCommand.MessageContent { RoomName = roomName, Users = users as List<User> ?? users.ToList() };
+      var sendingContent = new ServerInviteUsersCommand.MessageContent { RoomName = roomName, Users = users as List<string> ?? users.ToList() };
       ClientModel.Client.SendMessage(ServerInviteUsersCommand.CommandId, sendingContent);
     }
 
@@ -243,7 +335,7 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="users">Пользотватели, которые будут удалены из комнаты.</param>
     [SecuritySafeCritical]
-    public void KickUsers(string roomName, IEnumerable<User> users)
+    public void KickUsers(string roomName, IEnumerable<string> users)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
@@ -251,7 +343,7 @@ namespace Engine.API
       if (users == null)
         throw new ArgumentNullException("users");
 
-      var sendingContent = new ServerKickUsersCommand.MessageContent { RoomName = roomName, Users = users as List<User> ?? users.ToList() };
+      var sendingContent = new ServerKickUsersCommand.MessageContent { RoomName = roomName, Users = users as List<string> ?? users.ToList() };
       ClientModel.Client.SendMessage(ServerKickUsersCommand.CommandId, sendingContent);
     }
 
@@ -289,7 +381,7 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="newAdmin">Пользователь назначаемый администратором.</param>
     [SecuritySafeCritical]
-    public void SetRoomAdmin(string roomName, User newAdmin)
+    public void SetRoomAdmin(string roomName, string newAdmin)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
@@ -359,17 +451,14 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты из которой удаляется файл.</param>
     /// <param name="file">Описание удаляемого файла.</param>
     [SecuritySafeCritical]
-    public void RemoveFileFromRoom(string roomName, FileDescription file)
+    public void RemoveFileFromRoom(string roomName, int fileId)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
-      if (file == null)
-        throw new ArgumentNullException("file");
-
       using (var client = ClientModel.Get())
       {
-        var postedFile = client.PostedFiles.FirstOrDefault(current => current.File.Equals(file));
+        var postedFile = client.PostedFiles.FirstOrDefault(current => current.File.Id.Equals(fileId));
         if (postedFile == null)
           return;
 
@@ -377,7 +466,7 @@ namespace Engine.API
         postedFile.Dispose();
       }
 
-      var sendingContent = new ServerRemoveFileFromRoomCommand.MessageContent { RoomName = roomName, File = file };
+      var sendingContent = new ServerRemoveFileFromRoomCommand.MessageContent { RoomName = roomName, FileId = fileId };
       ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.CommandId, sendingContent);
     }
 
@@ -388,7 +477,7 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты где находится файл.</param>
     /// <param name="file">Описание файла.</param>
     [SecuritySafeCritical]
-    public void DownloadFile(string path, string roomName, FileDescription file)
+    public void DownloadFile(string path, string roomName, int fileId)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
@@ -396,32 +485,37 @@ namespace Engine.API
       if (string.IsNullOrEmpty(path))
         throw new ArgumentException("path");
 
-      if (file == null)
-        throw new ArgumentNullException("file");
-
       if (File.Exists(path))
-        throw new ArgumentException("Файл уже существует");
+        throw new ArgumentException("path");
 
       using (var client = ClientModel.Get())
       {
-        if (client.DownloadingFiles.Exists(dFile => dFile.File.Equals(file)))
-          throw new ModelException(ErrorCode.FileAlreadyDownloading, file);
+        if (client.DownloadingFiles.Exists(dFile => dFile.File.Id == fileId))
+          throw new ModelException(ErrorCode.FileAlreadyDownloading, fileId);
+
+        Room room;
+        if (client.Rooms.TryGetValue(roomName, out room))
+          throw new ModelException(ErrorCode.RoomNotFound);
+
+        var file = room.Files.Find(f => f.Id == fileId);
+        if (file == null)
+          throw new ModelException(ErrorCode.FileInRoomNotFound);
 
         if (client.User.Equals(file.Owner))
-          throw new ArgumentException("Нельзя скачивать свой файл.");
+          throw new ModelException(ErrorCode.CantDownloadOwnFile);
 
         client.DownloadingFiles.Add(new DownloadingFile { File = file, FullName = path });
+
+        var sendingContent = new ClientReadFilePartCommand.MessageContent
+        {
+          File = file,
+          Length = AsyncClient.DefaultFilePartSize,
+          RoomName = roomName,
+          StartPartPosition = 0,
+        };
+
+        ClientModel.Peer.SendMessage(file.Owner.Nick, ClientReadFilePartCommand.CommandId, sendingContent);
       }
-
-      var sendingContent = new ClientReadFilePartCommand.MessageContent
-      {
-        File = file,
-        Length = AsyncClient.DefaultFilePartSize,
-        RoomName = roomName,
-        StartPartPosition = 0,
-      };
-
-      ClientModel.Peer.SendMessage(file.Owner.Nick, ClientReadFilePartCommand.CommandId, sendingContent);
     }
 
     /// <summary>
@@ -430,14 +524,11 @@ namespace Engine.API
     /// <param name="file">Описание файла.</param>
     /// <param name="leaveLoadedPart">Осталять недокачанный файл или нет.</param>
     [SecuritySafeCritical]
-    public void CancelDownloading(FileDescription file, bool leaveLoadedPart = true)
+    public void CancelDownloading(int fileId, bool leaveLoadedPart = true)
     {
-      if (file == null)
-        throw new ArgumentNullException("file");
-
       using (var client = ClientModel.Get())
       {
-        var downloadingFile = client.DownloadingFiles.FirstOrDefault(current => current.File.Equals(file));
+        var downloadingFile = client.DownloadingFiles.FirstOrDefault(c => c.File.Id == fileId);
         if (downloadingFile == null)
           return;
 

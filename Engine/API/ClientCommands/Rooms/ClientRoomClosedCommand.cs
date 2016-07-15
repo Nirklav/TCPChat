@@ -1,5 +1,6 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Entities;
+using Engine.Model.Server;
 using System;
 using System.Security;
 
@@ -23,10 +24,28 @@ namespace Engine.API.ClientCommands
       if (content.Room == null)
         throw new ArgumentNullException("room");
 
-      ClientModel.Notifier.RoomClosed(new RoomEventArgs { Room = content.Room });
+      ClientModel.Notifier.RoomClosed(new RoomEventArgs { RoomName = content.Room.Name });
+
+      Room room;
+      string userNick;
 
       using (var client = ClientModel.Get())
+      {
+        userNick = client.User.Nick;
+        room = client.Rooms[content.Room.Name];
         client.Rooms.Remove(content.Room.Name);
+      }
+
+      if (room.Type == RoomType.Voice)
+      {
+        foreach (var nick in room.Users)
+        {
+          if (nick.Equals(userNick))
+            continue;
+
+          ClientModel.Api.RemoveInterlocutor(nick);
+        }
+      }
     }
 
     [Serializable]

@@ -48,10 +48,11 @@ namespace UI.Dialogs
 
     private void RemoveFile_Click(object sender, RoutedEventArgs e)
     {
+      // TODO: refactor this
       var postedFile = (PostedFile)((Button)sender).Tag;
 
       if (ClientModel.Api != null)
-        ClientModel.Api.RemoveFileFromRoom(postedFile.RoomName, postedFile.File);
+        ClientModel.Api.RemoveFileFromRoom(postedFile.RoomName, postedFile.File.Id);
 
       RefreshFiles();
     }

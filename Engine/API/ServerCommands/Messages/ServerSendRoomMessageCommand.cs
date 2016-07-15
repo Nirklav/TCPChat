@@ -2,7 +2,6 @@
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
-using System.Linq;
 using System.Security;
 
 namespace Engine.API.ServerCommands
@@ -28,12 +27,11 @@ namespace Engine.API.ServerCommands
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[content.RoomName];
+        Room room;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+          return;
 
         if (!room.Users.Contains(args.ConnectionId))
         {
@@ -64,7 +62,7 @@ namespace Engine.API.ServerCommands
           MessageId = message.Id
         };
 
-        foreach (string user in room.Users.Where(u => u != null))
+        foreach (var user in room.Users)
           ServerModel.Server.SendMessage(user, ClientOutRoomMessageCommand.CommandId, sendingContent);
       }
     }

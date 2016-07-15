@@ -21,20 +21,17 @@ namespace Engine.API.ServerCommands
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
-      if (content.File == null)
-        throw new ArgumentNullException("File");
-
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("RoomName");
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[content.RoomName];
+        Room room;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+          return;
 
-        if (!room.Files.Exists(file => file.Equals(content.File)))
+        var file = room.Files.Find(f => f.Id == content.FileId);
+        if (file == null)
           return;
 
         if (!room.ContainsUser(args.ConnectionId))
@@ -46,19 +43,19 @@ namespace Engine.API.ServerCommands
         bool access = false;
         if (room.Admin != null)
           access |= args.ConnectionId.Equals(room.Admin);
-        access |= args.ConnectionId.Equals(content.File.Owner.Nick);
+        access |= args.ConnectionId.Equals(file.Owner.Nick);
         if (!access)
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.FileRemoveAccessDenied);
           return;
         }
 
-        room.Files.Remove(content.File);
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.FileRemoved, content.File.Name);
+        room.Files.Remove(file);
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.FileRemoved, file.Name);
 
         var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent()
         {
-          File = content.File,
+          FileId = file.Id,
           RoomName = room.Name,
         };
 
@@ -71,7 +68,7 @@ namespace Engine.API.ServerCommands
     public class MessageContent
     {
       private string roomName;
-      private FileDescription file;
+      private int fileId;
 
       public string RoomName
       {
@@ -79,10 +76,10 @@ namespace Engine.API.ServerCommands
         set { roomName = value; }
       }
 
-      public FileDescription File
+      public int FileId
       {
-        get { return file; }
-        set { file = value; }
+        get { return fileId; }
+        set { fileId = value; }
       }
     }
   }

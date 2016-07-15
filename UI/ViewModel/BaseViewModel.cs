@@ -59,5 +59,13 @@ namespace UI.ViewModel
       setter(value);
       OnPropertyChanged(propertyName);
     }
+
+    protected EventHandler<TArgs> CreateSubscriber<TArgs>(Action<TArgs> method)
+      where TArgs : EventArgs
+    {
+      // For subscribing on NotifierContext event, it can not unsubscribe.
+      // Because notifier context creatred for each viewmodel, and removed with viewmodel.
+      return (sender, eventArgs) => Dispatcher.BeginInvoke(method, eventArgs);
+    }
   }
 }

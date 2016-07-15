@@ -4,6 +4,7 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using Engine.Plugins;
 using Engine.Plugins.Server;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -129,6 +130,41 @@ namespace Engine.API
     }
 
     /// <summary>
+    /// Возвращает пользователей из комнаты.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public List<User> GetRoomUsers(ServerContext server, string name)
+    {
+      Room room;
+      if (!server.Rooms.TryGetValue(name, out room))
+        throw new ArgumentException("This room does't exist");
+      return GetRoomUsers(server, room);
+    }
+
+    public List<User> GetRoomUsers(ServerContext server, Room room)
+    {
+      return room.Users
+        .Select(n =>
+        {
+          User user;
+          server.Users.TryGetValue(n, out user);
+          return new { Nick = n, User = user };
+        })
+        .Where(g =>
+        {
+          if (g.User == null)
+          {
+            ServerModel.Logger.WriteWarning("User not found: {0}", g.Nick);
+            return false;
+          }
+          return true;
+        })
+        .Select(g => g.User)
+        .ToList();
+    }
+
+    /// <summary>
     /// Удаляет пользователя и закрывает соединение с ним.
     /// </summary>
     /// <param name="nick">Ник пользователя, соединение котрого будет закрыто.</param>
@@ -154,9 +190,7 @@ namespace Engine.API
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent
           {
             Room = room,
-            Users = room.Users
-              .Select(n => server.Users[n])
-              .ToList()
+            Users = GetRoomUsers(server, room)
           };
 
           foreach (var user in room.Users)

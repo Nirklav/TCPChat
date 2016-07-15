@@ -21,6 +21,12 @@ namespace Engine.Model.Client
       get { return model.User; }
     }
 
+    public Dictionary<string, User> Users
+    {
+      [SecuritySafeCritical]
+      get { return model.Users; }
+    }
+
     public Dictionary<string, Room> Rooms
     {
       [SecuritySafeCritical]

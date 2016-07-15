@@ -21,11 +21,10 @@ namespace Engine.Audio.OpenAL
     private readonly object syncObj = new object();
     private EventHandler<RecordedEventArgs> recorded;
 
-    private bool disposed;
-    private Timer systemTimer;
+    private bool disposed;    
     private AudioCapture capture;
     private byte[] buffer;
-
+    private Timer captureTimer;
     private AudioQuality quality;
     private int samplesSize;
     #endregion
@@ -125,7 +124,8 @@ namespace Engine.Audio.OpenAL
       lock (syncObj)
       {
         capture.Start();
-        systemTimer = new Timer(OnRecording, null, GetTimerTimeOut(), -1);
+        if (captureTimer == null)
+          captureTimer = new Timer(OnRecording, null, GetTimerTimeOut(), -1);
       }
     }
 
@@ -146,14 +146,13 @@ namespace Engine.Audio.OpenAL
     {
       lock (syncObj)
       {
-        if (capture == null || !capture.IsRunning)
+        if (capture == null)
           return;
 
-        int availableSamples = capture.AvailableSamples;
-
+        var availableSamples = capture.AvailableSamples;
         if (availableSamples > 0)
         {
-          int availableDataSize = availableSamples * quality.Channels * (quality.Bits / 8);
+          var availableDataSize = availableSamples * quality.Channels * (quality.Bits / 8);
           if (availableDataSize > buffer.Length)
             buffer = new byte[availableDataSize * 2];
 
@@ -164,8 +163,15 @@ namespace Engine.Audio.OpenAL
             temp(this, new RecordedEventArgs(buffer, availableSamples, quality.Channels, quality.Bits, quality.Frequency));
         }
 
-        if (systemTimer != null && capture.IsRunning)
-          systemTimer.Change(GetTimerTimeOut(), -1);
+        if (capture.IsRunning)
+        {
+          captureTimer.Change(GetTimerTimeOut(), -1);
+        }
+        else
+        {
+          captureTimer.Dispose();
+          captureTimer = null;
+        }
       }
     }
 
@@ -178,10 +184,6 @@ namespace Engine.Audio.OpenAL
       lock (syncObj)
       {
         capture.Stop();
-
-        if (systemTimer != null)
-          systemTimer.Dispose();
-        systemTimer = null;
       }
     }
 
@@ -205,10 +207,10 @@ namespace Engine.Audio.OpenAL
 
       lock (syncObj)
       {
-        if (systemTimer != null)
-          systemTimer.Dispose();
+        if (captureTimer != null)
+          captureTimer.Dispose();
 
-        systemTimer = null;
+        captureTimer = null;
 
         if (capture != null)
         {

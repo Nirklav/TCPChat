@@ -3,7 +3,6 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security;
 
 namespace Engine.API.ServerCommands
@@ -35,12 +34,11 @@ namespace Engine.API.ServerCommands
         return;
       }
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[content.RoomName];
+        Room room;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+          return;
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
@@ -49,18 +47,16 @@ namespace Engine.API.ServerCommands
         }
 
         var invitedUsers = new HashSet<string>();
-        foreach (var user in content.Users)
+        foreach (var userNick in content.Users)
         {
-          if (room.ContainsUser(user.Nick))
+          if (room.ContainsUser(userNick))
             continue;
 
-          room.AddUser(user.Nick);
-          invitedUsers.Add(user.Nick);
+          room.AddUser(userNick);
+          invitedUsers.Add(userNick);
         }
 
-        var users = room.Users
-          .Select(n => server.Users[n])
-          .ToList();
+        var users = ServerModel.Api.GetRoomUsers(server, room);
 
         var roomOpenContent = new ClientRoomOpenedCommand.MessageContent
         {
@@ -89,7 +85,7 @@ namespace Engine.API.ServerCommands
     public class MessageContent
     {
       private string roomName;
-      private List<User> users;
+      private List<string> users;
 
       public string RoomName
       {
@@ -97,7 +93,7 @@ namespace Engine.API.ServerCommands
         set { roomName = value; }
       }
 
-      public List<User> Users
+      public List<string> Users
       {
         get { return users; }
         set { users = value; }

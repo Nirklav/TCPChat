@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using UI.Infrastructure;
 using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
+using DialogResult = System.Windows.Forms.DialogResult;
 
 namespace UI.ViewModel
 {
@@ -31,28 +32,22 @@ namespace UI.ViewModel
     #region fields
     private int progress;
     private string text;
-    private FileDescription file;
+    private int? fileId;
     private RoomViewModel roomViewModel;
     private DateTime time;
     #endregion
 
     #region properties
     public long MessageId { get; private set; }
-    public string Title { get; set; }
-    public UserViewModel Sender { get; set; }
-    public UserViewModel Receiver { get; set; }
-    public MessageType Type { get; set; }
+    public string Title { get; private set; }
+    public UserViewModel Sender { get; private set; }
+    public UserViewModel Receiver { get; private set; }
+    public MessageType Type { get; private set; }
 
     public string Text 
     {
       get { return text; }
       set { SetValue(value, "Text", v => text = v); }
-    }
-
-    public FileDescription File
-    {
-      get { return file; }
-      set { SetValue(value, "File", v => file = v); }
     }
 
     public int Progress
@@ -75,52 +70,59 @@ namespace UI.ViewModel
       Type = MessageType.System;
     }
 
-    public MessageViewModel(UserViewModel sender, string fileName, FileDescription fileDescription, RoomViewModel room)
-      : this(Room.SpecificMessageId, room, true)
+    public MessageViewModel(string senderNick, int fileId, RoomViewModel roomVm)
+      : this(Room.SpecificMessageId, roomVm, true)
     {
-      NotifierContext.DownloadProgress += ClientDownloadProgress;
-      NotifierContext.PostedFileDeleted += ClientPostedFileDeleted;
+      this.fileId = fileId;
 
-      Sender = sender;
-      File = fileDescription;
+      Sender = new UserViewModel(senderNick, roomViewModel);
       Progress = 0;
       Title = Localizer.Instance.Localize(FromKey, DateTime.Now.ToString(TimeFormat));
 
-      string sizeDim = string.Empty;
-      float size = 0;
+      var sizeDim = string.Empty;
+      var size = 0L;
 
-      if (fileDescription.Size < 1024)
+      using (var client = ClientModel.Get())
       {
-        sizeDim = Localizer.Instance.Localize(ByteStrKey);
-        size = fileDescription.Size;
-      }
+        var file = GetFile(client, fileId);
 
-      if (fileDescription.Size >= 1024 && fileDescription.Size < 1024 * 1024)
-      {
-        sizeDim = Localizer.Instance.Localize(KByteStrKey);
-        size = fileDescription.Size / 1024.0f;
-      }
+        if (file.Size < 1024)
+        {
+          sizeDim = Localizer.Instance.Localize(ByteStrKey);
+          size = file.Size;
+        }
 
-      if (fileDescription.Size >= 1024 * 1024)
-      {
-        sizeDim = Localizer.Instance.Localize(MByteStrKey);
-        size = fileDescription.Size / (1024.0f * 1024.0f);
+        if (file.Size >= 1024 && file.Size < 1024 * 1024)
+        {
+          sizeDim = Localizer.Instance.Localize(KByteStrKey);
+          size = file.Size / 1024;
+        }
+
+        if (file.Size >= 1024 * 1024)
+        {
+          sizeDim = Localizer.Instance.Localize(MByteStrKey);
+          size = file.Size / (1024 * 1024);
+        }
+
+        Text = file.Name + string.Format(SizeFormat, size, sizeDim);
       }
       
-      Text = fileName + string.Format(SizeFormat, size, sizeDim);
       Type = MessageType.File;
-      DownloadFileCommand = new Command(DownloadFile, _ => ClientModel.Client != null);
+      DownloadFileCommand = new Command(DownloadFile, _ => ClientModel.Api != null);
+
+      NotifierContext.DownloadProgress += CreateSubscriber<FileDownloadEventArgs>(ClientDownloadProgress);
+      NotifierContext.PostedFileDeleted += CreateSubscriber<FileDownloadEventArgs>(ClientPostedFileDeleted);
     }
 
-    public MessageViewModel(long messageId, UserViewModel sender, UserViewModel receiver, string message, bool isPrivate, RoomViewModel room)
+    public MessageViewModel(long messageId, string senderNick, string receiverNick, string message, bool isPrivate, RoomViewModel room)
       : this(messageId, room, false)
     {
       Text = message;
-      Sender = sender;
-      Receiver = receiver;
+      Sender = new UserViewModel(senderNick, room);
+      Receiver = new UserViewModel(receiverNick, room);
       Type = isPrivate ? MessageType.Private : MessageType.Common;
 
-      EditMessageCommand = new Command(EditMessage, Obj => ClientModel.Client != null);
+      EditMessageCommand = new Command(EditMessage, _ => ClientModel.Client != null);
 
       Title = Localizer.Instance.Localize(isPrivate ? PMFormKey : FromKey, DateTime.Now.ToString(TimeFormat));
     }
@@ -137,104 +139,104 @@ namespace UI.ViewModel
     {
       base.DisposeManagedResources();
 
-      if (NotifierContext != null)
-      {
-        NotifierContext.DownloadProgress -= ClientDownloadProgress;
-        NotifierContext.PostedFileDeleted -= ClientPostedFileDeleted;
-      }
+      if (Sender != null)
+        Sender.Dispose();
+      if (Receiver != null)
+        Receiver.Dispose();
     }
     #endregion
 
     #region client events
-    private void ClientDownloadProgress(object sender, FileDownloadEventArgs e)
+    private void ClientDownloadProgress(FileDownloadEventArgs e)
     {
-      if (e.RoomName != roomViewModel.Name 
-        || !e.File.Equals(File) 
-        || Progress == e.Progress)
+      if (e.RoomName != roomViewModel.Name || e.FileId != fileId || Progress == e.Progress)
         return;
-          
-      Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
+
+      using (var client = ClientModel.Get())
       {
-        if (args.Progress < 100)
-          Progress = args.Progress;
+        var file = GetFile(client, fileId.Value);
+
+        if (e.Progress < 100)
+          Progress = e.Progress;
         else
         {
           Progress = 0;
-          roomViewModel.AddSystemMessage(string.Format("Загрузка файла \"{0}\" завершена.", args.File.Name));
+          roomViewModel.AddSystemMessage(string.Format("Загрузка файла \"{0}\" завершена.", file.Name));
         }
-      }), e);
+      }
     }
 
-    private void ClientPostedFileDeleted(object sender, FileDownloadEventArgs e)
+    private void ClientPostedFileDeleted(FileDownloadEventArgs e)
     {
-      if (e.RoomName != roomViewModel.Name || !e.File.Equals(File))
+      if (e.RoomName != roomViewModel.Name || e.FileId != fileId)
         return;
 
-      Dispatcher.BeginInvoke(new Action<FileDownloadEventArgs>(args =>
-      {
-        Progress = 0;
-        File = null;
-      }), e);
+      Progress = 0;
+      fileId = null;
     }
     #endregion
 
     #region command methods
     private void DownloadFile(object obj)
     {
-      if (File == null)
+      if (fileId == null)
       {
         roomViewModel.AddSystemMessage(Localizer.Instance.Localize(FileNotFoundKey));
         return;
       }
 
-      try
+      using (var client = ClientModel.Get())
       {
-        using (var client = ClientModel.Get())
+        var file = GetFile(client, fileId.Value);
+        try
         {
-          if (client.DownloadingFiles.Exists(dFile => dFile.File.Equals(File)))
-            throw new ModelException(ErrorCode.FileAlreadyDownloading, File);
+          var saveDialog = new SaveFileDialog();
+          saveDialog.OverwritePrompt = false;
+          saveDialog.Filter = FileDialogFilter;
+          saveDialog.FileName = file.Name;
 
-          if (client.User.Equals(File.Owner))
-            throw new ArgumentException(Localizer.Instance.Localize(CantDownloadItsFileKey));
+          if (saveDialog.ShowDialog() == DialogResult.OK)
+            ClientModel.Api.DownloadFile(saveDialog.FileName, roomViewModel.Name, file.Id);
         }
-
-        var saveDialog = new SaveFileDialog();
-        saveDialog.OverwritePrompt = false;
-        saveDialog.Filter = FileDialogFilter;
-        saveDialog.FileName = File.Name;
-
-        if (saveDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.Api != null)
-          ClientModel.Api.DownloadFile(saveDialog.FileName, roomViewModel.Name, File);
-      }
-      catch (ModelException me)
-      {
-        if (me.Code != ErrorCode.FileAlreadyDownloading)
+        catch (ModelException me)
         {
-          roomViewModel.AddSystemMessage(me.Message);
-          return;
-        }
+          if (me.Code != ErrorCode.FileAlreadyDownloading)
+          {
+            // TODO: localization for error code
+            roomViewModel.AddSystemMessage(me.Message);
+            return;
+          }
 
-        var msg = Localizer.Instance.Localize(CancelDownloadingQuestionKey);
-        var result = MessageBox.Show(msg, MainViewModel.ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question);
-        if (result == MessageBoxResult.Yes && ClientModel.Api != null)
-        {
-          ClientModel.Api.CancelDownloading(File, true);
-          Progress = 0;
+          var msg = Localizer.Instance.Localize(CancelDownloadingQuestionKey);
+          var result = MessageBox.Show(msg, MainViewModel.ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question);
+          if (result == MessageBoxResult.Yes)
+          {
+            ClientModel.Api.CancelDownloading(file.Id, true);
+            Progress = 0;
+          }
         }
-      }
-      catch (ArgumentException ae)
-      {
-        roomViewModel.AddSystemMessage(ae.Message);
-      }
-      catch (SocketException se)
-      {
-        roomViewModel.AddSystemMessage(se.Message);
+        catch (ArgumentException ae)
+        {
+          roomViewModel.AddSystemMessage(ae.Message);
+        }
+        catch (SocketException se)
+        {
+          roomViewModel.AddSystemMessage(se.Message);
+        }
       }
     }
 
     private void EditMessage(object obj)
     {
       roomViewModel.EditMessage(this);
+    }
+    #endregion
+
+    #region Helpers
+    private FileDescription GetFile(ClientContext client, int fileId)
+    {
+      var room = client.Rooms[roomViewModel.Name];
+      return room.Files.Find(f => f.Id == fileId);
     }
     #endregion
   }

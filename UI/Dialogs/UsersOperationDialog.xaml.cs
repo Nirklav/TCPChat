@@ -21,19 +21,19 @@ namespace UI.Dialogs
   {
     private class UserListItem
     {
-      public UserListItem(UserViewModel user)
+      public UserListItem(string nick)
       {
-        User = user;
+        Nick = nick;
         Invite = false;
       }
 
-      public UserViewModel User { get; private set; }
+      public string Nick { get; private set; }
       public bool Invite { get; set; }
     }
 
-    public IEnumerable<User> Users { get; set; }
+    public IEnumerable<string> Users { get; set; }
 
-    public UsersOperationDialog(string titleKey, IEnumerable<UserViewModel> users)
+    public UsersOperationDialog(string titleKey, IEnumerable<string> users)
     {
       InitializeComponent();
 
@@ -47,7 +47,7 @@ namespace UI.Dialogs
       Users = UserList.Items
         .Cast<UserListItem>()
         .Where(i => i.Invite)
-        .Select(i => i.User.Info);
+        .Select(i => i.Nick);
 
       DialogResult = true;
     }

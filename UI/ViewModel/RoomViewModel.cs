@@ -13,6 +13,7 @@ using UI.Dialogs;
 using UI.Infrastructure;
 using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
 using Keys = System.Windows.Forms.Keys;
+using Engine.Model.Server;
 
 namespace UI.ViewModel
 {
@@ -32,12 +33,17 @@ namespace UI.ViewModel
 
     #region fields
     private bool updated;
+
     private bool messagesAutoScroll;
     private string message;
     private long? messageId;
     private int messageCaretIndex;
+
     private UserViewModel allInRoom;
     private UserViewModel selectedReciver;
+    private List<UserViewModel> recivers;
+
+    private MainViewModel mainViewModel;
 
     private ObservableCollection<MessageViewModel> messages;
     private HashSet<long> messageIds;
@@ -53,15 +59,20 @@ namespace UI.ViewModel
     #endregion
 
     #region properties
-    public Room Description { get; private set; }
-    public MainViewModel MainViewModel { get; private set; }
-    public bool IsMessageSelected { get { return SelectedMessageId != null; } } // OnProperyChanged called from SelectedMessageId
+    public string Name { get; private set; }
+    public RoomType Type { get; private set; }
     public ObservableCollection<UserViewModel> Users { get; private set; }
 
     public ObservableCollection<MessageViewModel> Messages
     {
       get { return messages; }
       set { SetValue(value, "Messages", v => messages = v); }
+    }
+
+    public bool Updated
+    {
+      get { return updated; }
+      set { SetValue(value, "Updated", v => updated = v); }
     }
 
     public string Message
@@ -75,26 +86,16 @@ namespace UI.ViewModel
       }
     }
 
+    // OnProperyChanged called from SelectedMessageId
+    public bool IsMessageSelected
+    {
+      get { return SelectedMessageId != null; }
+    }
+
     private long? SelectedMessageId
     {
       get { return messageId; }
       set { SetValue(value, "IsMessageSelected", v => messageId = v); }
-    }
-
-    public string Name
-    {
-      get { return Description.Name; }
-    }
-
-    public RoomType Type
-    {
-      get { return Description.Type; }
-    }
-
-    public bool Updated
-    {
-      get { return updated; }
-      set { SetValue(value, "Updated", v => updated = v); }
     }
 
     public int MessageCaretIndex
@@ -127,7 +128,7 @@ namespace UI.ViewModel
       get
       {
         yield return allInRoom;
-        foreach (var user in MainViewModel.AllUsers)
+        foreach (var user in mainViewModel.AllUsers)
           if (!user.IsClient)
             yield return user;
       }
@@ -135,30 +136,49 @@ namespace UI.ViewModel
     #endregion
 
     #region constructors
-    public RoomViewModel(MainViewModel main, Room room, IList<User> users)
+    public RoomViewModel(MainViewModel main, string roomName, IList<string> users)
       : base(main, true)
     {
-      Description = room;
-      MainViewModel = main;
+      using (var client = ClientModel.Get())
+      {
+        Room room;
+        if (client.Rooms.TryGetValue(roomName, out room))
+        {
+          Name = room.Name;
+          Type = room.Type;
+        }
+        else if (roomName == ServerModel.MainRoomName)
+        {
+          Name = ServerModel.MainRoomName;
+          Type = RoomType.Chat;
+        }
+        else
+        {
+          throw new ArgumentException("roomName");
+        }
+      }
+
+      mainViewModel = main;
       Messages = new ObservableCollection<MessageViewModel>();
-      SelectedReceiver = allInRoom = new UserViewModel(AllInRoomKey, new User(string.Empty, Color.Black), this);
+      SelectedReceiver = allInRoom = new UserViewModel(AllInRoomKey, null, this);
+      recivers = new List<UserViewModel>();
 
       messageIds = new HashSet<long>();
       Users = new ObservableCollection<UserViewModel>(users == null
         ? Enumerable.Empty<UserViewModel>()
         : users.Select(user => new UserViewModel(user, this)));
 
-      SendMessageCommand = new Command(SendMessage, _ => ClientModel.Client != null);
+      SendMessageCommand = new Command(SendMessage, _ => ClientModel.Api != null && ClientModel.Client.IsConnected);
       PastReturnCommand = new Command(PastReturn);
-      AddFileCommand = new Command(AddFile, _ => ClientModel.Client != null);
-      InviteInRoomCommand = new Command(InviteInRoom, _ => ClientModel.Client != null);
-      KickFromRoomCommand = new Command(KickFromRoom, _ => ClientModel.Client != null);
-      ClearSelectedMessageCommand = new Command(ClearSelectedMessage, _ => ClientModel.Client != null);
+      AddFileCommand = new Command(AddFile, _ => ClientModel.Api != null);
+      InviteInRoomCommand = new Command(InviteInRoom, _ => ClientModel.Api != null);
+      KickFromRoomCommand = new Command(KickFromRoom, _ => ClientModel.Api != null);
+      ClearSelectedMessageCommand = new Command(ClearSelectedMessage);
       
+      NotifierContext.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
+      NotifierContext.RoomRefreshed += CreateSubscriber<RoomEventArgs>(ClientRoomRefreshed);
 
-      MainViewModel.AllUsers.CollectionChanged += AllUsersCollectionChanged;
-      NotifierContext.ReceiveMessage += ClientReceiveMessage;
-      NotifierContext.RoomRefreshed += ClientRoomRefreshed;
+      RefreshRecivers();
     }
 
     protected override void DisposeManagedResources()
@@ -172,14 +192,6 @@ namespace UI.ViewModel
       foreach (var message in Messages)
         message.Dispose(); 
       Messages.Clear();
-
-      MainViewModel.AllUsers.CollectionChanged -= AllUsersCollectionChanged;
-
-      if (NotifierContext != null)
-      {
-        NotifierContext.ReceiveMessage -= ClientReceiveMessage;
-        NotifierContext.RoomRefreshed -= ClientRoomRefreshed;
-      }
     }
     #endregion
 
@@ -195,19 +207,19 @@ namespace UI.ViewModel
       AddMessage(new MessageViewModel(message, this));
     }
 
-    public void AddMessage(long messageId, UserViewModel sender, string message)
+    public void AddMessage(long messageId, string sender, string message)
     {
       AddMessage(new MessageViewModel(messageId, sender, null, message, false, this));
     }
 
-    public void AddPrivateMessage(UserViewModel sender, UserViewModel receiver, string message)
+    public void AddPrivateMessage(string senderNick, string receiverNick, string message)
     {
-      AddMessage(new MessageViewModel(Room.SpecificMessageId, sender, receiver, message, true, this));
+      AddMessage(new MessageViewModel(Room.SpecificMessageId, senderNick, receiverNick, message, true, this));
     }
 
-    public void AddFileMessage(UserViewModel sender, FileDescription file)
+    public void AddFileMessage(string senderNick, int fileId)
     {
-      AddMessage(new MessageViewModel(sender, file.Name, file, this));
+      AddMessage(new MessageViewModel(senderNick, fileId, this));
     }
 
     private void AddMessage(MessageViewModel message)
@@ -249,16 +261,12 @@ namespace UI.ViewModel
 
       try
       {
-        if (ClientModel.Api == null || !ClientModel.Client.IsConnected)
-          return;
-
-        if (ReferenceEquals(allInRoom, SelectedReceiver))
+        if (SelectedReceiver.IsAllInRoom)
           ClientModel.Api.SendMessage(SelectedMessageId, Message, Name);
         else
         {
           ClientModel.Api.SendPrivateMessage(SelectedReceiver.Nick, Message);
-          var sender = MainViewModel.AllUsers.Single(uvm => uvm.Info.Equals(ClientModel.Client.Id));
-          AddPrivateMessage(sender, SelectedReceiver, Message);
+          AddPrivateMessage(ClientModel.Client.Id, SelectedReceiver.Nick, Message);
         }
       }
       catch (SocketException se)
@@ -285,7 +293,7 @@ namespace UI.ViewModel
         var openDialog = new OpenFileDialog();
         openDialog.Filter = FileDialogFilter;
 
-        if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && ClientModel.Api != null)
+        if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
           ClientModel.Api.AddFileToRoom(Name, openDialog.FileName);
       }
       catch (SocketException se)
@@ -298,16 +306,19 @@ namespace UI.ViewModel
     {
       try
       {
-        var availableUsers = MainViewModel.AllUsers.Except(Users);
-        if (!availableUsers.Any())
+        using (var client = ClientModel.Get())
         {
-          AddSystemMessage(Localizer.Instance.Localize(NoBodyToInviteKey));
-          return;
-        }
+          var availableUsers = client.Users.Keys.Except(Users.Select(u => u.Nick));
+          if (!availableUsers.Any())
+          {
+            AddSystemMessage(Localizer.Instance.Localize(NoBodyToInviteKey));
+            return;
+          }
 
-        var dialog = new UsersOperationDialog(InviteInRoomTitleKey, availableUsers);
-        if (dialog.ShowDialog() == true && ClientModel.Api != null)
-          ClientModel.Api.InviteUsers(Name, dialog.Users);
+          var dialog = new UsersOperationDialog(InviteInRoomTitleKey, availableUsers);
+          if (dialog.ShowDialog() == true)
+            ClientModel.Api.InviteUsers(Name, dialog.Users);
+        }
       }
       catch (SocketException se)
       {
@@ -319,8 +330,8 @@ namespace UI.ViewModel
     {
       try
       {
-        var dialog = new UsersOperationDialog(KickFormRoomTitleKey, Users);
-        if (dialog.ShowDialog() == true && ClientModel.Api != null)
+        var dialog = new UsersOperationDialog(KickFormRoomTitleKey, Users.Select(u => u.Nick));
+        if (dialog.ShowDialog() == true)
           ClientModel.Api.KickUsers(Name, dialog.Users);
       }
       catch (SocketException se)
@@ -339,63 +350,68 @@ namespace UI.ViewModel
     }
     #endregion
 
-    #region client methods
-    private void AllUsersCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-    {
-      OnPropertyChanged("Receivers");
-
-      if (SelectedReceiver == null)
-        SelectedReceiver = allInRoom;
-    }
-
-    private void ClientReceiveMessage(object sender, ReceiveMessageEventArgs e)
+    #region client events
+    private void ClientReceiveMessage(ReceiveMessageEventArgs e)
     {
       if (e.RoomName != Name)
         return;
 
-      Dispatcher.BeginInvoke(new Action<ReceiveMessageEventArgs>(args =>
+      switch (e.Type)
       {
-        var senderUser = MainViewModel.AllUsers.Single(uvm => uvm.Info.Nick == args.Sender);
+        case MessageType.Common:
+          AddMessage(e.MessageId, e.Sender, e.Message);
+          break;
 
-        switch (args.Type)
-        {
-          case MessageType.Common:
-            AddMessage(args.MessageId, senderUser, args.Message);
-            break;
+        case MessageType.File:
+          AddFileMessage(e.Sender, e.FileId);
+          break;
+      }
 
-          case MessageType.File:
-            AddFileMessage(senderUser, (FileDescription)args.State);
-            break;
-        }
+      if (Name != mainViewModel.SelectedRoom.Name)
+        Updated = true;
 
-        if (Name != MainViewModel.SelectedRoom.Name)
-          Updated = true;
-
-        MainViewModel.Alert();
-      }), e);
+      mainViewModel.Alert();
     }
 
-    private void ClientRoomRefreshed(object sender, RoomEventArgs e)
+    private void ClientRoomOpened(RoomEventArgs e)
     {
-      if (e.Room.Name != Name)
-        return;
+      RefreshRecivers();
+    }
 
-      Dispatcher.BeginInvoke(new Action<RoomEventArgs>(args =>
+    private void ClientRoomRefreshed(RoomEventArgs e)
+    {
+      if (e.RoomName == Name)
       {
-        Description = args.Room;
-
         foreach (var user in Users)
           user.Dispose();
-
         Users.Clear();
 
-        foreach (string user in Description.Users)
-          Users.Add(new UserViewModel(args.Users.Find(u => string.Equals(u.Nick, user)), this));
+        using (var client = ClientModel.Get())
+        {
+          Room room;
+          if (!client.Rooms.TryGetValue(e.RoomName, out room))
+            throw new ArgumentException("e.RoomName");
+
+          foreach (string user in room.Users)
+            Users.Add(new UserViewModel(e.Users.Find(nick => nick == user), this));
+        }
 
         OnPropertyChanged("Name");
         OnPropertyChanged("Admin");
         OnPropertyChanged("Users");
-      }), e);
+      }
+      else if (e.RoomName == ServerModel.MainRoomName)
+      {
+        RefreshRecivers();
+      }
+    }
+    #endregion
+
+    #region helpers
+    private void RefreshRecivers()
+    {
+      // TODO: refresh recivers :)
+      OnPropertyChanged("Recivers");
     }
     #endregion
   }

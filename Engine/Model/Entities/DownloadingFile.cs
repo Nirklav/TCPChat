@@ -38,7 +38,10 @@ namespace Engine.Model.Entities
       disposed = true;
 
       if (WriteStream != null)
+      {
         WriteStream.Dispose();
+        WriteStream = null;
+      }
     }
   }
 }

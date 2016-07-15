@@ -2,7 +2,6 @@
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
-using System.Linq;
 using System.Security;
 
 namespace Engine.API.ServerCommands
@@ -28,12 +27,11 @@ namespace Engine.API.ServerCommands
       if (string.Equals(content.RoomName, ServerModel.MainRoomName))
         return;
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[content.RoomName];
+        Room room;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+          return;
 
         if (!room.Users.Contains(args.ConnectionId))
         {
@@ -44,9 +42,7 @@ namespace Engine.API.ServerCommands
         var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
         {
           Room = room,
-          Users = room.Users
-            .Select(n => server.Users[n])
-            .ToList()
+          Users = ServerModel.Api.GetRoomUsers(server, room)
         };
         ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomRefreshedCommand.CommandId, roomRefreshedContent);
       }

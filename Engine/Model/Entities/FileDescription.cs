@@ -37,6 +37,14 @@ namespace Engine.Model.Entities
     }
 
     /// <summary>
+    /// Идентификатор файла.
+    /// </summary>
+    public int Id
+    {
+      get { return id; }
+    }
+
+    /// <summary>
     /// Имя файла.
     /// </summary>
     public string Name
@@ -50,14 +58,6 @@ namespace Engine.Model.Entities
     public long Size
     {
       get { return size; }
-    }
-
-    /// <summary>
-    /// Идентификатор файла.
-    /// </summary>
-    public int Id
-    {
-      get { return id; }
     }
 
     public override bool Equals(object obj)

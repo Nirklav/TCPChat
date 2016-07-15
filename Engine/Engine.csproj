@@ -108,6 +108,7 @@
     <Compile Include="API\ServerCommands\ServerCommandId.cs" />
     <Compile Include="API\ClientApi.cs" />
     <Compile Include="API\ServerApi.cs" />
+    <Compile Include="EventArgs\RoomUsersEventArgs.cs" />
     <Compile Include="EventArgs\ServerRegistrationEventArgs.cs" />
     <Compile Include="Helpers\Serializer.cs" />
     <Compile Include="Audio\IPlayer.cs" />

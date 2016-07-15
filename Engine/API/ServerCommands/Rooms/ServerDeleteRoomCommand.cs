@@ -30,19 +30,19 @@ namespace Engine.API.ServerCommands
         return;
       }
 
-      if (!RoomExists(content.RoomName, args.ConnectionId))
-        return;
-
-      using (var context = ServerModel.Get())
+      using (var server = ServerModel.Get())
       {
-        var deletingRoom = context.Rooms[content.RoomName];
+        Room deletingRoom;
+        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out deletingRoom))
+          return;
+
         if (!deletingRoom.Admin.Equals(args.ConnectionId))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
           return;
         }
 
-        context.Rooms.Remove(deletingRoom.Name);
+        server.Rooms.Remove(deletingRoom.Name);
 
         var sendingContent = new ClientRoomClosedCommand.MessageContent { Room = deletingRoom };
         foreach (string user in deletingRoom.Users)

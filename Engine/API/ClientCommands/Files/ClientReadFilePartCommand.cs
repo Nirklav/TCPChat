@@ -42,11 +42,11 @@ namespace Engine.API.ClientCommands
 
       using(var client = ClientModel.Get())
       {
-        if (!client.PostedFiles.Exists((current) => current.File.Equals(content.File)))
+        if (!client.PostedFiles.Exists(c => c.File.Equals(content.File)))
         {
           var fileNotPostContent = new ServerRemoveFileFromRoomCommand.MessageContent
           {
-            File = content.File,
+            FileId = content.File.Id,
             RoomName = content.RoomName,
           };
 

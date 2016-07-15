@@ -10,31 +10,32 @@ namespace UI.ViewModel
 {
   public class UserViewModel : BaseViewModel
   {
-    #region fields
-    private bool isClient;
-    private string nickKey;
-    private RoomViewModel parent;
+    #region consts
+    private const string UserNotExistKey = "userViewModel-userNotExist"; // TODO: удалить
     #endregion
 
-    #region properties
-    public User Info { get; private set; }
+    #region fields
+    private string nick;
+    private string nickKey;
+    private RoomViewModel parent;
+    private bool isClient;
     #endregion
 
     #region constructors
-    public UserViewModel(User info, RoomViewModel parentViewModel)
-      : this(null, info, parentViewModel)
+    public UserViewModel(string userNick, RoomViewModel parentViewModel)
+      : this(null, userNick, parentViewModel)
     {
 
     }
 
-    public UserViewModel(string nickLocKey, User info, RoomViewModel parentViewModel)
+    public UserViewModel(string nickLocKey, string userNick, RoomViewModel parentViewModel)
       : base(parentViewModel, false)
     {
-      Info = info;
+      nick = userNick;
       parent = parentViewModel;
       nickKey = nickLocKey;
 
-      SetRoomAdminCommand = new Command(SetRoomAdmin, _ => ClientModel.Client != null);
+      SetRoomAdminCommand = new Command(SetRoomAdmin, _ => ClientModel.Api != null);
       UserClickCommand = new Command(UserClick);
 
       Localizer.Instance.LocaleChanged += RefreshNick;
@@ -56,7 +57,19 @@ namespace UI.ViewModel
     #region properties
     public WPFColor NickColor
     {
-      get { return WPFColor.FromRgb(Info.NickColor.R, Info.NickColor.G, Info.NickColor.B); }
+      get
+      {
+        if (nick == null)
+          return WPFColor.FromRgb(0, 0, 0);
+
+        using (var client = ClientModel.Get())
+        {
+          User user;
+          if (!client.Users.TryGetValue(nick, out user))
+            return WPFColor.FromRgb(0, 0, 0);
+          return WPFColor.FromRgb(user.NickColor.R, user.NickColor.G, user.NickColor.B);
+        }
+      }
     }
 
     public string Nick
@@ -65,8 +78,7 @@ namespace UI.ViewModel
       {
         if (nickKey != null)
           return Localizer.Instance.Localize(nickKey);
-
-        return Info.Nick;
+        return nick;
       }
     }
 
@@ -79,6 +91,11 @@ namespace UI.ViewModel
     {
       get { return isClient; }
       set { SetValue(value, "IsClient", v => isClient = v); }
+    }
+
+    public bool IsAllInRoom
+    {
+      get { return nickKey != null; }
     }
     #endregion
 
@@ -93,8 +110,7 @@ namespace UI.ViewModel
     {
       try
       {
-        if (ClientModel.Api != null)
-          ClientModel.Api.SetRoomAdmin(parent.MainViewModel.SelectedRoom.Name, Info);
+        ClientModel.Api.SetRoomAdmin(parent.Name, nick);
       }
       catch (SocketException se)
       {
@@ -112,8 +128,7 @@ namespace UI.ViewModel
       if (ReferenceEquals(obj, this))
         return true;
 
-      UserViewModel viewModel = obj as UserViewModel;
-
+      var viewModel = obj as UserViewModel;
       if (viewModel == null)
         return false;
 
@@ -128,18 +143,17 @@ namespace UI.ViewModel
       if (ReferenceEquals(viewModel, this))
         return true;
 
-      if (viewModel.Info == null)
-        return Info == null;
+      if (viewModel.nick == null)
+        return nick == null;
 
-      return viewModel.Info.Equals(Info);
+      return viewModel.nick == nick;
     }
 
     public override int GetHashCode()
     {
-      if (Info == null)
+      if (nick == null)
         return 0;
-
-      return Info.GetHashCode();
+      return nick.GetHashCode();
     }
     #endregion
   }

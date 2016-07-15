@@ -110,14 +110,14 @@ namespace Engine.Helpers
     [SecurityCritical]
     private string CreateLogMessage(Exception e, int level)
     {
-      StringBuilder tabs = new StringBuilder();
+      var tabs = new StringBuilder();
       for (int i = 0; i < level; i++)
         tabs.Append("  ");
 
-      StringBuilder stackTrace = new StringBuilder(e.StackTrace);
+      var stackTrace = new StringBuilder(e.StackTrace);
       stackTrace.Replace("  ", "  " + tabs);
 
-      StringBuilder builder = new StringBuilder(200);
+      var builder = new StringBuilder(200);
       builder.AppendFormat(MessageTemplate, DateTime.Now, e.GetType(), e.Message, stackTrace, tabs, Environment.NewLine);
 
       if (e.InnerException != null)

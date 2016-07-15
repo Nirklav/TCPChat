@@ -1,6 +1,9 @@
 ﻿using Engine.Exceptions;
+using Engine.Model.Client;
+using Engine.Model.Entities;
 using Engine.Network.Connections;
 using Engine.Plugins;
+using System.Collections.Generic;
 using System.Security;
 
 namespace Engine.API.ClientCommands
@@ -56,5 +59,19 @@ namespace Engine.API.ClientCommands
 
     [SecuritySafeCritical]
     protected abstract void OnRun(TContent content, ClientCommandArgs args);
+
+    #region Helpers
+    /// <summary>
+    /// Обновляет пользователей в модели.
+    /// </summary>
+    /// <param name="client">Клиентская модель.</param>
+    /// <param name="users">Пользователи.</param>
+    [SecuritySafeCritical]
+    protected void UpdateUsers(ClientContext client, List<User> users)
+    {
+      foreach (var user in users)
+        client.Users[user.Nick] = user;
+    }
+    #endregion
   }
 }

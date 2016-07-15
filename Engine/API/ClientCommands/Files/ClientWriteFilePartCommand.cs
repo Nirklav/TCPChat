@@ -44,12 +44,12 @@ namespace Engine.API.ClientCommands
       var downloadEventArgs = new FileDownloadEventArgs
       {
         RoomName = content.RoomName,
-        File = content.File,
+        FileId = content.File.Id,
       };
 
       using (var client = ClientModel.Get())
       {
-        var downloadingFile = client.DownloadingFiles.FirstOrDefault((current) => current.File.Equals(content.File));
+        var downloadingFile = client.DownloadingFiles.FirstOrDefault(f => f.File.Equals(content.File));
         if (downloadingFile == null)
           return;
 

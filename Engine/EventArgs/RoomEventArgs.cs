@@ -1,5 +1,4 @@
-﻿using Engine.Model.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Engine
@@ -7,7 +6,7 @@ namespace Engine
   [Serializable]
   public class RoomEventArgs : EventArgs
   {
-    public Room Room { get; set; }
-    public List<User> Users { get; set; }
+    public string RoomName { get; set; }
+    public List<string> Users { get; set; }
   }
 }

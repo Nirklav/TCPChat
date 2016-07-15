@@ -124,6 +124,14 @@ namespace Engine.Model.Client
       private set;
     }
 
+    public Dictionary<string, User> Users
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
+
     public Dictionary<string, Room> Rooms
     {
       [SecurityCritical]
@@ -154,6 +162,7 @@ namespace Engine.Model.Client
     public ClientModel(User user)
     {
       User = user;
+      Users = new Dictionary<string, User>();
       Rooms = new Dictionary<string, Room>();
       DownloadingFiles = new List<DownloadingFile>();
       PostedFiles = new List<PostedFile>();

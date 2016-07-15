@@ -3,6 +3,7 @@ using Engine.Model.Entities;
 using Engine.Model.Server;
 using Engine.Network.Connections;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 
@@ -52,23 +53,53 @@ namespace Engine.API.ServerCommands
           server.Users.Add(content.User.Nick, content.User);
           room.AddUser(content.User.Nick);
 
-          var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = true };
+          Register(content.User.Nick, args.ConnectionId);
 
-          ServerModel.Server.RegisterConnection(args.ConnectionId, content.User.Nick);
-          ServerModel.Server.SendMessage(content.User.Nick, ClientRegistrationResponseCommand.CommandId, regResponseContent);
+          var users = ServerModel.Api.GetRoomUsers(server, room);
+          SendRefresh(content.User.Nick, room, users);
+          SendOpened(content.User.Nick, room, users);
 
-          var sendingContent = new ClientRoomRefreshedCommand.MessageContent
-          {
-            Room = room,
-            Users = room.Users.Select(nick => server.Users[nick]).ToList()
-          };
-
-          foreach (var connectionId in room.Users)
-            ServerModel.Server.SendMessage(connectionId, ClientRoomRefreshedCommand.CommandId, sendingContent);
-
+          // Notify
           ServerModel.Notifier.Registered(new ServerRegistrationEventArgs { Nick = content.User.Nick });
         }
       }
+    }
+
+    private void Register(string userNick, string tempId)
+    {
+      var messageContent = new ClientRegistrationResponseCommand.MessageContent { Registered = true };
+
+      ServerModel.Server.RegisterConnection(tempId, userNick);
+      ServerModel.Server.SendMessage(userNick, ClientRegistrationResponseCommand.CommandId, messageContent);
+    }
+
+    private void SendRefresh(string userNick, Room room, List<User> users)
+    {
+      var messageContent = new ClientRoomRefreshedCommand.MessageContent
+      {
+        Room = room,
+        Users = users
+      };
+
+      foreach (var nick in room.Users)
+      {
+        if (nick == userNick)
+          continue;
+
+        ServerModel.Server.SendMessage(nick, ClientRoomRefreshedCommand.CommandId, messageContent);
+      }
+    }
+
+    private void SendOpened(string userNick, Room room, List<User> users)
+    {
+      var messageContent = new ClientRoomOpenedCommand.MessageContent
+      {
+        Room = room,
+        Users = users,
+        Type = room.Type
+      };
+
+      ServerModel.Server.SendMessage(userNick, ClientRoomOpenedCommand.CommandId, messageContent);
     }
 
     private void SendFail(string connectionId, MessageId message)
