@@ -40,7 +40,7 @@ namespace UI.ViewModel
     private int messageCaretIndex;
 
     private UserViewModel allInRoom;
-    private UserViewModel selectedReciver;
+    private UserViewModel selectedReceiver;
     private List<UserViewModel> recivers;
 
     private MainViewModel mainViewModel;
@@ -119,8 +119,8 @@ namespace UI.ViewModel
 
     public UserViewModel SelectedReceiver
     {
-      get { return selectedReciver; }
-      set { SetValue(value, "SelectedReceiver", v => selectedReciver = v); }
+      get { return selectedReceiver; }
+      set { SetValue(value, "SelectedReceiver", v => selectedReceiver = v); }
     }
 
     public IEnumerable<UserViewModel> Receivers
@@ -128,45 +128,51 @@ namespace UI.ViewModel
       get
       {
         yield return allInRoom;
-        foreach (var user in mainViewModel.AllUsers)
-          if (!user.IsClient)
-            yield return user;
+        foreach (var user in recivers)
+          yield return user;
       }
     }
     #endregion
 
     #region constructors
-    public RoomViewModel(MainViewModel main, string roomName, IList<string> users)
+    public RoomViewModel(MainViewModel main)
       : base(main, true)
     {
+      Init(main, null);
+
+      Name = ServerModel.MainRoomName;
+      Type = RoomType.Chat;
+    }
+
+    public RoomViewModel(MainViewModel main, string roomName, IList<string> usersNicks)
+      : base(main, true)
+    {
+      Init(main, usersNicks);
+
       using (var client = ClientModel.Get())
       {
         Room room;
-        if (client.Rooms.TryGetValue(roomName, out room))
-        {
-          Name = room.Name;
-          Type = room.Type;
-        }
-        else if (roomName == ServerModel.MainRoomName)
-        {
-          Name = ServerModel.MainRoomName;
-          Type = RoomType.Chat;
-        }
-        else
-        {
+        if (!client.Rooms.TryGetValue(roomName, out room))
           throw new ArgumentException("roomName");
-        }
-      }
 
+        Name = room.Name;
+        Type = room.Type;
+        RefreshReceivers(client);
+      }
+    }
+
+    private void Init(MainViewModel main, IList<string> usersNicks)
+    {
       mainViewModel = main;
       Messages = new ObservableCollection<MessageViewModel>();
       SelectedReceiver = allInRoom = new UserViewModel(AllInRoomKey, null, this);
       recivers = new List<UserViewModel>();
-
       messageIds = new HashSet<long>();
-      Users = new ObservableCollection<UserViewModel>(users == null
+
+      var userViewModels = usersNicks == null
         ? Enumerable.Empty<UserViewModel>()
-        : users.Select(user => new UserViewModel(user, this)));
+        : usersNicks.Select(user => new UserViewModel(user, this));
+      Users = new ObservableCollection<UserViewModel>(userViewModels);
 
       SendMessageCommand = new Command(SendMessage, _ => ClientModel.Api != null && ClientModel.Client.IsConnected);
       PastReturnCommand = new Command(PastReturn);
@@ -174,11 +180,10 @@ namespace UI.ViewModel
       InviteInRoomCommand = new Command(InviteInRoom, _ => ClientModel.Api != null);
       KickFromRoomCommand = new Command(KickFromRoom, _ => ClientModel.Api != null);
       ClearSelectedMessageCommand = new Command(ClearSelectedMessage);
-      
-      NotifierContext.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
-      NotifierContext.RoomRefreshed += CreateSubscriber<RoomEventArgs>(ClientRoomRefreshed);
 
-      RefreshRecivers();
+      NotifierContext.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
+      NotifierContext.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
+      NotifierContext.RoomRefreshed += CreateSubscriber<RoomEventArgs>(ClientRoomRefreshed);
     }
 
     protected override void DisposeManagedResources()
@@ -375,43 +380,65 @@ namespace UI.ViewModel
 
     private void ClientRoomOpened(RoomEventArgs e)
     {
-      RefreshRecivers();
+      using (var client = ClientModel.Get())
+      {
+        RefreshUsers(client);
+        RefreshReceivers(client);
+      }
     }
 
     private void ClientRoomRefreshed(RoomEventArgs e)
     {
-      if (e.RoomName == Name)
+      using (var client = ClientModel.Get())
       {
-        foreach (var user in Users)
-          user.Dispose();
-        Users.Clear();
-
-        using (var client = ClientModel.Get())
-        {
-          Room room;
-          if (!client.Rooms.TryGetValue(e.RoomName, out room))
-            throw new ArgumentException("e.RoomName");
-
-          foreach (string user in room.Users)
-            Users.Add(new UserViewModel(e.Users.Find(nick => nick == user), this));
-        }
-
-        OnPropertyChanged("Name");
-        OnPropertyChanged("Admin");
-        OnPropertyChanged("Users");
-      }
-      else if (e.RoomName == ServerModel.MainRoomName)
-      {
-        RefreshRecivers();
+        if (e.RoomName == Name)
+          RefreshUsers(client);
+        
+        if (e.RoomName == ServerModel.MainRoomName)
+          RefreshReceivers(client);
       }
     }
     #endregion
 
     #region helpers
-    private void RefreshRecivers()
+    private void RefreshUsers(ClientContext client)
     {
-      // TODO: refresh recivers :)
-      OnPropertyChanged("Recivers");
+      foreach (var user in Users)
+        user.Dispose();
+      Users.Clear();
+
+      Room room;
+      if (!client.Rooms.TryGetValue(Name, out room))
+        throw new ArgumentException("e.RoomName");
+
+      foreach (var user in room.Users)
+        Users.Add(new UserViewModel(user, this));
+
+      OnPropertyChanged("Name");
+      OnPropertyChanged("Admin");
+      OnPropertyChanged("Users");
+    }
+
+    private void RefreshReceivers(ClientContext client)
+    {
+      var selectedReceiverNick = selectedReceiver == allInRoom
+        ? null
+        : selectedReceiver.Nick;
+
+      recivers.Clear();
+      foreach (var user in client.Users.Values)
+      {
+        if (user.Nick == client.User.Nick)
+          continue;
+
+        var receiver = new UserViewModel(user.Nick, this);
+        if (user.Nick == selectedReceiverNick)
+          selectedReceiver = receiver;
+        recivers.Add(receiver);
+      }
+
+      OnPropertyChanged("Receivers");
+      OnPropertyChanged("SelectedReceiver");
     }
     #endregion
   }

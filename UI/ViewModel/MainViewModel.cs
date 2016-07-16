@@ -145,38 +145,37 @@ namespace UI.ViewModel
     #region command methods
     private void EnableServer(object obj)
     {
-      ServerDialog dialog = new ServerDialog();
+      var dialog = new ServerDialog();
+      if (dialog.ShowDialog() != true)
+        return;
 
-      if (dialog.ShowDialog() == true)
+      try
       {
-        try
+        var excludedPlugins = Settings.Current.Plugins
+          .Where(s => !s.Enabled)
+          .Select(s => s.Name)
+          .ToArray();
+
+        var initializer = new ServerInitializer
         {
-          var excludedPlugins = Settings.Current.Plugins
-            .Where(s => !s.Enabled)
-            .Select(s => s.Name)
-            .ToArray();
+          PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
+          ExcludedPlugins = excludedPlugins
+        };
 
-          var initializer = new ServerInitializer
-          {
-            PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
-            ExcludedPlugins = excludedPlugins
-          };
+        ServerModel.Init(initializer);
+        ServerModel.Server.Start(Settings.Current.Port, Settings.Current.ServicePort, Settings.Current.StateOfIPv6Protocol);
 
-          ServerModel.Init(initializer);
-          ServerModel.Server.Start(Settings.Current.Port, Settings.Current.ServicePort, Settings.Current.StateOfIPv6Protocol);
+        InitializeClient(true);
+      }
+      catch (ArgumentException)
+      {
+        SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
 
-          InitializeClient(true);
-        }
-        catch (ArgumentException)
-        {
-          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
+        if (ClientModel.IsInited)
+          ClientModel.Reset();
 
-          if (ClientModel.IsInited)
-            ClientModel.Reset();
-
-          if (ServerModel.IsInited)
-            ServerModel.Reset();
-        }
+        if (ServerModel.IsInited)
+          ServerModel.Reset();
       }
     }
 
@@ -291,18 +290,15 @@ namespace UI.ViewModel
     #region client events
     private void ClientConnect(ConnectEventArgs args)
     {
-      if (args.Error != null)
+      if (args.Error == null)
+        ClientModel.Api.Register();
+      else
       {
         SelectedRoom.AddSystemMessage(args.Error.Message);
 
         if (ClientModel.IsInited)
           ClientModel.Reset();
-
-        return;
       }
-
-      if (ClientModel.Api != null)
-        ClientModel.Api.Register();
     }
 
     private void ClientRegistration(RegistrationEventArgs e)
@@ -470,7 +466,7 @@ namespace UI.ViewModel
         room.Dispose();
 
       Rooms.Clear();
-      Rooms.Add(new RoomViewModel(this, ServerModel.MainRoomName, null));
+      Rooms.Add(new RoomViewModel(this));
       SelectedRoomIndex = 0;
     }
     #endregion

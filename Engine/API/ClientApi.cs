@@ -494,7 +494,7 @@ namespace Engine.API
           throw new ModelException(ErrorCode.FileAlreadyDownloading, fileId);
 
         Room room;
-        if (client.Rooms.TryGetValue(roomName, out room))
+        if (!client.Rooms.TryGetValue(roomName, out room))
           throw new ModelException(ErrorCode.RoomNotFound);
 
         var file = room.Files.Find(f => f.Id == fileId);
