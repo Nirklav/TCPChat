@@ -156,6 +156,13 @@ namespace Engine.Model.Server
 
       disposable.Dispose();
     }
+
+    [SecurityCritical]
+    public static void Check()
+    {
+      if (!IsInited)
+        throw new InvalidOperationException("Server not inited");
+    }
     #endregion
   }
 }

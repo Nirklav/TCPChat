@@ -31,6 +31,7 @@ namespace Engine.API.ClientCommands
         Room prevRoom;
         client.Rooms.TryGetValue(content.Room.Name, out prevRoom);
         client.Rooms[content.Room.Name] = content.Room;
+        content.Room.Enabled = prevRoom.Enabled;
 
         UpdateUsers(client, content.Users);
 
@@ -54,7 +55,7 @@ namespace Engine.API.ClientCommands
         }
 
         // TODO: maybe use OOP, but room is common entity for server and client and this is only client operation
-        if (content.Room.Type == RoomType.Voice)
+        if (content.Room.Enabled && content.Room.Type == RoomType.Voice)
         {
           foreach (var nick in added)
             ClientModel.Api.AddInterlocutor(nick);

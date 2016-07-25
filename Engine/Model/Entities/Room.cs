@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Engine.Model.Entities
@@ -22,6 +23,9 @@ namespace Engine.Model.Entities
     protected string admin;
     protected long lastMessageId;
 
+    [NonSerialized]
+    private bool enabled; // Only client
+
     /// <summary>
     /// Создает комнату.
     /// </summary>
@@ -35,6 +39,7 @@ namespace Engine.Model.Entities
       users = new List<string>();
       messages = new Dictionary<long, Message>();
       files = new List<FileDescription>();
+      enabled = true;
 
       if (admin != null)
         users.Add(admin);
@@ -49,13 +54,7 @@ namespace Engine.Model.Entities
     public Room(string admin, string name, IEnumerable<User> initialUsers)
       : this(admin, name)
     {
-      foreach(var user in initialUsers)
-      {
-        if (string.Equals(admin, user.Nick))
-          continue;
-
-        users.Add(user.Nick);
-      }
+      users.AddRange(initialUsers.Select(u => u.Nick).Where(n => n != admin));
     }
 
     /// <summary>
@@ -64,6 +63,15 @@ namespace Engine.Model.Entities
     public virtual RoomType Type
     {
       get { return RoomType.Chat; }
+    }
+
+    /// <summary>
+    /// Включенность комнаты.
+    /// </summary>
+    public bool Enabled
+    {
+      get { return enabled; }
+      set { enabled = value; }
     }
 
     /// <summary>

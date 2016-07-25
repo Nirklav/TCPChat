@@ -460,6 +460,11 @@
         <MenuItem Header="{Infrastructure:Localized menu-kickFromRoom}"
                   Command="{Binding Path=SelectedRoom.KickFromRoomCommand}"/>
         <Separator/>
+        <MenuItem Header="{Infrastructure:Localized menu-enableVoiceInRoom}"
+                  Command="{Binding Path=SelectedRoom.EnableVoiceCommand}"/>
+        <MenuItem Header="{Infrastructure:Localized menu-disableVoiceInRoom}"
+                  Command="{Binding Path=SelectedRoom.DisableVoiceCommand}"/>
+        <Separator/>
         <MenuItem Header="{Infrastructure:Localized menu-exitFromRoom}"
                   Command="{Binding Path=ExitFromRoomCommand}"/>
       </MenuItem>
@@ -529,13 +534,30 @@
               <Image.Style>
                 <Style>
                   <Style.Triggers>
-                    <DataTrigger Binding="{Binding Path=Type}" Value="Voice">
+                    <MultiDataTrigger>
+                      <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=Type}" Value="Voice"/>
+                        <Condition Binding="{Binding Path=Enabled}" Value="true"/>
+                      </MultiDataTrigger.Conditions>
                       <Setter Property="Image.Source" Value="/TCPChat;component/Images/voiceOn.png"/>
-                    </DataTrigger>
+                    </MultiDataTrigger>
 
-                    <DataTrigger Binding="{Binding Path=Type}" Value="Chat">
+                    <MultiDataTrigger>
+                      <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=Type}" Value="Voice"/>
+                        <Condition Binding="{Binding Path=Enabled}" Value="false"/>
+                      </MultiDataTrigger.Conditions>
+                      <Setter Property="Image.Source" Value="/TCPChat;component/Images/voiceOff.png"/>
+                    </MultiDataTrigger>
+
+                    <MultiDataTrigger>
+                      <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=Type}" Value="Chat"/>
+                        <Condition Binding="{Binding Path=Enabled}" Value="true"/>
+                      </MultiDataTrigger.Conditions>
                       <Setter Property="Image.Source" Value="/TCPChat;component/Images/chat.png"/>
-                    </DataTrigger>
+                    </MultiDataTrigger>
+                    
                   </Style.Triggers>
                 </Style>
               </Image.Style>

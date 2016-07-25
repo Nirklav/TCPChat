@@ -217,6 +217,13 @@ namespace Engine.Model.Client
 
       disposable.Dispose();
     }
+
+    [SecurityCritical]
+    public static void Check()
+    {
+      if (!IsInited)
+        throw new InvalidOperationException("Client not inited");
+    }
     #endregion
   }
 }

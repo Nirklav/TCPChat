@@ -175,7 +175,12 @@ namespace Engine.API
         {
           room.Enabled = true;
           foreach (var nick in room.Users)
+          {
+            if (nick == client.User.Nick)
+              continue;
+
             AddInterlocutor(nick);
+          }
         }
       }
     }
@@ -194,7 +199,12 @@ namespace Engine.API
         {
           room.Enabled = false;
           foreach (var nick in room.Users)
+          {
+            if (nick == client.User.Nick)
+              continue;
+
             RemoveInterlocutor(nick);
+          }
         }
       }
     }

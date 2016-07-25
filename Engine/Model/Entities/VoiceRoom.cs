@@ -10,10 +10,7 @@ namespace Engine.Model.Entities
   [Serializable]
   public class VoiceRoom : Room
   {
-    [NonSerialized]
-    private bool enabled;
-
-    private Dictionary<string, List<string>> connectionMap;
+    private readonly Dictionary<string, List<string>> connectionMap;
 
     /// <summary>
     /// Создает голосовую комнату.
@@ -23,7 +20,6 @@ namespace Engine.Model.Entities
     public VoiceRoom(string admin, string name)
       : base(admin, name) 
     {
-      enabled = true;
       connectionMap = new Dictionary<string, List<string>>();
       connectionMap.Add(admin, new List<string>());
     }
@@ -37,7 +33,6 @@ namespace Engine.Model.Entities
     public VoiceRoom(string admin, string name, IEnumerable<User> initialUsers)
       : base(admin, name, initialUsers) 
     {
-      enabled = true;
       connectionMap = new Dictionary<string, List<string>>();
 
       for (int i = 0; i < users.Count; i++)
@@ -86,16 +81,6 @@ namespace Engine.Model.Entities
         kvp.Value.Remove(nick);
 
       connectionMap.Remove(nick);
-    }
-
-    /// <summary>
-    /// Включено ли вещание для этой комнаты.
-    /// 
-    /// </summary>
-    public bool Enabled
-    {
-      get { return enabled; }
-      set { enabled = value; }
     }
 
     /// <summary>

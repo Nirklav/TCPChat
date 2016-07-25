@@ -30,7 +30,7 @@ namespace Engine.API.ClientCommands
         var room = client.Rooms[content.Room.Name];
         client.Rooms.Remove(content.Room.Name);
 
-        if (room.Type == RoomType.Voice)
+        if (room.Enabled && room.Type == RoomType.Voice)
         {
           foreach (var nick in room.Users)
           {

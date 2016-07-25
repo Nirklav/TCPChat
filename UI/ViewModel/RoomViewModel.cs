@@ -32,19 +32,19 @@ namespace UI.ViewModel
     #endregion
 
     #region fields
-    private bool updated;
+    private MainViewModel mainViewModel;
 
-    private bool messagesAutoScroll;
-    private string message;
-    private long? messageId;
-    private int messageCaretIndex;
+    private bool updated;
+    private bool enabled;
 
     private UserViewModel allInRoom;
     private UserViewModel selectedReceiver;
     private List<UserViewModel> recivers;
 
-    private MainViewModel mainViewModel;
-
+    private bool messagesAutoScroll;
+    private string message;
+    private long? messageId;
+    private int messageCaretIndex;
     private ObservableCollection<MessageViewModel> messages;
     private HashSet<long> messageIds;
     #endregion
@@ -56,6 +56,8 @@ namespace UI.ViewModel
     public ICommand PastReturnCommand { get; private set; }
     public ICommand ClearSelectedMessageCommand { get; private set; }
     public ICommand AddFileCommand { get; private set; }
+    public ICommand EnableVoiceCommand { get; private set; }
+    public ICommand DisableVoiceCommand { get; private set; }
     #endregion
 
     #region properties
@@ -63,45 +65,16 @@ namespace UI.ViewModel
     public RoomType Type { get; private set; }
     public ObservableCollection<UserViewModel> Users { get; private set; }
 
-    public ObservableCollection<MessageViewModel> Messages
-    {
-      get { return messages; }
-      set { SetValue(value, "Messages", v => messages = v); }
-    }
-
     public bool Updated
     {
       get { return updated; }
       set { SetValue(value, "Updated", v => updated = v); }
     }
 
-    public string Message
+    public bool Enabled
     {
-      get { return message; }
-      set
-      {
-        SetValue(value, "Message", v => message = v);
-        if (value == string.Empty)
-          SelectedMessageId = null;
-      }
-    }
-
-    // OnProperyChanged called from SelectedMessageId
-    public bool IsMessageSelected
-    {
-      get { return SelectedMessageId != null; }
-    }
-
-    private long? SelectedMessageId
-    {
-      get { return messageId; }
-      set { SetValue(value, "IsMessageSelected", v => messageId = v); }
-    }
-
-    public int MessageCaretIndex
-    {
-      get { return messageCaretIndex; }
-      set { SetValue(value, "MessageCaretIndex", v => messageCaretIndex = v); }
+      get { return enabled; }
+      set { SetValue(value, "Enabled", v => enabled = v); }
     }
 
     public bool MessagesAutoScroll
@@ -115,6 +88,40 @@ namespace UI.ViewModel
         if (value == true)
           MessagesAutoScroll = false;
       }
+    }
+
+    public string Message
+    {
+      get { return message; }
+      set
+      {
+        SetValue(value, "Message", v => message = v);
+        if (value == string.Empty)
+          SelectedMessageId = null;
+      }
+    }
+
+    private long? SelectedMessageId
+    {
+      get { return messageId; }
+      set { SetValue(value, "IsMessageSelected", v => messageId = v); }
+    }
+
+    public bool IsMessageSelected
+    {
+      get { return SelectedMessageId != null; }
+    }
+    
+    public int MessageCaretIndex
+    {
+      get { return messageCaretIndex; }
+      set { SetValue(value, "MessageCaretIndex", v => messageCaretIndex = v); }
+    }
+
+    public ObservableCollection<MessageViewModel> Messages
+    {
+      get { return messages; }
+      set { SetValue(value, "Messages", v => messages = v); }
     }
 
     public UserViewModel SelectedReceiver
@@ -142,6 +149,7 @@ namespace UI.ViewModel
 
       Name = ServerModel.MainRoomName;
       Type = RoomType.Chat;
+      Enabled = true;
     }
 
     public RoomViewModel(MainViewModel main, string roomName, IList<string> usersNicks)
@@ -157,6 +165,8 @@ namespace UI.ViewModel
 
         Name = room.Name;
         Type = room.Type;
+        Enabled = room.Enabled;
+
         RefreshReceivers(client);
       }
     }
@@ -180,6 +190,8 @@ namespace UI.ViewModel
       InviteInRoomCommand = new Command(InviteInRoom, _ => ClientModel.Api != null);
       KickFromRoomCommand = new Command(KickFromRoom, _ => ClientModel.Api != null);
       ClearSelectedMessageCommand = new Command(ClearSelectedMessage);
+      EnableVoiceCommand = new Command(EnableVoice, _ => Type == RoomType.Voice && !Enabled);
+      DisableVoiceCommand = new Command(DisableVoice, _ => Type == RoomType.Voice && Enabled);
 
       NotifierContext.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
       NotifierContext.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
@@ -352,6 +364,18 @@ namespace UI.ViewModel
 
       SelectedMessageId = null;
       Message = string.Empty;
+    }
+
+    private void EnableVoice(object obj)
+    {
+      Enabled = true;
+      ClientModel.Api.EnableVoiceRoom(Name);
+    }
+
+    private void DisableVoice(object obj)
+    {
+      Enabled = false;
+      ClientModel.Api.DisableVoiceRoom(Name);
     }
     #endregion
 

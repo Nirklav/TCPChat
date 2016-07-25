@@ -39,6 +39,8 @@
   <row key="menu-closeRoom" value="Close"/>
   <row key="menu-inviteInRoom" value="Invite"/>
   <row key="menu-kickFromRoom" value="Kick"/>
+  <row key="menu-enableVoiceInRoom" value="Enable voice"/>
+  <row key="menu-disableVoiceInRoom" value="Disable voice"/>
   <row key="menu-exitFromRoom" value="Exit"/>
 
   <row key="menu-header-File" value="Files"/>

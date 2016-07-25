@@ -27,6 +27,11 @@ namespace Engine.API.ClientCommands
 
       using (var client = ClientModel.Get())
       {
+        content.Room.Enabled = true;
+        client.Rooms.Add(content.Room.Name, content.Room);
+
+        UpdateUsers(client, content.Users);
+
         if (content.Type == RoomType.Voice)
         {
           var room = content.Room as VoiceRoom;
@@ -45,9 +50,6 @@ namespace Engine.API.ClientCommands
           foreach (var nick in mapForUser)
             ClientModel.Api.ConnectToPeer(nick);
         }
-
-        client.Rooms.Add(content.Room.Name, content.Room);
-        UpdateUsers(client, content.Users);
       }
 
       var eventArgs = new RoomEventArgs
