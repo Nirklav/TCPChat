@@ -26,8 +26,8 @@ namespace Engine.API.ClientCommands
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      // TODO: check is voice enabled
-      ClientModel.Player.Enqueue(args.PeerConnectionId, content.Number, content.Pack);
+      if (ClientModel.Api.IsActiveInterlocutor(args.PeerConnectionId))
+        ClientModel.Player.Enqueue(args.PeerConnectionId, content.Number, content.Pack);
     }
 
     [Serializable]

@@ -26,9 +26,6 @@ namespace Engine.API.ClientCommands
       if (content.Room == null)
         throw new ArgumentNullException("room");
 
-      HashSet<string> added = null;
-      HashSet<string> removed = null;
-
       using (var client = ClientModel.Get())
       {
         Room prevRoom;
@@ -37,7 +34,9 @@ namespace Engine.API.ClientCommands
 
         UpdateUsers(client, content.Users);
 
-        added = new HashSet<string>(content.Room.Users);
+        var removed = (HashSet<string>)null;
+        var added = new HashSet<string>(content.Room.Users);
+
         if (prevRoom != null)
         {
           foreach (var nick in prevRoom.Users)
@@ -53,21 +52,18 @@ namespace Engine.API.ClientCommands
           foreach (var nick in removed)
             client.Users.Remove(nick);
         }
-      }
 
-      // TODO: maybe use OOP, but room is common entity for server and client and this is only client operation
-      if (content.Room.Type == RoomType.Voice)
-      {
-        if (added != null)
+        // TODO: maybe use OOP, but room is common entity for server and client and this is only client operation
+        if (content.Room.Type == RoomType.Voice)
         {
           foreach (var nick in added)
             ClientModel.Api.AddInterlocutor(nick);
-        }
 
-        if (removed != null)
-        {
-          foreach (var nick in removed)
-            ClientModel.Api.RemoveInterlocutor(nick);
+          if (removed != null)
+          {
+            foreach (var nick in removed)
+              ClientModel.Api.RemoveInterlocutor(nick);
+          }
         }
       }
 

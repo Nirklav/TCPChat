@@ -10,10 +10,6 @@ namespace UI.ViewModel
 {
   public class UserViewModel : BaseViewModel
   {
-    #region consts
-    private const string UserNotExistKey = "userViewModel-userNotExist"; // TODO: удалить
-    #endregion
-
     #region fields
     private string nick;
     private string nickKey;

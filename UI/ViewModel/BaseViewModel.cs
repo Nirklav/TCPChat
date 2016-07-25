@@ -48,8 +48,7 @@ namespace UI.ViewModel
 
     protected virtual void OnPropertyChanged(string name)
     {
-      PropertyChangedEventHandler temp = Interlocked.CompareExchange(ref PropertyChanged, null, null);
-
+      var temp = Interlocked.CompareExchange(ref PropertyChanged, null, null);
       if (temp != null)
         temp(this, new PropertyChangedEventArgs(name));
     }

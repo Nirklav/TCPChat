@@ -25,35 +25,27 @@ namespace Engine.API.ClientCommands
       if (content.Room == null)
         throw new ArgumentNullException("room");
 
-      if (content.Type == RoomType.Voice)
-      {
-        var room = content.Room as VoiceRoom;
-        if (room == null)
-          throw new ArgumentException("type");
-
-        string userNick;
-        List<string> mapForUser;
-
-        using (var client = ClientModel.Get())
-        {
-          userNick = client.User.Nick;
-          mapForUser = room.ConnectionMap[userNick];
-        }
-
-        foreach (var nick in room.Users)
-        {
-          if (nick.Equals(userNick))
-            continue;
-
-          ClientModel.Api.AddInterlocutor(nick);
-        }
-
-        foreach (string nick in mapForUser)
-          ClientModel.Api.ConnectToPeer(nick);
-      }
-
       using (var client = ClientModel.Get())
       {
+        if (content.Type == RoomType.Voice)
+        {
+          var room = content.Room as VoiceRoom;
+          if (room == null)
+            throw new ArgumentException("type");
+
+          foreach (var nick in room.Users)
+          {
+            if (nick == client.User.Nick)
+              continue;
+
+            ClientModel.Api.AddInterlocutor(nick);
+          }
+
+          var mapForUser = room.ConnectionMap[client.User.Nick];
+          foreach (var nick in mapForUser)
+            ClientModel.Api.ConnectToPeer(nick);
+        }
+
         client.Rooms.Add(content.Room.Name, content.Room);
         UpdateUsers(client, content.Users);
       }

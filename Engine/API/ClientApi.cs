@@ -107,6 +107,22 @@ namespace Engine.API
     }
 
     /// <summary>
+    /// Возвращает флаг описывающий активность собеседника.
+    /// </summary>
+    /// <param name="nick">Ник собеседника.</param>
+    /// <returns>Флаг описывающий активность собеседника.</returns>
+    [SecuritySafeCritical]
+    public bool IsActiveInterlocutor(string nick)
+    {
+      lock (interlocutors)
+      {
+        int count;
+        interlocutors.TryGetValue(nick, out count);
+        return count > 0;
+      }
+    }
+
+    /// <summary>
     /// Добавляет собеседника.
     /// </summary>
     /// <param name="nick">Ник собеседника.</param>
