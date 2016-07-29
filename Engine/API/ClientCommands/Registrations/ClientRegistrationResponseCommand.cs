@@ -33,7 +33,7 @@ namespace Engine.API.ClientCommands
     public class MessageContent
     {
       private bool registered;
-      private MessageId message;
+      private SystemMessageId message;
 
       public bool Registered
       {
@@ -41,7 +41,7 @@ namespace Engine.API.ClientCommands
         set { registered = value; }
       }
 
-      public MessageId Message
+      public SystemMessageId Message
       {
         get { return message; }
         set { message = value; }

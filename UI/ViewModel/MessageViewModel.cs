@@ -33,8 +33,7 @@ namespace UI.ViewModel
     private int progress;
     private string text;
     private int? fileId;
-    private RoomViewModel roomViewModel;
-    private DateTime time;
+    private RoomViewModel parentRoom;
     #endregion
 
     #region properties
@@ -70,14 +69,16 @@ namespace UI.ViewModel
       Type = MessageType.System;
     }
 
-    public MessageViewModel(string senderNick, int fileId, RoomViewModel roomVm)
+    public MessageViewModel(DateTime messageTime, string senderNick, int fileId, RoomViewModel roomVm)
       : this(Room.SpecificMessageId, roomVm, true)
     {
       this.fileId = fileId;
 
-      Sender = new UserViewModel(senderNick, roomViewModel);
+      Sender = new UserViewModel(senderNick, parentRoom);
       Progress = 0;
-      Title = Localizer.Instance.Localize(FromKey, DateTime.Now.ToString(TimeFormat));
+
+      var localMessageTime = messageTime.ToLocalTime();
+      Title = Localizer.Instance.Localize(FromKey, localMessageTime.ToString(TimeFormat));
 
       var sizeDim = string.Empty;
       var size = 0L;
@@ -114,7 +115,7 @@ namespace UI.ViewModel
       NotifierContext.PostedFileDeleted += CreateSubscriber<FileDownloadEventArgs>(ClientPostedFileDeleted);
     }
 
-    public MessageViewModel(long messageId, string senderNick, string receiverNick, string message, bool isPrivate, RoomViewModel room)
+    public MessageViewModel(long messageId, DateTime messageTime, string senderNick, string receiverNick, string message, bool isPrivate, RoomViewModel room)
       : this(messageId, room, false)
     {
       Text = message;
@@ -124,15 +125,15 @@ namespace UI.ViewModel
 
       EditMessageCommand = new Command(EditMessage, _ => ClientModel.Client != null);
 
-      Title = Localizer.Instance.Localize(isPrivate ? PMFormKey : FromKey, DateTime.Now.ToString(TimeFormat));
+      var localMessageTime = messageTime.ToLocalTime();
+      Title = Localizer.Instance.Localize(isPrivate ? PMFormKey : FromKey, localMessageTime.ToString(TimeFormat));
     }
 
     private MessageViewModel(long messageId, RoomViewModel room, bool initializeNotifier)
       : base(room, initializeNotifier)
     {
       MessageId = messageId;
-      roomViewModel = room;
-      time = DateTime.Now;
+      parentRoom = room;
     }
 
     protected override void DisposeManagedResources()
@@ -149,7 +150,7 @@ namespace UI.ViewModel
     #region client events
     private void ClientDownloadProgress(FileDownloadEventArgs e)
     {
-      if (e.RoomName != roomViewModel.Name || e.FileId != fileId || Progress == e.Progress)
+      if (e.RoomName != parentRoom.Name || e.FileId != fileId || Progress == e.Progress)
         return;
 
       using (var client = ClientModel.Get())
@@ -161,14 +162,14 @@ namespace UI.ViewModel
         else
         {
           Progress = 0;
-          roomViewModel.AddSystemMessage(string.Format("Загрузка файла \"{0}\" завершена.", file.Name));
+          parentRoom.AddSystemMessage(string.Format("Загрузка файла \"{0}\" завершена.", file.Name));
         }
       }
     }
 
     private void ClientPostedFileDeleted(FileDownloadEventArgs e)
     {
-      if (e.RoomName != roomViewModel.Name || e.FileId != fileId)
+      if (e.RoomName != parentRoom.Name || e.FileId != fileId)
         return;
 
       Progress = 0;
@@ -181,7 +182,7 @@ namespace UI.ViewModel
     {
       if (fileId == null)
       {
-        roomViewModel.AddSystemMessage(Localizer.Instance.Localize(FileNotFoundKey));
+        parentRoom.AddSystemMessage(Localizer.Instance.Localize(FileNotFoundKey));
         return;
       }
 
@@ -196,14 +197,14 @@ namespace UI.ViewModel
           saveDialog.FileName = file.Name;
 
           if (saveDialog.ShowDialog() == DialogResult.OK)
-            ClientModel.Api.DownloadFile(saveDialog.FileName, roomViewModel.Name, file.Id);
+            ClientModel.Api.DownloadFile(saveDialog.FileName, parentRoom.Name, file.Id);
         }
         catch (ModelException me)
         {
           if (me.Code != ErrorCode.FileAlreadyDownloading)
           {
             // TODO: localization for error code
-            roomViewModel.AddSystemMessage(me.Message);
+            parentRoom.AddSystemMessage(me.Message);
             return;
           }
 
@@ -217,25 +218,25 @@ namespace UI.ViewModel
         }
         catch (ArgumentException ae)
         {
-          roomViewModel.AddSystemMessage(ae.Message);
+          parentRoom.AddSystemMessage(ae.Message);
         }
         catch (SocketException se)
         {
-          roomViewModel.AddSystemMessage(se.Message);
+          parentRoom.AddSystemMessage(se.Message);
         }
       }
     }
 
     private void EditMessage(object obj)
     {
-      roomViewModel.EditMessage(this);
+      parentRoom.EditMessage(this);
     }
     #endregion
 
     #region Helpers
     private FileDescription GetFile(ClientContext client, int fileId)
     {
-      var room = client.Rooms[roomViewModel.Name];
+      var room = client.Rooms[parentRoom.Name];
       return room.Files.Find(f => f.Id == fileId);
     }
     #endregion

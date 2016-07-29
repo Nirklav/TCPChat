@@ -8,13 +8,14 @@ namespace Engine
   {
     public long MessageId { get; set; }
     public MessageType Type { get; set; }
+    public DateTime Time { get; set; }
 
     public string Sender { get; set; }
     public string RoomName { get; set; }
 
     public string Message { get; set; }
 
-    public MessageId SystemMessage { get; set; }
+    public SystemMessageId SystemMessage { get; set; }
     public string[] SystemMessageFormat { get; set; }
 
     public int FileId { get; set; }

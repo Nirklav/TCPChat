@@ -20,13 +20,14 @@ namespace Engine.API.ClientCommands
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      if (content.Message == MessageId.None)
+      if (content.Message == SystemMessageId.None)
         throw new ArgumentException("message");
 
       ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs
       {
         SystemMessage = content.Message,
         SystemMessageFormat = content.FormatParams,
+        Time = DateTime.UtcNow,
         Type = MessageType.System
       });
     }
@@ -34,10 +35,10 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private MessageId message;
+      private SystemMessageId message;
       private string[] formatParams;
 
-      public MessageId Message
+      public SystemMessageId Message
       {
         get { return message; }
         set { message = value; }

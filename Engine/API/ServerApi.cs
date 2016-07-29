@@ -111,7 +111,7 @@ namespace Engine.API
     /// <param name="roomName">Имя комнаты, для которой предназначено системное сообщение.</param>
     /// <param name="message">Сообщение.</param>
     [SecuritySafeCritical]
-    public void SendSystemMessage(string nick, MessageId message, params string[] formatParams)
+    public void SendSystemMessage(string nick, SystemMessageId message, params string[] formatParams)
     {
       var sendingContent = new ClientOutSystemMessageCommand.MessageContent { Message = message, FormatParams = formatParams };
       ServerModel.Server.SendMessage(nick, ClientOutSystemMessageCommand.CommandId, sendingContent);
@@ -184,7 +184,7 @@ namespace Engine.API
           {
             room.Admin = room.Users.FirstOrDefault();
             if (room.Admin != null)
-              ServerModel.Api.SendSystemMessage(room.Admin, MessageId.RoomAdminChanged, room.Name);
+              ServerModel.Api.SendSystemMessage(room.Admin, SystemMessageId.RoomAdminChanged, room.Name);
           }
 
           var sendingContent = new ClientRoomRefreshedCommand.MessageContent

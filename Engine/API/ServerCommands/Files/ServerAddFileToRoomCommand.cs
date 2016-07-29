@@ -36,7 +36,7 @@ namespace Engine.API.ServerCommands
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;
         }
 

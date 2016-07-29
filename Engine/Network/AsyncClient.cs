@@ -240,7 +240,8 @@ namespace Engine.Network
 
       var args = new ReceiveMessageEventArgs
       {
-        SystemMessage = MessageId.ConnectionRetryAttempt,
+        SystemMessage = SystemMessageId.ConnectionRetryAttempt,
+        Time = DateTime.UtcNow,
         Type = MessageType.System
       };
 

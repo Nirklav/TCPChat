@@ -29,7 +29,7 @@ namespace Engine.API.ServerCommands
       {
         if (server.Rooms.ContainsKey(content.RoomName))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAlreadyExist);
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAlreadyExist);
           return;
         }
 

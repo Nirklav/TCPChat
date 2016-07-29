@@ -102,9 +102,9 @@ namespace Engine.Model.Entities
     /// <summary>
     /// Количество пользователей.
     /// </summary>
-    public int Count
+    public ICollection<Message> Messages
     {
-      get { return users.Count; }
+      get { return messages.Values; }
     }
 
     /// <summary>
@@ -165,6 +165,11 @@ namespace Engine.Model.Entities
 
       messages[message.Id] = message;
       return message;
+    }
+
+    public void AddMessage(Message message)
+    {
+      messages[message.Id] = message;
     }
 
     /// <summary>

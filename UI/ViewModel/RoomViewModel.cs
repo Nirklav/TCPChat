@@ -1,6 +1,7 @@
 ﻿using Engine;
 using Engine.Model.Client;
 using Engine.Model.Entities;
+using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,9 +12,9 @@ using System.Net.Sockets;
 using System.Windows.Input;
 using UI.Dialogs;
 using UI.Infrastructure;
-using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
+using DialogResult = System.Windows.Forms.DialogResult;
 using Keys = System.Windows.Forms.Keys;
-using Engine.Model.Server;
+using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
 
 namespace UI.ViewModel
 {
@@ -85,7 +86,7 @@ namespace UI.ViewModel
         messagesAutoScroll = value;
         OnPropertyChanged("MessagesAutoScroll");
 
-        if (value == true)
+        if (value)
           MessagesAutoScroll = false;
       }
     }
@@ -96,7 +97,7 @@ namespace UI.ViewModel
       set
       {
         SetValue(value, "Message", v => message = v);
-        if (value == string.Empty)
+        if (string.IsNullOrEmpty(value))
           SelectedMessageId = null;
       }
     }
@@ -167,6 +168,7 @@ namespace UI.ViewModel
         Type = room.Type;
         Enabled = room.Enabled;
 
+        FillMessages(client);
         RefreshReceivers(client);
       }
     }
@@ -224,19 +226,19 @@ namespace UI.ViewModel
       AddMessage(new MessageViewModel(message, this));
     }
 
-    public void AddMessage(long messageId, string sender, string message)
+    public void AddMessage(long messageId, DateTime messageTime, string sender, string message)
     {
-      AddMessage(new MessageViewModel(messageId, sender, null, message, false, this));
+      AddMessage(new MessageViewModel(messageId, messageTime, sender, null, message, false, this));
     }
 
     public void AddPrivateMessage(string senderNick, string receiverNick, string message)
     {
-      AddMessage(new MessageViewModel(Room.SpecificMessageId, senderNick, receiverNick, message, true, this));
+      AddMessage(new MessageViewModel(Room.SpecificMessageId, DateTime.UtcNow, senderNick, receiverNick, message, true, this));
     }
 
-    public void AddFileMessage(string senderNick, int fileId)
+    public void AddFileMessage(DateTime messageTime, string senderNick, int fileId)
     {
-      AddMessage(new MessageViewModel(senderNick, fileId, this));
+      AddMessage(new MessageViewModel(messageTime, senderNick, fileId, this));
     }
 
     private void AddMessage(MessageViewModel message)
@@ -309,8 +311,9 @@ namespace UI.ViewModel
       {
         var openDialog = new OpenFileDialog();
         openDialog.Filter = FileDialogFilter;
+        var result = openDialog.ShowDialog();
 
-        if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        if (result == DialogResult.OK)
           ClientModel.Api.AddFileToRoom(Name, openDialog.FileName);
       }
       catch (SocketException se)
@@ -388,11 +391,11 @@ namespace UI.ViewModel
       switch (e.Type)
       {
         case MessageType.Common:
-          AddMessage(e.MessageId, e.Sender, e.Message);
+          AddMessage(e.MessageId, e.Time, e.Sender, e.Message);
           break;
 
         case MessageType.File:
-          AddFileMessage(e.Sender, e.FileId);
+          AddFileMessage(e.Time, e.Sender, e.FileId);
           break;
       }
 
@@ -408,6 +411,7 @@ namespace UI.ViewModel
       {
         RefreshUsers(client);
         RefreshReceivers(client);
+        FillMessages(client);
       }
     }
 
@@ -463,6 +467,17 @@ namespace UI.ViewModel
 
       OnPropertyChanged("Receivers");
       OnPropertyChanged("SelectedReceiver");
+    }
+
+    private void FillMessages(ClientContext client)
+    {
+      Room room;
+      if (!client.Rooms.TryGetValue(Name, out room))
+        throw new ArgumentException("e.RoomName");
+
+      var ordered = room.Messages.OrderBy(m => m.Time);
+      foreach (var msg in ordered)
+        AddMessage(msg.Id, msg.Time, msg.Owner, msg.Text);
     }
     #endregion
   }

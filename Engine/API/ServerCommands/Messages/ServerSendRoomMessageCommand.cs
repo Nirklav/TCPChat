@@ -35,13 +35,13 @@ namespace Engine.API.ServerCommands
 
         if (!room.Users.Contains(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;
         }
 
         if (content.MessageId != null && !room.IsMessageBelongToUser(args.ConnectionId, content.MessageId.Value))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.MessageEditAccessDenied);
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.MessageEditAccessDenied);
           return;
         }
 
@@ -56,10 +56,8 @@ namespace Engine.API.ServerCommands
 
         var sendingContent = new ClientOutRoomMessageCommand.MessageContent
         {
-          Message = message.Text,
+          Message = message,
           RoomName = content.RoomName,
-          Sender = args.ConnectionId,
-          MessageId = message.Id
         };
 
         foreach (var user in room.Users)

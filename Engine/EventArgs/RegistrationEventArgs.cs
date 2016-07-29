@@ -7,6 +7,6 @@ namespace Engine
   public class RegistrationEventArgs : EventArgs
   {
     public bool Registered { get; set; }
-    public MessageId Message { get; set; }
+    public SystemMessageId Message { get; set; }
   }
 }

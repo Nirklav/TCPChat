@@ -33,7 +33,7 @@ namespace Engine.API.ServerCommands
 
       if (!ServerModel.Server.ContainsConnection(content.ReceiverNick))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.P2PUserNotExist);
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.P2PUserNotExist);
         return;
       }
 

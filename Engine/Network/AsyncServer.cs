@@ -354,7 +354,7 @@ namespace Engine.Network
             continue;
 
           var room = server.Rooms[name];
-          if (room.Count == 0)
+          if (room.Users.Count == 0)
             server.Rooms.Remove(name);
         }
       }

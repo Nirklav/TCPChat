@@ -1,6 +1,6 @@
 ﻿namespace Engine.Model.Entities
 {
-  public enum MessageId
+  public enum SystemMessageId
   {
     None = 0,
 
@@ -16,7 +16,7 @@
     RoomCantLeaveMainRoom = 23,            // Невозможно выйти из основной комнаты.
     RoomItsMainRoom = 24,                  // Невозможно произвести это действие с основной комнатой.
     RoomNotExist = 25,                     // Команата с таким именем не существует.
-    RoomUserNotExist = 26,                 // Такого пользователя нет в комнате TODO: первести
+    RoomUserNotExist = 26,                 // Такого пользователя нет в комнате
 
     FileRemoveAccessDenied = 30,           // Вы не можете удалить данный файл. Не хватает прав.
     FileRemoved = 31,                      // Файл удален {0} - имя файла

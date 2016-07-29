@@ -59,13 +59,13 @@ namespace UI.Infrastructure
       }
     }
 
-    public string Localize(MessageId message, params string[] formatParams)
+    public string Localize(SystemMessageId message, params string[] formatParams)
     {
       var key = GetKey(message);
       return Localize(key, formatParams);
     }
 
-    private string GetKey(MessageId message)
+    private string GetKey(SystemMessageId message)
     {
       return string.Format("systemMessage-{0}", message);
     }

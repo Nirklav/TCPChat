@@ -62,7 +62,7 @@ namespace Engine.API.ServerCommands
       {
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { Room = new Room(null, roomName) };
         ServerModel.Server.SendMessage(connectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
-        ServerModel.Api.SendSystemMessage(connectionId, MessageId.RoomNotExist);
+        ServerModel.Api.SendSystemMessage(connectionId, SystemMessageId.RoomNotExist);
       }
       return result;
     }

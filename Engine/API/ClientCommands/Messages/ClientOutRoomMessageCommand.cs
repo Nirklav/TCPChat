@@ -1,4 +1,5 @@
 ﻿using Engine.Model.Client;
+using Engine.Model.Entities;
 using System;
 using System.Security;
 
@@ -19,10 +20,7 @@ namespace Engine.API.ClientCommands
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      if (string.IsNullOrEmpty(content.Sender))
-        throw new ArgumentException("sender");
-
-      if (string.IsNullOrEmpty(content.Message))
+      if (content.Message == null)
         throw new ArgumentException("message");
 
       if (string.IsNullOrEmpty(content.RoomName))
@@ -31,40 +29,27 @@ namespace Engine.API.ClientCommands
       using (var client = ClientModel.Get())
       {
         var room = client.Rooms[content.RoomName];
-        room.AddMessage(content.Sender, content.MessageId, content.Message);
+        room.AddMessage(content.Message);
+
+        var receiveMessageArgs = new ReceiveMessageEventArgs
+        {
+          Type = MessageType.Common,
+          RoomName = content.RoomName,
+          MessageId = content.Message.Id,
+          Time = content.Message.Time,
+          Message = content.Message.Text,
+          Sender = content.Message.Owner,
+        };
+
+        ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);
       }
-
-      var receiveMessageArgs = new ReceiveMessageEventArgs
-      {
-        Type = MessageType.Common,
-        Message = content.Message,
-        Sender = content.Sender,
-        RoomName = content.RoomName,
-        MessageId = content.MessageId,
-      };
-
-      ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);
     }
 
     [Serializable]
     public class MessageContent
     {
-      private string sender;
-      private string message;
+      private Message message;
       private string roomName;
-      private long messageId;
-
-      public string Sender
-      {
-        get { return sender; }
-        set { sender = value; }
-      }
-
-      public string Message
-      {
-        get { return message; }
-        set { message = value; }
-      }
 
       public string RoomName
       {
@@ -72,10 +57,10 @@ namespace Engine.API.ClientCommands
         set { roomName = value; }
       }
 
-      public long MessageId
+      public Message Message
       {
-        get { return messageId; }
-        set { messageId = value; }
+        get { return message; }
+        set { message = value; }
       }
     }
   }

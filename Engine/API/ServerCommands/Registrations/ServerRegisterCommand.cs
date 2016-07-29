@@ -32,7 +32,7 @@ namespace Engine.API.ServerCommands
 
       if (content.User.Nick.Contains(Connection.TempConnectionPrefix))
       {
-        SendFail(args.ConnectionId, MessageId.NotRegisteredBadName);
+        SendFail(args.ConnectionId, SystemMessageId.NotRegisteredBadName);
         return;
       }
       
@@ -43,7 +43,7 @@ namespace Engine.API.ServerCommands
 
         if (userExist)
         {
-          SendFail(args.ConnectionId, MessageId.NotRegisteredNameAlreadyExist);
+          SendFail(args.ConnectionId, SystemMessageId.NotRegisteredNameAlreadyExist);
           return;
         }
         else
@@ -102,7 +102,7 @@ namespace Engine.API.ServerCommands
       ServerModel.Server.SendMessage(userNick, ClientRoomOpenedCommand.CommandId, messageContent);
     }
 
-    private void SendFail(string connectionId, MessageId message)
+    private void SendFail(string connectionId, SystemMessageId message)
     {
       var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
       ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.CommandId, regResponseContent, true);

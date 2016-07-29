@@ -23,6 +23,7 @@
   <row key="systemMessage-FileRemoved" value="Файл {0} удален."/>
   <row key="systemMessage-MessageEditAccessDenied" value="Вы не можете редактировать это сообщение."/>
   <row key="systemMessage-P2PUserNotExist" value="Данного пользователя не существует."/>
+  <row key="systemMessage-RoomUserNotExist" value="Данного пользователя нет в комнате."/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Редактировать"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>

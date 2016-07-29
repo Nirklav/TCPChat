@@ -40,6 +40,7 @@ namespace Engine.API.ClientCommands
       {
         Type = MessageType.File,
         MessageId = Room.SpecificMessageId,
+        Time = DateTime.UtcNow,
         Message = content.File.Name,
         Sender = content.File.Owner.Nick,
         RoomName = content.RoomName,

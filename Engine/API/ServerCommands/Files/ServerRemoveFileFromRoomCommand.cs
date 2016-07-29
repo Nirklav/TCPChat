@@ -36,7 +36,7 @@ namespace Engine.API.ServerCommands
 
         if (!room.ContainsUser(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;
         }
 
@@ -46,12 +46,12 @@ namespace Engine.API.ServerCommands
         access |= args.ConnectionId.Equals(file.Owner.Nick);
         if (!access)
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.FileRemoveAccessDenied);
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.FileRemoveAccessDenied);
           return;
         }
 
         room.Files.Remove(file);
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.FileRemoved, file.Name);
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.FileRemoved, file.Name);
 
         var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent()
         {

@@ -333,9 +333,11 @@ namespace UI.ViewModel
 
     private void ClientRoomOpened(RoomEventArgs e)
     {
+      // If room view model already exist then event will be processed by it self
       if (Rooms.Any(vm => vm.Name == e.RoomName))
         return;
 
+      // Else create new view model
       var roomViewModel = new RoomViewModel(this, e.RoomName, e.Users);
       roomViewModel.Updated = true;
       Rooms.Add(roomViewModel);

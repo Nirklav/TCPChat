@@ -28,7 +28,7 @@ namespace Engine.API.ServerCommands
 
       if (string.Equals(content.RoomName, ServerModel.MainRoomName))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
+        ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
         return;
       }
 
@@ -40,18 +40,18 @@ namespace Engine.API.ServerCommands
 
         if (!room.Admin.Equals(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomAccessDenied);
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;
         }
 
         if (!room.Users.Contains(content.NewAdmin))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, MessageId.RoomUserNotExist);
+          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomUserNotExist);
           return;
         }
 
         room.Admin = content.NewAdmin;
-        ServerModel.Api.SendSystemMessage(content.NewAdmin, MessageId.RoomAdminChanged, room.Name);
+        ServerModel.Api.SendSystemMessage(content.NewAdmin, SystemMessageId.RoomAdminChanged, room.Name);
       }
     }
 

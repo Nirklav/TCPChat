@@ -31,6 +31,7 @@ namespace Engine.API.ClientCommands
       var receiveMessageArgs = new ReceiveMessageEventArgs
       {
         Type = MessageType.Private,
+        Time = DateTime.UtcNow,
         Message = content.Message,
         Sender = args.PeerConnectionId,
       };
