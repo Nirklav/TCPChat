@@ -16,7 +16,7 @@ namespace UI.Infrastructure
     public static void SetHook()
     {
       moduleHandle = Marshal.GetHINSTANCE(AppDomain.CurrentDomain.GetAssemblies()[0].GetModules()[0]);
-      hookCallback = new HookHandler(HookCallback);
+      hookCallback = HookCallback;
 
       hookHandle = SetWindowsHookEx(HookType.KerboardLowLevel, hookCallback, moduleHandle, 0);
     }
@@ -33,13 +33,9 @@ namespace UI.Infrastructure
     {
       if (code == 0)
       {
-        KeyboardDescription description = (KeyboardDescription)Marshal.PtrToStructure(lParam, typeof(KeyboardDescription));
-
-        bool isDown = false;
-        if (wParam.ToInt32() == 0x100 || wParam.ToInt32() == 0x104)
-          isDown = true;
-
-        Keys keys = (Keys)description.KeyCode;
+        var description = (KeyboardDescription)Marshal.PtrToStructure(lParam, typeof(KeyboardDescription));
+        var keys = (Keys)description.KeyCode;
+        var isDown = wParam.ToInt32() == 0x100 || wParam.ToInt32() == 0x104;
 
         if (isDown)
         {

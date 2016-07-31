@@ -266,8 +266,12 @@ namespace UI.ViewModel
 
     private void OpenFilesDialog(object obj)
     {
-      var dialog = new PostedFilesDialog();
-      dialog.ShowDialog();
+      using (var viewModel = new PostedFilesViewModel(this))
+      { 
+        var dialog = new PostedFilesView();
+        dialog.DataContext = viewModel;
+        dialog.ShowDialog();
+      }
     }
 
     private void OpenAboutProgram(object obj)

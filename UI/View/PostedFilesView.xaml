@@ -1,4 +1,4 @@
-﻿<Window x:Class="UI.Dialogs.PostedFilesDialog"
+﻿<Window x:Class="UI.Dialogs.PostedFilesView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:Infrastructure="clr-namespace:UI.Infrastructure"
@@ -12,22 +12,27 @@
 
   <Window.Resources>
     <DataTemplate x:Key="PostedFileTemplate">
-      <DockPanel HorizontalAlignment="Stretch">
+      <DockPanel>
         <TextBlock DockPanel.Dock="Left"
-                   Text="{Binding Path=PostedFile.File.Name}"
+                   Text="{Binding Path=FileName}"
                    VerticalAlignment="Center"
                    Padding="0"
                    Margin="5, 2.5, 2.5, 2.5"/>
 
         <Button DockPanel.Dock="Right"
                 Content="{Infrastructure:Localized delete}"
-                Click="RemoveFile_Click"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Right"
                 MinWidth="70"
-                Tag="{Binding Path=PostedFile}"
-                Margin="2.5, 2.5, 5, 2.5"/>
+                Margin="2.5, 2.5, 5, 2.5"
+                Command="{Binding RemoveCommand}"/>
       </DockPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="PostedFileRoomTemplate">
+      <TreeViewItem Header="{Binding RoomName}"
+                    ItemsSource="{Binding PostedFiles}"
+                    ItemTemplate="{StaticResource PostedFileTemplate}"/>
     </DataTemplate>
   </Window.Resources>
 
@@ -37,25 +42,18 @@
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
-    <TreeView x:Name="files"
-              Grid.Row="0"
-              Margin="10, 10, 10, 5">
-      <TreeView.ItemContainerStyle>
-        <Style TargetType="TreeViewItem">
-          <Setter Property="ItemTemplate" 
-                  Value="{StaticResource ResourceKey=PostedFileTemplate}"/>
-        </Style>
-      </TreeView.ItemContainerStyle>
-    </TreeView>
+    <TreeView Grid.Row="0"
+              Margin="10, 10, 10, 5"
+              ItemsSource="{Binding Rooms}"
+              ItemTemplate="{StaticResource PostedFileRoomTemplate}"/>
 
-    <Button x:Name="okBtn"
-            Content="{Infrastructure:Localized ok}"
+    <Button Content="{Infrastructure:Localized ok}"
             Grid.Row="1"
             MinWidth="100"
             MinHeight="25"
             HorizontalAlignment="Right"
             VerticalAlignment="Center"
             Margin="10, 5, 10, 10"
-            Click="okBtn_Click"/>
+            Click="Ok_Click"/>
   </Grid>
 </Window>
