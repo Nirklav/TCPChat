@@ -4,7 +4,7 @@
   {
     APINotSupported = 1,
     FileAlreadyDownloading = 2,
-    FreePortDontFind = 3,
+    FreePortDontFound = 3,
     LargeReceivedData = 4,
     CantDownloadOwnFile = 5,
 

@@ -121,4 +121,16 @@
   <row key="roomViewModel-nobodyToInvite" value="Nobody to invite. All already in the room."/>
   <row key="roomViewModel-allInRoom" value="All in room"/>
   <row key="userViewModel-userNotExist" value="User does not exist."/>
+
+  <row key="errorCode-APINotSupported" value="Server api not supported by client. You probably need to update client or server."/>
+  <row key="errorCode-FileAlreadyDownloading" value="This file already downloading."/>
+  <row key="errorCode-FreePortDontFound" value="Free tcp/udp port nod found."/>
+  <row key="errorCode-LargeReceivedData" value="Received data to large."/>
+  <row key="errorCode-CantDownloadOwnFile" value="Can't download this file."/>
+  <row key="errorCode-AudioNotEnabled" value="Audio not enabled."/>
+  <row key="errorCode-PluginError" value="Some plugin error has occurred."/>
+  <row key="errorCode-RoomNotFound" value="Room not found."/>
+  <row key="errorCode-FileInRoomNotFound" value="File in room not found."/>
+  <row key="errorCode-WrongContentType" value="Wrong content type (internal error)."/>
+  <row key="errorCode-IllegalInvoker" value="Illegal invoker (internal error)."/>
 </Localization>

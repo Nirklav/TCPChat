@@ -1,4 +1,5 @@
-﻿using Engine.Model.Client;
+﻿using Engine.Exceptions;
+using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Collections.Generic;
@@ -65,9 +66,20 @@ namespace UI.Infrastructure
       return Localize(key, formatParams);
     }
 
+    public string Localize(ErrorCode code, params string[] formatParams)
+    {
+      var key = GetKey(code);
+      return Localize(key, formatParams);
+    }
+
     private string GetKey(SystemMessageId message)
     {
       return string.Format("systemMessage-{0}", message);
+    }
+
+    private string GetKey(ErrorCode code)
+    {
+      return string.Format("errorCode-{0}", code);
     }
   }
 }

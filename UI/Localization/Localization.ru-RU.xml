@@ -121,4 +121,16 @@
   <row key="roomViewModel-nobodyToInvite" value="Некого пригласить. Все и так в комнате."/>
   <row key="roomViewModel-allInRoom" value="Все в комнате"/>
   <row key="userViewModel-userNotExist" value="Пользователь не существует."/>
+
+  <row key="errorCode-APINotSupported" value="Данная версия апи не поддерживается клиентом. Вам вероятно нужно обноавить клиент или сервер."/>
+  <row key="errorCode-FileAlreadyDownloading" value="Файл уже загружается."/>
+  <row key="errorCode-FreePortDontFound" value="Свободный tcp/udp порт не найден."/>
+  <row key="errorCode-LargeReceivedData" value="Входящие данные имеют слишком большой размер."/>
+  <row key="errorCode-CantDownloadOwnFile" value="Невозможно загрузить данный файл."/>
+  <row key="errorCode-AudioNotEnabled" value="Аудио системы не включены."/>
+  <row key="errorCode-PluginError" value="Ошибка плагина."/>
+  <row key="errorCode-RoomNotFound" value="Комната не найдена."/>
+  <row key="errorCode-FileInRoomNotFound" value="Файл в комнате не найден."/>
+  <row key="errorCode-WrongContentType" value="Неправильный тип содержимого (internal error)."/>
+  <row key="errorCode-IllegalInvoker" value="Недопустимый вызыватель (internal error)."/>
 </Localization>

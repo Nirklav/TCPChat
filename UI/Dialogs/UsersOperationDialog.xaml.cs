@@ -1,19 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using Engine;
-using UI.ViewModel;
-using Engine.Model.Entities;
 using UI.Infrastructure;
+using UI.ViewModel;
 
 namespace UI.Dialogs
 {
@@ -21,17 +11,17 @@ namespace UI.Dialogs
   {
     private class UserListItem
     {
+      public string Nick { get; private set; }
+      public bool Invite { get; set; }
+
       public UserListItem(string nick)
       {
         Nick = nick;
         Invite = false;
       }
-
-      public string Nick { get; private set; }
-      public bool Invite { get; set; }
     }
 
-    public IEnumerable<string> Users { get; set; }
+    public IEnumerable<string> Users { get; private set; }
 
     public UsersOperationDialog(string titleKey, IEnumerable<string> users)
     {

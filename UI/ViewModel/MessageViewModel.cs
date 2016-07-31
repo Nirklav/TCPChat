@@ -203,8 +203,7 @@ namespace UI.ViewModel
         {
           if (me.Code != ErrorCode.FileAlreadyDownloading)
           {
-            // TODO: localization for error code
-            parentRoom.AddSystemMessage(me.Message);
+            parentRoom.AddSystemMessage(Localizer.Instance.Localize(me.Code));
             return;
           }
 
