@@ -125,12 +125,13 @@ namespace Engine.Model.Entities
     }
 
     /// <summary>
-    /// Удаляет пользователя из комнаты.
+    /// Удаляет пользователя и его файлы из комнаты.
     /// </summary>
     /// <param name="nick">Ник пользователя.</param>
     public virtual void RemoveUser(string nick)
     {
       users.Remove(nick);
+      files.RemoveAll(f => f.Owner == nick);
     }
 
     /// <summary>

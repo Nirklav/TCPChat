@@ -10,6 +10,8 @@ namespace Engine.Model.Entities
     MarshalByRefObject, 
     IDisposable
   {
+    private bool disposed = false;
+
     /// <summary>
     /// Описание файла.
     /// </summary>
@@ -24,8 +26,6 @@ namespace Engine.Model.Entities
     /// Полное имя файла.
     /// </summary>
     public string FullName { get; set; }
-
-    bool disposed = false;
 
     /// <summary>
     /// Освобождает ресурсы.

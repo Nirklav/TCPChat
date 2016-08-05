@@ -457,7 +457,7 @@ namespace Engine.API
         while (client.PostedFiles.Exists(postFile => postFile.File.Id == id))
           id = idCreator.Next(int.MinValue, int.MaxValue);
 
-        var file = new FileDescription(client.User, info.Length, Path.GetFileName(path), id);
+        var file = new FileDescription(client.User.Nick, info.Length, Path.GetFileName(path), id);
 
         client.PostedFiles.Add(new PostedFile
         {
@@ -475,7 +475,7 @@ namespace Engine.API
     /// Удаляет файл с раздачи.
     /// </summary>
     /// <param name="roomName">Название комнаты из которой удаляется файл.</param>
-    /// <param name="file">Описание удаляемого файла.</param>
+    /// <param name="fileId">Идентификатор файла.</param>
     [SecuritySafeCritical]
     public void RemoveFileFromRoom(string roomName, int fileId)
     {
@@ -484,11 +484,12 @@ namespace Engine.API
 
       using (var client = ClientModel.Get())
       {
-        var postedFile = client.PostedFiles.FirstOrDefault(current => current.File.Id.Equals(fileId));
-        if (postedFile == null)
+        var postedFileIndex = client.PostedFiles.FindIndex(current => current.File.Id == fileId);
+        if (postedFileIndex < 0)
           return;
 
-        client.PostedFiles.Remove(postedFile);
+        var postedFile = client.PostedFiles[postedFileIndex];
+        client.PostedFiles.RemoveAt(postedFileIndex);
         postedFile.Dispose();
       }
 
@@ -497,11 +498,51 @@ namespace Engine.API
     }
 
     /// <summary>
+    /// Закрывает раздающийся файл на клиенте. (Без удаления на сервере)
+    /// </summary>
+    /// <param name="client">Контекст клиента.</param>
+    /// <param name="roomName">Название комнаты.</param>
+    /// <param name="fileId">Идентификатор файла.</param>
+    [SecuritySafeCritical]
+    public void ClosePostedFile(ClientContext client, string roomName, int fileId)
+    {
+      // Remove file from room
+      Room room;
+      if (client.Rooms.TryGetValue(roomName, out room))
+        room.Files.RemoveAll(f => f.Id == fileId);
+
+      // Remove downloading files
+      var closing = new List<DownloadingFile>();
+      client.DownloadingFiles.RemoveAll(f =>
+      {
+        if (f.File.Id == fileId)
+        {
+          closing.Add(f);
+          return true;
+        }
+        return false;
+      });
+
+      foreach (var file in closing)
+        file.Dispose();
+     
+      // Notify
+      var downloadEventArgs = new FileDownloadEventArgs
+      {
+        FileId = fileId,
+        Progress = 0,
+        RoomName = roomName,
+      };
+
+      ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
+    }
+
+    /// <summary>
     /// Загружает файл.
     /// </summary>
     /// <param name="path">Путь для сохранения файла.</param>
     /// <param name="roomName">Название комнаты где находится файл.</param>
-    /// <param name="file">Описание файла.</param>
+    /// <param name="fileId">Идентификатор файла.</param>
     [SecuritySafeCritical]
     public void DownloadFile(string path, string roomName, int fileId)
     {
@@ -540,14 +581,14 @@ namespace Engine.API
           StartPartPosition = 0,
         };
 
-        ClientModel.Peer.SendMessage(file.Owner.Nick, ClientReadFilePartCommand.CommandId, sendingContent);
+        ClientModel.Peer.SendMessage(file.Owner, ClientReadFilePartCommand.CommandId, sendingContent);
       }
     }
 
     /// <summary>
     /// Останавлиает загрузку файла.
     /// </summary>
-    /// <param name="file">Описание файла.</param>
+    /// <param name="fileId">Идентификатор файла.</param>
     /// <param name="leaveLoadedPart">Осталять недокачанный файл или нет.</param>
     [SecuritySafeCritical]
     public void CancelDownloading(int fileId, bool leaveLoadedPart = true)

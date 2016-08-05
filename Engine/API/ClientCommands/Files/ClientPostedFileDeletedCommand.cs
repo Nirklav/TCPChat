@@ -1,7 +1,5 @@
 ﻿using Engine.Model.Client;
-using Engine.Model.Entities;
 using System;
-using System.Collections.Generic;
 using System.Security;
 
 namespace Engine.API.ClientCommands
@@ -25,36 +23,7 @@ namespace Engine.API.ClientCommands
         throw new ArgumentException("roomName");
 
       using (var client = ClientModel.Get())
-      {
-        // Remove file from room
-        Room room;
-        if (client.Rooms.TryGetValue(content.RoomName, out room))
-          room.Files.RemoveAll(f => f.Id == content.FileId);
-
-        // Remove downloading files
-        var removed = new List<DownloadingFile>();
-        client.DownloadingFiles.RemoveAll(f =>
-        {
-          if (f.File.Id == content.FileId)
-          {
-            removed.Add(f);
-            return true;
-          }
-          return false;
-        });
-
-        foreach (var file in removed)
-          file.Dispose();
-      }
-
-      var downloadEventArgs = new FileDownloadEventArgs
-      {
-        FileId = content.FileId,
-        Progress = 0,
-        RoomName = content.RoomName,
-      };
-
-      ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
+        ClientModel.Api.ClosePostedFile(client, content.RoomName, content.FileId);
     }
 
     [Serializable]

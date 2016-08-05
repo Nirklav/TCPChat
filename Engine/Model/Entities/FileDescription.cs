@@ -8,7 +8,7 @@ namespace Engine.Model.Entities
   [Serializable]
   public class FileDescription : IEquatable<FileDescription>
   {
-    private readonly User owner;
+    private readonly string owner;
     private readonly int id;
     private readonly string name;
     private readonly long size;
@@ -20,7 +20,7 @@ namespace Engine.Model.Entities
     /// <param name="fileSize">Размер файла.</param>
     /// <param name="fileName">Короткое имя файла.</param>
     /// <param name="fileId">Индетификатор файла. В пределах пользователя должен быть уникален.</param>
-    public FileDescription(User fileOwner, long fileSize, string fileName, int fileId)
+    public FileDescription(string fileOwner, long fileSize, string fileName, int fileId)
     {
       owner = fileOwner;
       id = fileId;
@@ -31,7 +31,7 @@ namespace Engine.Model.Entities
     /// <summary>
     /// Пользователь раздающий файл.
     /// </summary>
-    public User Owner
+    public string Owner
     {
       get { return owner; }
     }

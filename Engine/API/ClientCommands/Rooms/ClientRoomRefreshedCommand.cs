@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Security;
+using Engine.Exceptions;
 
 namespace Engine.API.ClientCommands
 {
@@ -29,43 +30,15 @@ namespace Engine.API.ClientCommands
       using (var client = ClientModel.Get())
       {
         Room prevRoom;
-        client.Rooms.TryGetValue(content.Room.Name, out prevRoom);
+        if (!client.Rooms.TryGetValue(content.Room.Name, out prevRoom))
+          throw new ModelException(ErrorCode.RoomNotFound);
+
         client.Rooms[content.Room.Name] = content.Room;
         content.Room.Enabled = prevRoom.Enabled;
 
         UpdateUsers(client, content.Users);
-
-        var removed = (HashSet<string>)null;
-        var added = new HashSet<string>(content.Room.Users);
-
-        if (prevRoom != null)
-        {
-          foreach (var nick in prevRoom.Users)
-            added.Remove(nick);
-
-          removed = new HashSet<string>(prevRoom.Users);
-          foreach (var nick in content.Room.Users)
-            removed.Remove(nick);
-        }
-
-        if (removed != null && content.Room.Name == ServerModel.MainRoomName)
-        {
-          foreach (var nick in removed)
-            client.Users.Remove(nick);
-        }
-
-        // TODO: maybe use OOP, but room is common entity for server and client and this is only client operation
-        if (content.Room.Enabled && content.Room.Type == RoomType.Voice)
-        {
-          foreach (var nick in added)
-            ClientModel.Api.AddInterlocutor(nick);
-
-          if (removed != null)
-          {
-            foreach (var nick in removed)
-              ClientModel.Api.RemoveInterlocutor(nick);
-          }
-        }
+        UpdateRoomUsers(client, content.Room, prevRoom);
+        UpdateRoomFiles(client, content.Room, prevRoom);
       }
 
       var eventArgs = new RoomEventArgs
@@ -76,6 +49,46 @@ namespace Engine.API.ClientCommands
           .ToList()
       };
       ClientModel.Notifier.RoomRefreshed(eventArgs);
+    }
+
+    [SecurityCritical]
+    private static void UpdateRoomUsers(ClientContext client, Room currentRoom, Room prevRoom)
+    {
+      var removed = new HashSet<string>(prevRoom.Users);
+      var added = new HashSet<string>(currentRoom.Users);
+
+      foreach (var nick in prevRoom.Users)
+        added.Remove(nick);
+      foreach (var nick in currentRoom.Users)
+        removed.Remove(nick);
+
+      if (currentRoom.Name == ServerModel.MainRoomName)
+      {
+        foreach (var nick in removed)
+          client.Users.Remove(nick);
+      }
+
+      // TODO: Maybe use OOP. But room is common entity for server and client. 
+      // And this is only client operation.
+      // So it would be strange to add it to the common entity.
+      if (currentRoom.Enabled && currentRoom.Type == RoomType.Voice)
+      {
+        foreach (var nick in added)
+          ClientModel.Api.AddInterlocutor(nick);
+        foreach (var nick in removed)
+          ClientModel.Api.RemoveInterlocutor(nick);
+      }
+    }
+
+    [SecurityCritical]
+    private static void UpdateRoomFiles(ClientContext client, Room currentRoom, Room prevRoom)
+    {
+      var removed = new HashSet<int>(prevRoom.Files.Select(f => f.Id));
+      foreach (var file in currentRoom.Files)
+        removed.Remove(file.Id);
+
+      foreach (var fileId in removed)
+        ClientModel.Api.ClosePostedFile(client, currentRoom.Name, fileId);
     }
 
     [Serializable]

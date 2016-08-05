@@ -40,11 +40,7 @@ namespace Engine.API.ServerCommands
           return;
         }
 
-        bool access = false;
-        if (room.Admin != null)
-          access |= args.ConnectionId.Equals(room.Admin);
-        access |= args.ConnectionId.Equals(file.Owner.Nick);
-        if (!access)
+        if (room.Admin != args.ConnectionId && file.Owner != args.ConnectionId)
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.FileRemoveAccessDenied);
           return;
