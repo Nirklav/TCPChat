@@ -285,7 +285,7 @@ namespace Engine.Plugins
 
       return Directory
         .GetFiles(path)
-        .Where(f => string.Equals(Path.GetExtension(f), "dll", StringComparison.OrdinalIgnoreCase))
+        .Where(f => string.Equals(Path.GetExtension(f), ".dll", StringComparison.OrdinalIgnoreCase))
         .ToArray();
     }
 

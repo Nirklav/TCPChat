@@ -14,7 +14,7 @@ namespace Engine.Audio.OpenAL
     IRecorder
   {
     #region consts
-    private const int DefaultBufferSize = 1024 * 8;
+    private const int DefaultBufferSize = 1024 * 2;
     #endregion
 
     #region fields
