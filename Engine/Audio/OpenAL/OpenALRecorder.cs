@@ -14,7 +14,7 @@ namespace Engine.Audio.OpenAL
     IRecorder
   {
     #region consts
-    private const int DefaultBufferSize = 8192;
+    private const int DefaultBufferSize = 1024 * 8;
     #endregion
 
     #region fields
@@ -100,7 +100,7 @@ namespace Engine.Audio.OpenAL
           if (!AudioCapture.AvailableDevices.Contains(deviceName))
             deviceName = AudioCapture.DefaultDevice;
 
-          capture = new AudioCapture(deviceName, quality.Frequency, format, samplesSize * 2);
+          capture = new AudioCapture(deviceName, quality.Frequency, format, samplesSize);
         }
       }
       catch (Exception e)
@@ -190,8 +190,8 @@ namespace Engine.Audio.OpenAL
     [SecurityCritical]
     private int GetTimerTimeOut()
     {
-      double timeToBufferFilled = samplesSize / (quality.Frequency * 1000d);
-      return (int)(timeToBufferFilled / 2);
+      var bufferFillMs = (double)samplesSize * 1000 / quality.Frequency;
+      return (int)(bufferFillMs * 0.75d);
     }
     #endregion
 
