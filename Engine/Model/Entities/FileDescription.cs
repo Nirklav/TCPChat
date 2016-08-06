@@ -8,38 +8,27 @@ namespace Engine.Model.Entities
   [Serializable]
   public class FileDescription : IEquatable<FileDescription>
   {
-    private readonly string owner;
-    private readonly int id;
+    private readonly FileId id;
     private readonly string name;
     private readonly long size;
 
     /// <summary>
     /// Создает новый экземпляр класса.
     /// </summary>
-    /// <param name="fileOwner">Пользователь раздающий файл.</param>
-    /// <param name="fileSize">Размер файла.</param>
+    /// <param name="fileId">Идентификатор файла.</param>
     /// <param name="fileName">Короткое имя файла.</param>
     /// <param name="fileId">Индетификатор файла. В пределах пользователя должен быть уникален.</param>
-    public FileDescription(string fileOwner, long fileSize, string fileName, int fileId)
+    public FileDescription(FileId fileId, long fileSize, string fileName)
     {
-      owner = fileOwner;
       id = fileId;
       name = fileName;
       size = fileSize;
     }
 
     /// <summary>
-    /// Пользователь раздающий файл.
-    /// </summary>
-    public string Owner
-    {
-      get { return owner; }
-    }
-
-    /// <summary>
     /// Идентификатор файла.
     /// </summary>
-    public int Id
+    public FileId Id
     {
       get { return id; }
     }
@@ -83,12 +72,12 @@ namespace Engine.Model.Entities
       if (ReferenceEquals(file, this))
         return true;
 
-      return owner.Equals(file.owner) && id == file.id;
+      return id == file.id;
     }
 
     public override int GetHashCode()
     {
-      return (owner.GetHashCode() * 397) ^ id.GetHashCode();
+      return id.GetHashCode();
     }
   }
 }

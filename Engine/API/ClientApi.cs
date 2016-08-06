@@ -440,11 +440,11 @@ namespace Engine.API
       using (var client = ClientModel.Get())
       {
         var postedFile = client.PostedFiles.FirstOrDefault(posted =>
-          posted.File.Owner.Equals(client.User)
+          posted.File.Id.Owner.Equals(client.User)
           && string.Equals(posted.ReadStream.Name, path)
           && string.Equals(posted.RoomName, roomName));
 
-        // Отправляем на сервер уже созданный файл (нет необходимости создавать новый id)
+        // If file already exist then send created file on server.
         if (postedFile != null)
         {
           var oldSendingContent = new ServerAddFileToRoomCommand.MessageContent { RoomName = roomName, File = postedFile.File };
@@ -452,12 +452,15 @@ namespace Engine.API
           return;
         }
 
-        // Создаем новый файл
-        var id = 0;
-        while (client.PostedFiles.Exists(postFile => postFile.File.Id == id))
-          id = idCreator.Next(int.MinValue, int.MaxValue);
-
-        var file = new FileDescription(client.User.Nick, info.Length, Path.GetFileName(path), id);
+        // Create new file.
+        FileId id;
+        while (true)
+        {
+          id = new FileId(idCreator.Next(int.MinValue, int.MaxValue), client.User.Nick);
+          if (!client.PostedFiles.Exists(postFile => postFile.File.Id == id))
+            break;
+        }
+        var file = new FileDescription(id, info.Length, Path.GetFileName(path));
 
         client.PostedFiles.Add(new PostedFile
         {
@@ -477,14 +480,14 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты из которой удаляется файл.</param>
     /// <param name="fileId">Идентификатор файла.</param>
     [SecuritySafeCritical]
-    public void RemoveFileFromRoom(string roomName, int fileId)
+    public void RemoveFileFromRoom(string roomName, FileId fileId)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
 
       using (var client = ClientModel.Get())
       {
-        var postedFileIndex = client.PostedFiles.FindIndex(current => current.File.Id == fileId);
+        var postedFileIndex = client.PostedFiles.FindIndex(f => f.File.Id == fileId);
         if (postedFileIndex < 0)
           return;
 
@@ -504,7 +507,7 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="fileId">Идентификатор файла.</param>
     [SecuritySafeCritical]
-    public void ClosePostedFile(ClientContext client, string roomName, int fileId)
+    public void ClosePostedFile(ClientContext client, string roomName, FileId fileId)
     {
       // Remove file from room
       Room room;
@@ -529,9 +532,9 @@ namespace Engine.API
       // Notify
       var downloadEventArgs = new FileDownloadEventArgs
       {
-        FileId = fileId,
-        Progress = 0,
         RoomName = roomName,
+        FileId = fileId,
+        Progress = 0
       };
 
       ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
@@ -544,7 +547,7 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты где находится файл.</param>
     /// <param name="fileId">Идентификатор файла.</param>
     [SecuritySafeCritical]
-    public void DownloadFile(string path, string roomName, int fileId)
+    public void DownloadFile(string path, string roomName, FileId fileId)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
@@ -557,7 +560,7 @@ namespace Engine.API
 
       using (var client = ClientModel.Get())
       {
-        if (client.DownloadingFiles.Exists(dFile => dFile.File.Id == fileId))
+        if (client.DownloadingFiles.Exists(f => f.File.Id == fileId))
           throw new ModelException(ErrorCode.FileAlreadyDownloading, fileId);
 
         Room room;
@@ -568,7 +571,7 @@ namespace Engine.API
         if (file == null)
           throw new ModelException(ErrorCode.FileInRoomNotFound);
 
-        if (client.User.Equals(file.Owner))
+        if (client.User.Equals(file.Id.Owner))
           throw new ModelException(ErrorCode.CantDownloadOwnFile);
 
         client.DownloadingFiles.Add(new DownloadingFile { File = file, FullName = path });
@@ -581,7 +584,7 @@ namespace Engine.API
           StartPartPosition = 0,
         };
 
-        ClientModel.Peer.SendMessage(file.Owner, ClientReadFilePartCommand.CommandId, sendingContent);
+        ClientModel.Peer.SendMessage(file.Id.Owner, ClientReadFilePartCommand.CommandId, sendingContent);
       }
     }
 
@@ -591,18 +594,18 @@ namespace Engine.API
     /// <param name="fileId">Идентификатор файла.</param>
     /// <param name="leaveLoadedPart">Осталять недокачанный файл или нет.</param>
     [SecuritySafeCritical]
-    public void CancelDownloading(int fileId, bool leaveLoadedPart = true)
+    public void CancelDownloading(FileId fileId, bool leaveLoadedPart = true)
     {
       using (var client = ClientModel.Get())
       {
-        var downloadingFile = client.DownloadingFiles.FirstOrDefault(c => c.File.Id == fileId);
-        if (downloadingFile == null)
+        var file = client.DownloadingFiles.Find(c => c.File.Id == fileId);
+        if (file == null)
           return;
 
-        var filePath = downloadingFile.FullName;
-        downloadingFile.Dispose();
+        var filePath = file.FullName;
+        file.Dispose();
 
-        client.DownloadingFiles.Remove(downloadingFile);
+        client.DownloadingFiles.Remove(file);
 
         if (File.Exists(filePath) && !leaveLoadedPart)
           File.Delete(filePath);

@@ -40,7 +40,7 @@ namespace Engine.API.ServerCommands
           return;
         }
 
-        if (room.Files.FirstOrDefault(file => file.Equals(content.File)) == null)
+        if (!room.Files.Exists(f => f.Equals(content.File)))
           room.Files.Add(content.File);
 
         var sendingContent = new ClientFilePostedCommand.MessageContent

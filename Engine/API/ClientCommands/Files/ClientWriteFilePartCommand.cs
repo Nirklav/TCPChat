@@ -44,27 +44,27 @@ namespace Engine.API.ClientCommands
       var downloadEventArgs = new FileDownloadEventArgs
       {
         RoomName = content.RoomName,
-        FileId = content.File.Id,
+        FileId = content.File.Id
       };
 
       using (var client = ClientModel.Get())
       {
-        var downloadingFile = client.DownloadingFiles.FirstOrDefault(f => f.File.Equals(content.File));
-        if (downloadingFile == null)
+        var file = client.DownloadingFiles.Find(f => f.File.Equals(content.File));
+        if (file == null)
           return;
 
-        if (downloadingFile.WriteStream == null)
-          downloadingFile.WriteStream = File.Create(downloadingFile.FullName);
+        if (file.WriteStream == null)
+          file.WriteStream = File.Create(file.FullName);
 
-        if (downloadingFile.WriteStream.Position == content.StartPartPosition)
-          downloadingFile.WriteStream.Write(content.Part, 0, content.Part.Length);
+        if (file.WriteStream.Position == content.StartPartPosition)
+          file.WriteStream.Write(content.Part, 0, content.Part.Length);
 
-        downloadingFile.File = content.File;
+        file.File = content.File;
 
-        if (downloadingFile.WriteStream.Position >= content.File.Size)
+        if (file.WriteStream.Position >= content.File.Size)
         {
-          client.DownloadingFiles.Remove(downloadingFile);
-          downloadingFile.WriteStream.Dispose();
+          client.DownloadingFiles.Remove(file);
+          file.WriteStream.Dispose();
           downloadEventArgs.Progress = 100;
         }
         else
@@ -74,11 +74,11 @@ namespace Engine.API.ClientCommands
             File = content.File,
             Length = AsyncClient.DefaultFilePartSize,
             RoomName = content.RoomName,
-            StartPartPosition = downloadingFile.WriteStream.Position,
+            StartPartPosition = file.WriteStream.Position,
           };
 
           ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientReadFilePartCommand.CommandId, sendingContent);
-          downloadEventArgs.Progress = (int)((downloadingFile.WriteStream.Position * 100) / content.File.Size);
+          downloadEventArgs.Progress = (int)((file.WriteStream.Position * 100) / content.File.Size);
         }
       }
 
@@ -88,10 +88,16 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private FileDescription file;
       private string roomName;
+      private FileDescription file;
       private long startPartPosition;
       private byte[] part;
+
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
 
       public FileDescription File
       {
@@ -103,12 +109,6 @@ namespace Engine.API.ClientCommands
       {
         get { return startPartPosition; }
         set { startPartPosition = value; }
-      }
-
-      public string RoomName
-      {
-        get { return roomName; }
-        set { roomName = value; }
       }
 
       public byte[] Part

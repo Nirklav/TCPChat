@@ -13,14 +13,14 @@ namespace Engine.Model.Entities
     private bool disposed;
 
     /// <summary>
-    /// Описание файла.
-    /// </summary>
-    public FileDescription File { get; set; }
-
-    /// <summary>
     /// Комната в которую выложен файл.
     /// </summary>
     public string RoomName { get; set; }
+
+    /// <summary>
+    /// Описание файла.
+    /// </summary>
+    public FileDescription File { get; set; }
 
     /// <summary>
     /// Поток для чтения файла.

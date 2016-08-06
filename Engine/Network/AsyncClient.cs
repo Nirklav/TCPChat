@@ -18,7 +18,7 @@ namespace Engine.Network
   public sealed class AsyncClient : Connection
   {
     #region consts
-    public const long DefaultFilePartSize = 500 * 1024;
+    public const long DefaultFilePartSize = 1024 * 1024;
     private const int SystemTimerInterval = 1000;
     private const int ReconnectTimeInterval = 10 * 1000;
     private const int PingInterval = 3000;

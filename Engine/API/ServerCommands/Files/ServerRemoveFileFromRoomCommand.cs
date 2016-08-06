@@ -40,7 +40,7 @@ namespace Engine.API.ServerCommands
           return;
         }
 
-        if (room.Admin != args.ConnectionId && file.Owner != args.ConnectionId)
+        if (room.Admin != args.ConnectionId && file.Id.Owner != args.ConnectionId)
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.FileRemoveAccessDenied);
           return;
@@ -49,10 +49,10 @@ namespace Engine.API.ServerCommands
         room.Files.Remove(file);
         ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.FileRemoved, file.Name);
 
-        var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent()
+        var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent
         {
-          FileId = file.Id,
           RoomName = room.Name,
+          FileId = file.Id
         };
 
         foreach (string user in room.Users)
@@ -64,7 +64,7 @@ namespace Engine.API.ServerCommands
     public class MessageContent
     {
       private string roomName;
-      private int fileId;
+      private FileId fileId;
 
       public string RoomName
       {
@@ -72,7 +72,7 @@ namespace Engine.API.ServerCommands
         set { roomName = value; }
       }
 
-      public int FileId
+      public FileId FileId
       {
         get { return fileId; }
         set { fileId = value; }

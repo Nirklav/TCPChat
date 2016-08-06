@@ -42,7 +42,7 @@ namespace Engine.API.ClientCommands
         MessageId = Room.SpecificMessageId,
         Time = DateTime.UtcNow,
         Message = content.File.Name,
-        Sender = content.File.Owner,
+        Sender = content.File.Id.Owner,
         RoomName = content.RoomName,
         FileId = content.File.Id,
       };

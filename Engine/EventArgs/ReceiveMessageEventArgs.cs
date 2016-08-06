@@ -18,7 +18,7 @@ namespace Engine
     public SystemMessageId SystemMessage { get; set; }
     public string[] SystemMessageFormat { get; set; }
 
-    public int FileId { get; set; }
+    public FileId FileId { get; set; }
   }
 
   public enum MessageType

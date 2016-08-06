@@ -83,7 +83,7 @@ namespace Engine.API.ClientCommands
     [SecurityCritical]
     private static void UpdateRoomFiles(ClientContext client, Room currentRoom, Room prevRoom)
     {
-      var removed = new HashSet<int>(prevRoom.Files.Select(f => f.Id));
+      var removed = new HashSet<FileId>(prevRoom.Files.Select(f => f.Id));
       foreach (var file in currentRoom.Files)
         removed.Remove(file.Id);
 

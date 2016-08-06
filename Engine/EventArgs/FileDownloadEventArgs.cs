@@ -6,9 +6,10 @@ namespace Engine
   [Serializable]
   public class FileDownloadEventArgs : EventArgs
   {
-    public int Progress { get; set; }
-    public int FileId { get; set; }
     public string RoomName { get; set; }
+    public FileId FileId { get; set; }
+
+    public int Progress { get; set; }
     public bool Canceled { get; set; }
   }
 }

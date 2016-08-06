@@ -76,7 +76,7 @@ namespace UI.ViewModel
   {
     private PostedFileRoomViewModel parent;
 
-    public int FileId { get; private set; }
+    public FileId FileId { get; private set; }
     public string FileName { get; private set; }
 
     public ICommand RemoveCommand { get; private set; }

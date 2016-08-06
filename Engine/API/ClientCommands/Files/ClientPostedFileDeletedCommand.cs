@@ -1,4 +1,5 @@
 ﻿using Engine.Model.Client;
+using Engine.Model.Entities;
 using System;
 using System.Security;
 
@@ -29,19 +30,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private int fileId;
       private string roomName;
-
-      public int FileId
-      {
-        get { return fileId; }
-        set { fileId = value; }
-      }
+      private FileId fileId;
 
       public string RoomName
       {
         get { return roomName; }
         set { roomName = value; }
+      }
+
+      public FileId FileId
+      {
+        get { return fileId; }
+        set { fileId = value; }
       }
     }
   }

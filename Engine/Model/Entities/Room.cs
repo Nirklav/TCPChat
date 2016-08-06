@@ -131,7 +131,7 @@ namespace Engine.Model.Entities
     public virtual void RemoveUser(string nick)
     {
       users.Remove(nick);
-      files.RemoveAll(f => f.Owner == nick);
+      files.RemoveAll(f => f.Id.Owner == nick);
     }
 
     /// <summary>

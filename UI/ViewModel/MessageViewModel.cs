@@ -32,7 +32,7 @@ namespace UI.ViewModel
     #region fields
     private int progress;
     private string text;
-    private int? fileId;
+    private FileId? fileId;
     private RoomViewModel parentRoom;
     #endregion
 
@@ -69,7 +69,7 @@ namespace UI.ViewModel
       Type = MessageType.System;
     }
 
-    public MessageViewModel(DateTime messageTime, string senderNick, int fileId, RoomViewModel roomVm)
+    public MessageViewModel(DateTime messageTime, string senderNick, FileId fileId, RoomViewModel roomVm)
       : this(Room.SpecificMessageId, roomVm, true)
     {
       this.fileId = fileId;
@@ -233,7 +233,7 @@ namespace UI.ViewModel
     #endregion
 
     #region Helpers
-    private FileDescription GetFile(ClientContext client, int fileId)
+    private FileDescription GetFile(ClientContext client, FileId fileId)
     {
       var room = client.Rooms[parentRoom.Name];
       return room.Files.Find(f => f.Id == fileId);

@@ -83,10 +83,16 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
+      private string roomName;
       private FileDescription file;
       private long startPartPosition;
       private long length;
-      private string roomName;
+
+      public string RoomName
+      {
+        get { return roomName; }
+        set { roomName = value; }
+      }
 
       public FileDescription File
       {
@@ -104,12 +110,6 @@ namespace Engine.API.ClientCommands
       {
         get { return length; }
         set { length = value; }
-      }
-
-      public string RoomName
-      {
-        get { return roomName; }
-        set { roomName = value; }
       }
     }
   }

@@ -236,7 +236,7 @@ namespace UI.ViewModel
       AddMessage(new MessageViewModel(Room.SpecificMessageId, DateTime.UtcNow, senderNick, receiverNick, message, true, this));
     }
 
-    public void AddFileMessage(DateTime messageTime, string senderNick, int fileId)
+    public void AddFileMessage(DateTime messageTime, string senderNick, FileId fileId)
     {
       AddMessage(new MessageViewModel(messageTime, senderNick, fileId, this));
     }
