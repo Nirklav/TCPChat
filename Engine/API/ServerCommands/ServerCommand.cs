@@ -36,7 +36,7 @@ namespace Engine.API.ServerCommands
     [SecuritySafeCritical]
     protected sealed override void OnRun(ServerCommandArgs args)
     {
-      var package = args.Package as IPackage<TContent>;
+      var package = args.Unpacked.Package as IPackage<TContent>;
       if (package == null)
         throw new ModelException(ErrorCode.WrongContentType);
 

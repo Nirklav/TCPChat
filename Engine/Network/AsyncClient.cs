@@ -158,8 +158,8 @@ namespace Engine.Network
           return;
         }
 
-        var command = ClientModel.Api.GetCommand(e.Package.Id);
-        var args = new ClientCommandArgs(null, e.Package);
+        var command = ClientModel.Api.GetCommand(e.Unpacked.Package.Id);
+        var args = new ClientCommandArgs(null, e.Unpacked);
 
         requestQueue.Add(ClientId, command, args);
       }

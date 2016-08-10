@@ -265,8 +265,8 @@ namespace Engine.Network
           return;
 
         var connectionId = ((ServerConnection)sender).Id;
-        var command = ServerModel.Api.GetCommand(e.Package.Id);
-        var args = new ServerCommandArgs(connectionId, e.Package);
+        var command = ServerModel.Api.GetCommand(e.Unpacked.Package.Id);
+        var args = new ServerCommandArgs(connectionId, e.Unpacked);
 
         requestQueue.Add(connectionId, command, args);
       }

@@ -14,12 +14,11 @@ namespace Engine.Helpers
     /// CryptoStream closes outputStream, this class avoids this behaviour
     /// </summary>
     /// <typeparam name="TStream">Real stream type</typeparam>
-    private class NotDisposableStream<TStream> : Stream
-      where TStream: Stream
+    private class NotDisposableStream : Stream
     {
-      private TStream real;
+      private Stream real;
 
-      public NotDisposableStream(TStream stream)
+      public NotDisposableStream(Stream stream)
       {
         if (stream == null)
           throw new ArgumentNullException("stream");
@@ -116,6 +115,7 @@ namespace Engine.Helpers
     /// </summary>
     /// <param name="inputStream">Поток, который будет зашифрован.</param>
     /// <param name="outputStream">Поток, в который будет записан результат шифрования.</param>
+    /// <param name="length">Размер данных для шифрования.</param>
     [SecuritySafeCritical]
     public void Encrypt(Stream inputStream, Stream outputStream)
     {
@@ -127,7 +127,7 @@ namespace Engine.Helpers
       if (outputStream == null)
         throw new ArgumentNullException("Output stream is null");
 
-      var outputWrapper = new NotDisposableStream<Stream>(outputStream);
+      var outputWrapper = new NotDisposableStream(outputStream);
 
       using (var transform = algorithm.CreateEncryptor())
       using (var encrypter = new CryptoStream(outputWrapper, transform, CryptoStreamMode.Write))
@@ -136,7 +136,6 @@ namespace Engine.Helpers
         writer.Write(algorithm.IV);
 
         var dataBuffer = new byte[BufferSize];
-
         while (inputStream.Position < inputStream.Length)
         {
           var readed = inputStream.Read(dataBuffer, 0, BufferSize);
@@ -146,56 +145,11 @@ namespace Engine.Helpers
     }
 
     /// <summary>
-    /// Шифрует объект в поток.
-    /// </summary>
-    /// <typeparam name="T">Тип объекта, который будет зашифрован.</typeparam>
-    /// <param name="obj">Объект который будет зашифрован.</param>
-    /// <param name="outputStream">Поток в который будет зашифрован объект.</param>
-    [SecuritySafeCritical]
-    public void Encrypt<T>(T obj, Stream outputStream)
-    {
-      ThrowIfDisposed();
-
-      if (obj == null)
-        throw new ArgumentNullException("Input object is null");
-
-      if (outputStream == null)
-        throw new ArgumentNullException("Output stream is null");
-
-      var outputWrapper = new NotDisposableStream<Stream>(outputStream);
-
-      using (var transform = algorithm.CreateEncryptor())
-      using (var encrypter = new CryptoStream(outputWrapper, transform, CryptoStreamMode.Write))
-      using (var writer = new BinaryWriter(outputWrapper, Encoding.Unicode, true))
-      {
-        writer.Write(algorithm.IV);
-        Serializer.Serialize(encrypter, obj);
-      }
-    }
-
-    /// <summary>
-    /// Шифрует объект в массив байт.
-    /// </summary>
-    /// <typeparam name="T">Тип объекта, который будет зашифрован.</typeparam>
-    /// <param name="obj">Объект который будет зашифрован.</param>
-    /// <returns>Зашифрованный объект.</returns>
-    [SecuritySafeCritical]
-    public MemoryStream Encrypt<T>(T obj)
-    {
-      ThrowIfDisposed();
-
-      var outputStream = new MemoryStream();
-      Encrypt(obj, outputStream);
-      outputStream.Seek(0, SeekOrigin.Begin);
-      return outputStream;
-    }
-
-    /// <summary>
     /// Производит дешифрование потока.
     /// </summary>
     /// <param name="inputStream">Поток, который будет дешифрован.</param>
     /// <param name="outputStream">Поток, в который будет записан результат дешифрования.</param>
-    /// <param name="key">Ключ для дешифрования.</param>
+    /// <param name="length">Размер данных для дешифрования.</param>
     [SecuritySafeCritical]
     public void Decrypt(Stream inputStream, Stream outputStream)
     {
@@ -207,61 +161,23 @@ namespace Engine.Helpers
       if (outputStream == null)
         throw new ArgumentNullException("Output stream is null");
 
-      using (var reader = new BinaryReader(inputStream, Encoding.Unicode, true))
+      var inputWrapper = new NotDisposableStream(inputStream);
+
+      using (var reader = new BinaryReader(inputWrapper))
       {
         algorithm.IV = reader.ReadBytes(algorithm.BlockSize / 8);
 
         using (var transform = algorithm.CreateDecryptor())
-        using (var decryptor = new CryptoStream(inputStream, transform, CryptoStreamMode.Read))
+        using (var decryptor = new CryptoStream(inputWrapper, transform, CryptoStreamMode.Read))
         {
           var dataBuffer = new byte[BufferSize];
-
-          while (inputStream.Position < inputStream.Length)
+          while (inputWrapper.Position < inputWrapper.Length)
           {
             var readed = decryptor.Read(dataBuffer, 0, BufferSize);
             outputStream.Write(dataBuffer, 0, readed);
           }
         }
       }
-    }
-
-    /// <summary>
-    /// Расшифровывает из потока 1 объект.
-    /// </summary>
-    /// <typeparam name="T">Тип объекта который будет расшифрован.</typeparam>
-    /// <param name="inputStream">Поток с входными данными.</param>
-    /// <returns>Расшифрованый объект.</returns>
-    [SecuritySafeCritical]
-    public T Decrypt<T>(Stream inputStream)
-    {
-      ThrowIfDisposed();
-
-      if (inputStream == null)
-        throw new ArgumentNullException("Input stream is null");
-
-      using (var reader = new BinaryReader(inputStream, Encoding.Unicode, true))
-      {
-        algorithm.IV = reader.ReadBytes(algorithm.BlockSize / 8);
-
-        using (var transform = algorithm.CreateDecryptor())
-        using (var decryptor = new CryptoStream(inputStream, transform, CryptoStreamMode.Read))
-          return Serializer.Deserialize<T>(decryptor);
-      }
-    }
-
-    /// <summary>
-    /// Расшифровывает из потока 1 объект.
-    /// </summary>
-    /// <typeparam name="T">Тип объекта который будет расшифрован.</typeparam>
-    /// <param name="input">Массив с входными данными.</param>
-    /// <returns>Расшифрованый объект.</returns>
-    [SecuritySafeCritical]
-    public T Decrypt<T>(byte[] input)
-    {
-      ThrowIfDisposed();
-
-      using (var inputStream = new MemoryStream(input))
-        return Decrypt<T>(inputStream);
     }
     #endregion
 

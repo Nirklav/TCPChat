@@ -3,7 +3,6 @@ using Engine.Model.Entities;
 using Engine.Network;
 using System;
 using System.IO;
-using System.Linq;
 using System.Security;
 
 namespace Engine.API.ClientCommands
@@ -32,8 +31,11 @@ namespace Engine.API.ClientCommands
       if (content.File == null)
         throw new ArgumentNullException("File");
 
-      if (content.Part == null)
-        throw new ArgumentNullException("Part");
+      if (args.Unpacked.RawData == null)
+        throw new ArgumentNullException("args.Unpacked.RawData");
+
+      if (args.Unpacked.RawLength <= 0)
+        throw new ArgumentException("args.Unpacked.RawLength <= 0");
 
       if (content.StartPartPosition < 0)
         throw new ArgumentException("StartPartPosition < 0");
@@ -56,8 +58,11 @@ namespace Engine.API.ClientCommands
         if (file.WriteStream == null)
           file.WriteStream = File.Create(file.FullName);
 
+        var filePart = args.Unpacked.RawData;
+        var filePartLength = args.Unpacked.RawLength;
+
         if (file.WriteStream.Position == content.StartPartPosition)
-          file.WriteStream.Write(content.Part, 0, content.Part.Length);
+          file.WriteStream.Write(filePart, 0, filePartLength);
 
         file.File = content.File;
 
@@ -91,7 +96,6 @@ namespace Engine.API.ClientCommands
       private string roomName;
       private FileDescription file;
       private long startPartPosition;
-      private byte[] part;
 
       public string RoomName
       {
@@ -109,12 +113,6 @@ namespace Engine.API.ClientCommands
       {
         get { return startPartPosition; }
         set { startPartPosition = value; }
-      }
-
-      public byte[] Part
-      {
-        get { return part; }
-        set { part = value; }
       }
     }
   }

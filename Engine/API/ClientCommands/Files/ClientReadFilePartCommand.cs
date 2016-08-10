@@ -62,22 +62,20 @@ namespace Engine.API.ClientCommands
         RoomName = content.RoomName,
       };
 
-      long partSize;
-      if (content.File.Size < content.StartPartPosition + content.Length)
-        partSize = content.File.Size - content.StartPartPosition;
-      else
-        partSize = content.Length;
+      var partSize = content.File.Size < content.StartPartPosition + content.Length
+        ? content.File.Size - content.StartPartPosition
+        : content.Length;
 
-      sendingContent.Part = new byte[partSize];
+      var part = new byte[partSize];
 
       using (var client = ClientModel.Get())
       {
         var sendingFileStream = client.PostedFiles.First(c => c.File.Equals(content.File)).ReadStream;
         sendingFileStream.Position = content.StartPartPosition;
-        sendingFileStream.Read(sendingContent.Part, 0, sendingContent.Part.Length);
+        sendingFileStream.Read(part, 0, part.Length);
       }
 
-      ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientWriteFilePartCommand.CommandId, sendingContent);
+      ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientWriteFilePartCommand.CommandId, sendingContent, part);
     }
 
     [Serializable]

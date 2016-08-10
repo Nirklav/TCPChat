@@ -23,10 +23,11 @@ namespace UI.ViewModel
     private const string FileNotFoundKey = "messageViewModel-fileNotFound";
     private const string CantDownloadItsFileKey = "messageViewModel-cantDownloadItsFile";
     private const string CancelDownloadingQuestionKey = "messageViewModel-cancelDownloadingQuestion";
+    private const string FileDownloadedKey = "messageViewModel-fileDownloaded";
 
     private const string TimeFormat = "hh:mm";
     private const string SizeFormat = " ({0:#,##0.0} {1})";
-    private const string FileDialogFilter = "Все файлы|*.*";
+    private const string FileDialogFilter = "All files|*.*";
     #endregion
 
     #region fields
@@ -162,7 +163,7 @@ namespace UI.ViewModel
         else
         {
           Progress = 0;
-          parentRoom.AddSystemMessage(string.Format("Загрузка файла \"{0}\" завершена.", file.Name));
+          parentRoom.AddSystemMessage(Localizer.Instance.Localize(FileDownloadedKey, file.Name));
         }
       }
     }
@@ -191,6 +192,20 @@ namespace UI.ViewModel
         var file = GetFile(client, fileId.Value);
         try
         {
+          // File already downloading
+          if (client.DownloadingFiles.Exists(f => f.File.Id == fileId))
+          {
+            var msg = Localizer.Instance.Localize(CancelDownloadingQuestionKey);
+            var result = MessageBox.Show(msg, MainViewModel.ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+              ClientModel.Api.CancelDownloading(file.Id, true);
+              Progress = 0;
+            }
+            return;
+          }
+
+          // Show save file dialog
           var saveDialog = new SaveFileDialog();
           saveDialog.OverwritePrompt = false;
           saveDialog.Filter = FileDialogFilter;
@@ -201,19 +216,7 @@ namespace UI.ViewModel
         }
         catch (ModelException me)
         {
-          if (me.Code != ErrorCode.FileAlreadyDownloading)
-          {
-            parentRoom.AddSystemMessage(Localizer.Instance.Localize(me.Code));
-            return;
-          }
-
-          var msg = Localizer.Instance.Localize(CancelDownloadingQuestionKey);
-          var result = MessageBox.Show(msg, MainViewModel.ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question);
-          if (result == MessageBoxResult.Yes)
-          {
-            ClientModel.Api.CancelDownloading(file.Id, true);
-            Progress = 0;
-          }
+          parentRoom.AddSystemMessage(Localizer.Instance.Localize(me.Code));
         }
         catch (ArgumentException ae)
         {

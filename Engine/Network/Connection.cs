@@ -37,8 +37,8 @@ namespace Engine.Network.Connections
     [SecurityCritical] protected byte[] buffer;
     [SecurityCritical] protected Socket handler;
     [SecurityCritical] protected MemoryStream received;
+    [SecurityCritical] protected Packer packer;
     [SecurityCritical] private ECDiffieHellmanCng diffieHellman;
-    [SecurityCritical] private byte[] key;
     [SecurityCritical] protected volatile bool disposed;
     #endregion
 
@@ -55,6 +55,7 @@ namespace Engine.Network.Connections
       handler = socket;
       buffer = new byte[BufferSize];
       received = new MemoryStream();
+      packer = new Packer();
 
       diffieHellman = new ECDiffieHellmanCng(KeySize);
       diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
@@ -144,40 +145,17 @@ namespace Engine.Network.Connections
       if (!handler.Connected)
         throw new InvalidOperationException("Not connected");
 
-      MemoryStream stream = null;
-      try
+      using (var packed = packer.Pack(package))
       {
-        var encrypt = key != null;
-
-        stream = new MemoryStream();
-        stream.Write(BitConverter.GetBytes(0), 0, sizeof(int));
-        stream.Write(BitConverter.GetBytes(encrypt), 0, sizeof(bool));
-
-        if (!encrypt)
-          Serializer.Serialize(stream, package);
-        else
+        try
         {
-          using (var crypter = new Crypter())
-          {
-            crypter.SetKey(key);
-            crypter.Encrypt(package, stream);
-          }
+          handler.BeginSend(packed.Data, 0, packed.Length, SocketFlags.None, OnSend, null);
         }
-
-        var message = stream.ToArray();
-        var lengthBlob = BitConverter.GetBytes(message.Length);
-        Buffer.BlockCopy(lengthBlob, 0, message, 0, lengthBlob.Length);
-        handler.BeginSend(message, 0, message.Length, SocketFlags.None, OnSend, null);
-      }
-      catch (SocketException se)
-      {
-        if (!OnSocketException(se))
-          throw;
-      }
-      finally
-      {
-        if (stream != null)
-          stream.Dispose();
+        catch (SocketException se)
+        {
+          if (!OnSocketException(se))
+            throw;
+        }
       }
     }
 
@@ -231,23 +209,37 @@ namespace Engine.Network.Connections
 
           received.Write(buffer, 0, bytesRead);
 
-          if (GetReceivingPackageSize() > MaxReceivedDataSize)
+          var size = packer.GetPackageSize(received);
+          if (size > MaxReceivedDataSize)
             throw new ModelException(ErrorCode.LargeReceivedData);
 
-          while (IsPackageReceived())
+          while (packer.IsPackageReceived(received))
           {
-            var package = GetReceivedPackage();
+            var unpacked = packer.Unpack<IPackage>(received);
 
-            switch (package.Id)
+            var length = (int) received.Length;
+
+            received.Position = 0;
+            received.SetLength(0);
+
+            var restDataSize = length - size;
+            if (restDataSize > 0)
+            {
+              var dataBuffer = received.GetBuffer();
+              received.Write(dataBuffer, size, restDataSize);
+            }
+
+            switch (unpacked.Package.Id)
             {
               case RemoteInfoId:
                 if (!connectionInfoSent)
                   SendInfo();
 
-                SetRemoteInfo(package);
+                SetRemoteInfo(unpacked.Package);
+                unpacked.Dispose();
                 break;
               default:
-                OnPackageReceived(new PackageReceivedEventArgs(package));
+                OnPackageReceived(new PackageReceivedEventArgs(unpacked));
                 break;
             }
           }
@@ -378,79 +370,9 @@ namespace Engine.Network.Connections
       // Set key
       remoteInfo = remoteInfoPack.Content;
       var publicKey = CngKey.Import(remoteInfo.PublicKey, CngKeyBlobFormat.EccPublicBlob);
-      key = diffieHellman.DeriveKeyMaterial(publicKey);
+      packer.SetKey(diffieHellman.DeriveKeyMaterial(publicKey));
 
       OnInfoReceived(remoteInfo);
-    }
-
-    [SecurityCritical]
-    private bool IsPackageReceived()
-    {
-      var size = GetReceivingPackageSize();
-      if (size == -1)
-        return false;
-
-      if (size > received.Position)
-        return false;
-
-      return true;
-    }
-
-    [SecurityCritical]
-    private int GetReceivingPackageSize()
-    {
-      if (received.Position < HeadSize)
-        return -1;
-
-      return BitConverter.ToInt32(received.GetBuffer(), LengthHead);
-    }
-
-    [SecurityCritical]
-    private bool IsReceivingPackageEncrypted()
-    {
-      if (received.Position < HeadSize)
-        return false;
-
-      return BitConverter.ToBoolean(received.GetBuffer(), EncryptionHead);
-    }
-
-    [SecurityCritical]
-    private IPackage GetReceivedPackage()
-    {
-      if (!IsPackageReceived())
-        throw new InvalidOperationException("Package not received yet");
-
-      var receivingSize = GetReceivingPackageSize();
-      var restDataSize = (int)(received.Position - receivingSize);
-
-      received.Position = HeadSize;
-
-      IPackage result;
-      if (!IsReceivingPackageEncrypted())
-        result = Serializer.Deserialize<IPackage>(received);
-      else
-      {
-        if (key == null)
-          throw new InvalidOperationException("Key not set yet");
-
-        var packageBlob = new byte[receivingSize - HeadSize];
-        received.Read(packageBlob, 0, packageBlob.Length);
-
-        using (var crypter = new Crypter())
-        {
-          crypter.SetKey(key);
-          result = crypter.Decrypt<IPackage>(packageBlob);
-        }
-      }
-
-      received.Position = 0;
-      if (restDataSize > 0)
-      {
-        var dataBuffer = received.GetBuffer();
-        received.Write(dataBuffer, receivingSize, restDataSize);
-      }
-
-      return result;
     }
     #endregion
 
@@ -493,7 +415,6 @@ namespace Engine.Network.Connections
         received = null;
       }
 
-      key = null;
       connectionInfoSent = false;
       remoteInfo = null;
     }

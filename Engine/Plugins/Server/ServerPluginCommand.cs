@@ -14,7 +14,7 @@ namespace Engine.Plugins.Server
   {
     protected sealed override void OnRun(ServerCommandArgs args)
     {
-      var package = args.Package as IPackage<byte[]>;
+      var package = args.Unpacked.Package as IPackage<byte[]>;
       if (package == null)
         throw new ModelException(ErrorCode.WrongContentType);
 

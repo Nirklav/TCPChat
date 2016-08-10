@@ -138,6 +138,7 @@ namespace Engine.Network
       public void Run()
       {
         command.Run(args);
+        args.Unpacked.Dispose();
       }
     }
 

@@ -1,4 +1,5 @@
-﻿using Engine.Network.Connections;
+﻿using Engine.Network;
+using Engine.Network.Connections;
 using System;
 
 namespace Engine.API
@@ -17,11 +18,11 @@ namespace Engine.API
   [Serializable]
   public class CommandArgs
   {
-    public IPackage Package { get; private set; }
+    public Unpacked<IPackage> Unpacked { get; private set; }
 
-    public CommandArgs(IPackage package)
+    public CommandArgs(Unpacked<IPackage> unpacked)
     {
-      Package = package;
+      Unpacked = unpacked;
     }
   }
 
@@ -31,8 +32,8 @@ namespace Engine.API
   {
     public string ConnectionId { get; private set; }
     
-    public ServerCommandArgs(string connectionId, IPackage package)
-      : base(package)
+    public ServerCommandArgs(string connectionId, Unpacked<IPackage> unpacked)
+      : base(unpacked)
     {
       ConnectionId = connectionId;
     }
@@ -44,8 +45,8 @@ namespace Engine.API
   {
     public string PeerConnectionId { get; private set; }
 
-    public ClientCommandArgs(string peerConnectionId, IPackage package)
-      : base(package)
+    public ClientCommandArgs(string peerConnectionId, Unpacked<IPackage> unpacked)
+      : base(unpacked)
     {
       PeerConnectionId = peerConnectionId;
     }

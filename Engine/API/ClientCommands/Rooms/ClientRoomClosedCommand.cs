@@ -27,8 +27,12 @@ namespace Engine.API.ClientCommands
 
       using (var client = ClientModel.Get())
       {
-        var room = client.Rooms[content.Room.Name];
+        Room room;
+        if (!client.Rooms.TryGetValue(content.Room.Name, out room))
+          throw new ArgumentException("Room ");
+
         client.Rooms.Remove(content.Room.Name);
+        client.PostedFiles.RemoveAll(f => room.Files.Exists(rf => rf.Id == f.File.Id));
 
         if (room.Enabled && room.Type == RoomType.Voice)
         {

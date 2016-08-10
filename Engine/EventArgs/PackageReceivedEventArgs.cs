@@ -1,4 +1,5 @@
-﻿using Engine.Network.Connections;
+﻿using Engine.Network;
+using Engine.Network.Connections;
 using System;
 
 namespace Engine
@@ -6,12 +7,12 @@ namespace Engine
   [Serializable]
   public class PackageReceivedEventArgs : EventArgs
   {
-    public IPackage Package { get; private set; }
+    public Unpacked<IPackage> Unpacked { get; private set; }
     public Exception Exception { get; private set; }
 
-    public PackageReceivedEventArgs(IPackage package)
+    public PackageReceivedEventArgs(Unpacked<IPackage> unpacked)
     {
-      Package = package;
+      Unpacked = unpacked;
     }
 
     public PackageReceivedEventArgs(Exception e)

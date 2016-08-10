@@ -138,9 +138,11 @@
     <Compile Include="Model\Server\ServerInitializer.cs" />
     <Compile Include="Network\AsyncClient.cs" />
     <Compile Include="Network\AsyncServer.cs" />
+    <Compile Include="Network\Pool.cs" />
     <Compile Include="Network\Connection.cs" />
     <Compile Include="Network\AsyncPeer.cs" />
     <Compile Include="Network\ConnectionInfo.cs" />
+    <Compile Include="Network\Packer.cs" />
     <Compile Include="Network\ServerConnection.cs" />
     <Compile Include="Model\Client\ClientModel.cs" />
     <Compile Include="Model\Entities\DownloadingFile.cs" />

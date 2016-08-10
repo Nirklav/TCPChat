@@ -29,14 +29,16 @@ namespace Engine.Network
     #region nested types
     private class WaitingCommandContainer
     {
-      public WaitingCommandContainer(IPackage package, bool unreliable)
+      public IPackage Package { get; private set; }
+      public byte[] RawData { get; private set; }
+      public bool Unreliable { get; private set; }
+
+      public WaitingCommandContainer(IPackage package, byte[] rawData, bool unreliable)
       {
         Package = package;
+        RawData = rawData;
         Unreliable = unreliable;
       }
-
-      public IPackage Package { get; private set; }
-      public bool Unreliable { get; private set; }
     }
     #endregion
 
@@ -49,7 +51,7 @@ namespace Engine.Network
     #region private fields
     [SecurityCritical] private readonly object syncObject = new object();
     [SecurityCritical] private Dictionary<string, List<WaitingCommandContainer>> waitingCommands;
-    [SecurityCritical] private Dictionary<string, byte[]> keys;
+    [SecurityCritical] private Dictionary<string, Packer> packers;
     [SecurityCritical] private NetConnection serviceConnection;
     [SecurityCritical] private NetPeer handler;
     [SecurityCritical] private int state; //PeerState
@@ -75,7 +77,7 @@ namespace Engine.Network
     internal AsyncPeer()
     {
       waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
-      keys = new Dictionary<string, byte[]>();
+      packers = new Dictionary<string, Packer>();
       syncContext = new EngineSyncContext();
       requestQueue = new ClientRequestQueue();
 
@@ -211,7 +213,22 @@ namespace Engine.Network
     [SecuritySafeCritical]
     public void SendMessage<T>(string peerId, long id, T content, bool unreliable = false)
     {
-      SendMessage(peerId, new Package<T>(id, content), unreliable);
+      SendMessage(peerId, new Package<T>(id, content), null, unreliable);
+    }
+
+    /// <summary>
+    /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
+    /// </summary>
+    /// <typeparam name="T">Тип параметра пакета.</typeparam>
+    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
+    /// <param name="id">Индетификатор команды.</param>
+    /// <param name="content">Параметр пакета.</param>
+    /// <param name="rawData">Данные не требующие сериализации.</param>
+    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    [SecuritySafeCritical]
+    public void SendMessage<T>(string peerId, long id, T content, byte[] rawData, bool unreliable = false)
+    {
+      SendMessage(peerId, new Package<T>(id, content), rawData, unreliable);
     }
 
     /// <summary>
@@ -223,7 +240,7 @@ namespace Engine.Network
     [SecuritySafeCritical]
     public void SendMessage(string peerId, long id, bool unreliable = false)
     {
-      SendMessage(peerId, new Package(id), unreliable);
+      SendMessage(peerId, new Package(id), null, unreliable);
     }
 
     /// <summary>
@@ -231,27 +248,28 @@ namespace Engine.Network
     /// </summary>
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
     /// <param name="package">Индетификатор пакета.</param>
+    /// <param name="rawData">Данные не требующие серализации.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     [SecuritySafeCritical]
-    public void SendMessage(string peerId, IPackage package, bool unreliable = false)
+    public void SendMessage(string peerId, IPackage package, byte[] rawData, bool unreliable = false)
     {
       ThrowIfDisposed();
 
       if (handler == null || handler.Status != NetPeerStatus.Running)
       {
-        SaveCommandAndConnect(peerId, package, unreliable);
+        SaveCommandAndConnect(peerId, package, rawData, unreliable);
         return;
       }
 
       var connection = FindConnection(peerId);
       if (connection == null)
       {
-        SaveCommandAndConnect(peerId, package, unreliable);
+        SaveCommandAndConnect(peerId, package, rawData, unreliable);
         return;
       }
 
       var deliveryMethod = unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered;
-      var message = CreateMessage(peerId, package);
+      var message = CreateMessage(peerId, package, rawData);
       handler.SendMessage(message, connection, deliveryMethod, 0);
     }
     #endregion
@@ -269,7 +287,7 @@ namespace Engine.Network
     [SecuritySafeCritical]
     public bool SendMessageIfConnected<T>(string peerId, long id, T content, bool unreliable = false)
     {
-      return SendMessageIfConnected(peerId, new Package<T>(id, content), unreliable);
+      return SendMessageIfConnected(peerId, new Package<T>(id, content), null, unreliable);
     }
 
     /// <summary>
@@ -277,10 +295,11 @@ namespace Engine.Network
     /// </summary>
     /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
     /// <param name="package">Индетификатор пакета.</param>
+    /// <param name="rawData">Данные не требующие сериализации.</param>
     /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
     /// <returns>Отправлено ли сообщение.</returns>
     [SecuritySafeCritical]
-    public bool SendMessageIfConnected(string peerId, IPackage package, bool unreliable = false)
+    public bool SendMessageIfConnected(string peerId, IPackage package, byte[] rawData, bool unreliable = false)
     {
       ThrowIfDisposed();
 
@@ -292,7 +311,7 @@ namespace Engine.Network
         return false;
 
       var deliveryMethod = unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered;
-      var message = CreateMessage(peerId, package);
+      var message = CreateMessage(peerId, package, rawData);
       handler.SendMessage(message, connection, deliveryMethod, 0);
       return true;
     }
@@ -301,32 +320,26 @@ namespace Engine.Network
 
     #region private methods
     [SecurityCritical]
-    private byte[] GetKey(string peerId)
+    private Packer GetPacker(string peerId)
     {
-      byte[] key;
+      Packer packer;
       lock (syncObject)
-        keys.TryGetValue(peerId, out key);
+        packers.TryGetValue(peerId, out packer);
 
-      if (key == null)
-        throw new InvalidOperationException(string.Format("Key not set, for connection {0}", peerId));
+      if (packer == null)
+        throw new InvalidOperationException(string.Format("Packer not set, for connection {0}", peerId));
 
-      return key;
+      return packer;
     }
 
     [SecurityCritical]
-    private NetOutgoingMessage CreateMessage(string peerId, IPackage package)
+    private NetOutgoingMessage CreateMessage(string peerId, IPackage package, byte[] rawData)
     {
-      MemoryStream pack;     
-      using (var crypter = new Crypter())
-      {
-        crypter.SetKey(GetKey(peerId));
-        pack = crypter.Encrypt(package);
-      }
-
-      var buffer = pack.GetBuffer();
-      var length = (int)pack.Length;
-      var message = handler.CreateMessage(length);
-      message.Write(buffer, 0, length);
+      var packer = GetPacker(peerId);
+      var packed = packer.Pack(package, rawData);
+      
+      var message = handler.CreateMessage(packed.Length);
+      message.Write(packed.Data, 0, packed.Length);
       return message;
     }
 
@@ -347,7 +360,7 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private void SaveCommandAndConnect(string peerId, IPackage package, bool unreliable)
+    private void SaveCommandAndConnect(string peerId, IPackage package, byte[] rawData, bool unreliable)
     {
       lock (syncObject)
       {
@@ -359,7 +372,7 @@ namespace Engine.Network
           waitingCommands.Add(peerId, commands);
         }
 
-        commands.Add(new WaitingCommandContainer(package, unreliable));
+        commands.Add(new WaitingCommandContainer(package, rawData, unreliable));
       }
 
       ClientModel.Api.ConnectToPeer(peerId);
@@ -494,15 +507,17 @@ namespace Engine.Network
 
       lock (syncObject)
       {
-        // Add connection key
-        keys.Add(connectionId, key);
+        // Add connection packer
+        var packer = new Packer();
+        packer.SetKey(key);
+        packers.Add(connectionId, packer);
 
         // Invoke waiting commands
         List<WaitingCommandContainer> commands;
         if (waitingCommands.TryGetValue(connectionId, out commands))
         {
-          foreach (WaitingCommandContainer command in commands)
-            SendMessage(connectionId, command.Package, command.Unreliable);
+          foreach (var command in commands)
+            SendMessage(connectionId, command.Package, command.RawData, command.Unreliable);
 
           waitingCommands.Remove(connectionId);
         }
@@ -518,7 +533,7 @@ namespace Engine.Network
       message.SenderConnection.Tag = null;
 
       if (connectionId != null)
-        keys.Remove(connectionId);
+        packers.Remove(connectionId);
     }
 
     [SecurityCritical]
@@ -527,17 +542,12 @@ namespace Engine.Network
       try
       {
         var peerId = (string)message.SenderConnection.Tag;
+        var packer = GetPacker(peerId);
+        var unpacked = packer.Unpack<IPackage>(message.Data);
 
-        IPackage package;
-        using (var crypter = new Crypter())
-        {
-          crypter.SetKey(GetKey(peerId));
-          package = crypter.Decrypt<IPackage>(message.Data);
-        }
-
-        var command = ClientModel.Api.GetCommand(package.Id);
-        var args = new ClientCommandArgs(peerId, package);
-
+        var command = ClientModel.Api.GetCommand(unpacked.Package.Id);
+        var args = new ClientCommandArgs(peerId, unpacked);
+        
         requestQueue.Add(peerId, command, args);
       }
       catch (Exception exc)
@@ -576,7 +586,7 @@ namespace Engine.Network
       lock (syncObject)
       {
         waitingCommands.Clear();
-        keys.Clear();
+        packers.Clear();
       }
     }
     #endregion

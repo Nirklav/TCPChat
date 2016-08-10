@@ -115,6 +115,7 @@
   <row key="messageViewModel-fileNotFound" value="Файл недоступен"/>
   <row key="messageViewModel-cantDownloadItsFile" value="Нельзя скачивать свой файл."/>
   <row key="messageViewModel-cancelDownloadingQuestion" value="Вы уже загружаете этот файл. Вы хотите отменить загрузку?"/>
+  <row key="messageViewModel-fileDownloaded" value="Загрузка файла {0} завершена."/>
 
   <row key="roomViewModel-inviteInRoomTitle" value="Пригласить в комнату"/>
   <row key="roomViewModel-kickFormRoomTitle" value="Удалить из комнаты"/>
