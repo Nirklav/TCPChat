@@ -18,6 +18,12 @@ namespace Engine.API.ServerCommands
       get;
     }
 
+    public virtual bool IsPluginCommand
+    {
+      [SecuritySafeCritical]
+      get { return false; }
+    }
+
     [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {
@@ -55,7 +61,7 @@ namespace Engine.API.ServerCommands
     /// <param name="connectionId">Id соединения.</param>
     /// <returns>Возвращает false если комнаты не существует.</returns>
     [SecurityCritical]
-    protected static bool TryGetRoom(ServerContext server, string roomName, string connectionId, out Room room)
+    protected static bool TryGetRoom(ServerGuard server, string roomName, string connectionId, out Room room)
     {
       var result = server.Rooms.TryGetValue(roomName, out room);
       if (!result)
@@ -73,7 +79,7 @@ namespace Engine.API.ServerCommands
     /// <param name="server">Контекст сервера.</param>
     /// <param name="room">Комната.</param>
     [SecurityCritical]
-    protected static void RefreshRoom(ServerContext server, Room room)
+    protected static void RefreshRoom(ServerGuard server, Room room)
     {
       var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
       {

@@ -1,11 +1,7 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Entities;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using UI.Infrastructure;
 
@@ -53,7 +49,7 @@ namespace UI.ViewModel
     public string RoomName { get; private set; }
     public ObservableCollection<PostedFileViewModel> PostedFiles { get; private set; }
 
-    public PostedFileRoomViewModel(ClientContext client, string roomName, PostedFilesViewModel parent)
+    public PostedFileRoomViewModel(ClientGuard client, string roomName, PostedFilesViewModel parent)
       : base(parent, false)
     {
       this.parent = parent;
@@ -81,7 +77,7 @@ namespace UI.ViewModel
 
     public ICommand RemoveCommand { get; private set; }
 
-    public PostedFileViewModel(ClientContext client, PostedFile postedFile, PostedFileRoomViewModel parent)
+    public PostedFileViewModel(ClientGuard client, PostedFile postedFile, PostedFileRoomViewModel parent)
       : base(parent, false)
     {
       this.parent = parent;

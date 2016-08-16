@@ -33,7 +33,7 @@ namespace Engine.Plugins.Server
     /// <example>using (var server = SeeverModel.Get()) { ... }</example>
     /// <returns>Возвращает и блокирует модель.</returns>
     [SecuritySafeCritical]
-    public ServerContext Get()
+    public ServerGuard Get()
     {
       return ServerModel.Get();
     }

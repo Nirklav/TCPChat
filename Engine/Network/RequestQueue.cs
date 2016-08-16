@@ -137,8 +137,13 @@ namespace Engine.Network
       [SecurityCritical]
       public void Run()
       {
-        command.Run(args);
-        args.Unpacked.Dispose();
+        using (args)
+        {
+          if (command.IsPluginCommand)
+            args.CopyUnpacked();
+
+          command.Run(args);
+        }
       }
     }
 

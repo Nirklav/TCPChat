@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Engine.Model
 {
-  public abstract class ModelContext<TModel> :
+  public abstract class ModelGuard<TModel> :
     MarshalByRefObject,
     IDisposable
   {
@@ -23,7 +23,7 @@ namespace Engine.Model
 
     #region initialization
     [SecurityCritical]
-    protected ModelContext(TModel initialModel)
+    protected ModelGuard(TModel initialModel)
     {
       if (!Monitor.TryEnter(syncObject, TimeOut))
         throw new InvalidOperationException("model lock timeout");

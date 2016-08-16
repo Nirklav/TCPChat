@@ -52,7 +52,7 @@ namespace Engine.API.ClientCommands
     }
 
     [SecurityCritical]
-    private static void UpdateRoomUsers(ClientContext client, Room currentRoom, Room prevRoom)
+    private static void UpdateRoomUsers(ClientGuard client, Room currentRoom, Room prevRoom)
     {
       var removed = new HashSet<string>(prevRoom.Users);
       var added = new HashSet<string>(currentRoom.Users);
@@ -81,7 +81,7 @@ namespace Engine.API.ClientCommands
     }
 
     [SecurityCritical]
-    private static void UpdateRoomFiles(ClientContext client, Room currentRoom, Room prevRoom)
+    private static void UpdateRoomFiles(ClientGuard client, Room currentRoom, Room prevRoom)
     {
       var removed = new HashSet<FileId>(prevRoom.Files.Select(f => f.Id));
       foreach (var file in currentRoom.Files)

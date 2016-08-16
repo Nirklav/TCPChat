@@ -7,8 +7,8 @@ using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Input;
 using UI.Infrastructure;
-using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 using DialogResult = System.Windows.Forms.DialogResult;
+using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 
 namespace UI.ViewModel
 {
@@ -236,7 +236,7 @@ namespace UI.ViewModel
     #endregion
 
     #region Helpers
-    private FileDescription GetFile(ClientContext client, FileId fileId)
+    private FileDescription GetFile(ClientGuard client, FileId fileId)
     {
       var room = client.Rooms[parentRoom.Name];
       return room.Files.Find(f => f.Id == fileId);

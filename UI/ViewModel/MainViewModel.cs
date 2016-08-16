@@ -11,7 +11,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using UI.Dialogs;
 using UI.Infrastructure;
 using UI.View;

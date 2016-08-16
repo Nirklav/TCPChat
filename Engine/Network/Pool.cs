@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Security;
+using System.Threading;
 
 namespace Engine.Network
 {
@@ -81,6 +82,10 @@ namespace Engine.Network
       }
     }
 
+    private static long Misses;
+    private static long Hits;
+    private static long Puts;
+
     private readonly int maxSize;
     private readonly List<Container> storage;
     private readonly Comparer comaprer;
@@ -105,23 +110,30 @@ namespace Engine.Network
       lock (storage)
       {
         var streamSize = size ?? DefaultSize;
+        if (streamSize <= 0)
+          throw new ArgumentException("size");
+
         var index = storage.BinarySearch(new Container(streamSize), comaprer);
         if (index < 0)
         {
           index = ~index;
-          index++;
 
           if (index >= storage.Count)
           {
             if (size == null && storage.Count >= 1)
               index = 0;
             else
+            {
+              Interlocked.Increment(ref Misses);
               return new MemoryStream(streamSize);
+            }
           }
         }
-
+        
         var result = storage[index];
         storage.RemoveAt(index);
+
+        Interlocked.Increment(ref Hits);
         return result.Data;
       }
     }
@@ -129,6 +141,8 @@ namespace Engine.Network
     [SecurityCritical]
     public void Put(MemoryStream data)
     {
+      Interlocked.Increment(ref Puts);
+
       lock (storage)
       {
         if (storage.Count < maxSize)

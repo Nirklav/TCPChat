@@ -73,12 +73,12 @@ namespace Engine.Model.Server
     /// <example>using (var server = SeeverModel.Get()) { ... }</example>
     /// <returns>Возвращает и блокирует модель.</returns>
     [SecurityCritical]
-    public static ServerContext Get()
+    public static ServerGuard Get()
     {
       if (Interlocked.CompareExchange(ref model, null, null) == null)
         throw new ArgumentException("model do not inited yet");
 
-      return new ServerContext(model);
+      return new ServerGuard(model);
     }
     #endregion
 

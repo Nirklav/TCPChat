@@ -3,103 +3,10 @@ using Engine.Network.Connections;
 using System;
 using System.IO;
 using System.Security;
+using System.Threading;
 
 namespace Engine.Network
 {
-  public struct Packed : IPoolable
-  {
-    private readonly Packer owner;
-    private readonly MemoryStream stream;
-    
-    public byte[] Data
-    {
-      [SecurityCritical]
-      get { return stream.GetBuffer(); }
-    }
-    
-    public int Length
-    {
-      [SecurityCritical]
-      get { return (int)stream.Length; }
-    }
-
-    MemoryStream IPoolable.Stream
-    {
-      [SecuritySafeCritical]
-      get { return stream; }
-    }
-
-    [SecurityCritical]
-    public Packed(Packer packer, MemoryStream dataStream)
-    {
-      owner = packer;
-      stream = dataStream;
-    }
-    
-    [SecuritySafeCritical]
-    public void Dispose()
-    {
-      owner.Release(this);
-    }
-  }
-  
-  public struct Unpacked<T> : IPoolable
-    where T : IPackage
-  {
-    private readonly Packer owner;
-    private readonly MemoryStream stream;
-    
-    public T Package
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-    
-    public byte[] RawData
-    {
-      [SecurityCritical]
-      get
-      {
-        if (stream == null)
-          return null;
-        return stream.GetBuffer();
-      }
-    }
-    
-    public int RawLength
-    {
-      [SecurityCritical]
-      get
-      {
-        if (stream == null)
-          return 0;
-        return (int) stream.Length;
-      }
-    }
-
-    MemoryStream IPoolable.Stream
-    {
-      [SecuritySafeCritical]
-      get { return stream; }
-    }
-
-    [SecurityCritical]
-    public Unpacked(Packer packer, T package, MemoryStream rawDataStream)
-    {
-      owner = packer;
-      Package = package;
-      stream = rawDataStream;
-    }
-
-    [SecuritySafeCritical]
-    public void Dispose()
-    {
-      owner.Release(this);
-    }
-  }
-
   public interface IPoolable : IDisposable
   {
     MemoryStream Stream { get; }
@@ -107,17 +14,25 @@ namespace Engine.Network
 
   public class Packer
   {
+    private static long NotCryptedMessagesSent;
+    private static long NotCryptedMessagesRecived;
+    private static long CryptedMessagesSent;
+    private static long CryptedMessagesRecived;
+
+    private const int poolSize = 500;
+    private static Pool pool;
+
     public const int HeadSize = sizeof(int) + sizeof(bool);
     public const int LengthHead = 0;
     public const int EncryptionHead = sizeof(int);
-
-    private Pool pool;
+    
     private volatile byte[] key;
 
     [SecurityCritical]
     public Packer()
     {
-      pool = new Pool(500);
+      if (pool == null)
+        pool = new Pool(poolSize);
     }
 
     [SecurityCritical]
@@ -142,11 +57,11 @@ namespace Engine.Network
       where T : IPackage
     {
       var encrypt = key != null;
-      var streamCapacity = rawData == null ? (int?)null : rawData.Length;
-      var stream = pool.Get(streamCapacity);
+      var resultCapacity = rawData == null ? (int?)null : rawData.Length;
+      var result = pool.Get(resultCapacity);
 
-      stream.Write(BitConverter.GetBytes(0), 0, sizeof(int));
-      stream.Write(BitConverter.GetBytes(encrypt), 0, sizeof(bool));
+      result.Write(BitConverter.GetBytes(0), 0, sizeof(int));
+      result.Write(BitConverter.GetBytes(encrypt), 0, sizeof(bool));
 
       using (var guard = pool.GetWithGuard())
       {
@@ -160,22 +75,26 @@ namespace Engine.Network
           using (var crypter = new Crypter())
           {
             crypter.SetKey(key);
-            crypter.Encrypt(guard.Stream, stream);
+            crypter.Encrypt(guard.Stream, result);
           }
+
+          Interlocked.Increment(ref CryptedMessagesSent);
         }
         else
         {
           var guardStreamBuffer = guard.Stream.GetBuffer();
-          stream.Write(guardStreamBuffer, 0, (int)guard.Stream.Length);
+          result.Write(guardStreamBuffer, 0, (int)guard.Stream.Length);
+
+          Interlocked.Increment(ref NotCryptedMessagesSent);
         }
       }
 
-      var size = (int) stream.Length;
-      var buffer = stream.GetBuffer();
+      var size = (int) result.Length;
+      var buffer = result.GetBuffer();
       var lengthBlob = BitConverter.GetBytes(size);
       Buffer.BlockCopy(lengthBlob, 0, buffer, 0, lengthBlob.Length);
 
-      return new Packed(this, stream);
+      return new Packed(this, result);
     }
 
     [SecurityCritical]
@@ -215,12 +134,16 @@ namespace Engine.Network
           }
 
           outputGuard.Stream.Position = 0;
+
+          Interlocked.Increment(ref CryptedMessagesRecived);
         }
         else
         {
           var inputBuffer = input.GetBuffer();
           outputGuard.Stream.Write(inputBuffer, 0, size);
           outputGuard.Stream.Position = HeadSize;
+
+          Interlocked.Increment(ref NotCryptedMessagesRecived);
         }
 
         result = Serializer.Deserialize<T>(outputGuard.Stream);

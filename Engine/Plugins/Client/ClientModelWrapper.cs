@@ -52,6 +52,6 @@ namespace Engine.Plugins.Client
     /// <example>using (var client = ClientModel.Get()) { ... }</example>
     /// <returns>Возвращает и блокирует модель.</returns>
     [SecuritySafeCritical]
-    public ClientContext Get() { return ClientModel.Get(); }
+    public ClientGuard Get() { return ClientModel.Get(); }
   }
 }

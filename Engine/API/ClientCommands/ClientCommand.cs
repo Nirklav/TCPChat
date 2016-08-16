@@ -12,18 +12,24 @@ namespace Engine.API.ClientCommands
     CrossDomainObject, 
     ICommand<ClientCommandArgs>
   {
+    public abstract long Id
+    {
+      [SecuritySafeCritical]
+      get;
+    }
+
+    public virtual bool IsPluginCommand
+    {
+      [SecuritySafeCritical]
+      get { return false; }
+    }
+
     protected virtual bool IsPeerCommand
     {
       [SecuritySafeCritical]
       get { return false; }
     }
 
-    public abstract long Id
-    {
-      [SecuritySafeCritical]
-      get;
-    }
-  
     [SecuritySafeCritical]
     public void Run(ClientCommandArgs args)
     {
@@ -67,7 +73,7 @@ namespace Engine.API.ClientCommands
     /// <param name="client">Клиентская модель.</param>
     /// <param name="users">Пользователи.</param>
     [SecuritySafeCritical]
-    protected void UpdateUsers(ClientContext client, List<User> users)
+    protected void UpdateUsers(ClientGuard client, List<User> users)
     {
       foreach (var user in users)
         client.Users[user.Nick] = user;

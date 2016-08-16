@@ -210,7 +210,7 @@ namespace Engine.API
     }
 
     [SecurityCritical]
-    private VoiceRoom GetVoiceRoom(ClientContext client, string name)
+    private VoiceRoom GetVoiceRoom(ClientGuard client, string name)
     {
       Room room;
       if (!client.Rooms.TryGetValue(name, out room))
@@ -507,7 +507,7 @@ namespace Engine.API
     /// <param name="roomName">Название комнаты.</param>
     /// <param name="fileId">Идентификатор файла.</param>
     [SecuritySafeCritical]
-    public void ClosePostedFile(ClientContext client, string roomName, FileId fileId)
+    public void ClosePostedFile(ClientGuard client, string roomName, FileId fileId)
     {
       // Remove file from room
       Room room;

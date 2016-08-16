@@ -4,11 +4,11 @@ using System.Security;
 
 namespace Engine.Model.Server
 {
-  public class ServerContext : ModelContext<ServerModel>
+  public class ServerGuard : ModelGuard<ServerModel>
   {
     #region constructor
     [SecurityCritical]
-    public ServerContext(ServerModel model) : base(model)
+    public ServerGuard(ServerModel model) : base(model)
     {
 
     }

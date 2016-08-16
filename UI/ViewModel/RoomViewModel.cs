@@ -5,15 +5,12 @@ using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Drawing;
 using System.Linq;
 using System.Net.Sockets;
 using System.Windows.Input;
 using UI.Dialogs;
 using UI.Infrastructure;
 using DialogResult = System.Windows.Forms.DialogResult;
-using Keys = System.Windows.Forms.Keys;
 using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
 
 namespace UI.ViewModel
@@ -429,7 +426,7 @@ namespace UI.ViewModel
     #endregion
 
     #region helpers
-    private void RefreshUsers(ClientContext client)
+    private void RefreshUsers(ClientGuard client)
     {
       foreach (var user in Users)
         user.Dispose();
@@ -447,7 +444,7 @@ namespace UI.ViewModel
       OnPropertyChanged("Users");
     }
 
-    private void RefreshReceivers(ClientContext client)
+    private void RefreshReceivers(ClientGuard client)
     {
       var selectedReceiverNick = selectedReceiver == allInRoom
         ? null
@@ -469,7 +466,7 @@ namespace UI.ViewModel
       OnPropertyChanged("SelectedReceiver");
     }
 
-    private void FillMessages(ClientContext client)
+    private void FillMessages(ClientGuard client)
     {
       Room room;
       if (!client.Rooms.TryGetValue(Name, out room))

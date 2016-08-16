@@ -1,12 +1,14 @@
 ﻿using Engine.Network;
 using Engine.Network.Connections;
 using System;
+using System.Security;
 
 namespace Engine.API
 {
   public interface ICommand
   {
     long Id { get; }
+    bool IsPluginCommand { get; }
   }
 
   public interface ICommand<in TArgs> : ICommand
@@ -16,13 +18,25 @@ namespace Engine.API
   }
 
   [Serializable]
-  public class CommandArgs
+  public class CommandArgs : IDisposable
   {
     public Unpacked<IPackage> Unpacked { get; private set; }
 
     public CommandArgs(Unpacked<IPackage> unpacked)
     {
       Unpacked = unpacked;
+    }
+
+    [SecuritySafeCritical]
+    public void CopyUnpacked()
+    {
+      Unpacked = Unpacked.Copy();
+    }
+
+    [SecuritySafeCritical]
+    public void Dispose()
+    {
+      Unpacked.Dispose();
     }
   }
 

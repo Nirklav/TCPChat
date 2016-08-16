@@ -134,7 +134,7 @@ namespace Engine.API
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    public List<User> GetRoomUsers(ServerContext server, string name)
+    public List<User> GetRoomUsers(ServerGuard server, string name)
     {
       Room room;
       if (!server.Rooms.TryGetValue(name, out room))
@@ -142,7 +142,7 @@ namespace Engine.API
       return GetRoomUsers(server, room);
     }
 
-    public List<User> GetRoomUsers(ServerContext server, Room room)
+    public List<User> GetRoomUsers(ServerGuard server, Room room)
     {
       return room.Users
         .Select(n =>

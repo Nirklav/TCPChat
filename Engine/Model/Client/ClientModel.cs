@@ -106,12 +106,12 @@ namespace Engine.Model.Client
     /// <example>using (var client = ClientModel.Get()) { ... }</example>
     /// <returns>Контекст данных модели.</returns>
     [SecurityCritical]
-    public static ClientContext Get()
+    public static ClientGuard Get()
     {
       if (Interlocked.CompareExchange(ref model, null, null) == null)
         throw new ArgumentException("model do not inited yet");
 
-      return new ClientContext(model);
+      return new ClientGuard(model);
     }
     #endregion
 

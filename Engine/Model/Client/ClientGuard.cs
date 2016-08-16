@@ -4,11 +4,11 @@ using System.Security;
 
 namespace Engine.Model.Client
 {
-  public class ClientContext : ModelContext<ClientModel>
+  public class ClientGuard : ModelGuard<ClientModel>
   {
     #region contructor
     [SecurityCritical]
-    public ClientContext(ClientModel model) : base(model)
+    public ClientGuard(ClientModel model) : base(model)
     {
 
     }
