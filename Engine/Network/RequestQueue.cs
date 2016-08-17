@@ -138,12 +138,7 @@ namespace Engine.Network
       public void Run()
       {
         using (args)
-        {
-          if (command.IsPluginCommand)
-            args.CopyUnpacked();
-
           command.Run(args);
-        }
       }
     }
 

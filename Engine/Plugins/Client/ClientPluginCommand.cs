@@ -8,10 +8,6 @@ namespace Engine.Plugins.Client
 {
   public abstract class ClientPluginCommand : ClientCommand 
   {
-    public sealed override bool IsPluginCommand
-    {
-      get { return true; }
-    }
   }
 
   public abstract class ClientPluginCommand<TContent> : ClientPluginCommand

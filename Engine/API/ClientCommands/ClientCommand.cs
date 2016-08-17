@@ -18,12 +18,6 @@ namespace Engine.API.ClientCommands
       get;
     }
 
-    public virtual bool IsPluginCommand
-    {
-      [SecuritySafeCritical]
-      get { return false; }
-    }
-
     protected virtual bool IsPeerCommand
     {
       [SecuritySafeCritical]

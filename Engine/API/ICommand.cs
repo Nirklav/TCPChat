@@ -8,7 +8,6 @@ namespace Engine.API
   public interface ICommand
   {
     long Id { get; }
-    bool IsPluginCommand { get; }
   }
 
   public interface ICommand<in TArgs> : ICommand
@@ -25,12 +24,6 @@ namespace Engine.API
     public CommandArgs(Unpacked<IPackage> unpacked)
     {
       Unpacked = unpacked;
-    }
-
-    [SecuritySafeCritical]
-    public void CopyUnpacked()
-    {
-      Unpacked = Unpacked.Copy();
     }
 
     [SecuritySafeCritical]

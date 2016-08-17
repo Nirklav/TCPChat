@@ -18,12 +18,6 @@ namespace Engine.API.ServerCommands
       get;
     }
 
-    public virtual bool IsPluginCommand
-    {
-      [SecuritySafeCritical]
-      get { return false; }
-    }
-
     [SecuritySafeCritical]
     public void Run(ServerCommandArgs args)
     {

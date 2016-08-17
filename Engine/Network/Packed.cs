@@ -60,17 +60,6 @@ namespace Engine.Network
       data = (byte[])info.GetValue("data", typeof(byte[]));
     }
 
-    [SecurityCritical]
-    public Packed Copy()
-    {
-      if (data != null)
-        return this;
-
-      var dataArray = new byte[(int)stream.Length];
-      Array.Copy(stream.GetBuffer(), dataArray, dataArray.Length);
-      return new Packed(dataArray);
-    }
-
     [SecuritySafeCritical]
     public void Dispose()
     {
@@ -82,6 +71,15 @@ namespace Engine.Network
     [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
     public void GetObjectData(SerializationInfo info, StreamingContext context)
     {
+      byte[] dataArray;
+      if (data == null)
+        dataArray = data;
+      else
+      {
+        dataArray = new byte[(int)stream.Length];
+        Array.Copy(stream.GetBuffer(), dataArray, dataArray.Length);
+      }
+
       info.AddValue("data", data, typeof(byte[]));
     }
   }

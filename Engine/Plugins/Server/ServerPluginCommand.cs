@@ -8,10 +8,6 @@ namespace Engine.Plugins.Server
 {
   public abstract class ServerPluginCommand : ServerCommand
   {
-    public sealed override bool IsPluginCommand
-    {
-      get { return true; }
-    }
   }
 
   public abstract class ServerPluginCommand<TContent> : ServerPluginCommand

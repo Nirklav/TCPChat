@@ -82,22 +82,6 @@ namespace Engine.Network
       Package = (T) info.GetValue("Package", typeof(T));       
     }
 
-    [SecurityCritical]
-    public Unpacked<T> Copy()
-    {
-      if (rawData != null)
-        return this;
-
-      var rawDataArray = (byte[])null;
-      if (stream != null)
-      {
-        rawDataArray = new byte[(int)stream.Length];
-        Array.Copy(stream.GetBuffer(), rawDataArray, rawDataArray.Length);
-      }
-
-      return new Unpacked<T>(Package, null);
-    }
-
     [SecuritySafeCritical]
     public void Dispose()
     {
@@ -109,7 +93,18 @@ namespace Engine.Network
     [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
     public void GetObjectData(SerializationInfo info, StreamingContext context)
     {
-      info.AddValue("rawData", rawData, typeof(byte[]));
+      byte[] rawDataArray = null;
+      if (rawData != null)
+      {
+        rawDataArray = rawData;
+      }
+      else if (stream != null)
+      {
+        rawDataArray = new byte[(int)stream.Length];
+        Array.Copy(stream.GetBuffer(), rawDataArray, rawDataArray.Length);
+      }
+
+      info.AddValue("rawData", rawDataArray, typeof(byte[]));
       info.AddValue("Package", Package, typeof(T));
     }
   }
