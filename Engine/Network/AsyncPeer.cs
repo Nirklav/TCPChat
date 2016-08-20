@@ -5,7 +5,6 @@ using Engine.Network.Connections;
 using Lidgren.Network;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -492,7 +491,7 @@ namespace Engine.Network
       var hailMessage = message.SenderConnection.RemoteHailMessage;
       if (hailMessage == null)
       {
-        hailMessage.SenderConnection.Deny();
+        message.SenderConnection.Deny();
         ClientModel.Logger.WriteWarning("ConnectionId is null [Message: {0}, SenderEndPoint: {1}]", message.ToString(), message.SenderEndPoint);
         return;
       }
