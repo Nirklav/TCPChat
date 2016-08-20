@@ -446,23 +446,29 @@ namespace UI.ViewModel
 
     private void RefreshReceivers(ClientGuard client)
     {
+      recivers.Clear();
+
       var selectedReceiverNick = selectedReceiver == allInRoom
         ? null
         : selectedReceiver.Nick;
+      var newReciver = (UserViewModel) null;
 
-      recivers.Clear();
       foreach (var user in client.Users.Values)
       {
         if (user.Nick == client.User.Nick)
           continue;
 
         var receiver = new UserViewModel(user.Nick, this);
-        if (user.Nick == selectedReceiverNick)
-          selectedReceiver = receiver;
         recivers.Add(receiver);
-      }
 
+        if (user.Nick == selectedReceiverNick)
+          newReciver = receiver;
+      }
       OnPropertyChanged("Receivers");
+
+      selectedReceiver = newReciver == null
+        ? allInRoom
+        : newReciver;
       OnPropertyChanged("SelectedReceiver");
     }
 
