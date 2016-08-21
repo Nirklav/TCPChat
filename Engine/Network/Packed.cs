@@ -80,7 +80,7 @@ namespace Engine.Network
         Array.Copy(stream.GetBuffer(), dataArray, dataArray.Length);
       }
 
-      info.AddValue("data", data, typeof(byte[]));
+      info.AddValue("data", dataArray, typeof(byte[]));
     }
   }
 }
