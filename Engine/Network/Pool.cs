@@ -13,13 +13,15 @@ namespace Engine.Network
     public struct Guard : IDisposable
     {
       private readonly Pool owner;
-      public MemoryStream Stream { get; private set; }
+      private readonly MemoryStream stream;
+
+      public MemoryStream Stream { get { return stream; } }
 
       [SecurityCritical]
-      public Guard(Pool guardOwner, MemoryStream stream)
+      public Guard(Pool guardOwner, MemoryStream memoryStream)
       {
         owner = guardOwner;
-        Stream = stream;
+        stream = memoryStream;
       }
 
       [SecuritySafeCritical]

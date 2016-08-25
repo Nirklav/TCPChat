@@ -37,11 +37,11 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    public Packed(Packer packer, MemoryStream dataStream)
+    public Packed(Packer owner, MemoryStream stream)
     {
-      owner = packer;
-      stream = dataStream;
-      data = null;
+      this.owner = owner;
+      this.stream = stream;
+      this.data = null;
     }
 
     [SecurityCritical]

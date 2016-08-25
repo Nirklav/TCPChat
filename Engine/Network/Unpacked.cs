@@ -13,14 +13,14 @@ namespace Engine.Network
   {
     private readonly Packer owner;
     private readonly MemoryStream stream;
+
+    private readonly T package;
     private readonly byte[] rawData;
 
     public T Package
     {
       [SecuritySafeCritical]
-      get;
-      [SecurityCritical]
-      private set;
+      get { return package; }
     }
 
     public byte[] RawData
@@ -56,21 +56,21 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    public Unpacked(Packer packer, T package, MemoryStream rawDataStream)
+    public Unpacked(Packer owner, T package, MemoryStream stream)
     {
-      owner = packer;
-      stream = rawDataStream;
-      rawData = null;
-      Package = package;
+      this.owner = owner;
+      this.stream = stream;
+      this.rawData = null;
+      this.package = package;
     }
 
     [SecurityCritical]
-    public Unpacked(T package, byte[] rawDataArray)
+    public Unpacked(T package, byte[] rawData)
     {
-      owner = null;
-      stream = null;
-      rawData = rawDataArray;
-      Package = package;
+      this.owner = null;
+      this.stream = null;
+      this.rawData = rawData;
+      this.package = package;
     }
 
     [SecurityCritical]
@@ -79,7 +79,7 @@ namespace Engine.Network
       owner = null;
       stream = null;
       rawData = (byte[]) info.GetValue("rawData", typeof(byte[]));
-      Package = (T) info.GetValue("Package", typeof(T));       
+      package = (T) info.GetValue("Package", typeof(T));
     }
 
     [SecuritySafeCritical]
