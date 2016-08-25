@@ -36,7 +36,7 @@ namespace Engine.Network.Connections
     /// Создает серверное подключение.
     /// </summary>
     /// <param name="handler">Подключенный к клиенту сокет.</param>
-    /// <param name="maxReceivedDataSize">Максимальныйц размер сообщения получаемый от пользователя.</param>
+    /// <param name="apiName">Текущая версия Api.</param>
     /// <param name="receivedCallback">Функция обратного вызова, для полученных данных.</param>
     [SecurityCritical]
     public ServerConnection(Socket handler, string apiName, EventHandler<PackageReceivedEventArgs> receivedCallback)
@@ -98,13 +98,12 @@ namespace Engine.Network.Connections
     /// <summary>
     /// Регистрирует данное соединение.
     /// </summary>
-    /// <param name="id">Идентификатор соединения.</param>
-    /// <param name="openKey">Открытый ключ соединения.</param>
+    /// <param name="newId">Идентификатор соединения.</param>
     [SecurityCritical]
-    public void Register(string id)
+    public void Register(string newId)
     {
       ThrowIfDisposed();
-      this.id = id;
+      id = newId;
     }
     #endregion
 

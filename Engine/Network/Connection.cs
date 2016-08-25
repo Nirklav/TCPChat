@@ -19,10 +19,6 @@ namespace Engine.Network.Connections
     #region consts
     private const long RemoteInfoId = 1;
 
-    private const int HeadSize = sizeof(int) + sizeof(bool);
-    private const int LengthHead = 0;
-    private const int EncryptionHead = sizeof(int);
-
     private const int KeySize = 256;
     private const int BufferSize = 4096;
     private const int MaxReceivedDataSize = 1024 * 1024;
@@ -208,12 +204,12 @@ namespace Engine.Network.Connections
 
           received.Write(buffer, 0, bytesRead);
 
-          var size = packer.GetPackageSize(received);
-          if (size > MaxReceivedDataSize)
-            throw new ModelException(ErrorCode.LargeReceivedData);
-
           while (packer.IsPackageReceived(received))
           {
+            var size = packer.GetPackageSize(received);
+            if (size > MaxReceivedDataSize)
+              throw new ModelException(ErrorCode.LargeReceivedData);
+
             var unpacked = packer.Unpack<IPackage>(received);
 
             var length = (int) received.Length;
