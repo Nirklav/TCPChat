@@ -3,7 +3,7 @@ using Engine.Model.Entities;
 using System;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientPlayVoiceCommand :
@@ -33,19 +33,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private SoundPack pack;
-      private long number;
+      private SoundPack _pack;
+      private long _number;
 
       public SoundPack Pack
       {
-        get { return pack; }
-        set { pack = value; }
+        get { return _pack; }
+        set { _pack = value; }
       }
 
       public long Number
       {
-        get { return number; }
-        set { number = value; }
+        get { return _number; }
+        set { _number = value; }
       }
     }
   }

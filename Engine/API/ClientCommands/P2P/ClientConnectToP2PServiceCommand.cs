@@ -3,7 +3,7 @@ using System;
 using System.Net;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientConnectToP2PServiceCommand :
@@ -29,12 +29,12 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private int port;
+      private int _port;
 
       public int Port
       {
-        get { return port; }
-        set { port = value; }
+        get { return _port; }
+        set { _port = value; }
       }
     }
   }

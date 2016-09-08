@@ -10,65 +10,65 @@ namespace Engine.Helpers
     [SecurityCritical]
     private class Event
     {
-      private SendOrPostCallback callback;
-      private object state;
-      private ManualResetEvent resetEvent;
+      private SendOrPostCallback _callback;
+      private object _state;
+      private ManualResetEvent _resetEvent;
 
       public WaitHandle Handle
       {
         [SecurityCritical]
-        get { return resetEvent; }
+        get { return _resetEvent; }
       }
 
       [SecurityCritical]
       public Event(SendOrPostCallback callback, object state, bool isSend)
       {
-        this.callback = callback;
-        this.state = state;
+        _callback = callback;
+        _state = state;
 
-        resetEvent = new ManualResetEvent(!isSend);
+        _resetEvent = new ManualResetEvent(!isSend);
       }
 
       [SecurityCritical]
       public void Dispatch()
       {
-        var e = callback;
+        var e = _callback;
         if (e != null)
-          e(state);
+          e(_state);
 
-        resetEvent.Set();
+        _resetEvent.Set();
       }
     }
 
-    private object syncObject = new object();
-    private volatile bool inProcess;
-    private Queue<Event> callbackQueue;
+    private object _syncObject = new object();
+    private volatile bool _inProcess;
+    private Queue<Event> _callbackQueue;
 
     [SecurityCritical]
     public EngineSyncContext()
     {
-      callbackQueue = new Queue<Event>();
+      _callbackQueue = new Queue<Event>();
     }
 
     [SecuritySafeCritical]
     public override void Post(SendOrPostCallback d, object state)
     {
-      lock (syncObject)
+      lock (_syncObject)
       {
-        callbackQueue.Enqueue(new Event(d, state, false));
+        _callbackQueue.Enqueue(new Event(d, state, false));
 
         StartThread();
       }
     }
 
     [SecuritySafeCritical]
-    public override void Send(SendOrPostCallback d, object state)
+    public override void Send(SendOrPostCallback callback, object state)
     {
       Event item;
-      lock (syncObject)
+      lock (_syncObject)
       {
-        item = new Event(d, state, true);
-        callbackQueue.Enqueue(item);
+        item = new Event(callback, state, true);
+        _callbackQueue.Enqueue(item);
 
         StartThread();
       }
@@ -85,10 +85,10 @@ namespace Engine.Helpers
     [SecurityCritical]
     private void StartThread()
     {
-      if (inProcess)
+      if (_inProcess)
         return;
 
-      inProcess = true;
+      _inProcess = true;
       ThreadPool.QueueUserWorkItem(ThreadFunc);
     }
 
@@ -101,16 +101,16 @@ namespace Engine.Helpers
       while (true)
       {
         Event e;
-        lock (syncObject)
+        lock (_syncObject)
         {
-          if (callbackQueue.Count <= 0)
+          if (_callbackQueue.Count <= 0)
           {
             SetSynchronizationContext(oldSyncContext);
-            inProcess = false;           
+            _inProcess = false;           
             return;
           }
 
-          e = callbackQueue.Dequeue();         
+          e = _callbackQueue.Dequeue();         
         }
 
         e.Dispatch();

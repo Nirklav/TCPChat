@@ -1,11 +1,11 @@
-﻿using Engine.API.ClientCommands;
+﻿using Engine.Api.ClientCommands;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerAddFileToRoomCommand :
@@ -57,19 +57,19 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private string roomName;
-      private FileDescription file;
+      private string _roomName;
+      private FileDescription _file;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public FileDescription File
       {
-        get { return file; }
-        set { file = value; }
+        get { return _file; }
+        set { _file = value; }
       }
     }
   }

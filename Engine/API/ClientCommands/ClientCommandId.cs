@@ -1,4 +1,4 @@
-﻿namespace Engine.API.ClientCommands
+﻿namespace Engine.Api.ClientCommands
 {
   //Команды для клиента: (формат сообщений XX XX Serialized(this.MessageContent))
   //Расшифровка XX XX:

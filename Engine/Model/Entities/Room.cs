@@ -15,16 +15,16 @@ namespace Engine.Model.Entities
     /// </summary>
     public const long SpecificMessageId = -1;
 
-    protected readonly string name;
-    protected readonly List<string> users;
-    protected readonly Dictionary<long, Message> messages;
-    protected readonly List<FileDescription> files;
+    protected readonly string _name;
+    protected readonly List<string> _users;
+    protected readonly Dictionary<long, Message> _messages;
+    protected readonly List<FileDescription> _files;
 
-    protected string admin;
-    protected long lastMessageId;
+    protected string _admin;
+    protected long _lastMessageId;
 
     [NonSerialized]
-    private bool enabled; // Only client
+    private bool _enabled; // Only client
 
     /// <summary>
     /// Создает комнату.
@@ -33,16 +33,15 @@ namespace Engine.Model.Entities
     /// <param name="name">Название комнаты.</param>
     public Room(string admin, string name)
     {
-      this.admin = admin;
-      this.name = name;
-
-      users = new List<string>();
-      messages = new Dictionary<long, Message>();
-      files = new List<FileDescription>();
-      enabled = true;
+      _admin = admin;
+      _name = name;
+      _users = new List<string>();
+      _messages = new Dictionary<long, Message>();
+      _files = new List<FileDescription>();
+      _enabled = true;
 
       if (admin != null)
-        users.Add(admin);
+        _users.Add(admin);
     }
 
     /// <summary>
@@ -54,7 +53,7 @@ namespace Engine.Model.Entities
     public Room(string admin, string name, IEnumerable<User> initialUsers)
       : this(admin, name)
     {
-      users.AddRange(initialUsers.Select(u => u.Nick).Where(n => n != admin));
+      _users.AddRange(initialUsers.Select(u => u.Nick).Where(n => n != admin));
     }
 
     /// <summary>
@@ -70,8 +69,8 @@ namespace Engine.Model.Entities
     /// </summary>
     public bool Enabled
     {
-      get { return enabled; }
-      set { enabled = value; }
+      get { return _enabled; }
+      set { _enabled = value; }
     }
 
     /// <summary>
@@ -79,7 +78,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public string Name
     {
-      get { return name; }
+      get { return _name; }
     }
 
     /// <summary>
@@ -87,8 +86,8 @@ namespace Engine.Model.Entities
     /// </summary>
     public string Admin
     {
-      get { return admin; }
-      set { admin = value; }
+      get { return _admin; }
+      set { _admin = value; }
     }
 
     /// <summary>
@@ -96,7 +95,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public ICollection<string> Users
     {
-      get { return users; }
+      get { return _users; }
     }
 
     /// <summary>
@@ -104,7 +103,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public ICollection<Message> Messages
     {
-      get { return messages.Values; }
+      get { return _messages.Values; }
     }
 
     /// <summary>
@@ -112,7 +111,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public List<FileDescription> Files
     {
-      get { return files; }
+      get { return _files; }
     }
 
     /// <summary>
@@ -121,7 +120,7 @@ namespace Engine.Model.Entities
     /// <param name="nick">Ник пользователя.</param>
     public virtual void AddUser(string nick)
     {
-      users.Add(nick);
+      _users.Add(nick);
     }
 
     /// <summary>
@@ -130,8 +129,8 @@ namespace Engine.Model.Entities
     /// <param name="nick">Ник пользователя.</param>
     public virtual void RemoveUser(string nick)
     {
-      users.Remove(nick);
-      files.RemoveAll(f => f.Id.Owner == nick);
+      _users.Remove(nick);
+      _files.RemoveAll(f => f.Id.Owner == nick);
     }
 
     /// <summary>
@@ -142,9 +141,9 @@ namespace Engine.Model.Entities
     /// <returns>Добавленное сообщение.</returns>
     public Message AddMessage(string nick, string text)
     {
-      var message = AddMessage(nick, lastMessageId, text);
-      if (message.Id == lastMessageId)
-        lastMessageId++;
+      var message = AddMessage(nick, _lastMessageId, text);
+      if (message.Id == _lastMessageId)
+        _lastMessageId++;
 
       return message;
     }
@@ -159,18 +158,18 @@ namespace Engine.Model.Entities
     public Message AddMessage(string nick, long messageId, string text)
     {
       var message = new Message(nick, messageId, text);
-      var lastMessage = GetMessage(lastMessageId - 1);
+      var lastMessage = GetMessage(_lastMessageId - 1);
 
       if (lastMessage != null && lastMessage.TryConcat(message))
         return lastMessage;
 
-      messages[message.Id] = message;
+      _messages[message.Id] = message;
       return message;
     }
 
     public void AddMessage(Message message)
     {
-      messages[message.Id] = message;
+      _messages[message.Id] = message;
     }
 
     /// <summary>
@@ -181,7 +180,7 @@ namespace Engine.Model.Entities
     public Message GetMessage(long messageId)
     {
       Message message;
-      messages.TryGetValue(messageId, out message);
+      _messages.TryGetValue(messageId, out message);
       return message;
     }
 
@@ -191,7 +190,7 @@ namespace Engine.Model.Entities
     /// <param name="nick">Ник пользователя</param>
     public bool ContainsUser(string nick)
     {
-      return users.Contains(nick);
+      return _users.Contains(nick);
     }
 
     /// <summary>
@@ -231,7 +230,7 @@ namespace Engine.Model.Entities
 
     public override int GetHashCode()
     {
-      return name.GetHashCode();
+      return _name.GetHashCode();
     }
 
     /// <summary>
@@ -247,7 +246,7 @@ namespace Engine.Model.Entities
       if (ReferenceEquals(room, this))
         return true;
 
-      return string.Equals(name, room.name);
+      return string.Equals(_name, room._name);
     }
   }
 }

@@ -1,9 +1,8 @@
 ﻿using Engine.Network;
-using Engine.Network.Connections;
 using System;
 using System.Security;
 
-namespace Engine.API
+namespace Engine.Api
 {
   public interface ICommand
   {

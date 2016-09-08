@@ -1,4 +1,4 @@
-﻿using Engine.API;
+﻿using Engine.Api;
 using Engine.Audio;
 using Engine.Audio.OpenAL;
 using Engine.Helpers;
@@ -17,16 +17,16 @@ namespace Engine.Model.Client
   public class ClientModel
   {
     #region static model
-    private static ClientModel model;
-    private static Logger logger = new Logger("Client.log");
-    private static IPlayer player = new OpenALPlayer();
-    private static IRecorder recorder = new OpenALRecorder();
-    private static IClientNotifier notifier = NotifierGenerator.MakeInvoker<IClientNotifier>();
+    private static ClientModel _model;
+    private static Logger _logger = new Logger("Client.log");
+    private static IPlayer _player = new OpenALPlayer();
+    private static IRecorder _recorder = new OpenALRecorder();
+    private static IClientNotifier _notifier = NotifierGenerator.MakeInvoker<IClientNotifier>();
 
     public static Logger Logger
     {
       [SecurityCritical]
-      get { return logger; }
+      get { return _logger; }
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ namespace Engine.Model.Client
     public static IPlayer Player
     {
       [SecurityCritical]
-      get { return player; }
+      get { return _player; }
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ namespace Engine.Model.Client
     public static IRecorder Recorder
     {
       [SecurityCritical]
-      get { return recorder; }
+      get { return _recorder; }
     }
 
     /// <summary>
@@ -97,7 +97,7 @@ namespace Engine.Model.Client
     public static IClientNotifier Notifier
     {
       [SecurityCritical]
-      get { return notifier; }
+      get { return _notifier; }
     }
 
     /// <summary>
@@ -108,10 +108,10 @@ namespace Engine.Model.Client
     [SecurityCritical]
     public static ClientGuard Get()
     {
-      if (Interlocked.CompareExchange(ref model, null, null) == null)
+      if (Interlocked.CompareExchange(ref _model, null, null) == null)
         throw new ArgumentException("model do not inited yet");
 
-      return new ClientGuard(model);
+      return new ClientGuard(_model);
     }
     #endregion
 
@@ -173,7 +173,7 @@ namespace Engine.Model.Client
     public static bool IsInited
     {
       [SecurityCritical]
-      get { return Interlocked.CompareExchange(ref model, null, null) != null; }
+      get { return Interlocked.CompareExchange(ref _model, null, null) != null; }
     }
 
     [SecurityCritical]
@@ -181,7 +181,7 @@ namespace Engine.Model.Client
     {
       var user = new User(initializer.Nick, initializer.NickColor);
 
-      if (Interlocked.CompareExchange(ref model, new ClientModel(user), null) != null)
+      if (Interlocked.CompareExchange(ref _model, new ClientModel(user), null) != null)
         throw new InvalidOperationException("model already inited");
 
       Api = new ClientApi();
@@ -195,7 +195,7 @@ namespace Engine.Model.Client
     [SecurityCritical]
     public static void Reset()
     {
-      if (Interlocked.Exchange(ref model, null) == null)
+      if (Interlocked.Exchange(ref _model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
       Dispose(Client);

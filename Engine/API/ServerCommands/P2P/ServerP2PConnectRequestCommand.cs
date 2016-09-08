@@ -3,7 +3,7 @@ using Engine.Model.Server;
 using System;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerP2PConnectRequestCommand :
@@ -35,12 +35,12 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private string nick;
+      private string _nick;
 
       public string Nick
       {
-        get { return nick; }
-        set { nick = value; }
+        get { return _nick; }
+        set { _nick = value; }
       }
     }
   }

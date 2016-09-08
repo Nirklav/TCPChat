@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Engine.Network.Connections
+namespace Engine.Network
 {
   [Serializable]
   public class ConnectionInfo

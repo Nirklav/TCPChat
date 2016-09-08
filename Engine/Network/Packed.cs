@@ -9,14 +9,14 @@ namespace Engine.Network
   [Serializable]
   public struct Packed : IPoolable, ISerializable
   {
-    private readonly Packer owner;
-    private readonly MemoryStream stream;
-    private readonly byte[] data;
+    private readonly Packer _owner;
+    private readonly MemoryStream _stream;
+    private readonly byte[] _data;
 
     public byte[] Data
     {
       [SecuritySafeCritical]
-      get { return data ?? stream.GetBuffer(); }
+      get { return _data ?? _stream.GetBuffer(); }
     }
 
     public int Length
@@ -24,63 +24,63 @@ namespace Engine.Network
       [SecuritySafeCritical]
       get
       {
-        if (data != null)
-          return data.Length;
-        return (int)stream.Length;
+        if (_data != null)
+          return _data.Length;
+        return (int)_stream.Length;
       }
     }
 
     MemoryStream IPoolable.Stream
     {
       [SecuritySafeCritical]
-      get { return stream; }
+      get { return _stream; }
     }
 
     [SecurityCritical]
     public Packed(Packer owner, MemoryStream stream)
     {
-      this.owner = owner;
-      this.stream = stream;
-      this.data = null;
+      _owner = owner;
+      _stream = stream;
+      _data = null;
     }
 
     [SecurityCritical]
-    public Packed(byte[] dataArray)
+    public Packed(byte[] data)
     {
-      owner = null;
-      stream = null;
-      data = dataArray;
+      _owner = null;
+      _stream = null;
+      _data = data;
     }
 
     [SecurityCritical]
     private Packed(SerializationInfo info, StreamingContext context)
     {
-      owner = null;
-      stream = null;
-      data = (byte[])info.GetValue("data", typeof(byte[]));
+      _owner = null;
+      _stream = null;
+      _data = (byte[])info.GetValue("_data", typeof(byte[]));
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (owner != null)
-        owner.Release(this);
+      if (_owner != null)
+        _owner.Release(this);
     }
 
     [SecurityCritical]
     [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
     public void GetObjectData(SerializationInfo info, StreamingContext context)
     {
-      byte[] dataArray;
-      if (data == null)
-        dataArray = data;
+      byte[] data;
+      if (_data == null)
+        data = _data;
       else
       {
-        dataArray = new byte[(int)stream.Length];
-        Array.Copy(stream.GetBuffer(), dataArray, dataArray.Length);
+        data = new byte[(int)_stream.Length];
+        Array.Copy(_stream.GetBuffer(), data, data.Length);
       }
 
-      info.AddValue("data", dataArray, typeof(byte[]));
+      info.AddValue("_data", data, typeof(byte[]));
     }
   }
 }

@@ -1,6 +1,5 @@
-﻿using Engine.API;
+﻿using Engine.Api;
 using Engine.Model.Server;
-using Engine.Network.Connections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,18 +21,18 @@ namespace Engine.Network
     #endregion
 
     #region fields
-    [SecurityCritical] private readonly Dictionary<string, ServerConnection> connections;
-    [SecurityCritical] private readonly ServerRequestQueue requestQueue;
+    [SecurityCritical] private readonly Dictionary<string, ServerConnection> _connections;
+    [SecurityCritical] private readonly ServerRequestQueue _requestQueue;
 
-    [SecurityCritical] private P2PService p2pService;
-    [SecurityCritical] private Socket listener;
+    [SecurityCritical] private P2PService _p2pService;
+    [SecurityCritical] private Socket _listener;
 
-    [SecurityCritical] private bool isServerRunning;
-    [SecurityCritical] private long lastTempId;
-    [SecurityCritical] private bool disposed;
+    [SecurityCritical] private bool _isServerRunning;
+    [SecurityCritical] private long _lastTempId;
+    [SecurityCritical] private bool _disposed;
 
-    [SecurityCritical] private readonly object timerSync = new object();
-    [SecurityCritical] private Timer systemTimer;
+    [SecurityCritical] private readonly object _timerSync = new object();
+    [SecurityCritical] private Timer _systemTimer;
     #endregion
 
     #region properties and events
@@ -46,7 +45,7 @@ namespace Engine.Network
       get
       {
         ThrowIfDisposed();
-        return isServerRunning;
+        return _isServerRunning;
       }
     }
 
@@ -59,7 +58,7 @@ namespace Engine.Network
       get
       {
         ThrowIfDisposed();
-        return p2pService;
+        return _p2pService;
       }
     }
 
@@ -69,7 +68,7 @@ namespace Engine.Network
     public bool UsingIPv6
     {
       [SecurityCritical]
-      get { return listener.AddressFamily == AddressFamily.InterNetworkV6; }
+      get { return _listener.AddressFamily == AddressFamily.InterNetworkV6; }
     }
     #endregion
 
@@ -77,9 +76,9 @@ namespace Engine.Network
     [SecurityCritical]
     public AsyncServer()
     {
-      connections = new Dictionary<string, ServerConnection>();
-      requestQueue = new ServerRequestQueue();
-      isServerRunning = false;
+      _connections = new Dictionary<string, ServerConnection>();
+      _requestQueue = new ServerRequestQueue();
+      _isServerRunning = false;
     }
     #endregion
 
@@ -96,24 +95,24 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (isServerRunning)
+      if (_isServerRunning)
         return;
 
       if (!Connection.TcpPortIsAvailable(serverPort))
         throw new ArgumentException("port not available", "serverPort");
 
-      p2pService = new P2PService(p2pServicePort, usingIPv6);
-      systemTimer = new Timer(OnTimer, null, SystemTimerInterval, -1);
+      _p2pService = new P2PService(p2pServicePort, usingIPv6);
+      _systemTimer = new Timer(OnTimer, null, SystemTimerInterval, -1);
 
       var address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;
 
-      listener = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-      listener.LingerState = new LingerOption(false, 0);
-      listener.Bind(new IPEndPoint(address, serverPort));
-      listener.Listen(ListenConnections);
-      listener.BeginAccept(OnAccept, null);
+      _listener = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+      _listener.LingerState = new LingerOption(false, 0);
+      _listener.Bind(new IPEndPoint(address, serverPort));
+      _listener.Listen(ListenConnections);
+      _listener.BeginAccept(OnAccept, null);
 
-      isServerRunning = true;
+      _isServerRunning = true;
     }
 
     /// <summary>
@@ -125,14 +124,14 @@ namespace Engine.Network
     [SecurityCritical]
     public void RegisterConnection(string tempId, string id)
     {
-      lock (connections)
+      lock (_connections)
       {
         var connection = GetConnection(tempId, true);
         if (connection == null)
           return;
 
-        connections.Remove(tempId);
-        connections.Add(id, connection);
+        _connections.Remove(tempId);
+        _connections.Add(id, connection);
         connection.Register(id);
       }
     }
@@ -145,13 +144,13 @@ namespace Engine.Network
     public void CloseConnection(string id)
     {
       P2PService.RemoveEndPoint(id);
-      lock (connections)
+      lock (_connections)
       {
         var connection = GetConnection(id, true);
         if (connection == null)
           return;
 
-        connections.Remove(id);
+        _connections.Remove(id);
         connection.Dispose();
       }
     }
@@ -190,7 +189,7 @@ namespace Engine.Network
     [SecuritySafeCritical]
     public void SendMessage(string connectionId, IPackage package, bool allowTempConnections = false)
     {
-      lock (connections)
+      lock (_connections)
       {
         var connection = GetConnection(connectionId, allowTempConnections);
         if (connection != null)
@@ -205,8 +204,8 @@ namespace Engine.Network
     [SecuritySafeCritical]
     public string[] GetConnetionsIds()
     {
-      lock (connections)
-        return connections.Keys.Where(id => !id.Contains(Connection.TempConnectionPrefix)).ToArray();
+      lock (_connections)
+        return _connections.Keys.Where(id => !id.Contains(Connection.TempConnectionPrefix)).ToArray();
     }
 
     /// <summary>
@@ -217,8 +216,8 @@ namespace Engine.Network
     [SecuritySafeCritical]
     public bool ContainsConnection(string id)
     {
-      lock (connections)
-        return connections.ContainsKey(id);
+      lock (_connections)
+        return _connections.ContainsKey(id);
     }
     #endregion
 
@@ -226,22 +225,22 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnAccept(IAsyncResult result)
     {
-      if (!isServerRunning)
+      if (!_isServerRunning)
         return;
 
       try
       {
-        listener.BeginAccept(OnAccept, null);
+        _listener.BeginAccept(OnAccept, null);
 
-        var handler = listener.EndAccept(result);
+        var handler = _listener.EndAccept(result);
         var connection = new ServerConnection(handler, ServerModel.Api.Name, OnPackageReceived);
 
         connection.SendInfo();
 
-        lock (connections)
+        lock (_connections)
         {
-          connection.Id = string.Format("{0}{1}", Connection.TempConnectionPrefix, lastTempId++);
-          connections.Add(connection.Id, connection);
+          connection.Id = string.Format("{0}{1}", Connection.TempConnectionPrefix, _lastTempId++);
+          _connections.Add(connection.Id, connection);
         }
       }
       catch (Exception e)
@@ -261,14 +260,14 @@ namespace Engine.Network
           return;
         }
 
-        if (!isServerRunning)
+        if (!_isServerRunning)
           return;
 
         var connectionId = ((ServerConnection)sender).Id;
         var command = ServerModel.Api.GetCommand(e.Unpacked.Package.Id);
         var args = new ServerCommandArgs(connectionId, e.Unpacked);
 
-        requestQueue.Add(connectionId, command, args);
+        _requestQueue.Add(connectionId, command, args);
       }
       catch (Exception exc)
       {
@@ -283,9 +282,9 @@ namespace Engine.Network
       RefreshConnections();
       RefreshRooms();
 
-      lock (timerSync)
-        if (systemTimer != null)
-          systemTimer.Change(SystemTimerInterval, -1);
+      lock (_timerSync)
+        if (_systemTimer != null)
+          _systemTimer.Change(SystemTimerInterval, -1);
     }
 
     [SecurityCritical]
@@ -293,14 +292,14 @@ namespace Engine.Network
     {
       HashSet<string> removingUsers = null; // Prevent deadlock (in RemoveUser locked ServerModel)
 
-      lock (connections)
+      lock (_connections)
       {
-        var keys = connections.Keys.ToArray();
+        var keys = _connections.Keys.ToArray();
         foreach (var id in keys)
         {
           try
           {
-            var connection = connections[id];
+            var connection = _connections[id];
             if (connection.UnregisteredTimeInterval >= ServerConnection.UnregisteredTimeOut)
             {
               CloseConnection(id);
@@ -370,7 +369,7 @@ namespace Engine.Network
         throw new InvalidOperationException("this connection don't registered");
 
       ServerConnection connection;
-      if (!connections.TryGetValue(connectionId, out connection))
+      if (!_connections.TryGetValue(connectionId, out connection))
       {
         ServerModel.Logger.WriteWarning("Connection {0} don't finded", connectionId);
         return null;
@@ -384,44 +383,44 @@ namespace Engine.Network
     [SecurityCritical]
     private void ThrowIfDisposed()
     {
-      if (disposed)
+      if (_disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
     [SecurityCritical]
     private void DisposeManagedResources()
     {
-      isServerRunning = false;
+      _isServerRunning = false;
 
-      if (requestQueue != null)
-        requestQueue.Dispose();
+      if (_requestQueue != null)
+        _requestQueue.Dispose();
 
-      lock (timerSync)
+      lock (_timerSync)
       {
-        if (systemTimer != null)
-          systemTimer.Dispose();
+        if (_systemTimer != null)
+          _systemTimer.Dispose();
 
-        systemTimer = null;
+        _systemTimer = null;
       }
 
-      lock (connections)
+      lock (_connections)
       {
-        foreach (var connection in connections.Values)
+        foreach (var connection in _connections.Values)
           connection.Dispose();
 
-        connections.Clear();
+        _connections.Clear();
       }
 
-      if (listener != null)
+      if (_listener != null)
       {
-        listener.Dispose();
-        listener = null;
+        _listener.Dispose();
+        _listener = null;
       }
 
-      if (p2pService != null)
+      if (_p2pService != null)
       {
-        p2pService.Dispose();
-        p2pService = null;
+        _p2pService.Dispose();
+        _p2pService = null;
       }
     }
 
@@ -431,10 +430,10 @@ namespace Engine.Network
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
       DisposeManagedResources();
     }
     #endregion

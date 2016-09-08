@@ -1,5 +1,5 @@
-﻿using Engine.API.ClientCommands;
-using Engine.API.ServerCommands;
+﻿using Engine.Api.ClientCommands;
+using Engine.Api.ServerCommands;
 using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
@@ -13,7 +13,7 @@ using System.Linq;
 using System.Security;
 using System.Threading;
 
-namespace Engine.API
+namespace Engine.Api
 {
   /// <summary>
   /// Класс реализующий стандартный API для клиента.
@@ -22,10 +22,10 @@ namespace Engine.API
     CrossDomainObject,
     IApi<ClientCommandArgs>
   {
-    private readonly Dictionary<long, ICommand<ClientCommandArgs>> commands;
-    private readonly Dictionary<string, int> interlocutors;
-    private readonly Random idCreator;
-    private long lastSendedNumber;
+    [SecurityCritical] private readonly Dictionary<long, ICommand<ClientCommandArgs>> _commands;
+    [SecurityCritical] private readonly Dictionary<string, int> _interlocutors;
+    [SecurityCritical] private readonly Random _idCreator;
+    [SecurityCritical] private long _lastSendedNumber;
 
     /// <summary>
     /// Создает экземпляр API.
@@ -33,9 +33,9 @@ namespace Engine.API
     [SecurityCritical]
     public ClientApi()
     {
-      commands = new Dictionary<long, ICommand<ClientCommandArgs>>();
-      interlocutors = new Dictionary<string, int>();
-      idCreator = new Random(DateTime.Now.Millisecond);
+      _commands = new Dictionary<long, ICommand<ClientCommandArgs>>();
+      _interlocutors = new Dictionary<string, int>();
+      _idCreator = new Random(DateTime.UtcNow.Millisecond);
 
       ClientModel.Recorder.Recorded += OnRecorded;
 
@@ -60,7 +60,7 @@ namespace Engine.API
     [SecurityCritical]
     private void AddCommand(ICommand<ClientCommandArgs> command)
     {
-      commands.Add(command.Id, command);
+      _commands.Add(command.Id, command);
     }
 
     [SecurityCritical]
@@ -81,16 +81,16 @@ namespace Engine.API
           BitPerChannel = e.BitPerChannel,
           Frequency = e.Frequency
         },
-        Number = Interlocked.Increment(ref lastSendedNumber)
+        Number = Interlocked.Increment(ref _lastSendedNumber)
       };
 
       string userNick;
       using (var client = ClientModel.Get())
         userNick = client.User.Nick;
 
-      lock (interlocutors)
+      lock (_interlocutors)
       {
-        foreach (var kvp in interlocutors)
+        foreach (var kvp in _interlocutors)
         {
           var nick = kvp.Key;
           var count = kvp.Value;
@@ -114,10 +114,10 @@ namespace Engine.API
     [SecuritySafeCritical]
     public bool IsActiveInterlocutor(string nick)
     {
-      lock (interlocutors)
+      lock (_interlocutors)
       {
         int count;
-        interlocutors.TryGetValue(nick, out count);
+        _interlocutors.TryGetValue(nick, out count);
         return count > 0;
       }
     }
@@ -129,11 +129,11 @@ namespace Engine.API
     [SecuritySafeCritical]
     public void AddInterlocutor(string nick)
     {
-      lock (interlocutors)
+      lock (_interlocutors)
       {
         int count;
-        interlocutors.TryGetValue(nick, out count);
-        interlocutors[nick] = count + 1;
+        _interlocutors.TryGetValue(nick, out count);
+        _interlocutors[nick] = count + 1;
       }
     }
 
@@ -144,20 +144,20 @@ namespace Engine.API
     [SecuritySafeCritical]
     public void RemoveInterlocutor(string nick)
     {
-      lock (interlocutors)
+      lock (_interlocutors)
       {
         int count;
-        interlocutors.TryGetValue(nick, out count);
+        _interlocutors.TryGetValue(nick, out count);
         if (count == 0)
           throw new InvalidOperationException("Can't remove interlocutor");
 
         if (count == 1)
         {
-          interlocutors.Remove(nick);
+          _interlocutors.Remove(nick);
           return;
         }
 
-        interlocutors[nick] = count - 1;
+        _interlocutors[nick] = count - 1;
       }
     }
 
@@ -239,7 +239,7 @@ namespace Engine.API
     public ICommand<ClientCommandArgs> GetCommand(long id)
     {
       ICommand<ClientCommandArgs> command;
-      if (commands.TryGetValue(id, out command))
+      if (_commands.TryGetValue(id, out command))
         return command;
 
       ClientPluginCommand pluginCommand;
@@ -456,7 +456,7 @@ namespace Engine.API
         FileId id;
         while (true)
         {
-          id = new FileId(idCreator.Next(int.MinValue, int.MaxValue), client.User.Nick);
+          id = new FileId(_idCreator.Next(int.MinValue, int.MaxValue), client.User.Nick);
           if (!client.PostedFiles.Exists(postFile => postFile.File.Id == id))
             break;
         }

@@ -1,4 +1,4 @@
-﻿using Engine.API;
+﻿using Engine.Api;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -42,28 +42,28 @@ namespace Engine.Plugins
     protected readonly Dictionary<long, TCommand> Commands = new Dictionary<long, TCommand>();
     protected readonly Dictionary<string, object> NotifierContexts = new Dictionary<string, object>();
 
-    private string path;
-    private List<PluginInfo> infos;
+    private string _path;
+    private List<PluginInfo> _infos;
 
-    private bool disposed;
+    private bool _disposed;
 
     #endregion
 
     #region Initialization
 
     [SecurityCritical]
-    protected PluginManager(string pluginsPath)
+    protected PluginManager(string path)
     {
-      path = pluginsPath;
+      _path = path;
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
 
       var containers = Plugins.Values.ToList();
       foreach (var container in containers)
@@ -79,11 +79,11 @@ namespace Engine.Plugins
     {
       try
       {
-        var libs = FindLibraries(path);
+        var libs = FindLibraries(_path);
         var loader = new PluginInfoLoader();
-        infos = loader.LoadFrom(typeof(TPlugin).FullName, libs);
-        if (infos != null)
-          foreach (var info in infos)
+        _infos = loader.LoadFrom(typeof(TPlugin).FullName, libs);
+        if (_infos != null)
+          foreach (var info in _infos)
             LoadPlugin(info, excludedPlugins);
       }
       catch (Exception e)
@@ -95,10 +95,10 @@ namespace Engine.Plugins
     [SecurityCritical]
     public void LoadPlugin(string name)
     {
-      if (infos == null)
+      if (_infos == null)
         return;
 
-      var info = infos.Find(pi => pi.Name == name);
+      var info = _infos.Find(pi => pi.Name == name);
       if (info == null)
         return;
 
@@ -271,9 +271,9 @@ namespace Engine.Plugins
     {
       lock (SyncObject)
       {
-        if (infos == null)
+        if (_infos == null)
           return null;
-        return infos.Select(pi => pi.Name).ToArray();
+        return _infos.Select(pi => pi.Name).ToArray();
       }
     }
 

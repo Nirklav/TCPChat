@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Security;
 using System.Threading;
 
-namespace Engine.Network.Connections
+namespace Engine.Network
 {
   /// <summary>
   /// Серверное соединение с клиентом.
@@ -25,10 +25,10 @@ namespace Engine.Network.Connections
     #endregion
 
     #region private field
-    [SecurityCritical] private string serverApiName;
-    [SecurityCritical] private DateTime lastActivity;
-    [SecurityCritical] private DateTime createTime;
-    [SecurityCritical] private EventHandler<PackageReceivedEventArgs> dataReceivedCallback;
+    [SecurityCritical] private string _serverApiName;
+    [SecurityCritical] private DateTime _lastActivity;
+    [SecurityCritical] private DateTime _createTime;
+    [SecurityCritical] private EventHandler<PackageReceivedEventArgs> _receivedCallback;
     #endregion
 
     #region constructors
@@ -46,10 +46,10 @@ namespace Engine.Network.Connections
 
       Construct(handler);
 
-      serverApiName = apiName;
-      dataReceivedCallback = receivedCallback;
-      lastActivity = DateTime.Now;
-      createTime = DateTime.Now;
+      _serverApiName = apiName;
+      _receivedCallback = receivedCallback;
+      _lastActivity = DateTime.UtcNow;
+      _createTime = DateTime.UtcNow;
     }
     #endregion
 
@@ -63,7 +63,7 @@ namespace Engine.Network.Connections
       get
       {
         ThrowIfDisposed();
-        return (int)(DateTime.Now - lastActivity).TotalMilliseconds;
+        return (int)(DateTime.UtcNow - _lastActivity).TotalMilliseconds;
       }
     }
 
@@ -76,7 +76,7 @@ namespace Engine.Network.Connections
       get
       {
         ThrowIfDisposed();
-        return (IsRegistered) ? 0 : (int)(DateTime.Now - createTime).TotalMilliseconds;
+        return (IsRegistered) ? 0 : (int)(DateTime.UtcNow - _createTime).TotalMilliseconds;
       }
     }
 
@@ -89,7 +89,7 @@ namespace Engine.Network.Connections
       get
       {
         ThrowIfDisposed();
-        return id != null && !id.Contains(TempConnectionPrefix);
+        return _id != null && !_id.Contains(TempConnectionPrefix);
       }
     }
     #endregion
@@ -103,7 +103,7 @@ namespace Engine.Network.Connections
     public void Register(string newId)
     {
       ThrowIfDisposed();
-      id = newId;
+      _id = newId;
     }
     #endregion
 
@@ -112,14 +112,14 @@ namespace Engine.Network.Connections
     protected override ConnectionInfo CreateConnectionInfo()
     {
       var info = new ServerConnectionInfo();
-      info.ApiName = serverApiName;
+      info.ApiName = _serverApiName;
       return info;
     }
 
     [SecuritySafeCritical]
     protected override void OnPackagePartReceived()
     {
-      lastActivity = DateTime.Now;
+      _lastActivity = DateTime.UtcNow;
     }
 
     [SecuritySafeCritical]
@@ -135,7 +135,7 @@ namespace Engine.Network.Connections
         return;
       }
 
-      var temp = Interlocked.CompareExchange(ref dataReceivedCallback, null, null);
+      var temp = Interlocked.CompareExchange(ref _receivedCallback, null, null);
       if (temp != null)
         temp(this, args);
     }
@@ -146,7 +146,7 @@ namespace Engine.Network.Connections
       if (args.Exception != null)
         ServerModel.Logger.Write(args.Exception);
       else
-        lastActivity = DateTime.Now;
+        _lastActivity = DateTime.UtcNow;
     }
     #endregion
   }

@@ -4,7 +4,7 @@ using System;
 using System.Net;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientConnectToPeerCommand :
@@ -33,19 +33,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private IPEndPoint peerPoint;
-      private User remoteInfo;
+      private IPEndPoint _peerPoint;
+      private User _remoteInfo;
 
       public IPEndPoint PeerPoint
       {
-        get { return peerPoint; }
-        set { peerPoint = value; }
+        get { return _peerPoint; }
+        set { _peerPoint = value; }
       }
 
       public User RemoteInfo
       {
-        get { return remoteInfo; }
-        set { remoteInfo = value; }
+        get { return _remoteInfo; }
+        set { _remoteInfo = value; }
       }
     }
   }

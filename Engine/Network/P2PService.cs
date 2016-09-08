@@ -14,53 +14,55 @@ namespace Engine.Network
     #region nested types
     private class ClientDescription
     {
+      public IPEndPoint LocalPoint { get; private set; }
+      public IPEndPoint PublicPoint { get; private set; }
+
       public ClientDescription(IPEndPoint local, IPEndPoint @public)
       {
         LocalPoint = local;
         PublicPoint = @public;
       }
-
-      public IPEndPoint LocalPoint { get; private set; }
-      public IPEndPoint PublicPoint { get; private set; }
     }
 
     private class RequestPair
     {
+      public string RequestId { get; private set; }
+      public string SenderId { get; private set; }
+
       public RequestPair(string requestId, string senderId)
       {
         RequestId = requestId;
         SenderId = senderId;
       }
-
-      public string RequestId { get; private set; }
-      public string SenderId { get; private set; }
     }
     #endregion
 
     #region fields
-    [SecurityCritical] private readonly object syncObject = new object();
+    [SecurityCritical] private readonly object _syncObject = new object();
 
-    [SecurityCritical] private readonly Dictionary<string, ClientDescription> clientsEndPoints;
-    [SecurityCritical] private readonly HashSet<string> connectingClients;
-    [SecurityCritical] private readonly List<RequestPair> requests;
+    [SecurityCritical] private readonly Dictionary<string, ClientDescription> _clientsEndPoints;
+    [SecurityCritical] private readonly HashSet<string> _connectingClients;
+    [SecurityCritical] private readonly List<RequestPair> _requests;
 
-    [SecurityCritical] private NetServer server;
-    [SecurityCritical] private bool disposed;
+    [SecurityCritical] private NetServer _server;
+    [SecurityCritical] private bool _disposed;
 
-    [SecurityCritical] private SynchronizationContext syncContext;
+    [SecurityCritical] private SynchronizationContext _syncContext;
     #endregion
 
     #region constructors
     /// <summary>
-    /// Создает экземпляр сервиса для функционирования UDP hole punching. Без логирования.
+    /// Создает экземпляр сервиса для функционирования UDP hole punching.
     /// </summary>
+    /// <param name="port">UDP порт сервиса. Для входящих данных.</param>
+    /// <param name="usingIPv6">Использовать IPv6.</param>
     [SecurityCritical]
     public P2PService(int port, bool usingIPv6)
     {
-      disposed = false;
-      requests = new List<RequestPair>();
-      clientsEndPoints = new Dictionary<string, ClientDescription>();
-      connectingClients = new HashSet<string>();
+      _disposed = false;
+      _requests = new List<RequestPair>();
+      _clientsEndPoints = new Dictionary<string, ClientDescription>();
+      _connectingClients = new HashSet<string>();
 
       NetPeerConfiguration config = new NetPeerConfiguration(AsyncPeer.NetConfigString);
       config.MaximumConnections = 100;
@@ -69,11 +71,11 @@ namespace Engine.Network
       if (usingIPv6)
         config.LocalAddress = IPAddress.IPv6Any;
 
-      syncContext = new EngineSyncContext();
+      _syncContext = new EngineSyncContext();
 
-      server = new NetServer(config);
-      syncContext.Send(RegisterReceived, server);
-      server.Start();
+      _server = new NetServer(config);
+      _syncContext.Send(RegisterReceived, _server);
+      _server.Start();
     }
 
     [SecurityCritical]
@@ -94,7 +96,7 @@ namespace Engine.Network
       get
       {
         ThrowIfDisposed();
-        return server.Port;
+        return _server.Port;
       }
     }
     #endregion
@@ -122,9 +124,9 @@ namespace Engine.Network
       if (TryDoneRequest(senderId, requestId))
         return;
 
-      lock (syncObject)
+      lock (_syncObject)
       {
-        requests.Add(new RequestPair(requestId, senderId));
+        _requests.Add(new RequestPair(requestId, senderId));
 
         TrySendConnectRequest(senderId);
         TrySendConnectRequest(requestId);
@@ -136,14 +138,14 @@ namespace Engine.Network
     {
       bool needSend = false;
 
-      lock (syncObject)
+      lock (_syncObject)
       {
-        needSend = !clientsEndPoints.ContainsKey(connectionId);
+        needSend = !_clientsEndPoints.ContainsKey(connectionId);
 
-        if (connectingClients.Contains(connectionId))
+        if (_connectingClients.Contains(connectionId))
           needSend = false;
         else if (needSend)
-          connectingClients.Add(connectionId);
+          _connectingClients.Add(connectionId);
       }
 
       if (needSend)
@@ -153,8 +155,8 @@ namespace Engine.Network
     [SecurityCritical]
     internal void RemoveEndPoint(string id)
     {
-      lock (syncObject)
-        clientsEndPoints.Remove(id);
+      lock (_syncObject)
+        _clientsEndPoints.Remove(id);
     }
     #endregion
 
@@ -164,7 +166,7 @@ namespace Engine.Network
     {
       NetIncomingMessage message;
 
-      while ((message = server.ReadMessage()) != null)
+      while ((message = _server.ReadMessage()) != null)
       {
         try
         {
@@ -189,9 +191,9 @@ namespace Engine.Network
               var localPoint = hailMessage.ReadIPEndPoint();
               var publicPoint = message.SenderEndPoint;
 
-              lock (syncObject)
+              lock (_syncObject)
               {
-                clientsEndPoints.Add(id, new ClientDescription(localPoint, publicPoint));
+                _clientsEndPoints.Add(id, new ClientDescription(localPoint, publicPoint));
 
                 TryDoneAllRequest();
               }
@@ -213,10 +215,10 @@ namespace Engine.Network
       ClientDescription senderDescription;
       ClientDescription requestDescription;
 
-      lock (syncObject)
+      lock (_syncObject)
       {
-        received &= clientsEndPoints.TryGetValue(senderId, out senderDescription);
-        received &= clientsEndPoints.TryGetValue(requestId, out requestDescription);
+        received &= _clientsEndPoints.TryGetValue(senderId, out senderDescription);
+        received &= _clientsEndPoints.TryGetValue(requestId, out requestDescription);
       }
 
       if (received)
@@ -253,12 +255,12 @@ namespace Engine.Network
 
       if (received = TryGetRequest(senderId, requestId, out senderEndPoint, out requestEndPoint))
       {
-        lock (syncObject)
+        lock (_syncObject)
         {
-          requests.RemoveAll(p => string.Equals(p.SenderId, senderId) && string.Equals(p.RequestId, requestId));
+          _requests.RemoveAll(p => string.Equals(p.SenderId, senderId) && string.Equals(p.RequestId, requestId));
 
-          connectingClients.Remove(senderId);
-          connectingClients.Remove(requestId);
+          _connectingClients.Remove(senderId);
+          _connectingClients.Remove(requestId);
         }
 
         ServerModel.Api.IntroduceConnections(senderId, senderEndPoint, requestId, requestEndPoint);
@@ -270,16 +272,16 @@ namespace Engine.Network
     [SecurityCritical]
     private void TryDoneAllRequest()
     {
-      lock (syncObject)
+      lock (_syncObject)
       {
         List<string> removedIds = null;
 
-        for (int i = requests.Count - 1; i >= 0; i--)
+        for (int i = _requests.Count - 1; i >= 0; i--)
         {
           IPEndPoint senderEndPoint;
           IPEndPoint requestEndPoint;
 
-          var request = requests[i];
+          var request = _requests[i];
 
           if (TryGetRequest(request.SenderId, request.RequestId, out senderEndPoint, out requestEndPoint))
           {
@@ -287,13 +289,13 @@ namespace Engine.Network
             (removedIds ?? (removedIds = new List<string>())).Add(request.RequestId);
 
             ServerModel.Api.IntroduceConnections(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint);
-            requests.RemoveAt(i);
+            _requests.RemoveAt(i);
           }
         }
 
         if (removedIds != null)
           foreach (var id in removedIds)
-            connectingClients.Remove(id);
+            _connectingClients.Remove(id);
       }
     }
     #endregion
@@ -302,25 +304,25 @@ namespace Engine.Network
     [SecurityCritical]
     private void ThrowIfDisposed()
     {
-      if (disposed)
+      if (_disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
 
-      server.Shutdown(string.Empty);
+      _server.Shutdown(string.Empty);
 
-      lock (syncObject)
+      lock (_syncObject)
       {
-        requests.Clear();
-        clientsEndPoints.Clear();
-        connectingClients.Clear();
+        _requests.Clear();
+        _clientsEndPoints.Clear();
+        _connectingClients.Clear();
       }
     }
     #endregion

@@ -3,7 +3,7 @@ using Engine.Model.Entities;
 using System;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientRegistrationResponseCommand :
@@ -32,19 +32,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private bool registered;
-      private SystemMessageId message;
+      private bool _registered;
+      private SystemMessageId _message;
 
       public bool Registered
       {
-        get { return registered; }
-        set { registered = value; }
+        get { return _registered; }
+        set { _registered = value; }
       }
 
       public SystemMessageId Message
       {
-        get { return message; }
-        set { message = value; }
+        get { return _message; }
+        set { _message = value; }
       }
     }
   }

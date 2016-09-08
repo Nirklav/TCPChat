@@ -15,20 +15,20 @@ namespace Engine.Model.Common
     private const string GeneretedModuleName = "notifier_generated_module";
     private const string GeneretedAssemblyName = "notifier_generated_asm";
 
-    private static readonly AssemblyBuilder assemblyBuilder;
-    private static readonly ModuleBuilder moduleBuilder;
+    private static readonly AssemblyBuilder _assemblyBuilder;
+    private static readonly ModuleBuilder _moduleBuilder;
 
-    private static readonly ConcurrentDictionary<Type, Type> invokers;
-    private static readonly ConcurrentDictionary<Type, Type> contexts;
+    private static readonly ConcurrentDictionary<Type, Type> _invokers;
+    private static readonly ConcurrentDictionary<Type, Type> _contexts;
 
     [SecuritySafeCritical]
     static NotifierGenerator()
     {
-      invokers = new ConcurrentDictionary<Type, Type>();
-      contexts = new ConcurrentDictionary<Type, Type>();
+      _invokers = new ConcurrentDictionary<Type, Type>();
+      _contexts = new ConcurrentDictionary<Type, Type>();
 
-      assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(GeneretedAssemblyName), AssemblyBuilderAccess.Run);
-      moduleBuilder = assemblyBuilder.DefineDynamicModule(GeneretedModuleName);
+      _assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(GeneretedAssemblyName), AssemblyBuilderAccess.Run);
+      _moduleBuilder = _assemblyBuilder.DefineDynamicModule(GeneretedModuleName);
     }
 
     #region Context
@@ -48,7 +48,7 @@ namespace Engine.Model.Common
       if (!interfaceType.IsInterface)
         throw new InvalidOperationException("TInterface must be an interface");
 
-      var contextType = contexts.GetOrAdd(interfaceType, CreateContext);
+      var contextType = _contexts.GetOrAdd(interfaceType, CreateContext);
       return (TInterface)Activator.CreateInstance(contextType);
     }
 
@@ -57,7 +57,7 @@ namespace Engine.Model.Common
     {
       var invokeMethod = typeof(NotifierContext).GetMethod("Invoke", BindingFlags.Instance | BindingFlags.NonPublic);
 
-      var builder = moduleBuilder.DefineType(interfaceType.Name + GeneretedTypePostfix);
+      var builder = _moduleBuilder.DefineType(interfaceType.Name + GeneretedTypePostfix);
       builder.AddInterfaceImplementation(interfaceType);
       builder.SetParent(typeof(NotifierContext));
 
@@ -153,7 +153,7 @@ namespace Engine.Model.Common
       if (!interfaceType.IsInterface)
         throw new InvalidOperationException("TInterface must be an interface");
 
-      var invokerType = invokers.GetOrAdd(interfaceType, CreateInvoker);
+      var invokerType = _invokers.GetOrAdd(interfaceType, CreateInvoker);
       var invoker = (Notifier)Activator.CreateInstance(invokerType);
       foreach (var ctx in context)
         invoker.Add(ctx);
@@ -181,9 +181,9 @@ namespace Engine.Model.Common
       var contextsGetMethod = notifierType.GetMethod("GetContexts", BindingFlags.Instance | BindingFlags.Public);
       var arrayGetMethod = typeof(object[]).GetMethod("Get", BindingFlags.Instance | BindingFlags.Public, null, new[] { typeof(int) }, null);
 
-      var contextType = contexts.GetOrAdd(invokerAttribute.Context, CreateContext);
+      var contextType = _contexts.GetOrAdd(invokerAttribute.Context, CreateContext);
 
-      var builder = moduleBuilder.DefineType(interfaceType.Name + GeneretedTypePostfix);
+      var builder = _moduleBuilder.DefineType(interfaceType.Name + GeneretedTypePostfix);
       builder.SetParent(notifierType);
       builder.AddInterfaceImplementation(interfaceType);
 

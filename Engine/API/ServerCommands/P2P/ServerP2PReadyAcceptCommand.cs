@@ -1,11 +1,11 @@
-﻿using Engine.API.ClientCommands;
+﻿using Engine.Api.ClientCommands;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Net;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerP2PReadyAcceptCommand :
@@ -49,26 +49,26 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private string receiverNick;
-      private IPEndPoint peerPoint;
-      private User remoteInfo;
+      private string _receiverNick;
+      private IPEndPoint _peerPoint;
+      private User _remoteInfo;
 
       public string ReceiverNick
       {
-        get { return receiverNick; }
-        set { receiverNick = value; }
+        get { return _receiverNick; }
+        set { _receiverNick = value; }
       }
 
       public IPEndPoint PeerPoint
       {
-        get { return peerPoint; }
-        set { peerPoint = value; }
+        get { return _peerPoint; }
+        set { _peerPoint = value; }
       }
 
       public User RemoteInfo
       {
-        get { return remoteInfo; }
-        set { remoteInfo = value; }
+        get { return _remoteInfo; }
+        set { _remoteInfo = value; }
       }
     }
   }

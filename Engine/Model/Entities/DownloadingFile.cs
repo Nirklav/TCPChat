@@ -10,7 +10,7 @@ namespace Engine.Model.Entities
     MarshalByRefObject, 
     IDisposable
   {
-    private bool disposed = false;
+    private bool _disposed = false;
 
     /// <summary>
     /// Описание файла.
@@ -32,10 +32,10 @@ namespace Engine.Model.Entities
     /// </summary>
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
 
       if (WriteStream != null)
       {

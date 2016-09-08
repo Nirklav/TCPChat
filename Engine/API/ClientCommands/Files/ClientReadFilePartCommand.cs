@@ -1,11 +1,11 @@
-﻿using Engine.API.ServerCommands;
+﻿using Engine.Api.ServerCommands;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Linq;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientReadFilePartCommand :
@@ -81,33 +81,33 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private string roomName;
-      private FileDescription file;
-      private long startPartPosition;
-      private long length;
+      private string _roomName;
+      private FileDescription _file;
+      private long _startPartPosition;
+      private long _length;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public FileDescription File
       {
-        get { return file; }
-        set { file = value; }
+        get { return _file; }
+        set { _file = value; }
       }
 
       public long StartPartPosition
       {
-        get { return startPartPosition; }
-        set { startPartPosition = value; }
+        get { return _startPartPosition; }
+        set { _startPartPosition = value; }
       }
 
       public long Length
       {
-        get { return length; }
-        set { length = value; }
+        get { return _length; }
+        set { _length = value; }
       }
     }
   }

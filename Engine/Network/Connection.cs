@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Security;
 using System.Security.Cryptography;
 
-namespace Engine.Network.Connections
+namespace Engine.Network
 {
   /// <summary>
   /// Базовый класс соединения, реализовывает прием и передачу данных.
@@ -26,37 +26,37 @@ namespace Engine.Network.Connections
     #endregion
 
     #region fields
-    [SecurityCritical] protected string id;
-    [SecurityCritical] protected ConnectionInfo remoteInfo;
-    [SecurityCritical] private bool connectionInfoSent;
-    [SecurityCritical] protected byte[] buffer;
-    [SecurityCritical] protected Socket handler;
-    [SecurityCritical] protected MemoryStream received;
-    [SecurityCritical] protected Packer packer;
-    [SecurityCritical] private ECDiffieHellmanCng diffieHellman;
-    [SecurityCritical] protected volatile bool disposed;
+    [SecurityCritical] protected string _id;
+    [SecurityCritical] protected ConnectionInfo _remoteInfo;
+    [SecurityCritical] private bool _connectionInfoSent;
+    [SecurityCritical] protected byte[] _buffer;
+    [SecurityCritical] protected Socket _handler;
+    [SecurityCritical] protected MemoryStream _received;
+    [SecurityCritical] protected Packer _packer;
+    [SecurityCritical] private ECDiffieHellmanCng _diffieHellman;
+    [SecurityCritical] protected volatile bool _disposed;
     #endregion
 
     #region constructors
     [SecurityCritical]
-    protected void Construct(Socket socket)
+    protected void Construct(Socket handler)
     {
-      if (socket == null)
+      if (handler == null)
         throw new ArgumentNullException("socket");
 
-      if (!socket.Connected)
+      if (!handler.Connected)
         throw new ArgumentException("Socket should be connected.");
 
-      handler = socket;
-      buffer = new byte[BufferSize];
-      received = new MemoryStream();
-      packer = new Packer();
+      _handler = handler;
+      _buffer = new byte[BufferSize];
+      _received = new MemoryStream();
+      _packer = new Packer();
 
-      diffieHellman = new ECDiffieHellmanCng(KeySize);
-      diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-      diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
+      _diffieHellman = new ECDiffieHellmanCng(KeySize);
+      _diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+      _diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
 
-      handler.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, OnReceive, null);
+      _handler.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, OnReceive, null);
     }
     #endregion
 
@@ -67,12 +67,12 @@ namespace Engine.Network.Connections
     public string Id
     {
       [SecurityCritical]
-      get { return id; }
+      get { return _id; }
       [SecurityCritical]
       set
       {
         ThrowIfDisposed();
-        id = value;
+        _id = value;
       }
     }
 
@@ -85,7 +85,7 @@ namespace Engine.Network.Connections
       get
       {
         ThrowIfDisposed();
-        return (IPEndPoint)handler.RemoteEndPoint;
+        return (IPEndPoint)_handler.RemoteEndPoint;
       }
     }
 
@@ -98,7 +98,7 @@ namespace Engine.Network.Connections
       get
       {
         ThrowIfDisposed();
-        return (IPEndPoint)handler.LocalEndPoint;
+        return (IPEndPoint)_handler.LocalEndPoint;
       }
     }
     #endregion
@@ -134,17 +134,17 @@ namespace Engine.Network.Connections
     {
       ThrowIfDisposed();
 
-      if (handler == null)
+      if (_handler == null)
         throw new InvalidOperationException("Socket not set");
 
-      if (!handler.Connected)
+      if (!_handler.Connected)
         throw new InvalidOperationException("Not connected");
 
-      using (var packed = packer.Pack(package))
+      using (var packed = _packer.Pack(package))
       {
         try
         {
-          handler.BeginSend(packed.Data, 0, packed.Length, SocketFlags.None, OnSend, null);
+          _handler.BeginSend(packed.Data, 0, packed.Length, SocketFlags.None, OnSend, null);
         }
         catch (SocketException se)
         {
@@ -160,13 +160,13 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     public void SendInfo()
     {
-      if (connectionInfoSent)
+      if (_connectionInfoSent)
         throw new InvalidOperationException("Connection info already sent");
 
-      connectionInfoSent = true;
+      _connectionInfoSent = true;
 
       var info = CreateConnectionInfo();
-      info.PublicKey = diffieHellman.PublicKey.ToByteArray();
+      info.PublicKey = _diffieHellman.PublicKey.ToByteArray();
       SendMessage(RemoteInfoId, info);
     }
 
@@ -178,13 +178,13 @@ namespace Engine.Network.Connections
     {
       ThrowIfDisposed();
 
-      if (handler == null)
+      if (_handler == null)
         throw new InvalidOperationException("Socket not set");
 
-      if (!handler.Connected)
+      if (!_handler.Connected)
         throw new InvalidOperationException("not connected");
 
-      handler.BeginDisconnect(true, OnDisconnect, null);
+      _handler.BeginDisconnect(true, OnDisconnect, null);
     }
     #endregion
 
@@ -192,42 +192,42 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     private void OnReceive(IAsyncResult result)
     {
-      if (disposed)
+      if (_disposed)
         return;
 
       try
       {
-        var bytesRead = handler.EndReceive(result);
+        var bytesRead = _handler.EndReceive(result);
         if (bytesRead > 0)
         {
           OnPackagePartReceived();
 
-          received.Write(buffer, 0, bytesRead);
+          _received.Write(_buffer, 0, bytesRead);
 
-          while (packer.IsPackageReceived(received))
+          while (_packer.IsPackageReceived(_received))
           {
-            var size = packer.GetPackageSize(received);
+            var size = _packer.GetPackageSize(_received);
             if (size > MaxReceivedDataSize)
               throw new ModelException(ErrorCode.LargeReceivedData);
 
-            var unpacked = packer.Unpack<IPackage>(received);
+            var unpacked = _packer.Unpack<IPackage>(_received);
 
-            var length = (int) received.Length;
+            var length = (int) _received.Length;
 
-            received.Position = 0;
-            received.SetLength(0);
+            _received.Position = 0;
+            _received.SetLength(0);
 
             var restDataSize = length - size;
             if (restDataSize > 0)
             {
-              var dataBuffer = received.GetBuffer();
-              received.Write(dataBuffer, size, restDataSize);
+              var dataBuffer = _received.GetBuffer();
+              _received.Write(dataBuffer, size, restDataSize);
             }
 
             switch (unpacked.Package.Id)
             {
               case RemoteInfoId:
-                if (!connectionInfoSent)
+                if (!_connectionInfoSent)
                   SendInfo();
 
                 SetRemoteInfo(unpacked.Package);
@@ -240,7 +240,7 @@ namespace Engine.Network.Connections
           }
         }
 
-        handler.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, OnReceive, null);
+        _handler.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, OnReceive, null);
       }
       catch (SocketException se)
       {
@@ -256,12 +256,12 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     private void OnSend(IAsyncResult result)
     {
-      if (disposed)
+      if (_disposed)
         return;
 
       try
       {
-        var size = handler.EndSend(result);
+        var size = _handler.EndSend(result);
         OnPackageSent(new PackageSendedEventArgs(size));
       }
       catch (SocketException se)
@@ -278,12 +278,12 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     private void OnDisconnect(IAsyncResult result)
     {
-      if (disposed)
+      if (_disposed)
         return;
 
       try
       {
-        handler.EndDisconnect(result);
+        _handler.EndDisconnect(result);
         OnDisconnected(null);
       }
       catch (SocketException se)
@@ -363,11 +363,11 @@ namespace Engine.Network.Connections
         throw new ArgumentException("package isn't IPackage<ConnectionInfo>");
 
       // Set key
-      remoteInfo = remoteInfoPack.Content;
-      var publicKey = CngKey.Import(remoteInfo.PublicKey, CngKeyBlobFormat.EccPublicBlob);
-      packer.SetKey(diffieHellman.DeriveKeyMaterial(publicKey));
+      _remoteInfo = remoteInfoPack.Content;
+      var publicKey = CngKey.Import(_remoteInfo.PublicKey, CngKeyBlobFormat.EccPublicBlob);
+      _packer.SetKey(_diffieHellman.DeriveKeyMaterial(publicKey));
 
-      OnInfoReceived(remoteInfo);
+      OnInfoReceived(_remoteInfo);
     }
     #endregion
 
@@ -375,7 +375,7 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     protected void ThrowIfDisposed()
     {
-      if (disposed)
+      if (_disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
@@ -385,33 +385,33 @@ namespace Engine.Network.Connections
     [SecuritySafeCritical]
     protected virtual void Clean()
     {
-      if (handler != null)
+      if (_handler != null)
       {
-        if (handler.Connected)
+        if (_handler.Connected)
         {
-          handler.Shutdown(SocketShutdown.Both);
-          handler.Disconnect(false);
+          _handler.Shutdown(SocketShutdown.Both);
+          _handler.Disconnect(false);
           OnDisconnected(null);
         }
 
-        handler.Dispose();
-        handler = null;
+        _handler.Dispose();
+        _handler = null;
       }
 
-      if (diffieHellman != null)
+      if (_diffieHellman != null)
       {
-        diffieHellman.Dispose();
-        diffieHellman = null;
+        _diffieHellman.Dispose();
+        _diffieHellman = null;
       }
 
-      if (received != null)
+      if (_received != null)
       {
-        received.Dispose();
-        received = null;
+        _received.Dispose();
+        _received = null;
       }
 
-      connectionInfoSent = false;
-      remoteInfo = null;
+      _connectionInfoSent = false;
+      _remoteInfo = null;
     }
 
     /// <summary>
@@ -427,10 +427,10 @@ namespace Engine.Network.Connections
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
       DisposeManagedResources();
     }
     #endregion

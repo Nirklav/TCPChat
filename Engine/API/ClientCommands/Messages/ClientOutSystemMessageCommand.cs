@@ -3,7 +3,7 @@ using Engine.Model.Entities;
 using System;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientOutSystemMessageCommand :
@@ -35,19 +35,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private SystemMessageId message;
-      private string[] formatParams;
+      private SystemMessageId _message;
+      private string[] _formatParams;
 
       public SystemMessageId Message
       {
-        get { return message; }
-        set { message = value; }
+        get { return _message; }
+        set { _message = value; }
       }
 
       public string[] FormatParams
       {
-        get { return formatParams; }
-        set { formatParams = value; }
+        get { return _formatParams; }
+        set { _formatParams = value; }
       }
     }
   }

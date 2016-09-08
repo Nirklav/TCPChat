@@ -2,7 +2,7 @@
 using System;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientOutPrivateMessageCommand
@@ -42,12 +42,12 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private string message;
+      private string _message;
 
       public string Message
       {
-        get { return message; }
-        set { message = value; }
+        get { return _message; }
+        set { _message = value; }
       }
     }
   }

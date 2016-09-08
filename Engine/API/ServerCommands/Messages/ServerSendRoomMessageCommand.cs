@@ -1,10 +1,10 @@
-﻿using Engine.API.ClientCommands;
+﻿using Engine.Api.ClientCommands;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerSendRoomMessageCommand :
@@ -68,26 +68,26 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private string message;
-      private string roomName;
-      private long? messageId;
+      private string _message;
+      private string _roomName;
+      private long? _messageId;
 
       public string Message
       {
-        get { return message; }
-        set { message = value; }
+        get { return _message; }
+        set { _message = value; }
       }
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public long? MessageId
       {
-        get { return messageId; }
-        set { messageId = value; }
+        get { return _messageId; }
+        set { _messageId = value; }
       }
     }
   }

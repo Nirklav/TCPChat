@@ -1,11 +1,11 @@
-﻿using Engine.API.ClientCommands;
+﻿using Engine.Api.ClientCommands;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerKickUsersCommand :
@@ -71,19 +71,19 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private string roomName;
-      private List<string> users;
+      private string _roomName;
+      private List<string> _users;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public List<string> Users
       {
-        get { return users; }
-        set { users = value; }
+        get { return _users; }
+        set { _users = value; }
       }
     }
   }

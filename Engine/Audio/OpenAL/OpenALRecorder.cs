@@ -18,24 +18,24 @@ namespace Engine.Audio.OpenAL
     #endregion
 
     #region fields
-    private readonly object syncObj = new object();
-    private EventHandler<RecordedEventArgs> recorded;
+    private readonly object _syncObj = new object();
+    private EventHandler<RecordedEventArgs> _recorded;
 
-    private bool disposed;    
-    private AudioCapture capture;
-    private byte[] buffer;
-    private Timer captureTimer;
-    private AudioQuality quality;
-    private int samplesSize;
+    private bool _disposed;    
+    private AudioCapture _capture;
+    private byte[] _buffer;
+    private Timer _captureTimer;
+    private AudioQuality _quality;
+    private int _samplesSize;
     #endregion
 
     #region event
     public event EventHandler<RecordedEventArgs> Recorded
     {
       [SecuritySafeCritical]
-      add { recorded += value; }
+      add { _recorded += value; }
       [SecuritySafeCritical]
-      remove { recorded -= value; }
+      remove { _recorded -= value; }
     }
     #endregion
 
@@ -54,7 +54,7 @@ namespace Engine.Audio.OpenAL
     public bool IsInited
     {
       [SecuritySafeCritical]
-      get { return Interlocked.CompareExchange(ref capture, null, null) != null; }
+      get { return Interlocked.CompareExchange(ref _capture, null, null) != null; }
     }
 
     public IList<string> Devices
@@ -80,8 +80,8 @@ namespace Engine.Audio.OpenAL
     {
       try
       {
-        this.quality = quality;
-        this.samplesSize = DefaultBufferSize;
+        _quality = quality;
+        _samplesSize = DefaultBufferSize;
 
         ALFormat format;
 
@@ -90,9 +90,9 @@ namespace Engine.Audio.OpenAL
         else
           format = quality.Bits == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16;
 
-        lock (syncObj)
+        lock (_syncObj)
         {
-          buffer = new byte[quality.Channels * (quality.Bits / 8) * samplesSize * 2];
+          _buffer = new byte[quality.Channels * (quality.Bits / 8) * _samplesSize * 2];
 
           if (string.IsNullOrEmpty(deviceName))
             deviceName = AudioCapture.DefaultDevice;
@@ -100,15 +100,15 @@ namespace Engine.Audio.OpenAL
           if (!AudioCapture.AvailableDevices.Contains(deviceName))
             deviceName = AudioCapture.DefaultDevice;
 
-          capture = new AudioCapture(deviceName, quality.Frequency, format, samplesSize);
+          _capture = new AudioCapture(deviceName, quality.Frequency, format, _samplesSize);
         }
       }
       catch (Exception e)
       {
-        if (capture != null)
-          capture.Dispose();
+        if (_capture != null)
+          _capture.Dispose();
 
-        capture = null;
+        _capture = null;
 
         ClientModel.Logger.Write(e);
         throw new ModelException(ErrorCode.AudioNotEnabled, "Audio recorder do not initialized.", e, deviceName);
@@ -118,14 +118,14 @@ namespace Engine.Audio.OpenAL
     [SecuritySafeCritical]
     public void Start()
     {
-      if (capture == null || capture.IsRunning)
+      if (_capture == null || _capture.IsRunning)
         return;
 
-      lock (syncObj)
+      lock (_syncObj)
       {
-        capture.Start();
-        if (captureTimer == null)
-          captureTimer = new Timer(OnRecording, null, GetTimerTimeOut(), -1);
+        _capture.Start();
+        if (_captureTimer == null)
+          _captureTimer = new Timer(OnRecording, null, GetTimerTimeOut(), -1);
       }
     }
 
@@ -135,7 +135,7 @@ namespace Engine.Audio.OpenAL
       if (IsInited)
       {
         Stop();
-        capture.Dispose();
+        _capture.Dispose();
       }
 
       Initialize(deviceName, quality);
@@ -144,33 +144,33 @@ namespace Engine.Audio.OpenAL
     [SecurityCritical]
     private void OnRecording(object state)
     {
-      lock (syncObj)
+      lock (_syncObj)
       {
-        if (capture == null)
+        if (_capture == null)
           return;
 
-        var availableSamples = capture.AvailableSamples;
+        var availableSamples = _capture.AvailableSamples;
         if (availableSamples > 0)
         {
-          var availableDataSize = availableSamples * quality.Channels * (quality.Bits / 8);
-          if (availableDataSize > buffer.Length)
-            buffer = new byte[availableDataSize * 2];
+          var availableDataSize = availableSamples * _quality.Channels * (_quality.Bits / 8);
+          if (availableDataSize > _buffer.Length)
+            _buffer = new byte[availableDataSize * 2];
 
-          capture.ReadSamples(buffer, availableSamples);
+          _capture.ReadSamples(_buffer, availableSamples);
 
-          var temp = Interlocked.CompareExchange(ref recorded, null, null);
+          var temp = Interlocked.CompareExchange(ref _recorded, null, null);
           if (temp != null)
-            temp(this, new RecordedEventArgs(buffer, availableSamples, quality.Channels, quality.Bits, quality.Frequency));
+            temp(this, new RecordedEventArgs(_buffer, availableSamples, _quality.Channels, _quality.Bits, _quality.Frequency));
         }
 
-        if (capture.IsRunning)
+        if (_capture.IsRunning)
         {
-          captureTimer.Change(GetTimerTimeOut(), -1);
+          _captureTimer.Change(GetTimerTimeOut(), -1);
         }
         else
         {
-          captureTimer.Dispose();
-          captureTimer = null;
+          _captureTimer.Dispose();
+          _captureTimer = null;
         }
       }
     }
@@ -181,16 +181,16 @@ namespace Engine.Audio.OpenAL
       if (!IsInited)
         return;
 
-      lock (syncObj)
+      lock (_syncObj)
       {
-        capture.Stop();
+        _capture.Stop();
       }
     }
 
     [SecurityCritical]
     private int GetTimerTimeOut()
     {
-      var bufferFillMs = (double)samplesSize * 1000 / quality.Frequency;
+      var bufferFillMs = (double)_samplesSize * 1000 / _quality.Frequency;
       return (int)(bufferFillMs * 0.75d);
     }
     #endregion
@@ -199,26 +199,26 @@ namespace Engine.Audio.OpenAL
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
-      recorded = null;
+      _disposed = true;
+      _recorded = null;
 
-      lock (syncObj)
+      lock (_syncObj)
       {
-        if (captureTimer != null)
-          captureTimer.Dispose();
+        if (_captureTimer != null)
+          _captureTimer.Dispose();
 
-        captureTimer = null;
+        _captureTimer = null;
 
-        if (capture != null)
+        if (_capture != null)
         {
-          capture.Stop();
-          capture.Dispose();
+          _capture.Stop();
+          _capture.Dispose();
         }
 
-        capture = null;
+        _capture = null;
       }
     }
     #endregion

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientRoomOpenedCommand :
@@ -65,26 +65,26 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private Room room;
-      private RoomType type;
-      private List<User> users;
+      private Room _room;
+      private RoomType _type;
+      private List<User> _users;
 
       public Room Room
       {
-        get { return room; }
-        set { room = value; }
+        get { return _room; }
+        set { _room = value; }
       }
 
       public RoomType Type
       {
-        get { return type; }
-        set { type = value; }
+        get { return _type; }
+        set { _type = value; }
       }
 
       public List<User> Users
       {
-        get { return users; }
-        set { users = value; }
+        get { return _users; }
+        set { _users = value; }
       }
     }
   }

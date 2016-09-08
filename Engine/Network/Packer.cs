@@ -1,5 +1,4 @@
 ﻿using Engine.Helpers;
-using Engine.Network.Connections;
 using System;
 using System.IO;
 using System.Security;
@@ -19,30 +18,30 @@ namespace Engine.Network
     private static long CryptedMessagesSent;
     private static long CryptedMessagesRecived;
 
-    private const int poolSize = 500;
-    private static Pool pool;
+    private const int PoolSize = 500;
+    private static Pool _pool;
 
     public const int HeadSize = sizeof(int) + sizeof(bool);
     public const int LengthHead = 0;
     public const int EncryptionHead = sizeof(int);
     
-    private volatile byte[] key;
+    private volatile byte[] _key;
 
     [SecurityCritical]
     public Packer()
     {
-      if (pool == null)
-        pool = new Pool(poolSize);
+      if (_pool == null)
+        _pool = new Pool(PoolSize);
     }
 
     [SecurityCritical]
-    public void SetKey(byte[] symmetricKey)
+    public void SetKey(byte[] key)
     {
-      if (key != null)
+      if (_key != null)
         throw new InvalidOperationException("Key already set");
-      if (symmetricKey == null)
+      if (key == null)
         throw new ArgumentNullException("symmetricKey");
-      key = symmetricKey;
+      _key = key;
     }
 
     [SecurityCritical]
@@ -56,14 +55,14 @@ namespace Engine.Network
     public Packed Pack<T>(T package, byte[] rawData)
       where T : IPackage
     {
-      var encrypt = key != null;
+      var encrypt = _key != null;
       var resultCapacity = rawData == null ? (int?)null : rawData.Length;
-      var result = pool.Get(resultCapacity);
+      var result = _pool.Get(resultCapacity);
 
       result.Write(BitConverter.GetBytes(0), 0, sizeof(int));
       result.Write(BitConverter.GetBytes(encrypt), 0, sizeof(bool));
 
-      using (var guard = pool.GetWithGuard())
+      using (var guard = _pool.GetWithGuard())
       {
         Serializer.Serialize(guard.Stream, package);
         if (rawData != null)
@@ -74,7 +73,7 @@ namespace Engine.Network
           guard.Stream.Position = 0;
           using (var crypter = new Crypter())
           {
-            crypter.SetKey(key);
+            crypter.SetKey(_key);
             crypter.Encrypt(guard.Stream, result);
           }
 
@@ -115,12 +114,12 @@ namespace Engine.Network
       T result;
       MemoryStream rawData = null;
 
-      using (var inputGuard = pool.GetWithGuard())
-      using (var outputGuard = pool.GetWithGuard())
+      using (var inputGuard = _pool.GetWithGuard())
+      using (var outputGuard = _pool.GetWithGuard())
       {
         if (IsPackageEncrypted(input))
         {
-          if (key == null)
+          if (_key == null)
             throw new InvalidOperationException("Key not set yet");
 
           var inputBuffer = input.GetBuffer();
@@ -129,7 +128,7 @@ namespace Engine.Network
 
           using (var crypter = new Crypter())
           {
-            crypter.SetKey(key);
+            crypter.SetKey(_key);
             crypter.Decrypt(inputGuard.Stream, outputGuard.Stream);
           }
 
@@ -154,7 +153,7 @@ namespace Engine.Network
           var length = (int)outputGuard.Stream.Length;
           var rawDataSize = length - position;
 
-          rawData = pool.Get(rawDataSize);
+          rawData = _pool.Get(rawDataSize);
           rawData.Write(outputBuffer, position, rawDataSize);
         }
       }
@@ -200,7 +199,7 @@ namespace Engine.Network
       where T : IPoolable
     {
       if (poolable.Stream != null)
-        pool.Put(poolable.Stream);
+        _pool.Put(poolable.Stream);
     }
   }
 }

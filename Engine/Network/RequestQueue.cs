@@ -1,4 +1,4 @@
-﻿using Engine.API;
+﻿using Engine.Api;
 using Engine.Helpers;
 using Engine.Model.Client;
 using Engine.Model.Server;
@@ -44,32 +44,32 @@ namespace Engine.Network
     [SecurityCritical]
     private class QueueContainer : IDisposable
     {
-      [SecurityCritical] private readonly RequestQueue<TArgs> queue;
+      [SecurityCritical] private readonly RequestQueue<TArgs> _queue;
 
-      [SecurityCritical] private readonly object syncObject = new object();
-      [SecurityCritical] private readonly Queue<CommandContainer> commands = new Queue<CommandContainer>();
-      [SecurityCritical] private volatile bool inProcess;
+      [SecurityCritical] private readonly object _syncObject = new object();
+      [SecurityCritical] private readonly Queue<CommandContainer> _commands = new Queue<CommandContainer>();
+      [SecurityCritical] private volatile bool _inProcess;
 
-      [SecurityCritical] private static readonly TimeSpan disposeEventTimeout = TimeSpan.FromSeconds(10);
-      [SecurityCritical] private readonly ManualResetEvent disposeEvent = new ManualResetEvent(true);
-      [SecurityCritical] private bool disposed;
+      [SecurityCritical] private static readonly TimeSpan _disposeEventTimeout = TimeSpan.FromSeconds(10);
+      [SecurityCritical] private readonly ManualResetEvent _disposeEvent = new ManualResetEvent(true);
+      [SecurityCritical] private bool _disposed;
 
       [SecurityCritical]
       public QueueContainer(RequestQueue<TArgs> queue)
       {
-        this.queue = queue;
+        _queue = queue;
       }
 
       [SecurityCritical]
       public void Enqueue(ICommand<TArgs> command, TArgs args)
       {
-        using(new TryLock(syncObject, Timeout))
+        using(new TryLock(_syncObject, Timeout))
         {
-          commands.Enqueue(new CommandContainer(command, args));
-          if (!inProcess)
+          _commands.Enqueue(new CommandContainer(command, args));
+          if (!_inProcess)
           {
-            inProcess = true;
-            disposeEvent.Reset();
+            _inProcess = true;
+            _disposeEvent.Reset();
             ThreadPool.QueueUserWorkItem(Process);
           }
         }
@@ -82,16 +82,16 @@ namespace Engine.Network
         {
           CommandContainer commandContainer;
 
-          using (new TryLock(syncObject, Timeout))
+          using (new TryLock(_syncObject, Timeout))
           {
-            if (commands.Count == 0)
+            if (_commands.Count == 0)
             {
-              inProcess = false;
-              disposeEvent.Set();
+              _inProcess = false;
+              _disposeEvent.Set();
               return;
             }
 
-            commandContainer = commands.Dequeue();
+            commandContainer = _commands.Dequeue();
           }
 
           try
@@ -100,7 +100,7 @@ namespace Engine.Network
           }
           catch (Exception e)
           {
-            queue.OnError(e);
+            _queue.OnError(e);
           }
         }
       }
@@ -108,52 +108,52 @@ namespace Engine.Network
       [SecuritySafeCritical]
       public void Dispose()
       {
-        if (disposed)
+        if (_disposed)
           return;
 
-        disposed = true;
+        _disposed = true;
 
-        lock (syncObject)
-          commands.Clear();
+        lock (_syncObject)
+          _commands.Clear();
 
-        if (!disposeEvent.WaitOne(disposeEventTimeout))
-          queue.OnError(new Exception("RequestQueue.Dispose() timeout"));
+        if (!_disposeEvent.WaitOne(_disposeEventTimeout))
+          _queue.OnError(new Exception("RequestQueue.Dispose() timeout"));
       }
     }
 
     [SecurityCritical]
     private class CommandContainer
     {
-      [SecurityCritical] private ICommand<TArgs> command;
-      [SecurityCritical] private TArgs args;
+      [SecurityCritical] private ICommand<TArgs> _command;
+      [SecurityCritical] private TArgs _args;
 
       [SecurityCritical]
       public CommandContainer(ICommand<TArgs> command, TArgs args)
       {
-        this.command = command;
-        this.args = args;
+        _command = command;
+        _args = args;
       }
 
       [SecurityCritical]
       public void Run()
       {
-        using (args)
-          command.Run(args);
+        using (_args)
+          _command.Run(_args);
       }
     }
 
     #endregion
 
-    [SecurityCritical] private readonly object syncObject;
-    [SecurityCritical] private readonly Dictionary<string, QueueContainer> requests;
+    [SecurityCritical] private readonly object _syncObject;
+    [SecurityCritical] private readonly Dictionary<string, QueueContainer> _requests;
 
-    [SecurityCritical] private volatile bool disposed;
+    [SecurityCritical] private volatile bool _disposed;
 
     [SecurityCritical]
     public RequestQueue()
     {
-      syncObject = new object();
-      requests = new Dictionary<string, QueueContainer>();
+      _syncObject = new object();
+      _requests = new Dictionary<string, QueueContainer>();
     }
 
     [SecurityCritical]
@@ -163,11 +163,11 @@ namespace Engine.Network
 
       QueueContainer queueContainer;
 
-      using (new TryLock(syncObject, Timeout))
+      using (new TryLock(_syncObject, Timeout))
       {
-        requests.TryGetValue(connectionId, out queueContainer);
+        _requests.TryGetValue(connectionId, out queueContainer);
         if (queueContainer == null)
-          requests.Add(connectionId, queueContainer = new QueueContainer(this));
+          _requests.Add(connectionId, queueContainer = new QueueContainer(this));
       }
 
       queueContainer.Enqueue(command, args);
@@ -177,10 +177,10 @@ namespace Engine.Network
     {
       QueueContainer[] queues;
 
-      lock (syncObject)
+      lock (_syncObject)
       {
-        queues = requests.Values.ToArray();
-        requests.Clear();
+        queues = _requests.Values.ToArray();
+        _requests.Clear();
       }
 
       foreach (var queue in queues)
@@ -193,17 +193,17 @@ namespace Engine.Network
     [SecurityCritical]
     private void ThrowIfDisposed()
     {
-      if (disposed)
+      if (_disposed)
         throw new ObjectDisposedException("RequestQueue is disposed");
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
       Clean();
     }
   }

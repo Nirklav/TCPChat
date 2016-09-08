@@ -1,6 +1,6 @@
 ﻿using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerEmptyCommand : ServerCommand

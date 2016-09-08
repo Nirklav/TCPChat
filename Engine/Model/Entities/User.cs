@@ -11,17 +11,18 @@ namespace Engine.Model.Entities
     IEquatable<User>,
     IEquatable<string>
   {
-    private readonly string nick;
-    private readonly Color nickColor;
+    private readonly string _nick;
+    private readonly Color _nickColor;
 
     /// <summary>
     /// Создает описание пользователя.
     /// </summary>
-    /// <param name="Nick">Ник пользователя.</param>
-    public User(string Nick, Color color)
+    /// <param name="nick">Ник пользователя.</param>
+    /// <param name="nickColor">Цвет ника.</param>
+    public User(string nick, Color nickColor)
     {
-      nick = Nick;
-      nickColor = color;
+      _nick = nick;
+      _nickColor = nickColor;
     }
 
     /// <summary>
@@ -29,7 +30,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public string Nick
     {
-      get { return nick; }
+      get { return _nick; }
     }
 
     /// <summary>
@@ -37,7 +38,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public Color NickColor
     {
-      get { return nickColor; }
+      get { return _nickColor; }
     }
 
     public override bool Equals(object obj)
@@ -57,12 +58,12 @@ namespace Engine.Model.Entities
 
     public override int GetHashCode()
     {
-      return nick.GetHashCode();
+      return _nick.GetHashCode();
     }
 
-    public bool Equals(string userNick)
+    public bool Equals(string nick)
     {
-      return string.Equals(Nick, userNick, StringComparison.OrdinalIgnoreCase);
+      return string.Equals(_nick, nick, StringComparison.OrdinalIgnoreCase);
     }
 
     public bool Equals(User user)
@@ -73,7 +74,7 @@ namespace Engine.Model.Entities
       if (ReferenceEquals(user, this))
         return true;
 
-      return Equals(Nick, user.Nick);
+      return Equals(_nick, user.Nick);
     }
   }
 }

@@ -3,7 +3,7 @@ using Engine.Model.Entities;
 using System;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientRoomClosedCommand :
@@ -50,12 +50,12 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private Room room;
+      private Room _room;
 
       public Room Room
       {
-        get { return room; }
-        set { room = value; }
+        get { return _room; }
+        set { _room = value; }
       }
     }
   }

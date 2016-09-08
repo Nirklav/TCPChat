@@ -27,24 +27,24 @@ namespace Engine.Model.Common
     CrossDomainObject, 
     INotifier
   {
-    private readonly List<object> contexts = new List<object>();
+    private readonly List<object> _contexts = new List<object>();
 
     public virtual object[] GetContexts()
     {
-      lock (contexts)
-        return contexts.ToArray();
+      lock (_contexts)
+        return _contexts.ToArray();
     }
 
     public void Add(object context)
     {
-      lock (contexts)
-        contexts.Add(context);
+      lock (_contexts)
+        _contexts.Add(context);
     }
 
     public bool Remove(object context)
     {
-      lock (contexts)
-        return contexts.Remove(context);
+      lock (_contexts)
+        return _contexts.Remove(context);
     }
   }
 

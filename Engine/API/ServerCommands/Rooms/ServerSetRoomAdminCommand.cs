@@ -3,7 +3,7 @@ using Engine.Model.Server;
 using System;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerSetRoomAdminCommand :
@@ -58,19 +58,19 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private string roomName;
-      private string newAdmin;
+      private string _roomName;
+      private string _newAdmin;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public string NewAdmin
       {
-        get { return newAdmin; }
-        set { newAdmin = value; }
+        get { return _newAdmin; }
+        set { _newAdmin = value; }
       }
     }
   }

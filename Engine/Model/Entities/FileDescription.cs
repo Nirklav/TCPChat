@@ -8,21 +8,21 @@ namespace Engine.Model.Entities
   [Serializable]
   public class FileDescription : IEquatable<FileDescription>
   {
-    private readonly FileId id;
-    private readonly string name;
-    private readonly long size;
+    private readonly FileId _id;
+    private readonly long _size;
+    private readonly string _name;
 
     /// <summary>
     /// Создает новый экземпляр класса.
     /// </summary>
-    /// <param name="fileId">Идентификатор файла.</param>
-    /// <param name="fileName">Короткое имя файла.</param>
-    /// <param name="fileId">Индетификатор файла. В пределах пользователя должен быть уникален.</param>
-    public FileDescription(FileId fileId, long fileSize, string fileName)
+    /// <param name="id">Идентификатор файла.</param>
+    /// <param name="size">Размер файла.</param>
+    /// <param name="name">Имя файла.</param>
+    public FileDescription(FileId id, long size, string name)
     {
-      id = fileId;
-      name = fileName;
-      size = fileSize;
+      _id = id;
+      _size = size;
+      _name = name;
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public FileId Id
     {
-      get { return id; }
+      get { return _id; }
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public string Name
     {
-      get { return name; }
+      get { return _name; }
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public long Size
     {
-      get { return size; }
+      get { return _size; }
     }
 
     public override bool Equals(object obj)
@@ -72,12 +72,12 @@ namespace Engine.Model.Entities
       if (ReferenceEquals(file, this))
         return true;
 
-      return id == file.id;
+      return _id == file._id;
     }
 
     public override int GetHashCode()
     {
-      return id.GetHashCode();
+      return _id.GetHashCode();
     }
   }
 }

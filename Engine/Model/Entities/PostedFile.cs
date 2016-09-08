@@ -10,7 +10,7 @@ namespace Engine.Model.Entities
     MarshalByRefObject,
     IDisposable
   {
-    private bool disposed;
+    private bool _disposed;
 
     /// <summary>
     /// Комната в которую выложен файл.
@@ -32,10 +32,10 @@ namespace Engine.Model.Entities
     /// </summary>
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
 
       if (ReadStream != null)
         ReadStream.Dispose();

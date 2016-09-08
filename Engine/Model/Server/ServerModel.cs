@@ -1,4 +1,4 @@
-﻿using Engine.API;
+﻿using Engine.Api;
 using Engine.Helpers;
 using Engine.Model.Common;
 using Engine.Model.Entities;
@@ -15,14 +15,14 @@ namespace Engine.Model.Server
   public class ServerModel
   {
     #region static model
-    private static ServerModel model;
-    private static Logger logger = new Logger("Server.log");
-    private static IServerNotifier notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
+    private static ServerModel _model;
+    private static Logger _logger = new Logger("Server.log");
+    private static IServerNotifier _notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
 
     public static Logger Logger
     {
       [SecurityCritical]
-      get { return logger; }
+      get { return _logger; }
     }
 
     /// <summary>
@@ -64,7 +64,7 @@ namespace Engine.Model.Server
     public static IServerNotifier Notifier
     {
       [SecurityCritical]
-      get { return notifier; }
+      get { return _notifier; }
     }
 
     /// <summary>
@@ -75,10 +75,10 @@ namespace Engine.Model.Server
     [SecurityCritical]
     public static ServerGuard Get()
     {
-      if (Interlocked.CompareExchange(ref model, null, null) == null)
+      if (Interlocked.CompareExchange(ref _model, null, null) == null)
         throw new ArgumentException("model do not inited yet");
 
-      return new ServerGuard(model);
+      return new ServerGuard(_model);
     }
     #endregion
 
@@ -119,13 +119,13 @@ namespace Engine.Model.Server
     public static bool IsInited
     {
       [SecurityCritical]
-      get { return Interlocked.CompareExchange(ref model, null, null) != null; }
+      get { return Interlocked.CompareExchange(ref _model, null, null) != null; }
     }
 
     [SecurityCritical]
     public static void Init(ServerInitializer initializer)
     {
-      if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
+      if (Interlocked.CompareExchange(ref _model, new ServerModel(), null) != null)
         throw new InvalidOperationException("model already inited");
 
       Server = new AsyncServer();
@@ -138,7 +138,7 @@ namespace Engine.Model.Server
     [SecurityCritical]
     public static void Reset()
     {
-      if (Interlocked.Exchange(ref model, null) == null)
+      if (Interlocked.Exchange(ref _model, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
       Dispose(Server);

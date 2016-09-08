@@ -1,10 +1,10 @@
-﻿using Engine.API.ClientCommands;
+﻿using Engine.Api.ClientCommands;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerRemoveFileFromRoomCommand :
@@ -63,19 +63,19 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private string roomName;
-      private FileId fileId;
+      private string _roomName;
+      private FileId _fileId;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public FileId FileId
       {
-        get { return fileId; }
-        set { fileId = value; }
+        get { return _fileId; }
+        set { _fileId = value; }
       }
     }
   }

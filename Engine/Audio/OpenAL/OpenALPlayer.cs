@@ -14,11 +14,11 @@ namespace Engine.Audio.OpenAL
     IPlayer
   {
     #region fields
-    private readonly object syncObject = new object();
-    private bool disposed;
+    private readonly object _syncObject = new object();
+    private bool _disposed;
 
-    private AudioContext context;
-    private Dictionary<string, SourceDescription> sources;
+    private AudioContext _context;
+    private Dictionary<string, SourceDescription> _sources;
     #endregion
 
     #region nested types
@@ -65,7 +65,7 @@ namespace Engine.Audio.OpenAL
     public bool IsInited
     {
       [SecuritySafeCritical]
-      get { return Interlocked.CompareExchange(ref context, null, null) != null; }
+      get { return Interlocked.CompareExchange(ref _context, null, null) != null; }
     }
 
     public IList<string> Devices
@@ -91,9 +91,9 @@ namespace Engine.Audio.OpenAL
     {
       try
       {
-        lock (syncObject)
+        lock (_syncObject)
         {
-          sources = new Dictionary<string, SourceDescription>();
+          _sources = new Dictionary<string, SourceDescription>();
 
           if (string.IsNullOrEmpty(deviceName))
             deviceName = AudioContext.DefaultDevice;
@@ -101,15 +101,15 @@ namespace Engine.Audio.OpenAL
           if (!AudioContext.AvailableDevices.Contains(deviceName))
             deviceName = AudioContext.DefaultDevice;
 
-          context = new AudioContext(deviceName);
+          _context = new AudioContext(deviceName);
         }
       }
       catch (Exception e)
       {
-        if (context != null)
-          context.Dispose();
+        if (_context != null)
+          _context.Dispose();
 
-        context = null;
+        _context = null;
 
         ClientModel.Logger.Write(e);
         throw new ModelException(ErrorCode.AudioNotEnabled, "Audio player do not initialized.", e, deviceName);
@@ -122,7 +122,7 @@ namespace Engine.Audio.OpenAL
       if (IsInited)
       {
         Stop();
-        context.Dispose();
+        _context.Dispose();
       }
 
       Initialize(deviceName);
@@ -137,14 +137,14 @@ namespace Engine.Audio.OpenAL
       if (!IsInited)
         return;
 
-      lock (syncObject)
+      lock (_syncObject)
       {
         SourceDescription source;
-        if (!sources.TryGetValue(id, out source))
+        if (!_sources.TryGetValue(id, out source))
         {
           int sourceId = AL.GenSource();
           source = new SourceDescription(sourceId);
-          sources.Add(id, source);
+          _sources.Add(id, source);
         }
 
         if (source.LastPlayedNumber > packNumber)
@@ -169,14 +169,14 @@ namespace Engine.Audio.OpenAL
       if (!IsInited)
         return;
 
-      lock (syncObject)
+      lock (_syncObject)
       {
         SourceDescription source;
-        if (!sources.TryGetValue(id, out source))
+        if (!_sources.TryGetValue(id, out source))
           return;
 
         Stop(source);
-        sources.Remove(id);
+        _sources.Remove(id);
       }
     }
 
@@ -186,12 +186,12 @@ namespace Engine.Audio.OpenAL
       if (!IsInited)
         return;
 
-      lock (syncObject)
+      lock (_syncObject)
       {
-        foreach (SourceDescription source in sources.Values)
+        foreach (SourceDescription source in _sources.Values)
           Stop(source);
 
-        sources.Clear();
+        _sources.Clear();
       }
     }
 
@@ -209,7 +209,7 @@ namespace Engine.Audio.OpenAL
     private void ClearBuffers(string id, int input)
     {
       SourceDescription source;
-      if (!sources.TryGetValue(id, out source))
+      if (!_sources.TryGetValue(id, out source))
         return;
 
       ClearBuffers(source, input);
@@ -218,7 +218,7 @@ namespace Engine.Audio.OpenAL
     [SecurityCritical]
     private void ClearBuffers(SourceDescription source, int count)
     {
-      if (context == null)
+      if (_context == null)
         return;
 
       int[] freedbuffers;
@@ -243,15 +243,15 @@ namespace Engine.Audio.OpenAL
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
 
-      if (context != null)
+      if (_context != null)
       {
         Stop();
-        context.Dispose();
+        _context.Dispose();
       }
     }
     #endregion

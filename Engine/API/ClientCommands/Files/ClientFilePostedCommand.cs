@@ -3,7 +3,7 @@ using Engine.Model.Entities;
 using System;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientFilePostedCommand :
@@ -53,19 +53,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private FileDescription file;
-      private string roomName;
+      private FileDescription _file;
+      private string _roomName;
 
       public FileDescription File
       {
-        get { return file; }
-        set { file = value; }
+        get { return _file; }
+        set { _file = value; }
       }
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
     }
   }

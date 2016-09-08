@@ -1,5 +1,5 @@
-﻿using Engine.API.ClientCommands;
-using Engine.API.ServerCommands;
+﻿using Engine.Api.ClientCommands;
+using Engine.Api.ServerCommands;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using Engine.Plugins;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Security;
 
-namespace Engine.API
+namespace Engine.Api
 {
   /// <summary>
   /// Класс реазиующий стандартное серверное API.
@@ -19,8 +19,7 @@ namespace Engine.API
     CrossDomainObject,
     IApi<ServerCommandArgs>
   {
-    [SecurityCritical]
-    private readonly Dictionary<long, ICommand<ServerCommandArgs>> commands;
+    [SecurityCritical] private readonly Dictionary<long, ICommand<ServerCommandArgs>> _commands;
 
     /// <summary>
     /// Создает экземпляр API.
@@ -28,7 +27,7 @@ namespace Engine.API
     [SecurityCritical]
     public ServerApi()
     {
-      commands = new Dictionary<long, ICommand<ServerCommandArgs>>();
+      _commands = new Dictionary<long, ICommand<ServerCommandArgs>>();
 
       AddCommand(new ServerRegisterCommand());
       AddCommand(new ServerUnregisterCommand());
@@ -50,7 +49,7 @@ namespace Engine.API
     [SecurityCritical]
     private void AddCommand(ICommand<ServerCommandArgs> command)
     {
-      commands.Add(command.Id, command);
+      _commands.Add(command.Id, command);
     }
 
     /// <summary>
@@ -71,7 +70,7 @@ namespace Engine.API
     public ICommand<ServerCommandArgs> GetCommand(long id)
     {
       ICommand<ServerCommandArgs> command;
-      if (commands.TryGetValue(id, out command))
+      if (_commands.TryGetValue(id, out command))
         return command;
 
       ServerPluginCommand pluginCommand;

@@ -17,26 +17,26 @@ namespace Engine.Model
     #endregion
 
     #region fields
-    private static object syncObject = new object();
-    protected TModel model;
+    private static object _syncObject = new object();
+    protected TModel _model;
     #endregion
 
     #region initialization
     [SecurityCritical]
     protected ModelGuard(TModel initialModel)
     {
-      if (!Monitor.TryEnter(syncObject, TimeOut))
+      if (!Monitor.TryEnter(_syncObject, TimeOut))
         throw new InvalidOperationException("model lock timeout");
 
-      model = initialModel;
+      _model = initialModel;
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      model = default(TModel);
+      _model = default(TModel);
 
-      Monitor.Exit(syncObject);
+      Monitor.Exit(_syncObject);
     }
     #endregion
   }

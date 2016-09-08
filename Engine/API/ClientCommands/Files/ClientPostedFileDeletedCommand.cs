@@ -3,7 +3,7 @@ using Engine.Model.Entities;
 using System;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientPostedFileDeletedCommand :
@@ -30,19 +30,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private string roomName;
-      private FileId fileId;
+      private string _roomName;
+      private FileId _fileId;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public FileId FileId
       {
-        get { return fileId; }
-        set { fileId = value; }
+        get { return _fileId; }
+        set { _fileId = value; }
       }
     }
   }

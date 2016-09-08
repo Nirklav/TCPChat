@@ -1,4 +1,4 @@
-﻿namespace Engine.API
+﻿namespace Engine.Api
 {
   public interface IApi<in TArgs>
     where TArgs : CommandArgs
@@ -13,6 +13,6 @@
     /// <summary>
     /// Версия и имя API.
     /// </summary>
-    public const string Name = "StandardAPI v3.3";
+    public const string Name = "StandardAPI v3.4";
   }
 }

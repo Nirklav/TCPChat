@@ -3,7 +3,7 @@ using Engine.Model.Entities;
 using System;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientOutRoomMessageCommand :
@@ -48,19 +48,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private Message message;
-      private string roomName;
+      private Message _message;
+      private string _roomName;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public Message Message
       {
-        get { return message; }
-        set { message = value; }
+        get { return _message; }
+        set { _message = value; }
       }
     }
   }

@@ -18,13 +18,13 @@ namespace Engine.Model.Server
     public Dictionary<string, User> Users
     {
       [SecuritySafeCritical]
-      get { return model.Users; }
+      get { return _model.Users; }
     }
 
     public Dictionary<string, Room> Rooms
     {
       [SecuritySafeCritical]
-      get { return model.Rooms; }
+      get { return _model.Rooms; }
     }
     #endregion
   }

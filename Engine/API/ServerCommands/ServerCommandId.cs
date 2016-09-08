@@ -1,4 +1,4 @@
-﻿namespace Engine.API.ServerCommands
+﻿namespace Engine.Api.ServerCommands
 {
   //Команды для сервера: (формат сообщений XX XX Serialized(this.MessageContent))
   //Расшифровка XX XX:

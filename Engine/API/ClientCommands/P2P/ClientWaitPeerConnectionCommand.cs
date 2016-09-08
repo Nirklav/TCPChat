@@ -1,11 +1,11 @@
-﻿using Engine.API.ServerCommands;
+﻿using Engine.Api.ServerCommands;
 using Engine.Model.Client;
 using Engine.Model.Entities;
 using System;
 using System.Net;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientWaitPeerConnectionCommand :
@@ -48,26 +48,26 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private User remoteInfo;
-      private IPEndPoint senderPoint;
-      private IPEndPoint requestPoint;
+      private User _remoteInfo;
+      private IPEndPoint _senderPoint;
+      private IPEndPoint _requestPoint;
 
       public User RemoteInfo
       {
-        get { return remoteInfo; }
-        set { remoteInfo = value; }
+        get { return _remoteInfo; }
+        set { _remoteInfo = value; }
       }
 
       public IPEndPoint SenderPoint
       {
-        get { return senderPoint; }
-        set { senderPoint = value; }
+        get { return _senderPoint; }
+        set { _senderPoint = value; }
       }
 
       public IPEndPoint RequestPoint
       {
-        get { return requestPoint; }
-        set { requestPoint = value; }
+        get { return _requestPoint; }
+        set { _requestPoint = value; }
       }
     }
   }

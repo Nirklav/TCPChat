@@ -1,11 +1,11 @@
-﻿using Engine.API.ClientCommands;
+﻿using Engine.Api.ClientCommands;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerCreateRoomCommand :
@@ -53,19 +53,19 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private string roomName;
-      private RoomType type;
+      private string _roomName;
+      private RoomType _type;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public RoomType Type
       {
-        get { return type; }
-        set { type = value; }
+        get { return _type; }
+        set { _type = value; }
       }
     }
   }

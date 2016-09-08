@@ -5,21 +5,21 @@ namespace Engine.Helpers
 {
   public struct TryLock : IDisposable
   {
-    private volatile bool lockTaken;
-    private readonly object syncObject;
+    private volatile bool _lockTaken;
+    private readonly object _syncObject;
 
     public TryLock(object obj, int timeout = 10000)
     {
-      syncObject = obj;
-      lockTaken = Monitor.TryEnter(syncObject, timeout);
-      if (!lockTaken)
+      _syncObject = obj;
+      _lockTaken = Monitor.TryEnter(_syncObject, timeout);
+      if (!_lockTaken)
         throw new InvalidOperationException("TryEnterLock timeout");
     }
 
     public void Dispose()
     {
-      if (lockTaken)
-        Monitor.Exit(syncObject);
+      if (_lockTaken)
+        Monitor.Exit(_syncObject);
     }
   }
 }

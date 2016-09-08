@@ -1,8 +1,7 @@
-﻿using Engine.API;
+﻿using Engine.Api;
 using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
-using Engine.Network.Connections;
 using System;
 using System.Linq;
 using System.Net;
@@ -39,14 +38,14 @@ namespace Engine.Network
     #endregion
 
     #region private fields
-    [SecurityCritical] private readonly object syncObject = new object();
-    [SecurityCritical] private IPEndPoint hostAddress;
-    [SecurityCritical] private ClientRequestQueue requestQueue;
-    [SecurityCritical] private Timer timer;
-    [SecurityCritical] private bool reconnect;
-    [SecurityCritical] private bool reconnecting;
-    [SecurityCritical] private DateTime lastReconnect;
-    [SecurityCritical] private DateTime lastPingRequest;
+    [SecurityCritical] private readonly object _syncObject = new object();
+    [SecurityCritical] private IPEndPoint _hostAddress;
+    [SecurityCritical] private ClientRequestQueue _requestQueue;
+    [SecurityCritical] private Timer _timer;
+    [SecurityCritical] private bool _reconnect;
+    [SecurityCritical] private bool _reconnecting;
+    [SecurityCritical] private DateTime _lastReconnect;
+    [SecurityCritical] private DateTime _lastPingRequest;
     #endregion
 
     #region constructors
@@ -54,13 +53,13 @@ namespace Engine.Network
     /// Создает клиентское подключение к серверу.
     /// </summary>
     [SecurityCritical]
-    public AsyncClient(string nick)
+    public AsyncClient(string id)
     {
-      requestQueue = new ClientRequestQueue();
-      timer = new Timer(OnTimer, null, SystemTimerInterval, -1);
-      reconnecting = false;
-      reconnect = true;
-      Id = nick;
+      _requestQueue = new ClientRequestQueue();
+      _timer = new Timer(OnTimer, null, SystemTimerInterval, -1);
+      _reconnecting = false;
+      _reconnect = true;
+      Id = id;
     }
     #endregion
 
@@ -71,7 +70,7 @@ namespace Engine.Network
     public bool IsConnected
     {
       [SecuritySafeCritical]
-      get { return handler == null ? false : handler.Connected; }
+      get { return _handler == null ? false : _handler.Connected; }
     }
 
     /// <summary>
@@ -84,14 +83,14 @@ namespace Engine.Network
       get
       {
         ThrowIfDisposed();
-        return reconnect;
+        return _reconnect;
       }
 
       [SecurityCritical]
       set
       {
         ThrowIfDisposed();
-        reconnect = value;
+        _reconnect = value;
       }
     }
 
@@ -101,19 +100,19 @@ namespace Engine.Network
     /// <summary>
     /// Асинхронно соединяет клиент с сервером.
     /// </summary>
-    /// <param name="ServerAddress">Адресс сервера.</param>
+    /// <param name="hostAddress">Адресс сервера.</param>
     [SecurityCritical]
-    public void Connect(IPEndPoint serverAddress)
+    public void Connect(IPEndPoint hostAddress)
     {
       ThrowIfDisposed();
 
-      if (handler != null && handler.Connected)
+      if (_handler != null && _handler.Connected)
         throw new InvalidOperationException("Client already connected");
 
-      hostAddress = serverAddress;
+      _hostAddress = hostAddress;
 
-      handler = new Socket(serverAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-      handler.BeginConnect(serverAddress, OnConnected, null);
+      _handler = new Socket(hostAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+      _handler.BeginConnect(hostAddress, OnConnected, null);
     }
     #endregion
 
@@ -121,19 +120,19 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnConnected(IAsyncResult result)
     {
-      if (disposed)
+      if (_disposed)
         return;
 
       try
       {
-        handler.EndConnect(result);
+        _handler.EndConnect(result);
 
-        Construct(handler);
+        Construct(_handler);
       }
       catch (SocketException se)
       {
         if (reconnectErrors.Contains(se.SocketErrorCode))
-          reconnecting = true;
+          _reconnecting = true;
         else
         {
           ClientModel.Notifier.Connected(new ConnectEventArgs { Error = se });
@@ -161,7 +160,7 @@ namespace Engine.Network
         var command = ClientModel.Api.GetCommand(e.Unpacked.Package.Id);
         var args = new ClientCommandArgs(null, e.Unpacked);
 
-        requestQueue.Add(ClientId, command, args);
+        _requestQueue.Add(ClientId, command, args);
       }
       catch (Exception exc)
       {
@@ -192,14 +191,14 @@ namespace Engine.Network
     [SecuritySafeCritical]
     protected override bool OnSocketException(SocketException se)
     {
-      if (!reconnect)
+      if (!_reconnect)
         return false;
 
       if (!reconnectErrors.Contains(se.SocketErrorCode))
         return false;
 
-      reconnecting = true;
-      lastReconnect = DateTime.Now;
+      _reconnecting = true;
+      _lastReconnect = DateTime.UtcNow;
       return true;
     }
 
@@ -209,9 +208,9 @@ namespace Engine.Network
       TrySendPingRequest();
       TryReconnect();
 
-      lock (syncObject)
-        if (timer != null)
-          timer.Change(SystemTimerInterval, -1);
+      lock (_syncObject)
+        if (_timer != null)
+          _timer.Change(SystemTimerInterval, -1);
     }
 
     [SecurityCritical]
@@ -220,21 +219,21 @@ namespace Engine.Network
       if (!IsConnected || ClientModel.Api == null)
         return;
 
-      var interval = (DateTime.Now - lastPingRequest).TotalMilliseconds;
+      var interval = (DateTime.UtcNow - _lastPingRequest).TotalMilliseconds;
       if (interval < PingInterval)
         return;
 
-      lastPingRequest = DateTime.Now;
+      _lastPingRequest = DateTime.UtcNow;
       ClientModel.Api.PingRequest();
     }
 
     [SecurityCritical]
     private void TryReconnect()
     {
-      if (!reconnecting)
+      if (!_reconnecting)
         return;
 
-      var interval = (DateTime.Now - lastReconnect).TotalMilliseconds;
+      var interval = (DateTime.UtcNow - _lastReconnect).TotalMilliseconds;
       if (interval < ReconnectTimeInterval)
         return;
 
@@ -248,10 +247,10 @@ namespace Engine.Network
       ClientModel.Notifier.ReceiveMessage(args);
 
       Clean();
-      Connect(hostAddress);
+      Connect(_hostAddress);
 
-      reconnecting = false;
-      lastReconnect = DateTime.Now;
+      _reconnecting = false;
+      _lastReconnect = DateTime.UtcNow;
     }
 
     [SecurityCritical]
@@ -269,7 +268,7 @@ namespace Engine.Network
     {
       base.Clean();
 
-      requestQueue.Clean();
+      _requestQueue.Clean();
     }
 
     [SecuritySafeCritical]
@@ -277,18 +276,18 @@ namespace Engine.Network
     {
       base.DisposeManagedResources();
 
-      if (requestQueue != null)
+      if (_requestQueue != null)
       {
-        requestQueue.Dispose();
-        requestQueue = null;
+        _requestQueue.Dispose();
+        _requestQueue = null;
       }
 
-      lock (syncObject)
+      lock (_syncObject)
       {
-        if (timer != null)
-          timer.Dispose();
+        if (_timer != null)
+          _timer.Dispose();
 
-        timer = null;
+        _timer = null;
       }
     }
 

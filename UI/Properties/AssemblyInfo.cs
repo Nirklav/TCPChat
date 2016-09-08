@@ -1,6 +1,4 @@
 ﻿using System.Reflection;
-using System.Resources;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -33,11 +31,11 @@ using System.Windows;
 
 [assembly: ThemeInfo(
     ResourceDictionaryLocation.None, //где расположены словари ресурсов по конкретным тематикам
-    //(используется, если ресурс не найден на странице 
-    // или в словарях ресурсов приложения)
+                                     //(используется, если ресурс не найден на странице 
+                                     // или в словарях ресурсов приложения)
     ResourceDictionaryLocation.SourceAssembly //где расположен словарь универсальных ресурсов
-    //(используется, если ресурс не найден на странице, 
-    // в приложении или в каких-либо словарях ресурсов для конкретной темы)
+                                              //(используется, если ресурс не найден на странице, 
+                                              // в приложении или в каких-либо словарях ресурсов для конкретной темы)
 )]
 
 
@@ -51,5 +49,5 @@ using System.Windows;
 // Можно задать все значения или принять номер построения и номер редакции по умолчанию, 
 // используя "*", как показано ниже:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("3.3.0.0")]
-[assembly: AssemblyFileVersion("3.3.0.0")]
+[assembly: AssemblyVersion("3.4.0.0")]
+[assembly: AssemblyFileVersion("3.4.0.0")]

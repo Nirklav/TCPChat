@@ -10,7 +10,7 @@ namespace Engine.Model.Entities
   [Serializable]
   public class VoiceRoom : Room
   {
-    private readonly Dictionary<string, List<string>> connectionMap;
+    private readonly Dictionary<string, List<string>> _connectionMap;
 
     /// <summary>
     /// Создает голосовую комнату.
@@ -20,8 +20,8 @@ namespace Engine.Model.Entities
     public VoiceRoom(string admin, string name)
       : base(admin, name) 
     {
-      connectionMap = new Dictionary<string, List<string>>();
-      connectionMap.Add(admin, new List<string>());
+      _connectionMap = new Dictionary<string, List<string>>();
+      _connectionMap.Add(admin, new List<string>());
     }
 
     /// <summary>
@@ -33,15 +33,15 @@ namespace Engine.Model.Entities
     public VoiceRoom(string admin, string name, IEnumerable<User> initialUsers)
       : base(admin, name, initialUsers) 
     {
-      connectionMap = new Dictionary<string, List<string>>();
+      _connectionMap = new Dictionary<string, List<string>>();
 
-      for (int i = 0; i < users.Count; i++)
+      for (int i = 0; i < _users.Count; i++)
       {
         var connections = new List<string>();
-        for (int m = i + 1; m < users.Count; m++)
-          connections.Add(users[m]);
+        for (int m = i + 1; m < _users.Count; m++)
+          connections.Add(_users[m]);
 
-        connectionMap.Add(users[i], connections);
+        _connectionMap.Add(_users[i], connections);
       }
     }
 
@@ -61,12 +61,12 @@ namespace Engine.Model.Entities
     {
       base.AddUser(nick);
 
-      var users = connectionMap.Keys.ToList();
+      var users = _connectionMap.Keys.ToList();
 
-      foreach (var kvp in connectionMap)
+      foreach (var kvp in _connectionMap)
         kvp.Value.Add(nick);
 
-      connectionMap.Add(nick, users);
+      _connectionMap.Add(nick, users);
     }
 
     /// <summary>
@@ -77,10 +77,10 @@ namespace Engine.Model.Entities
     {
       base.RemoveUser(nick);
 
-      foreach (var kvp in connectionMap)
+      foreach (var kvp in _connectionMap)
         kvp.Value.Remove(nick);
 
-      connectionMap.Remove(nick);
+      _connectionMap.Remove(nick);
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ namespace Engine.Model.Entities
     /// </summary>
     public Dictionary<string, List<string>> ConnectionMap
     {
-      get { return connectionMap; }
+      get { return _connectionMap; }
     }
   }
 }

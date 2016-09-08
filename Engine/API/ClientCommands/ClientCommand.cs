@@ -1,12 +1,12 @@
 ﻿using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Entities;
-using Engine.Network.Connections;
+using Engine.Network;
 using Engine.Plugins;
 using System.Collections.Generic;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   public abstract class ClientCommand : 
     CrossDomainObject, 

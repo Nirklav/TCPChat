@@ -1,6 +1,6 @@
 ﻿using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientEmptyCommand : ClientCommand

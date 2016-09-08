@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Security;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientWriteFilePartCommand :
@@ -93,26 +93,26 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private string roomName;
-      private FileDescription file;
-      private long startPartPosition;
+      private string _roomName;
+      private FileDescription _file;
+      private long _startPartPosition;
 
       public string RoomName
       {
-        get { return roomName; }
-        set { roomName = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
 
       public FileDescription File
       {
-        get { return file; }
-        set { file = value; }
+        get { return _file; }
+        set { _file = value; }
       }
 
       public long StartPartPosition
       {
-        get { return startPartPosition; }
-        set { startPartPosition = value; }
+        get { return _startPartPosition; }
+        set { _startPartPosition = value; }
       }
     }
   }

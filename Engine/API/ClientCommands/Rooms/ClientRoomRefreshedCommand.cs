@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Security;
 using Engine.Exceptions;
 
-namespace Engine.API.ClientCommands
+namespace Engine.Api.ClientCommands
 {
   [SecurityCritical]
   class ClientRoomRefreshedCommand :
@@ -94,19 +94,19 @@ namespace Engine.API.ClientCommands
     [Serializable]
     public class MessageContent
     {
-      private Room room;
-      private List<User> users;
+      private Room _room;
+      private List<User> _users;
  
       public Room Room
       {
-        get { return room; }
-        set { room = value; }
+        get { return _room; }
+        set { _room = value; }
       }
 
       public List<User> Users
       {
-        get { return users; }
-        set { users = value; }
+        get { return _users; }
+        set { _users = value; }
       }
     }
   }

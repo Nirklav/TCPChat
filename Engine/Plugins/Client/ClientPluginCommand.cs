@@ -1,8 +1,8 @@
-﻿using Engine.API;
-using Engine.API.ClientCommands;
+﻿using Engine.Api;
+using Engine.Api.ClientCommands;
 using Engine.Exceptions;
 using Engine.Helpers;
-using Engine.Network.Connections;
+using Engine.Network;
 
 namespace Engine.Plugins.Client
 {

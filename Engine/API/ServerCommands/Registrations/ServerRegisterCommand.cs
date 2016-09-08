@@ -1,13 +1,13 @@
-﻿using Engine.API.ClientCommands;
+﻿using Engine.Api.ClientCommands;
 using Engine.Model.Entities;
 using Engine.Model.Server;
-using Engine.Network.Connections;
+using Engine.Network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 
-namespace Engine.API.ServerCommands
+namespace Engine.Api.ServerCommands
 {
   [SecurityCritical]
   class ServerRegisterCommand :
@@ -112,12 +112,12 @@ namespace Engine.API.ServerCommands
     [Serializable]
     public class MessageContent
     {
-      private User user;
+      private User _user;
 
       public User User
       {
-        get { return user; }
-        set { user = value; }
+        get { return _user; }
+        set { _user = value; }
       }
     }
   }
