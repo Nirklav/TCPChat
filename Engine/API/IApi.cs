@@ -5,6 +5,8 @@
   {
     string Name { get; }
 
+    void Perform(IAction action);
+
     ICommand<TArgs> GetCommand(long id);
   }
 

@@ -54,7 +54,7 @@ namespace Engine.Helpers
 
     #region Constructors
     /// <summary>
-    /// Создает экемпляр класса Crypter. C алгоритмом AES-256
+    /// Create the instance of crypter. With AES-256 CBC algorithm.
     /// </summary>
     public Crypter()
     {
@@ -67,9 +67,9 @@ namespace Engine.Helpers
     }
 
     /// <summary>
-    /// Создает экемпляр класса Crypter.
+    /// Create the instance of crypter.
     /// </summary>
-    /// <param name="algorithm">Алгоритм шифрования.</param>
+    /// <param name="algorithm">Symmetric algorithm.</param>
     [SecuritySafeCritical]
     public Crypter(SymmetricAlgorithm algorithm)
     {
@@ -81,9 +81,9 @@ namespace Engine.Helpers
 
     #region Public Methods
     /// <summary>
-    /// Генерирует ключ и вектор инициализации.
+    /// Generate key, and IV.
     /// </summary>
-    /// <returns>Ключ.</returns>
+    /// <returns>Returns generated key.</returns>
     [SecuritySafeCritical]
     public byte[] GenerateKey()
     {
@@ -96,9 +96,9 @@ namespace Engine.Helpers
     }
 
     /// <summary>
-    /// Устанавливает ключ и генерирует вектор инициализации.
+    /// Set key, and generate IV.
     /// </summary>
-    /// <param name="key">Ключ шифрования.</param>
+    /// <param name="key">Key.</param>
     [SecuritySafeCritical]
     public void SetKey(byte[] key)
     {
@@ -109,11 +109,10 @@ namespace Engine.Helpers
     }
 
     /// <summary>
-    /// Производит шифрование потока.
+    /// Encrypt the stream.
     /// </summary>
-    /// <param name="inputStream">Поток, который будет зашифрован.</param>
-    /// <param name="outputStream">Поток, в который будет записан результат шифрования.</param>
-    /// <param name="length">Размер данных для шифрования.</param>
+    /// <param name="inputStream">Stream that be encrypted.</param>
+    /// <param name="outputStream">Stream that be used to write encrypted data.</param>
     [SecuritySafeCritical]
     public void Encrypt(Stream inputStream, Stream outputStream)
     {
@@ -143,11 +142,10 @@ namespace Engine.Helpers
     }
 
     /// <summary>
-    /// Производит дешифрование потока.
+    /// Decypt the stream.
     /// </summary>
-    /// <param name="inputStream">Поток, который будет дешифрован.</param>
-    /// <param name="outputStream">Поток, в который будет записан результат дешифрования.</param>
-    /// <param name="length">Размер данных для дешифрования.</param>
+    /// <param name="inputStream">Stream that be decrypted.</param>
+    /// <param name="outputStream">Stream that be used to write decypted data.</param>
     [SecuritySafeCritical]
     public void Decrypt(Stream inputStream, Stream outputStream)
     {

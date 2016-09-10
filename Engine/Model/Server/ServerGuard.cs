@@ -1,5 +1,4 @@
-﻿using Engine.Model.Entities;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Security;
 
 namespace Engine.Model.Server
@@ -14,7 +13,12 @@ namespace Engine.Model.Server
     }
     #endregion
 
-    #region properties
+    public ServerGuard Current
+    {
+      [SecuritySafeCritical]
+      get { return (ServerGuard)_current; }
+    }
+
     public Dictionary<string, User> Users
     {
       [SecuritySafeCritical]
@@ -26,6 +30,5 @@ namespace Engine.Model.Server
       [SecuritySafeCritical]
       get { return _model.Rooms; }
     }
-    #endregion
   }
 }

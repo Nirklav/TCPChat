@@ -1,13 +1,14 @@
 ﻿using Engine.Api;
+using Engine.Api.Client;
 using Engine.Audio;
 using Engine.Audio.OpenAL;
 using Engine.Helpers;
+using Engine.Model.Client.Entities;
 using Engine.Model.Common;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Network;
 using Engine.Plugins.Client;
 using System;
-using System.Collections.Generic;
 using System.Security;
 using System.Threading;
 
@@ -115,60 +116,6 @@ namespace Engine.Model.Client
     }
     #endregion
 
-    #region properties
-    public User User
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-
-    public Dictionary<string, User> Users
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-
-    public Dictionary<string, Room> Rooms
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-
-    public List<DownloadingFile> DownloadingFiles
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-
-    public List<PostedFile> PostedFiles
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-    #endregion
-
-    #region conctructor
-    [SecurityCritical]
-    public ClientModel(User user)
-    {
-      User = user;
-      Users = new Dictionary<string, User>();
-      Rooms = new Dictionary<string, Room>();
-      DownloadingFiles = new List<DownloadingFile>();
-      PostedFiles = new List<PostedFile>();
-    }
-    #endregion
-
     #region static methods
     public static bool IsInited
     {
@@ -223,6 +170,24 @@ namespace Engine.Model.Client
     {
       if (!IsInited)
         throw new InvalidOperationException("Client not inited");
+    }
+    #endregion
+
+    #region chat
+    public ClientChat Chat
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
+    #endregion
+
+    #region conctructor
+    [SecurityCritical]
+    public ClientModel(User user)
+    {
+      Chat = new ClientChat(user);
     }
     #endregion
   }

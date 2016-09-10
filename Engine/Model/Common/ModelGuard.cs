@@ -4,9 +4,8 @@ using System.Threading;
 
 namespace Engine.Model
 {
-  public abstract class ModelGuard<TModel> :
-    MarshalByRefObject,
-    IDisposable
+  public abstract class ModelGuard<TModel> : MarshalByRefObject, IDisposable
+    where TModel : class
   {
     #region consts
 #if DEBUG
@@ -17,7 +16,7 @@ namespace Engine.Model
     #endregion
 
     #region fields
-    private static object _syncObject = new object();
+    [ThreadStatic] protected static ModelGuard<TModel> _current;
     protected TModel _model;
     #endregion
 
@@ -25,18 +24,24 @@ namespace Engine.Model
     [SecurityCritical]
     protected ModelGuard(TModel initialModel)
     {
-      if (!Monitor.TryEnter(_syncObject, TimeOut))
+      if (!Monitor.TryEnter(initialModel, TimeOut))
         throw new InvalidOperationException("model lock timeout");
 
       _model = initialModel;
+
+      if (_current == null)
+        _current = this;
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
+      if (_current == this)
+        _current = null;
+
       _model = default(TModel);
 
-      Monitor.Exit(_syncObject);
+      Monitor.Exit(_model);
     }
     #endregion
   }
