@@ -29,7 +29,7 @@ namespace Engine.Api.Client.Messages
     }
 
     [SecuritySafeCritical]
-    public void Pefrorm()
+    public void Perform()
     {
       var sendingContent = new ClientOutPrivateMessageCommand.MessageContent { Text = _text };
       ClientModel.Peer.SendMessage(_reciverNick, ClientOutPrivateMessageCommand.CommandId, sendingContent);

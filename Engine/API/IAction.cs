@@ -2,6 +2,6 @@
 {
   public interface IAction
   {
-    void Pefrorm();
+    void Perform();
   }
 }

@@ -8,7 +8,7 @@ using System.Security;
 namespace Engine.Model.Client.Entities
 {
   [Serializable]
-  public class ClientChat : Chat<User, ClientRoom>
+  public class ClientChat : Chat<User, ClientRoom, ClientVoiceRoom>
   {
     [NonSerialized]
     private Random _idCreator;
@@ -35,6 +35,24 @@ namespace Engine.Model.Client.Entities
     {
       [SecuritySafeCritical]
       get { return _user; }
+    }
+    #endregion
+
+    #region rooms
+    /// <summary>
+    /// Remove text or voice room by name.
+    /// </summary>
+    /// <param name="roomName">Room name that be removed.</param>
+    /// <returns>Removed room.</returns>
+    public override Room RemoveRoom(string roomName)
+    {
+      var room = base.RemoveRoom(roomName);
+
+      // Remove all posted files.
+      foreach (var file in room.Files)
+        RemovePostedFileImpl(roomName, file.Id);
+
+      return room;
     }
     #endregion
 
@@ -154,6 +172,30 @@ namespace Engine.Model.Client.Entities
     public void RemovePostedFile(string roomName, FileId fileId)
     {
       // Remove posted files
+      RemovePostedFileImpl(roomName, fileId);
+
+      // Remove file from room
+      var room = TryGetRoom(roomName);
+      if (room != null)
+      {
+        var removed = room.RemoveFile(fileId);
+        if (removed)
+        {
+          // Notify
+          var downloadEventArgs = new FileDownloadEventArgs
+          {
+            RoomName = room.Name,
+            FileId = fileId,
+            Progress = 0
+          };
+
+          ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
+        }
+      }
+    }
+
+    private void RemovePostedFileImpl(string roomName, FileId fileId)
+    {
       PostedFile posted;
       if (!_postedFiles.TryGetValue(fileId, out posted))
         throw new InvalidOperationException("File not posted");
@@ -165,22 +207,6 @@ namespace Engine.Model.Client.Entities
       {
         _postedFiles.Remove(fileId);
         posted.Dispose();
-      }
-
-      // Remove file from room
-      var room = TryGetRoom(roomName);
-      var removed = room.RemoveFile(fileId);
-      if (removed)
-      {
-        // Notify
-        var downloadEventArgs = new FileDownloadEventArgs
-        {
-          RoomName = room.Name,
-          FileId = fileId,
-          Progress = 0
-        };
-
-        ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
       }
     }
     #endregion

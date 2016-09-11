@@ -52,7 +52,7 @@ namespace Engine.Api.Client.Messages
     }
 
     [SecuritySafeCritical]
-    public void Pefrorm()
+    public void Perform()
     {
       var sendingContent = new ServerSendRoomMessageCommand.MessageContent { RoomName = _roomName, MessageId = _messageId, Text = _text };
       ClientModel.Client.SendMessage(ServerSendRoomMessageCommand.CommandId, sendingContent);

@@ -1,7 +1,8 @@
 ﻿using Engine.Api;
+using Engine.Api.Server;
 using Engine.Exceptions;
 using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using System;
 using System.Linq;
 using System.Net;
@@ -224,7 +225,7 @@ namespace Engine.Network
         return;
 
       _lastPingRequest = DateTime.UtcNow;
-      ClientModel.Api.PingRequest();
+      SendMessage(ServerPingRequestCommand.CommandId);
     }
 
     [SecurityCritical]

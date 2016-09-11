@@ -28,7 +28,7 @@ namespace Engine.Api.Client.Files
     }
 
     [SecuritySafeCritical]
-    public void Pefrorm()
+    public void Perform()
     {
       using (var client = ClientModel.Get())
         client.Chat.RemovePostedFile(_roomName, _fileId);

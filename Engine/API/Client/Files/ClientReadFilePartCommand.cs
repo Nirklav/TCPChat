@@ -44,13 +44,20 @@ namespace Engine.Api.Client
         var posted = client.Chat.TryGetPostedFile(content.File.Id);
         if (posted == null)
         {
-          var fileNotPostContent = new ServerRemoveFileFromRoomCommand.MessageContent
-          {
-            FileId = content.File.Id,
-            RoomName = content.RoomName,
-          };
+          SendFileNotPost(content.RoomName, content.File.Id);
+          return;
+        }
 
-          ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.CommandId, fileNotPostContent);
+        var room = client.Chat.GetRoom(content.RoomName);
+        if (!room.ContainsUser(args.PeerConnectionId))
+        {
+          SendFileNotPost(content.RoomName, content.File.Id);
+          return;
+        }
+
+        if (!posted.RoomNames.Contains(content.RoomName))
+        {
+          SendFileNotPost(content.RoomName, content.File.Id);
           return;
         }
 
@@ -71,6 +78,17 @@ namespace Engine.Api.Client
 
         ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientWriteFilePartCommand.CommandId, sendingContent, part);
       }
+    }
+
+    private static void SendFileNotPost(string roomName, FileId fileId)
+    {
+      var fileNotPostContent = new ServerRemoveFileFromRoomCommand.MessageContent
+      {
+        FileId = fileId,
+        RoomName = roomName,
+      };
+
+      ClientModel.Client.SendMessage(ServerRemoveFileFromRoomCommand.CommandId, fileNotPostContent);
     }
 
     [Serializable]

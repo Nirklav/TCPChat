@@ -1,22 +1,20 @@
-﻿using System;
+﻿using Engine.Model.Common.Dto;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Engine.Model.Common.Entities
 {
-  /// <summary>
-  /// Класс описывающий голосовую комнату.
-  /// </summary>
   [Serializable]
   public class VoiceRoom : Room
   {
-    private readonly Dictionary<string, List<string>> _connectionMap;
+    protected readonly Dictionary<string, List<string>> _connectionMap;
 
     /// <summary>
-    /// Создает голосовую комнату.
+    /// Create new voice room instance.
     /// </summary>
-    /// <param name="admin">Ник администратора комнаты.</param>
-    /// <param name="name">Название комнаты.</param>
+    /// <param name="admin">Admin nick.</param>
+    /// <param name="name">Room name.</param>
     public VoiceRoom(string admin, string name)
       : base(admin, name) 
     {
@@ -25,11 +23,11 @@ namespace Engine.Model.Common.Entities
     }
 
     /// <summary>
-    /// Создает голосовую комнату.
+    /// Create new voice room instance.
     /// </summary>
-    /// <param name="admin">Ник администратора комнаты.</param>
-    /// <param name="name">Название комнаты.</param>
-    /// <param name="initialUsers">Начальный список пользователей комнаты. Уже существуюшие пользователе повторно добавлены не будут.</param>
+    /// <param name="admin">Admin nick.</param>
+    /// <param name="name">Room name.</param>
+    /// <param name="initialUsers">Initial room users list.</param>
     public VoiceRoom(string admin, string name, IEnumerable<User> initialUsers)
       : base(admin, name, initialUsers) 
     {
@@ -45,51 +43,49 @@ namespace Engine.Model.Common.Entities
       }
     }
 
+    #region users
     /// <summary>
-    /// Тип комнаты.
+    /// Add user to room.
     /// </summary>
-    public override RoomType Type
-    {
-      get { return RoomType.Voice; }
-    }
-
-    /// <summary>
-    /// Добавляет пользователя в комнату.
-    /// </summary>
-    /// <param name="nick">Ник пользователя.</param>
+    /// <param name="nick">User nick.</param>
     public override void AddUser(string nick)
     {
       base.AddUser(nick);
 
+      // Get users without new
       var users = _connectionMap.Keys.ToList();
-
-      foreach (var kvp in _connectionMap)
-        kvp.Value.Add(nick);
 
       _connectionMap.Add(nick, users);
     }
 
     /// <summary>
-    /// Удаляет пользователя из комнаты.
+    /// Remove user from room, including all his files.
     /// </summary>
-    /// <param name="nick">Ник пользователя.</param>
+    /// <param name="nick">User nick.</param>
     public override void RemoveUser(string nick)
     {
       base.RemoveUser(nick);
 
       foreach (var kvp in _connectionMap)
         kvp.Value.Remove(nick);
-
       _connectionMap.Remove(nick);
     }
 
     /// <summary>
-    /// Карта соединений. 
-    /// Кey - пользователь который должен инциировать соединения всем кто находится в списке (Value).
+    /// P2P connections map.
+    /// Кey - is user who must initiate connections in value list.
     /// </summary>
     public Dictionary<string, List<string>> ConnectionMap
     {
       get { return _connectionMap; }
     }
+    #endregion
+
+    #region dto
+    public override RoomDto ToDto()
+    {
+      return new RoomDto(_name, _admin, _users, _files.Values, _messages, RoomType.Voice, _connectionMap);
+    }
+    #endregion
   }
 }

@@ -1,5 +1,4 @@
 ﻿using Engine.Model.Client;
-using Engine.Model.Entities;
 using System;
 using System.Security;
 
@@ -20,42 +19,24 @@ namespace Engine.Api.Client
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      if (content.Room == null)
-        throw new ArgumentNullException("room");
-
-      ClientModel.Notifier.RoomClosed(new RoomEventArgs { RoomName = content.Room.Name });
+      if (content.RoomName == null)
+        throw new ArgumentNullException("content.RoomName");
 
       using (var client = ClientModel.Get())
-      {
-        Room room;
-        if (!client.Rooms.TryGetValue(content.Room.Name, out room))
-          throw new ArgumentException("Room ");
+        client.Chat.RemoveRoom(content.RoomName);
 
-        client.Rooms.Remove(content.Room.Name);
-        client.PostedFiles.RemoveAll(f => room.Files.Exists(rf => rf.Id == f.File.Id));
-
-        if (room.Enabled && room.Type == RoomType.Voice)
-        {
-          foreach (var nick in room.Users)
-          {
-            if (nick == client.User.Nick)
-              continue;
-
-            ClientModel.Api.RemoveInterlocutor(nick);
-          }
-        }
-      }
+      ClientModel.Notifier.RoomClosed(new RoomEventArgs { RoomName = content.RoomName });
     }
 
     [Serializable]
     public class MessageContent
     {
-      private Room _room;
+      private string _roomName;
 
-      public Room Room
+      public string RoomName
       {
-        get { return _room; }
-        set { _room = value; }
+        get { return _roomName; }
+        set { _roomName = value; }
       }
     }
   }

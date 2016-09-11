@@ -1,6 +1,8 @@
 ﻿using Engine.Exceptions;
 using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Client.Entities;
+using Engine.Model.Common.Dto;
+using Engine.Model.Common.Entities;
 using Engine.Network;
 using Engine.Plugins;
 using System.Collections.Generic;
@@ -62,15 +64,18 @@ namespace Engine.Api.Client
 
     #region Helpers
     /// <summary>
-    /// Обновляет пользователей в модели.
+    /// Add not existing users to chat.
     /// </summary>
-    /// <param name="client">Клиентская модель.</param>
-    /// <param name="users">Пользователи.</param>
+    /// <param name="chat">Chat.</param>
+    /// <param name="users">User dtos.</param>
     [SecuritySafeCritical]
-    protected void UpdateUsers(ClientGuard client, List<User> users)
+    protected void AddUsers(ClientChat chat, List<UserDto> users)
     {
-      foreach (var user in users)
-        client.Users[user.Nick] = user;
+      foreach (var userDto in users)
+      {
+        if (!chat.IsUserExist(userDto.Nick))
+          chat.AddUser(new User(userDto));
+      }
     }
     #endregion
   }

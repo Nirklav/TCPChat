@@ -31,7 +31,7 @@ namespace Engine.Api.Client.Files
     }
 
     [SecuritySafeCritical]
-    public void Pefrorm()
+    public void Perform()
     {
       var info = new FileInfo(_fileName);
       if (!info.Exists)

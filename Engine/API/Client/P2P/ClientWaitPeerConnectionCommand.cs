@@ -1,6 +1,6 @@
 ﻿using Engine.Api.Server;
 using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Dto;
 using System;
 using System.Net;
 using System.Security;
@@ -40,7 +40,7 @@ namespace Engine.Api.Client
       };
 
       using (var client = ClientModel.Get())
-        sendingContent.RemoteInfo = client.User;
+        sendingContent.RemoteInfo = new UserDto(client.Chat.User);
 
       ClientModel.Client.SendMessage(ServerP2PReadyAcceptCommand.CommandId, sendingContent);
     }
@@ -48,11 +48,11 @@ namespace Engine.Api.Client
     [Serializable]
     public class MessageContent
     {
-      private User _remoteInfo;
+      private UserDto _remoteInfo;
       private IPEndPoint _senderPoint;
       private IPEndPoint _requestPoint;
 
-      public User RemoteInfo
+      public UserDto RemoteInfo
       {
         get { return _remoteInfo; }
         set { _remoteInfo = value; }

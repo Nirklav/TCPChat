@@ -58,5 +58,10 @@ namespace Engine.Model.Common.Entities
       Text += string.Format("{0}{1}", Environment.NewLine, other.Text);
       return true;
     }
+
+    public Message Clone()
+    {
+      return new Message(Owner, Id, Text, Time);
+    }
   }
 }

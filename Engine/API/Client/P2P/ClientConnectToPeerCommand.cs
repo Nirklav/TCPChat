@@ -1,5 +1,5 @@
 ﻿using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Dto;
 using System;
 using System.Net;
 using System.Security;
@@ -34,7 +34,7 @@ namespace Engine.Api.Client
     public class MessageContent
     {
       private IPEndPoint _peerPoint;
-      private User _remoteInfo;
+      private UserDto _remoteInfo;
 
       public IPEndPoint PeerPoint
       {
@@ -42,7 +42,7 @@ namespace Engine.Api.Client
         set { _peerPoint = value; }
       }
 
-      public User RemoteInfo
+      public UserDto RemoteInfo
       {
         get { return _remoteInfo; }
         set { _remoteInfo = value; }

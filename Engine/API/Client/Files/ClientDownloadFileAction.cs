@@ -36,7 +36,7 @@ namespace Engine.Api.Client.Files
     }
 
     [SecuritySafeCritical]
-    public void Pefrorm()
+    public void Perform()
     {
       if (File.Exists(_savePath))
         throw new InvalidOperationException("File already exist.");

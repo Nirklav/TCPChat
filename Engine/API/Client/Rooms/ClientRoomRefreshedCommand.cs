@@ -1,11 +1,12 @@
 ﻿using Engine.Model.Client;
-using Engine.Model.Entities;
 using Engine.Model.Server;
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Security;
-using Engine.Exceptions;
+using Engine.Model.Common.Dto;
+using Engine.Model.Client.Entities;
+using Engine.Model.Common.Entities;
 
 namespace Engine.Api.Client
 {
@@ -29,16 +30,18 @@ namespace Engine.Api.Client
 
       using (var client = ClientModel.Get())
       {
-        Room prevRoom;
-        if (!client.Rooms.TryGetValue(content.Room.Name, out prevRoom))
-          throw new ModelException(ErrorCode.RoomNotFound);
+        var chat = client.Chat;
+        var room = chat.GetRoom(content.Room.Name);
 
-        client.Rooms[content.Room.Name] = content.Room;
-        content.Room.Enabled = prevRoom.Enabled;
+        AddUsers(chat, content.Users);
+        UpdateRoomFiles(chat, room, content.Room);
+        var removedUsers = UpdateRoomUsers(chat, room, content.Room);
 
-        UpdateUsers(client, content.Users);
-        UpdateRoomUsers(client, content.Room, prevRoom);
-        UpdateRoomFiles(client, content.Room, prevRoom);
+        if (room.Name == ServerModel.MainRoomName)
+        {
+          foreach (var nick in removedUsers)
+            chat.RemoveUser(nick);
+        }
       }
 
       var eventArgs = new RoomEventArgs
@@ -52,58 +55,63 @@ namespace Engine.Api.Client
     }
 
     [SecurityCritical]
-    private static void UpdateRoomUsers(ClientGuard client, Room currentRoom, Room prevRoom)
+    private static HashSet<string> UpdateRoomUsers(ClientChat chat, Room room, RoomDto dto)
     {
-      var removed = new HashSet<string>(prevRoom.Users);
-      var added = new HashSet<string>(currentRoom.Users);
+      var removed = new HashSet<string>(room.Users);
+      var added = new HashSet<string>(dto.Users);
 
-      foreach (var nick in prevRoom.Users)
+      foreach (var nick in room.Users)
         added.Remove(nick);
-      foreach (var nick in currentRoom.Users)
+      foreach (var nick in dto.Users)
         removed.Remove(nick);
 
-      if (currentRoom.Name == ServerModel.MainRoomName)
-      {
-        foreach (var nick in removed)
-          client.Users.Remove(nick);
-      }
+      foreach (var nick in removed)
+        room.RemoveUser(nick);
 
-      // TODO: Maybe use OOP. But room is common entity for server and client. 
-      // And this is only client operation.
-      // So it would be strange to add it to the common entity.
-      if (currentRoom.Enabled && currentRoom.Type == RoomType.Voice)
-      {
-        foreach (var nick in added)
-          ClientModel.Api.AddInterlocutor(nick);
-        foreach (var nick in removed)
-          ClientModel.Api.RemoveInterlocutor(nick);
-      }
+      foreach (var nick in added)
+        room.AddUser(nick);
+
+      return removed;
     }
 
     [SecurityCritical]
-    private static void UpdateRoomFiles(ClientGuard client, Room currentRoom, Room prevRoom)
+    private static void UpdateRoomFiles(ClientChat chat, Room room, RoomDto dto)
     {
-      var removed = new HashSet<FileId>(prevRoom.Files.Select(f => f.Id));
-      foreach (var file in currentRoom.Files)
+      // Select removed and added files
+      var removed = new HashSet<FileId>(room.Files.Select(f => f.Id));
+      var added = new HashSet<FileId>(dto.Files.Select(f => f.Id));
+
+      foreach (var file in room.Files)
+        added.Remove(file.Id);
+      foreach (var file in dto.Files)
         removed.Remove(file.Id);
 
+      // Add and remove files
       foreach (var fileId in removed)
-        ClientModel.Api.ClosePostedFile(client, currentRoom.Name, fileId);
+        room.RemoveFile(fileId);
+
+      foreach (var file in dto.Files)
+      {
+        if (!added.Contains(file.Id))
+          continue;
+
+        room.AddFile(file);
+      }
     }
 
     [Serializable]
     public class MessageContent
     {
-      private Room _room;
-      private List<User> _users;
+      private RoomDto _room;
+      private List<UserDto> _users;
  
-      public Room Room
+      public RoomDto Room
       {
         get { return _room; }
         set { _room = value; }
       }
 
-      public List<User> Users
+      public List<UserDto> Users
       {
         get { return _users; }
         set { _users = value; }

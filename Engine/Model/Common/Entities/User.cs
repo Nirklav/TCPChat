@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Engine.Model.Common.Dto;
+using System;
 using System.Drawing;
 
 namespace Engine.Model.Common.Entities
 {
   /// <summary>
-  /// Описание пользователя.
+  /// User description.
   /// </summary>
   [Serializable]
   public class User : 
@@ -15,10 +16,10 @@ namespace Engine.Model.Common.Entities
     private readonly Color _nickColor;
 
     /// <summary>
-    /// Создает описание пользователя.
+    /// Creates new instance of user.
     /// </summary>
-    /// <param name="nick">Ник пользователя.</param>
-    /// <param name="nickColor">Цвет ника.</param>
+    /// <param name="nick">User nick.</param>
+    /// <param name="nickColor">Nick color.</param>
     public User(string nick, Color nickColor)
     {
       _nick = nick;
@@ -26,7 +27,17 @@ namespace Engine.Model.Common.Entities
     }
 
     /// <summary>
-    /// Возвращает ник пользователя.
+    /// Creates new instance of user.
+    /// </summary>
+    /// <param name="dto">Data transfer object of user.</param>
+    public User(UserDto dto)
+    {
+      _nick = dto.Nick;
+      _nickColor = dto.NickColor;
+    }
+
+    /// <summary>
+    /// User nick.
     /// </summary>
     public string Nick
     {
@@ -34,7 +45,7 @@ namespace Engine.Model.Common.Entities
     }
 
     /// <summary>
-    /// Цвет ника пользователя.
+    /// Nick color.
     /// </summary>
     public Color NickColor
     {

@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Model.Common.Dto;
 using Engine.Model.Entities;
 using Engine.Model.Server;
 using Engine.Network;
@@ -112,9 +113,9 @@ namespace Engine.Api.Server
     [Serializable]
     public class MessageContent
     {
-      private User _user;
+      private UserDto _user;
 
-      public User User
+      public UserDto User
       {
         get { return _user; }
         set { _user = value; }

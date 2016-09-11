@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using Engine.Model.Common.Dto;
 
 namespace Engine.Model.Common.Entities
 {
@@ -13,15 +14,14 @@ namespace Engine.Model.Common.Entities
     public const long SpecificMessageId = -1;
 
     protected readonly string _name;
-    protected readonly List<string> _users;
+    protected readonly HashSet<string> _users;
     protected readonly Dictionary<long, Message> _messages;
     protected readonly Dictionary<FileId, FileDescription> _files;
 
     protected string _admin;
-    protected long _lastMessageId;
 
-    [NonSerialized]
-    private bool _enabled; // Only client
+    private long _lastMessageId;
+    private bool _enabled;
 
     /// <summary>
     /// Create the room.
@@ -32,10 +32,9 @@ namespace Engine.Model.Common.Entities
     {
       _admin = admin;
       _name = name;
-      _users = new List<string>();
+      _users = new HashSet<string>();
       _messages = new Dictionary<long, Message>();
       _files = new Dictionary<FileId, FileDescription>();
-      _enabled = true;
 
       if (admin != null)
         _users.Add(admin);
@@ -50,24 +49,8 @@ namespace Engine.Model.Common.Entities
     public Room(string admin, string name, IEnumerable<User> initialUsers)
       : this(admin, name)
     {
-      _users.AddRange(initialUsers.Select(u => u.Nick).Where(n => n != admin));
-    }
-
-    /// <summary>
-    /// Room type.
-    /// </summary>
-    public virtual RoomType Type
-    {
-      get { return RoomType.Chat; }
-    }
-
-    /// <summary>
-    /// Is room enabled.
-    /// </summary>
-    public bool Enabled
-    {
-      get { return _enabled; }
-      set { _enabled = value; }
+      foreach (var nick in initialUsers.Select(u => u.Nick))
+        _users.Add(nick);
     }
 
     /// <summary>
@@ -87,6 +70,32 @@ namespace Engine.Model.Common.Entities
       set { _admin = value; }
     }
 
+    #region enable/disable
+    /// <summary>
+    /// Is room enabled.
+    /// </summary>
+    public bool Enabled
+    {
+      get { return _enabled; }
+    }
+
+    /// <summary>
+    /// Enable room.
+    /// </summary>
+    public virtual void Enable()
+    {
+      _enabled = true;
+    }
+
+    /// <summary>
+    /// Disable room.
+    /// </summary>
+    public virtual void Disable()
+    {
+      _enabled = false;
+    }
+    #endregion
+
     #region users
     /// <summary>
     /// Users collection, including administrator.
@@ -102,6 +111,9 @@ namespace Engine.Model.Common.Entities
     /// <param name="nick">User nick.</param>
     public bool ContainsUser(string nick)
     {
+      if (string.IsNullOrEmpty(nick))
+        throw new ArgumentException("Nick is null or empty");
+
       return _users.Contains(nick);
     }
 
@@ -111,6 +123,11 @@ namespace Engine.Model.Common.Entities
     /// <param name="nick">User nick.</param>
     public virtual void AddUser(string nick)
     {
+      if (string.IsNullOrEmpty(nick))
+        throw new ArgumentException("Nick is null or empty");
+      if (_users.Contains(nick))
+        throw new ArgumentException("User already exist.");
+
       _users.Add(nick);
     }
 
@@ -120,6 +137,9 @@ namespace Engine.Model.Common.Entities
     /// <param name="nick">User nick.</param>
     public virtual void RemoveUser(string nick)
     {
+      if (string.IsNullOrEmpty(nick))
+        throw new ArgumentException("Nick is null or empty");
+
       _users.Remove(nick);
 
       // Remove all files
@@ -259,6 +279,13 @@ namespace Engine.Model.Common.Entities
     public bool RemoveFile(FileId fileId)
     {
       return _files.Remove(fileId);
+    }
+    #endregion
+
+    #region dto
+    public virtual RoomDto ToDto()
+    {
+      return new RoomDto(_name, _admin, _users, _files.Values, _messages, RoomType.Chat, null);
     }
     #endregion
 

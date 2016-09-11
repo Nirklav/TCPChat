@@ -74,6 +74,16 @@
     <Compile Include="Api\Client\Messages\ClientOutPrivateMessageCommand.cs" />
     <Compile Include="Api\Client\Messages\ClientSendPrivateMessageAction.cs" />
     <Compile Include="Api\Client\Messages\ClientSendMessageAction.cs" />
+    <Compile Include="Api\Client\P2P\ClientConnectToPeerAction.cs" />
+    <Compile Include="Api\Client\Registrations\ClientRegisterAction.cs" />
+    <Compile Include="Api\Client\Registrations\ClientUnregistrerAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientCreateRoomAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientDeleteRoomAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientExitFromRoomAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientInviteUsersAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientKickUsersAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientRefreshRoomAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientSetRoomAdminAction.cs" />
     <Compile Include="Api\IAction.cs" />
     <Compile Include="Api\IApi.cs" />
     <Compile Include="Api\ICommand.cs" />
@@ -129,6 +139,7 @@
     <Compile Include="Model\Client\ClientInitializer.cs" />
     <Compile Include="Model\Client\Entities\ClientChat.cs" />
     <Compile Include="Model\Client\Entities\ClientRoom.cs" />
+    <Compile Include="Model\Client\Entities\ClientVoiceRoom.cs" />
     <Compile Include="Model\Common\Dto\RoomDto.cs" />
     <Compile Include="Model\Common\Dto\UserDto.cs" />
     <Compile Include="Model\Common\Notifier.cs" />
