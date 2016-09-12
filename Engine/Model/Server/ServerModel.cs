@@ -1,24 +1,26 @@
-﻿using Engine.Api;
+﻿using Engine.Api.Server;
 using Engine.Helpers;
 using Engine.Model.Common;
-using Engine.Model.Entities;
+using Engine.Model.Server.Entities;
 using Engine.Network;
 using Engine.Plugins.Server;
 using System;
-using System.Collections.Generic;
 using System.Security;
 using System.Threading;
 
 namespace Engine.Model.Server
 {
   [SecurityCritical]
-  public class ServerModel
+  public static class ServerModel
   {
     #region static model
-    private static ServerModel _model;
+    private static ServerChat _chat;
     private static Logger _logger = new Logger("Server.log");
     private static IServerNotifier _notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
 
+    /// <summary>
+    /// Logger.
+    /// </summary>
     public static Logger Logger
     {
       [SecurityCritical]
@@ -75,42 +77,10 @@ namespace Engine.Model.Server
     [SecurityCritical]
     public static ServerGuard Get()
     {
-      if (Interlocked.CompareExchange(ref _model, null, null) == null)
+      if (Interlocked.CompareExchange(ref _chat, null, null) == null)
         throw new ArgumentException("model do not inited yet");
 
-      return new ServerGuard(_model);
-    }
-    #endregion
-
-    #region consts
-    public const string MainRoomName = "Main room";
-    #endregion
-
-    #region properties
-    public Dictionary<string, Room> Rooms
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-    public Dictionary<string, User> Users
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-    #endregion
-
-    #region constructor
-    [SecurityCritical]
-    public ServerModel()
-    {
-      Users = new Dictionary<string, User>();
-      Rooms = new Dictionary<string, Room>();
-
-      Rooms.Add(MainRoomName, new Room(null, MainRoomName));
+      return new ServerGuard(_chat);
     }
     #endregion
 
@@ -119,13 +89,13 @@ namespace Engine.Model.Server
     public static bool IsInited
     {
       [SecurityCritical]
-      get { return Interlocked.CompareExchange(ref _model, null, null) != null; }
+      get { return Interlocked.CompareExchange(ref _chat, null, null) != null; }
     }
 
     [SecurityCritical]
     public static void Init(ServerInitializer initializer)
     {
-      if (Interlocked.CompareExchange(ref _model, new ServerModel(), null) != null)
+      if (Interlocked.CompareExchange(ref _chat, new ServerChat(), null) != null)
         throw new InvalidOperationException("model already inited");
 
       Server = new AsyncServer();
@@ -138,7 +108,7 @@ namespace Engine.Model.Server
     [SecurityCritical]
     public static void Reset()
     {
-      if (Interlocked.Exchange(ref _model, null) == null)
+      if (Interlocked.Exchange(ref _chat, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
       Dispose(Server);

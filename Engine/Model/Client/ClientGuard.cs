@@ -3,24 +3,24 @@ using System.Security;
 
 namespace Engine.Model.Client
 {
-  public class ClientGuard : ModelGuard<ClientModel>
+  public class ClientGuard : Guard<ClientChat>
   {
     [SecurityCritical]
-    public ClientGuard(ClientModel model) : base(model)
+    public ClientGuard(ClientChat chat)
+      : base(chat)
     {
 
-    }
-
-    public static ClientGuard Current
-    {
-      [SecuritySafeCritical]
-      get { return (ClientGuard)_current; }
     }
 
     public ClientChat Chat
     {
+      get { return _obj; }
+    }
+
+    public static ClientChat CurrentChat
+    {
       [SecuritySafeCritical]
-      get { return _model.Chat; }
+      get { return ((ClientGuard)_current).Chat; }
     }
   }
 }

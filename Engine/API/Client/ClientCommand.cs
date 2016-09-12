@@ -1,8 +1,6 @@
 ﻿using Engine.Exceptions;
-using Engine.Model.Client;
 using Engine.Model.Client.Entities;
 using Engine.Model.Common.Dto;
-using Engine.Model.Common.Entities;
 using Engine.Network;
 using Engine.Plugins;
 using System.Collections.Generic;
@@ -74,7 +72,7 @@ namespace Engine.Api.Client
       foreach (var userDto in users)
       {
         if (!chat.IsUserExist(userDto.Nick))
-          chat.AddUser(new User(userDto));
+          chat.AddUser(new ClientUser(userDto));
       }
     }
     #endregion

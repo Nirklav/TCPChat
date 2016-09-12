@@ -18,7 +18,7 @@ namespace Engine.Model.Common.Dto
     public readonly List<Message> Messages;
 
     public readonly RoomType Type;
-    public readonly Dictionary<string, List<string>> ConnectionsMap;
+    public readonly List<string> ConnectTo;
 
     public RoomDto(
       string name
@@ -27,18 +27,16 @@ namespace Engine.Model.Common.Dto
       , IEnumerable<FileDescription> files
       , Dictionary<long, Message> messages
       , RoomType type
-      , Dictionary<string, List<string>> connectionsMap)
+      , List<string> connectTo)
     {
       Name = name;
       Admin = admin;
       Users = new List<string>(users);
       Files = new List<FileDescription>(files);
       Messages = messages.Select(kvp => kvp.Value.Clone()).ToList();
-      Type = type;
 
-      ConnectionsMap = connectionsMap != null 
-        ? connectionsMap.ToDictionary(kvp => kvp.Key, kvp => new List<string>(kvp.Value))
-        : null;
+      Type = type;
+      ConnectTo = new List<string>(connectTo);
     }
   }
 }

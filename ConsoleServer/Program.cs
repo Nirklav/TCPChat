@@ -14,25 +14,25 @@ namespace ConsoleServer
 
       if (args.Length < 3)
       {
-        Console.WriteLine("Parameters: \"serverPort\" \"servicePort\" \"usingIpV6\"");
+        WriteHelp();
         return;
       }
 
       if (!int.TryParse(args[0], out serverPort))
       {
-        Console.WriteLine("Parameters: \"serverPort\" \"servicePort\" \"usingIpV6\"");
+        WriteHelp();
         return;
       }
 
       if (!int.TryParse(args[1], out servicePort))
       {
-        Console.WriteLine("Parameters: \"serverPort\" \"servicePort\" \"usingIpV6\"");
+        WriteHelp();
         return;
       }
 
       if (!bool.TryParse(args[2], out usingIpV6))
       {
-        Console.WriteLine("Parameters: \"serverPort\" \"servicePort\" \"usingIpV6\"");
+        WriteHelp();
         return;
       }
 
@@ -55,6 +55,11 @@ namespace ConsoleServer
       }
 
       ServerModel.Reset();
+    }
+
+    private static void WriteHelp()
+    {
+      Console.WriteLine("Parameters: \"serverPort\" \"servicePort\" \"usingIpV6\"");
     }
   }
 }

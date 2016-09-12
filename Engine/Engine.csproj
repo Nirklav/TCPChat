@@ -157,6 +157,9 @@
     <Compile Include="Model\Client\ClientGuard.cs" />
     <Compile Include="Model\Common\Entities\RoomType.cs" />
     <Compile Include="Model\Common\Entities\VoiceRoom.cs" />
+    <Compile Include="Model\Server\Entities\ServerChat.cs" />
+    <Compile Include="Model\Server\Entities\ServerRoom.cs" />
+    <Compile Include="Model\Server\Entities\ServerVoiceRoom.cs" />
     <Compile Include="Model\Server\ServerGuard.cs" />
     <Compile Include="Model\Server\ServerNotifier.cs" />
     <Compile Include="Model\Server\ServerInitializer.cs" />
@@ -172,7 +175,7 @@
     <Compile Include="Network\ServerConnection.cs" />
     <Compile Include="Model\Client\ClientModel.cs" />
     <Compile Include="Model\Common\Entities\DownloadingFile.cs" />
-    <Compile Include="Model\Common\ModelGuard.cs" />
+    <Compile Include="Model\Common\Guard.cs" />
     <Compile Include="Model\Common\Entities\PostedFile.cs" />
     <Compile Include="Model\Server\ServerModel.cs" />
     <Compile Include="EventArgs\AsyncErrorEventArgs.cs" />
@@ -216,9 +219,7 @@
   <ItemGroup>
     <None Include="EngineStrongName.snk" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Model\Server\Entities\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

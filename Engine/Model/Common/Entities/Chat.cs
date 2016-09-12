@@ -11,6 +11,8 @@ namespace Engine.Model.Common.Entities
     where TRoom : Room
     where TVoiceRoom : VoiceRoom
   {
+    public const string MainRoomName = "Main room";
+
     protected Dictionary<string, TUser> _users;
     protected Dictionary<string, TRoom> _rooms;
     protected Dictionary<string, TVoiceRoom> _voiceRooms;

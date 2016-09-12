@@ -89,7 +89,7 @@ namespace Engine.Api.Client
     }
 
     /// <summary>
-    /// Версия и имя данного API.
+    /// Name and version of Api.
     /// </summary>
     public string Name
     {
@@ -98,10 +98,10 @@ namespace Engine.Api.Client
     }
 
     /// <summary>
-    /// Извлекает команду.
+    /// Get the command by identifier.
     /// </summary>
-    /// <param name="message">Сообщение, по которому будет определена команда.</param>
-    /// <returns>Команда.</returns>
+    /// <param name="id">Command identifier.</param>
+    /// <returns>Command.</returns>
     [SecuritySafeCritical]
     public ICommand<ClientCommandArgs> GetCommand(long id)
     {

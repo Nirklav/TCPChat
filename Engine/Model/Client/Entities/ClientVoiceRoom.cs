@@ -20,13 +20,6 @@ namespace Engine.Model.Client.Entities
 
       foreach (var message in dto.Messages)
         _messages.Add(message.Id, message);
-
-      foreach (var kvp in dto.ConnectionsMap)
-      {
-        var nick = kvp.Key;
-        var connectTo = kvp.Value;
-        _connectionMap.Add(nick, connectTo);
-      }
     }
 
     #region users
@@ -87,13 +80,13 @@ namespace Engine.Model.Client.Entities
 
     private void IncVoiceCoutner(string nick)
     {
-      var user = ClientGuard.Current.Chat.GetUser(nick);
+      var user = ClientGuard.CurrentChat.GetUser(nick);
       user.IncVoiceCounter();
     }
 
     private void DecVoiceCoutner(string nick)
     {
-      var user = ClientGuard.Current.Chat.GetUser(nick);
+      var user = ClientGuard.CurrentChat.GetUser(nick);
       user.DecVoiceCounter();
     }
     #endregion

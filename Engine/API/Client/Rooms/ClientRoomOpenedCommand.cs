@@ -42,15 +42,18 @@ namespace Engine.Api.Client
         {
           var voiceRoom = new ClientVoiceRoom(content.Room);
           client.Chat.AddVoiceRoom(voiceRoom);
-
-          var mapForUser = voiceRoom.ConnectionMap[client.Chat.User.Nick];
-          foreach (var nick in mapForUser)
-            ClientModel.Api.Perform(new ClientConnectToPeerAction(nick));
-
           room = voiceRoom;
         }
 
         AddUsers(client.Chat, content.Users);
+
+        // Create P2P connections to users if need
+        if (content.Room.ConnectTo != null)
+        {
+          foreach (var nick in content.Room.ConnectTo)
+            ClientModel.Api.Perform(new ClientConnectToPeerAction(nick));
+        }
+
         room.Enable();
       }
 

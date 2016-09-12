@@ -1,6 +1,6 @@
 ﻿using Engine.Api.Client;
 using Engine.Exceptions;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using Engine.Network;
 using Engine.Plugins;
@@ -48,23 +48,24 @@ namespace Engine.Api.Server
 
     #region Helpers
     /// <summary>
-    /// Проверяет существует ли комната. Если нет отправляет вызвавщему команду соединению сообщение об ошибке. 
-    /// А также команду закрытия комнаты.
+    /// Trying to get room. If room not found then it send error message and close room command.
     /// </summary>
-    /// <param name="RoomName">Название комнаты.</param>
-    /// <param name="connectionId">Id соединения.</param>
-    /// <returns>Возвращает false если комнаты не существует.</returns>
+    /// <param name="server">Server guard instance.</param>
+    /// <param name="roomName">Room name.</param>
+    /// <param name="connectionId">Connection id.</param>
+    /// <param name="room">Result room.</param>
+    /// <returns>Returns true if room found, otherwise false..</returns>
     [SecurityCritical]
     protected static bool TryGetRoom(ServerGuard server, string roomName, string connectionId, out Room room)
     {
-      var result = server.Rooms.TryGetValue(roomName, out room);
-      if (!result)
+      room = server.Chat.TryGetRoom(roomName);
+      if (room == null)
       {
-        var closeRoomContent = new ClientRoomClosedCommand.MessageContent { Room = new Room(null, roomName) };
+        var closeRoomContent = new ClientRoomClosedCommand.MessageContent { RoomName = roomName };
         ServerModel.Server.SendMessage(connectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
         ServerModel.Api.SendSystemMessage(connectionId, SystemMessageId.RoomNotExist);
       }
-      return result;
+      return room != null;
     }
 
     /// <summary>

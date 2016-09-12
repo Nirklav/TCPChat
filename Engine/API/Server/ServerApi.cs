@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using Engine.Plugins;
 using Engine.Plugins.Server;
@@ -10,9 +11,6 @@ using System.Security;
 
 namespace Engine.Api.Server
 {
-  /// <summary>
-  /// Класс реазиующий стандартное серверное API.
-  /// </summary>
   public sealed class ServerApi :
     CrossDomainObject,
     IApi<ServerCommandArgs>
@@ -20,7 +18,7 @@ namespace Engine.Api.Server
     [SecurityCritical] private readonly Dictionary<long, ICommand<ServerCommandArgs>> _commands;
 
     /// <summary>
-    /// Создает экземпляр API.
+    /// Creates instance of ServerApi.
     /// </summary>
     [SecurityCritical]
     public ServerApi()
@@ -51,7 +49,7 @@ namespace Engine.Api.Server
     }
 
     /// <summary>
-    /// Версия и имя данного API.
+    /// Name and version of Api.
     /// </summary>
     public string Name
     {
@@ -60,10 +58,10 @@ namespace Engine.Api.Server
     }
 
     /// <summary>
-    /// Извлекает команду.
+    /// Get the command by identifier.
     /// </summary>
-    /// <param name="message">Cообщение, по которому будет определена команда.</param>
-    /// <returns>Команда.</returns>
+    /// <param name="id">Command identifier.</param>
+    /// <returns>Command.</returns>
     [SecuritySafeCritical]
     public ICommand<ServerCommandArgs> GetCommand(long id)
     {
@@ -79,6 +77,15 @@ namespace Engine.Api.Server
     }
 
     /// <summary>
+    /// Perform the remote action.
+    /// </summary>
+    /// <param name="action">Action to perform.</param>
+    public void Perform(IAction action)
+    {
+      action.Perform();
+    }
+
+    /// <summary>
     /// Напрямую соединяет пользователей.
     /// </summary>
     /// <param name="senderId">Пользователь запросивший соединение.</param>
@@ -88,13 +95,13 @@ namespace Engine.Api.Server
     [SecuritySafeCritical]
     public void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint)
     {
-      using (var context = ServerModel.Get())
+      using (var server = ServerModel.Get())
       {
         var content = new ClientWaitPeerConnectionCommand.MessageContent
         {
           RequestPoint = requestPoint,
           SenderPoint = senderPoint,
-          RemoteInfo = context.Users[senderId],
+          RemoteInfo = server.Users[senderId],
         };
 
         ServerModel.Server.SendMessage(requestId, ClientWaitPeerConnectionCommand.CommandId, content);

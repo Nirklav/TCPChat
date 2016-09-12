@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using Engine.Model.Common.Dto;
+using System.Linq;
 
 namespace Engine.Model.Common.Entities
 {
@@ -279,13 +278,6 @@ namespace Engine.Model.Common.Entities
     public bool RemoveFile(FileId fileId)
     {
       return _files.Remove(fileId);
-    }
-    #endregion
-
-    #region dto
-    public virtual RoomDto ToDto()
-    {
-      return new RoomDto(_name, _admin, _users, _files.Values, _messages, RoomType.Chat, null);
     }
     #endregion
 
