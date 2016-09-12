@@ -1,11 +1,9 @@
-﻿using Engine.Api.Server;
-using Engine.Model.Client;
+﻿using Engine.Model.Client;
 using Engine.Model.Common.Entities;
 using Engine.Plugins;
 using Engine.Plugins.Client;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security;
 using System.Threading;
 
@@ -16,7 +14,6 @@ namespace Engine.Api.Client
     IApi<ClientCommandArgs>
   {
     [SecurityCritical] private readonly Dictionary<long, ICommand<ClientCommandArgs>> _commands;
-    [SecurityCritical] private readonly Dictionary<string, int> _interlocutors;
     [SecurityCritical] private long _lastSendedNumber;
 
     /// <summary>
@@ -26,7 +23,6 @@ namespace Engine.Api.Client
     public ClientApi()
     {
       _commands = new Dictionary<long, ICommand<ClientCommandArgs>>();
-      _interlocutors = new Dictionary<string, int>();
 
       ClientModel.Recorder.Recorded += OnRecorded;
 
@@ -75,80 +71,20 @@ namespace Engine.Api.Client
         Number = Interlocked.Increment(ref _lastSendedNumber)
       };
 
-      string userNick;
       using (var client = ClientModel.Get())
-        userNick = client.Chat.User.Nick;
-
-      lock (_interlocutors)
       {
-        foreach (var kvp in _interlocutors)
-        {
-          var nick = kvp.Key;
-          var count = kvp.Value;
+        var userNick = client.Chat.User.Nick;
 
-          if (count <= 0)
+        foreach (var user in client.Chat.GetUsers())
+        {
+          if (!user.IsVoiceActive())
             continue;
 
-          if (nick.Equals(userNick))
+          if (user.Nick == userNick)
             continue;
 
-          ClientModel.Peer.SendMessageIfConnected(nick, ClientPlayVoiceCommand.CommandId, content, true);
+          ClientModel.Peer.SendMessageIfConnected(user.Nick, ClientPlayVoiceCommand.CommandId, content, true);
         }
-      }
-    }
-
-    /// <summary>
-    /// Возвращает флаг описывающий активность собеседника.
-    /// </summary>
-    /// <param name="nick">Ник собеседника.</param>
-    /// <returns>Флаг описывающий активность собеседника.</returns>
-    [SecuritySafeCritical]
-    public bool IsActiveInterlocutor(string nick)
-    {
-      lock (_interlocutors)
-      {
-        int count;
-        _interlocutors.TryGetValue(nick, out count);
-        return count > 0;
-      }
-    }
-
-    /// <summary>
-    /// Добавляет собеседника.
-    /// </summary>
-    /// <param name="nick">Ник собеседника.</param>
-    [SecuritySafeCritical]
-    public void AddInterlocutor(string nick)
-    {
-      lock (_interlocutors)
-      {
-        int count;
-        _interlocutors.TryGetValue(nick, out count);
-        _interlocutors[nick] = count + 1;
-      }
-    }
-
-    /// <summary>
-    /// Удаляет собеседника.
-    /// </summary>
-    /// <param name="nick">Ник собеседника.</param>
-    [SecuritySafeCritical]
-    public void RemoveInterlocutor(string nick)
-    {
-      lock (_interlocutors)
-      {
-        int count;
-        _interlocutors.TryGetValue(nick, out count);
-        if (count == 0)
-          throw new InvalidOperationException("Can't remove interlocutor");
-
-        if (count == 1)
-        {
-          _interlocutors.Remove(nick);
-          return;
-        }
-
-        _interlocutors[nick] = count - 1;
       }
     }
 

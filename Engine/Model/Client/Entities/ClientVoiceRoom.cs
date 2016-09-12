@@ -39,7 +39,7 @@ namespace Engine.Model.Client.Entities
       base.AddUser(nick);
 
       if (Enabled)
-        ClientModel.Api.AddInterlocutor(nick);
+        IncVoiceCoutner(nick);
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ namespace Engine.Model.Client.Entities
       base.RemoveUser(nick);
 
       if (Enabled)
-        ClientModel.Api.RemoveInterlocutor(nick);
+        DecVoiceCoutner(nick);
     }
     #endregion
 
@@ -64,7 +64,7 @@ namespace Engine.Model.Client.Entities
       if (!Enabled)
       {
         foreach (var nick in _users)
-          ClientModel.Api.AddInterlocutor(nick);
+          IncVoiceCoutner(nick);
       }
 
       base.Enable();
@@ -78,10 +78,23 @@ namespace Engine.Model.Client.Entities
       if (!Enabled)
       {
         foreach (var nick in _users)
-          ClientModel.Api.RemoveInterlocutor(nick);
+          DecVoiceCoutner(nick);
       }
 
       base.Disable();
+    }
+
+
+    private void IncVoiceCoutner(string nick)
+    {
+      var user = ClientGuard.Current.Chat.GetUser(nick);
+      user.IncVoiceCounter();
+    }
+
+    private void DecVoiceCoutner(string nick)
+    {
+      var user = ClientGuard.Current.Chat.GetUser(nick);
+      user.DecVoiceCounter();
     }
     #endregion
   }

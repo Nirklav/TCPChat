@@ -1,6 +1,6 @@
 ﻿using Engine.Exceptions;
 using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using OpenAL;
 using System;
 using System.Collections.Generic;

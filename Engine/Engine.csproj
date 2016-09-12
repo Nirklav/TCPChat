@@ -139,6 +139,7 @@
     <Compile Include="Model\Client\ClientInitializer.cs" />
     <Compile Include="Model\Client\Entities\ClientChat.cs" />
     <Compile Include="Model\Client\Entities\ClientRoom.cs" />
+    <Compile Include="Model\Client\Entities\ClientUser.cs" />
     <Compile Include="Model\Client\Entities\ClientVoiceRoom.cs" />
     <Compile Include="Model\Common\Dto\RoomDto.cs" />
     <Compile Include="Model\Common\Dto\UserDto.cs" />

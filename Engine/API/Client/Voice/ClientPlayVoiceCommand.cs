@@ -1,5 +1,5 @@
 ﻿using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using System;
 using System.Security;
 
@@ -26,8 +26,12 @@ namespace Engine.Api.Client
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      if (ClientModel.Api.IsActiveInterlocutor(args.PeerConnectionId))
-        ClientModel.Player.Enqueue(args.PeerConnectionId, content.Number, content.Pack);
+      using (var client = ClientModel.Get())
+      {
+        var user = client.Chat.GetUser(args.PeerConnectionId);
+        if (user.IsVoiceActive())
+          ClientModel.Player.Enqueue(args.PeerConnectionId, content.Number, content.Pack);
+      }
     }
 
     [Serializable]

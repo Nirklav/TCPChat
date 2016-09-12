@@ -5,15 +5,13 @@ namespace Engine.Model.Server
 {
   public class ServerGuard : ModelGuard<ServerModel>
   {
-    #region constructor
     [SecurityCritical]
     public ServerGuard(ServerModel model) : base(model)
     {
 
     }
-    #endregion
 
-    public ServerGuard Current
+    public static ServerGuard Current
     {
       [SecuritySafeCritical]
       get { return (ServerGuard)_current; }

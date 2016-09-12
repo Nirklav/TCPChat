@@ -11,7 +11,7 @@ namespace Engine.Model.Client
 
     }
 
-    public ClientGuard Current
+    public static ClientGuard Current
     {
       [SecuritySafeCritical]
       get { return (ClientGuard)_current; }

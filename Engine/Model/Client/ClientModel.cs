@@ -126,7 +126,7 @@ namespace Engine.Model.Client
     [SecurityCritical]
     public static void Init(ClientInitializer initializer)
     {
-      var user = new User(initializer.Nick, initializer.NickColor);
+      var user = new ClientUser(initializer.Nick, initializer.NickColor);
 
       if (Interlocked.CompareExchange(ref _model, new ClientModel(user), null) != null)
         throw new InvalidOperationException("model already inited");
@@ -185,7 +185,7 @@ namespace Engine.Model.Client
 
     #region conctructor
     [SecurityCritical]
-    public ClientModel(User user)
+    public ClientModel(ClientUser user)
     {
       Chat = new ClientChat(user);
     }

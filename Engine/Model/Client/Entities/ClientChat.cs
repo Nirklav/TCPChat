@@ -8,17 +8,17 @@ using System.Security;
 namespace Engine.Model.Client.Entities
 {
   [Serializable]
-  public class ClientChat : Chat<User, ClientRoom, ClientVoiceRoom>
+  public class ClientChat : Chat<ClientUser, ClientRoom, ClientVoiceRoom>
   {
     [NonSerialized]
     private Random _idCreator;
 
-    private User _user;
+    private ClientUser _user;
     private Dictionary<FileId, DownloadingFile> _downloadingFiles;
     private Dictionary<FileId, PostedFile> _postedFiles;
 
     [SecurityCritical]
-    public ClientChat(User user)
+    public ClientChat(ClientUser user)
     {
       _idCreator = new Random();
 

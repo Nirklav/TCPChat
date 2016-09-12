@@ -1,4 +1,4 @@
-﻿using Engine.Model.Entities;
+﻿using Engine.Model.Common.Entities;
 using System;
 using System.Collections.Generic;
 
