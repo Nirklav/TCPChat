@@ -49,7 +49,7 @@ namespace Engine.Api.Client
         }
 
         var room = client.Chat.GetRoom(content.RoomName);
-        if (!room.ContainsUser(args.PeerConnectionId))
+        if (!room.IsUserExist(args.PeerConnectionId))
         {
           SendFileNotPost(content.RoomName, content.File.Id);
           return;

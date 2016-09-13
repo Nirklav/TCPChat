@@ -3,7 +3,6 @@ using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using Engine.Plugins;
 using Engine.Plugins.Server;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -131,41 +130,6 @@ namespace Engine.Api.Server
     {
       var sendingContent = new ClientConnectToP2PServiceCommand.MessageContent { Port = servicePort };
       ServerModel.Server.SendMessage(nick, ClientConnectToP2PServiceCommand.CommandId, sendingContent);
-    }
-
-    /// <summary>
-    /// Возвращает пользователей из комнаты.
-    /// </summary>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    public List<User> GetRoomUsers(ServerGuard server, string name)
-    {
-      Room room;
-      if (!server.Rooms.TryGetValue(name, out room))
-        throw new ArgumentException("This room does't exist");
-      return GetRoomUsers(server, room);
-    }
-
-    public List<User> GetRoomUsers(ServerGuard server, Room room)
-    {
-      return room.Users
-        .Select(n =>
-        {
-          User user;
-          server.Users.TryGetValue(n, out user);
-          return new { Nick = n, User = user };
-        })
-        .Where(g =>
-        {
-          if (g.User == null)
-          {
-            ServerModel.Logger.WriteWarning("User not found: {0}", g.Nick);
-            return false;
-          }
-          return true;
-        })
-        .Select(g => g.User)
-        .ToList();
     }
 
     /// <summary>

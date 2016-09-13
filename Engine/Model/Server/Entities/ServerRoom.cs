@@ -2,6 +2,7 @@
 using Engine.Model.Common.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Engine.Model.Server.Entities
 {
@@ -31,10 +32,10 @@ namespace Engine.Model.Server.Entities
 
     }
 
-    #region dto
-    public virtual RoomDto ToDto()
+    #region users
+    public IEnumerable<User> GetUsers()
     {
-      return new RoomDto(_name, _admin, _users, _files.Values, _messages, RoomType.Chat, null);
+      return _users.Select(n => ServerGuard.Current.GetUser(n));
     }
     #endregion
   }

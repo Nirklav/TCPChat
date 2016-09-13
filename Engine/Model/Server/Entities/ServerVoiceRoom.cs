@@ -75,12 +75,12 @@ namespace Engine.Model.Server.Entities
     #endregion
 
     #region dto
-    public RoomDto ToDto(string receiver)
+    public override RoomDto ToDto(string dtoReceiver)
     {
       List<string> connectTo;
-      if (!_connectionMap.TryGetValue(receiver, out connectTo))
+      if (!_connectionMap.TryGetValue(dtoReceiver, out connectTo))
         throw new ArgumentException("Reciver not found");
-      return new RoomDto(_name, _admin, _users, _files.Values, _messages, RoomType.Voice, connectTo);
+      return new RoomDto(_name, _admin, _users, _files.Values, _messages.Values, RoomType.Voice, connectTo);
     }
     #endregion
   }

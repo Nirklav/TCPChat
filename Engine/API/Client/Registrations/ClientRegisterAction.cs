@@ -22,7 +22,7 @@ namespace Engine.Api.Client.Registrations
     {
       using (var client = ClientModel.Get())
       {
-        var sendingContent = new ServerRegisterCommand.MessageContent { User = new UserDto(client.Chat.User) };
+        var sendingContent = new ServerRegisterCommand.MessageContent { UserDto = new UserDto(client.Chat.User) };
         ClientModel.Client.SendMessage(ServerRegisterCommand.CommandId, sendingContent);
       }
     }

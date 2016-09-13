@@ -1,7 +1,7 @@
 ﻿using Engine.Api.Client;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
-using System.Linq;
 using System.Security;
 
 namespace Engine.Api.Server
@@ -21,11 +21,11 @@ namespace Engine.Api.Server
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
-      if (content.File == null)
-        throw new ArgumentNullException("File");
-
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("RoomName");
+        throw new ArgumentException("content.RoomName");
+
+      if (content.File == null)
+        throw new ArgumentNullException("content.File");
 
       using (var server = ServerModel.Get())
       {
@@ -33,14 +33,14 @@ namespace Engine.Api.Server
         if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
           return;
 
-        if (!room.Users.Contains(args.ConnectionId))
+        if (!room.IsUserExist(args.ConnectionId))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;
         }
 
-        if (!room.Files.Exists(f => f.Equals(content.File)))
-          room.Files.Add(content.File);
+        if (!room.IsFileExist(content.File.Id))
+          room.AddFile(content.File);
 
         var sendingContent = new ClientFilePostedCommand.MessageContent
         {
@@ -48,7 +48,7 @@ namespace Engine.Api.Server
           RoomName = content.RoomName
         };
 
-        foreach (string user in room.Users)
+        foreach (var user in room.Users)
           ServerModel.Server.SendMessage(user, ClientFilePostedCommand.CommandId, sendingContent);
       }
     }

@@ -1,5 +1,6 @@
 ﻿using Engine.Api.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Dto;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Net;
@@ -23,13 +24,13 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (content.RemoteInfo == null)
-        throw new ArgumentNullException("Info");
+        throw new ArgumentNullException("content.RemoteInfo");
 
       if (content.PeerPoint == null)
-        throw new ArgumentNullException("PeerPoint");
+        throw new ArgumentNullException("content.PeerPoint");
 
       if (string.IsNullOrEmpty(content.ReceiverNick))
-        throw new ArgumentException("receiverNick");
+        throw new ArgumentException("content.ReceiverNick");
 
       if (!ServerModel.Server.ContainsConnection(content.ReceiverNick))
       {
@@ -51,7 +52,7 @@ namespace Engine.Api.Server
     {
       private string _receiverNick;
       private IPEndPoint _peerPoint;
-      private User _remoteInfo;
+      private UserDto _remoteInfo;
 
       public string ReceiverNick
       {
@@ -65,7 +66,7 @@ namespace Engine.Api.Server
         set { _peerPoint = value; }
       }
 
-      public User RemoteInfo
+      public UserDto RemoteInfo
       {
         get { return _remoteInfo; }
         set { _remoteInfo = value; }

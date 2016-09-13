@@ -1,5 +1,5 @@
 ﻿using Engine.Api.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
@@ -22,10 +22,10 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (string.IsNullOrEmpty(content.Text))
-        throw new ArgumentException("Message");
+        throw new ArgumentException("content.Text");
 
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("RoomName");
+        throw new ArgumentException("content.RoomName");
 
       using (var server = ServerModel.Get())
       {
@@ -33,7 +33,7 @@ namespace Engine.Api.Server
         if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
           return;
 
-        if (!room.Users.Contains(args.ConnectionId))
+        if (!room.IsUserExist(args.ConnectionId))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;

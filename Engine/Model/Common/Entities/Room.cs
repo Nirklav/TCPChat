@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Engine.Model.Common.Dto;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -108,7 +109,7 @@ namespace Engine.Model.Common.Entities
     /// Returns true if user with this nick exist in room, otherwise false.
     /// </summary>
     /// <param name="nick">User nick.</param>
-    public bool ContainsUser(string nick)
+    public bool IsUserExist(string nick)
     {
       if (string.IsNullOrEmpty(nick))
         throw new ArgumentException("Nick is null or empty");
@@ -278,6 +279,13 @@ namespace Engine.Model.Common.Entities
     public bool RemoveFile(FileId fileId)
     {
       return _files.Remove(fileId);
+    }
+    #endregion
+
+    #region toDto
+    public virtual RoomDto ToDto(string dtoReciver)
+    {
+      return new RoomDto(_name, _admin, _users, _files.Values, _messages.Values, RoomType.Chat, null);
     }
     #endregion
 

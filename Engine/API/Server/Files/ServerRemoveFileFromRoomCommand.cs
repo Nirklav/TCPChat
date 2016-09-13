@@ -1,5 +1,5 @@
 ﻿using Engine.Api.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
@@ -22,7 +22,7 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("RoomName");
+        throw new ArgumentException("content.RoomName");
 
       using (var server = ServerModel.Get())
       {
@@ -30,11 +30,11 @@ namespace Engine.Api.Server
         if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
           return;
 
-        var file = room.Files.Find(f => f.Id == content.FileId);
+        var file = room.TryGetFile(content.FileId);
         if (file == null)
           return;
 
-        if (!room.ContainsUser(args.ConnectionId))
+        if (!room.IsUserExist(args.ConnectionId))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;
@@ -46,7 +46,7 @@ namespace Engine.Api.Server
           return;
         }
 
-        room.Files.Remove(file);
+        room.RemoveFile(file.Id);
         ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.FileRemoved, file.Name);
 
         var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent

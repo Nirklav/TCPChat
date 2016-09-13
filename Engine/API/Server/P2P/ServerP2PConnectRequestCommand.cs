@@ -1,4 +1,4 @@
-﻿using Engine.Model.Entities;
+﻿using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
@@ -21,7 +21,7 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (content.Nick == null)
-        throw new ArgumentNullException("Info");
+        throw new ArgumentNullException("content.Nick");
 
       if (!ServerModel.Server.ContainsConnection(content.Nick))
       {

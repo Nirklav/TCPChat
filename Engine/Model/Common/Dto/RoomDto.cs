@@ -25,7 +25,7 @@ namespace Engine.Model.Common.Dto
       , string admin
       , IEnumerable<string> users
       , IEnumerable<FileDescription> files
-      , Dictionary<long, Message> messages
+      , IEnumerable<Message> messages
       , RoomType type
       , List<string> connectTo)
     {
@@ -33,7 +33,7 @@ namespace Engine.Model.Common.Dto
       Admin = admin;
       Users = new List<string>(users);
       Files = new List<FileDescription>(files);
-      Messages = messages.Select(kvp => kvp.Value.Clone()).ToList();
+      Messages = messages.Select(m => m.Clone()).ToList();
 
       Type = type;
       ConnectTo = new List<string>(connectTo);

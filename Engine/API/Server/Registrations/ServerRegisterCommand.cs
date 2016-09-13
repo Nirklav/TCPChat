@@ -1,11 +1,11 @@
 ﻿using Engine.Api.Client;
 using Engine.Model.Common.Dto;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
+using Engine.Model.Server.Entities;
 using Engine.Network;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security;
 
 namespace Engine.Api.Server
@@ -25,13 +25,13 @@ namespace Engine.Api.Server
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
-      if (content.User == null)
+      if (content.UserDto == null)
         throw new ArgumentNullException("User");
 
-      if (content.User.Nick == null)
+      if (content.UserDto.Nick == null)
         throw new ArgumentNullException("User.Nick");
 
-      if (content.User.Nick.Contains(Connection.TempConnectionPrefix))
+      if (content.UserDto.Nick.Contains(Connection.TempConnectionPrefix))
       {
         SendFail(args.ConnectionId, SystemMessageId.NotRegisteredBadName);
         return;
@@ -39,29 +39,30 @@ namespace Engine.Api.Server
       
       using (var server = ServerModel.Get())
       {
-        var room = server.Rooms[ServerModel.MainRoomName];    
-        var userExist = room.Users.Any(nick => string.Equals(content.User.Nick, nick));
-
-        if (userExist)
+        var chat = server.Chat;
+        if (chat.IsUserExist(content.UserDto.Nick))
         {
           SendFail(args.ConnectionId, SystemMessageId.NotRegisteredNameAlreadyExist);
           return;
         }
         else
         {
-          ServerModel.Logger.WriteInfo("User login: {0}", content.User.Nick);
+          ServerModel.Logger.WriteInfo("User login: {0}", content.UserDto.Nick);
 
-          server.Users.Add(content.User.Nick, content.User);
-          room.AddUser(content.User.Nick);
+          chat.AddUser(new User(content.UserDto));
 
-          Register(content.User.Nick, args.ConnectionId);
+          var mainRoom = chat.GetRoom(ServerChat.MainRoomName);
+          mainRoom.AddUser(content.UserDto.Nick);
 
-          var users = ServerModel.Api.GetRoomUsers(server, room);
-          SendRefresh(content.User.Nick, room, users);
-          SendOpened(content.User.Nick, room, users);
+          Register(content.UserDto.Nick, args.ConnectionId);
+
+          var userDtos = chat.GetRoomUserDtos(mainRoom.Name);
+
+          SendRefresh(content.UserDto.Nick, mainRoom, userDtos);
+          SendOpened(content.UserDto.Nick, mainRoom, userDtos);
 
           // Notify
-          ServerModel.Notifier.Registered(new ServerRegistrationEventArgs { Nick = content.User.Nick });
+          ServerModel.Notifier.Registered(new ServerRegistrationEventArgs { Nick = content.UserDto.Nick });
         }
       }
     }
@@ -74,30 +75,29 @@ namespace Engine.Api.Server
       ServerModel.Server.SendMessage(userNick, ClientRegistrationResponseCommand.CommandId, messageContent);
     }
 
-    private void SendRefresh(string userNick, Room room, List<User> users)
+    private void SendRefresh(string userNick, Room room, List<UserDto> users)
     {
-      var messageContent = new ClientRoomRefreshedCommand.MessageContent
-      {
-        Room = room,
-        Users = users
-      };
-
       foreach (var nick in room.Users)
       {
         if (nick == userNick)
           continue;
 
+        var messageContent = new ClientRoomRefreshedCommand.MessageContent
+        {
+          Room = room.ToDto(nick),
+          Users = users
+        };
+
         ServerModel.Server.SendMessage(nick, ClientRoomRefreshedCommand.CommandId, messageContent);
       }
     }
 
-    private void SendOpened(string userNick, Room room, List<User> users)
+    private void SendOpened(string userNick, Room room, List<UserDto> users)
     {
       var messageContent = new ClientRoomOpenedCommand.MessageContent
       {
-        Room = room,
-        Users = users,
-        Type = room.Type
+        Room = room.ToDto(userNick),
+        Users = users
       };
 
       ServerModel.Server.SendMessage(userNick, ClientRoomOpenedCommand.CommandId, messageContent);
@@ -115,7 +115,7 @@ namespace Engine.Api.Server
     {
       private UserDto _user;
 
-      public UserDto User
+      public UserDto UserDto
       {
         get { return _user; }
         set { _user = value; }
