@@ -136,13 +136,13 @@ namespace Engine.Network
           _reconnecting = true;
         else
         {
-          ClientModel.Notifier.Connected(new ConnectEventArgs { Error = se });
+          ClientModel.Notifier.Connected(new ConnectEventArgs(se));
           ClientModel.Logger.Write(se);
         }
       }
       catch (Exception e)
       {
-        ClientModel.Notifier.Connected(new ConnectEventArgs { Error = e });
+        ClientModel.Notifier.Connected(new ConnectEventArgs(e));
         ClientModel.Logger.Write(e);
       }
     }
@@ -257,7 +257,7 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnError(Exception e)
     {
-      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = e });
+      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(e));
       ClientModel.Logger.Write(e);
     }
     #endregion

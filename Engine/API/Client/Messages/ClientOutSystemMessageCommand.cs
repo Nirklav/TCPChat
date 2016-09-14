@@ -21,7 +21,7 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (content.Message == SystemMessageId.None)
-        throw new ArgumentException("message");
+        throw new ArgumentException("content.Message");
 
       ClientModel.Notifier.ReceiveMessage(new ReceiveMessageEventArgs
       {

@@ -28,7 +28,7 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (content.File == null)
-        throw new ArgumentNullException("File");
+        throw new ArgumentNullException("content.File");
 
       if (args.Unpacked.RawData == null)
         throw new ArgumentNullException("args.Unpacked.RawData");
@@ -37,17 +37,13 @@ namespace Engine.Api.Client
         throw new ArgumentException("args.Unpacked.RawLength <= 0");
 
       if (content.StartPartPosition < 0)
-        throw new ArgumentException("StartPartPosition < 0");
+        throw new ArgumentException("content.StartPartPosition < 0");
 
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("roomName");
+        throw new ArgumentException("content.RoomName");
 
       var fileId = content.File.Id;
-      var downloadEventArgs = new FileDownloadEventArgs
-      {
-        RoomName = content.RoomName,
-        FileId = fileId
-      };
+      var progress = 0;
 
       using (var client = ClientModel.Get())
       {
@@ -68,7 +64,7 @@ namespace Engine.Api.Client
         {
           chat.RemoveFileDownload(fileId);
 
-          downloadEventArgs.Progress = 100;
+          progress = 100;
         }
         else
         {
@@ -82,11 +78,11 @@ namespace Engine.Api.Client
 
           ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientReadFilePartCommand.CommandId, sendingContent);
 
-          downloadEventArgs.Progress = (int)((stream.Position * 100) / content.File.Size);
+          progress = (int)((stream.Position * 100) / content.File.Size);
         }
       }
 
-      ClientModel.Notifier.DownloadProgress(downloadEventArgs);
+      ClientModel.Notifier.DownloadProgress(new FileDownloadEventArgs(content.RoomName, fileId, progress));
     }
 
     [Serializable]

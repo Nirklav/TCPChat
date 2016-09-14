@@ -1,6 +1,7 @@
 ﻿using Engine.Api.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
+using Engine.Model.Server.Entities;
 using System;
 using System.Linq;
 using System.Security;
@@ -23,9 +24,9 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("RoomName");
+        throw new ArgumentException("content.RoomName");
 
-      if (string.Equals(content.RoomName, ServerModel.MainRoomName))
+      if (content.RoomName == ServerChat.MainRoomName)
       {
         ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomCantLeaveMainRoom);
         return;
@@ -34,17 +35,17 @@ namespace Engine.Api.Server
       using (var server = ServerModel.Get())
       {
         Room room;
-        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+        if (!TryGetRoom(server.Chat, content.RoomName, args.ConnectionId, out room))
           return;
 
-        if (!room.Users.Contains(args.ConnectionId))
+        if (!room.IsUserExist(args.ConnectionId))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;
         }
 
         room.RemoveUser(args.ConnectionId);
-        var closeRoomContent = new ClientRoomClosedCommand.MessageContent { Room = room };
+        var closeRoomContent = new ClientRoomClosedCommand.MessageContent { RoomName = room.Name };
         ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
 
         if (room.Admin == args.ConnectionId)

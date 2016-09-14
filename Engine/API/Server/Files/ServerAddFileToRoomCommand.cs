@@ -30,7 +30,7 @@ namespace Engine.Api.Server
       using (var server = ServerModel.Get())
       {
         Room room;
-        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+        if (!TryGetRoom(server.Chat, content.RoomName, args.ConnectionId, out room))
           return;
 
         if (!room.IsUserExist(args.ConnectionId))

@@ -8,5 +8,16 @@ namespace Engine
   {
     public string RoomName { get; set; }
     public List<string> Users { get; set; }
+
+    public RoomEventArgs(string roomName)
+      : this(roomName, null)
+    {
+    }
+
+    public RoomEventArgs(string roomName, List<string> users)
+    {
+      RoomName = roomName;
+      Users = users;
+    }
   }
 }

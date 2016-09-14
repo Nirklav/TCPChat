@@ -26,7 +26,7 @@ namespace Engine.Network
     [SecurityCritical]
     protected override void OnError(Exception exc)
     {
-      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = exc });
+      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(exc));
       ClientModel.Logger.Write(exc);
     }
   }

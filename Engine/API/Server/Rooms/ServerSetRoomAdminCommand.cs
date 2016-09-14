@@ -1,5 +1,6 @@
-﻿using Engine.Model.Entities;
+﻿using Engine.Model.Common.Entities;
 using Engine.Model.Server;
+using Engine.Model.Server.Entities;
 using System;
 using System.Security;
 
@@ -21,12 +22,12 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("RoomName");
+        throw new ArgumentException("content.RoomName");
 
       if (string.IsNullOrEmpty(content.NewAdmin))
-        throw new ArgumentNullException("NewAdmin");
+        throw new ArgumentNullException("content.NewAdmin");
 
-      if (string.Equals(content.RoomName, ServerModel.MainRoomName))
+      if (content.RoomName == ServerChat.MainRoomName)
       {
         ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
         return;
@@ -35,16 +36,16 @@ namespace Engine.Api.Server
       using (var server = ServerModel.Get())
       {
         Room room;
-        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+        if (!TryGetRoom(server.Chat, content.RoomName, args.ConnectionId, out room))
           return;
 
-        if (!room.Admin.Equals(args.ConnectionId))
+        if (room.Admin != args.ConnectionId)
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
           return;
         }
 
-        if (!room.Users.Contains(content.NewAdmin))
+        if (!room.IsUserExist(content.NewAdmin))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomUserNotExist);
           return;

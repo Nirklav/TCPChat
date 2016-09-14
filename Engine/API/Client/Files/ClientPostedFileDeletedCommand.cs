@@ -21,7 +21,7 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("roomName");
+        throw new ArgumentException("content.RoomName");
 
       using (var client = ClientModel.Get())
         client.Chat.RemovePostedFile(content.RoomName, content.FileId);

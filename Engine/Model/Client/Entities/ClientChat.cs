@@ -182,13 +182,7 @@ namespace Engine.Model.Client.Entities
         if (removed)
         {
           // Notify
-          var downloadEventArgs = new FileDownloadEventArgs
-          {
-            RoomName = room.Name,
-            FileId = fileId,
-            Progress = 0
-          };
-
+          var downloadEventArgs = new FileDownloadEventArgs(roomName, fileId, 0);
           ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
         }
       }

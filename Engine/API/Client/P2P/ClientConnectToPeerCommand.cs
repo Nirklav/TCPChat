@@ -22,10 +22,10 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (content.RemoteInfo == null)
-        throw new ArgumentNullException("info");
+        throw new ArgumentNullException("content.RemoteInfo");
 
       if (content.PeerPoint == null)
-        throw new ArgumentNullException("PeerPoint");
+        throw new ArgumentNullException("content.PeerPoint");
 
       ClientModel.Peer.ConnectToPeer(content.RemoteInfo.Nick, content.PeerPoint);
     }

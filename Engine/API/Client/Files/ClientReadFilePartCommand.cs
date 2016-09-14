@@ -28,16 +28,16 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (content.File == null)
-        throw new ArgumentNullException("File");
+        throw new ArgumentNullException("content.File");
 
       if (content.Length <= 0)
-        throw new ArgumentException("Length <= 0");
+        throw new ArgumentException("content.Length <= 0");
 
       if (content.StartPartPosition < 0)
-        throw new ArgumentException("StartPartPosition < 0");
+        throw new ArgumentException("content.StartPartPosition < 0");
 
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("roomName");
+        throw new ArgumentException("content.RoomName");
 
       using(var client = ClientModel.Get())
       {

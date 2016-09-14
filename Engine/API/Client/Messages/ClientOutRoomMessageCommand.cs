@@ -21,10 +21,10 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (content.Message == null)
-        throw new ArgumentException("message");
+        throw new ArgumentException("content.Message");
 
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("roomName");
+        throw new ArgumentException("ontent.RoomName");
 
       using (var client = ClientModel.Get())
       {

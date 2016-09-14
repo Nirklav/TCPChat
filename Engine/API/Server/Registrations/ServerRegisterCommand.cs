@@ -26,10 +26,10 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (content.UserDto == null)
-        throw new ArgumentNullException("User");
+        throw new ArgumentNullException("content.UserDto");
 
       if (content.UserDto.Nick == null)
-        throw new ArgumentNullException("User.Nick");
+        throw new ArgumentNullException("content.UserDto.Nick");
 
       if (content.UserDto.Nick.Contains(Connection.TempConnectionPrefix))
       {
@@ -62,7 +62,7 @@ namespace Engine.Api.Server
           SendOpened(content.UserDto.Nick, mainRoom, userDtos);
 
           // Notify
-          ServerModel.Notifier.Registered(new ServerRegistrationEventArgs { Nick = content.UserDto.Nick });
+          ServerModel.Notifier.Registered(new ServerRegistrationEventArgs(content.UserDto.Nick));
         }
       }
     }

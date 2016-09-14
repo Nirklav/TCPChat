@@ -20,12 +20,7 @@ namespace Engine.Api.Client
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
-      var eventArgs = new RegistrationEventArgs
-      {
-        Registered = content.Registered,
-        Message = content.Message
-      };
-
+      var eventArgs = new RegistrationEventArgs(content.Registered, content.Message);
       ClientModel.Notifier.ReceiveRegistrationResponse(eventArgs);
     }
 

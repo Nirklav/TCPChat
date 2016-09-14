@@ -1,4 +1,5 @@
-﻿using Engine.Helpers;
+﻿using Engine.Api.Server.P2P;
+using Engine.Helpers;
 using Engine.Model.Server;
 using Lidgren.Network;
 using System;
@@ -263,7 +264,7 @@ namespace Engine.Network
           _connectingClients.Remove(requestId);
         }
 
-        ServerModel.Api.IntroduceConnections(senderId, senderEndPoint, requestId, requestEndPoint);
+        ServerModel.Api.Perform(new ServerIntroduceConnectionsAction(senderId, senderEndPoint, requestId, requestEndPoint));
       }
 
       return received;
@@ -288,7 +289,7 @@ namespace Engine.Network
             (removedIds ?? (removedIds = new List<string>())).Add(request.SenderId);
             (removedIds ?? (removedIds = new List<string>())).Add(request.RequestId);
 
-            ServerModel.Api.IntroduceConnections(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint);
+            ServerModel.Api.Perform(new ServerIntroduceConnectionsAction(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint));
             _requests.RemoveAt(i);
           }
         }

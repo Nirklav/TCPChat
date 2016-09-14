@@ -23,13 +23,13 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (content.RemoteInfo == null)
-        throw new ArgumentNullException("info");
+        throw new ArgumentNullException("content.RemoteInfo");
 
       if (content.RequestPoint == null)
-        throw new ArgumentNullException("request point");
+        throw new ArgumentNullException("content.RequestPoint");
 
       if (content.SenderPoint == null)
-        throw new ArgumentNullException("sender point");
+        throw new ArgumentNullException("content.SenderPoint");
 
       ClientModel.Peer.WaitConnection(content.SenderPoint);
 

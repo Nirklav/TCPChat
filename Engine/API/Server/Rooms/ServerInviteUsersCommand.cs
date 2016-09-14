@@ -1,6 +1,7 @@
 ﻿using Engine.Api.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
+using Engine.Model.Server.Entities;
 using System;
 using System.Collections.Generic;
 using System.Security;
@@ -23,12 +24,12 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("RoomName");
+        throw new ArgumentException("content.RoomName");
 
       if (content.Users == null)
-        throw new ArgumentNullException("Users");
+        throw new ArgumentNullException("content.Users");
 
-      if (string.Equals(content.RoomName, ServerModel.MainRoomName))
+      if (content.RoomName == ServerChat.MainRoomName)
       {
         ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomItsMainRoom);
         return;
@@ -37,7 +38,7 @@ namespace Engine.Api.Server
       using (var server = ServerModel.Get())
       {
         Room room;
-        if (!TryGetRoom(server, content.RoomName, args.ConnectionId, out room))
+        if (!TryGetRoom(server.Chat, content.RoomName, args.ConnectionId, out room))
           return;
 
         if (!room.Admin.Equals(args.ConnectionId))
@@ -49,34 +50,39 @@ namespace Engine.Api.Server
         var invitedUsers = new HashSet<string>();
         foreach (var userNick in content.Users)
         {
-          if (room.ContainsUser(userNick))
+          if (room.IsUserExist(userNick))
             continue;
 
           room.AddUser(userNick);
           invitedUsers.Add(userNick);
         }
 
-        var users = ServerModel.Api.GetRoomUsers(server, room);
+        var users = server.Chat.GetRoomUserDtos(room.Name);
 
-        var roomOpenContent = new ClientRoomOpenedCommand.MessageContent
+        foreach (var userNick in room.Users)
         {
-          Room = room,
-          Type = room.Type,
-          Users = users
-        };
+          var roomDto = room.ToDto(userNick);
 
-        var roomRefreshContent = new ClientRoomRefreshedCommand.MessageContent
-        {
-          Room = room,
-          Users = users
-        };
+          if (invitedUsers.Contains(userNick))
+          {
+            var roomOpenContent = new ClientRoomOpenedCommand.MessageContent
+            {
+              Room = roomDto,
+              Users = users
+            };
 
-        foreach (var userId in room.Users)
-        {
-          if (invitedUsers.Contains(userId))
-            ServerModel.Server.SendMessage(userId, ClientRoomOpenedCommand.CommandId, roomOpenContent);
+            ServerModel.Server.SendMessage(userNick, ClientRoomOpenedCommand.CommandId, roomOpenContent);
+          }
           else
-            ServerModel.Server.SendMessage(userId, ClientRoomRefreshedCommand.CommandId, roomRefreshContent);
+          {
+            var roomRefreshContent = new ClientRoomRefreshedCommand.MessageContent
+            {
+              Room = roomDto,
+              Users = users
+            };
+
+            ServerModel.Server.SendMessage(userNick, ClientRoomRefreshedCommand.CommandId, roomRefreshContent);
+          }
         }
       }
     }

@@ -338,6 +338,7 @@ namespace Engine.Network
       }
     }
 
+    // TODO: move to api
     [SecurityCritical]
     private void RefreshRooms()
     {

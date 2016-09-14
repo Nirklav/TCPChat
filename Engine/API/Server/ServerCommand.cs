@@ -2,6 +2,7 @@
 using Engine.Exceptions;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
+using Engine.Model.Server.Entities;
 using Engine.Network;
 using Engine.Plugins;
 using System.Security;
@@ -50,15 +51,15 @@ namespace Engine.Api.Server
     /// <summary>
     /// Trying to get room. If room not found then it send error message and close room command.
     /// </summary>
-    /// <param name="server">Server guard instance.</param>
+    /// <param name="chat">Server chat instance.</param>
     /// <param name="roomName">Room name.</param>
     /// <param name="connectionId">Connection id.</param>
     /// <param name="room">Result room.</param>
-    /// <returns>Returns true if room found, otherwise false..</returns>
+    /// <returns>Returns true if room found, otherwise false.</returns>
     [SecurityCritical]
-    protected static bool TryGetRoom(ServerGuard server, string roomName, string connectionId, out Room room)
+    protected static bool TryGetRoom(ServerChat chat, string roomName, string connectionId, out Room room)
     {
-      room = server.Chat.TryGetRoom(roomName);
+      room = chat.TryGetRoom(roomName);
       if (room == null)
       {
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { RoomName = roomName };
@@ -69,21 +70,25 @@ namespace Engine.Api.Server
     }
 
     /// <summary>
-    /// Посылает команду обновления комнаты всем ее участникам.
+    /// Send refresh commands to all room users.
     /// </summary>
-    /// <param name="server">Контекст сервера.</param>
-    /// <param name="room">Комната.</param>
+    /// <param name="server">Server chat.</param>
+    /// <param name="room">Refreshed room.</param>
     [SecurityCritical]
-    protected static void RefreshRoom(ServerGuard server, Room room)
+    protected static void RefreshRoom(ServerChat chat, Room room)
     {
-      var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
-      {
-        Room = room,
-        Users = ServerModel.Api.GetRoomUsers(server, room)
-      };
+      var users = chat.GetRoomUserDtos(room.Name);
 
-      foreach (var user in room.Users)
-        ServerModel.Server.SendMessage(user, ClientRoomRefreshedCommand.CommandId, roomRefreshedContent);
+      foreach (var userNick in room.Users)
+      {
+        var roomRefreshedContent = new ClientRoomRefreshedCommand.MessageContent
+        {
+          Room = room.ToDto(userNick),
+          Users = users
+        };
+
+        ServerModel.Server.SendMessage(userNick, ClientRoomRefreshedCommand.CommandId, roomRefreshedContent);
+      }
     }
     #endregion
   }

@@ -26,7 +26,7 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (content.Room == null)
-        throw new ArgumentNullException("room");
+        throw new ArgumentNullException("content.Room");
 
       using (var client = ClientModel.Get())
       {
@@ -57,14 +57,11 @@ namespace Engine.Api.Client
         room.Enable();
       }
 
-      var eventArgs = new RoomEventArgs
-      {
-        RoomName = content.Room.Name,
-        Users = content.Users
+      var users = content.Users
           .Select(u => u.Nick)
-          .ToList()
-      };
-      ClientModel.Notifier.RoomOpened(eventArgs);
+          .ToList();
+
+      ClientModel.Notifier.RoomOpened(new RoomEventArgs(content.Room.Name, users));
     }
 
     [Serializable]

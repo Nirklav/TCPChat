@@ -1,6 +1,7 @@
 ﻿using Engine.Api.Client;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
+using Engine.Model.Server.Entities;
 using System;
 using System.Security;
 
@@ -22,27 +23,38 @@ namespace Engine.Api.Server
     protected override void OnRun(MessageContent content, ServerCommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentNullException("RoomName");
+        throw new ArgumentNullException("content.RoomName");
 
       using(var server = ServerModel.Get())
       {
-        if (server.Rooms.ContainsKey(content.RoomName))
+        if (server.Chat.IsRoomExist(content.RoomName))
         {
           ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAlreadyExist);
           return;
         }
 
-        var creatingRoom = content.Type == RoomType.Chat
-          ? new Room(args.ConnectionId, content.RoomName)
-          : new VoiceRoom(args.ConnectionId, content.RoomName);
+        Room room = null;
+        if (content.Type == RoomType.Chat)
+        {
+          var textRoom = new ServerRoom(args.ConnectionId, content.RoomName);
+          server.Chat.AddRoom(textRoom);
+          room = textRoom;
+        }
 
-        server.Rooms.Add(content.RoomName, creatingRoom);
+        if (content.Type == RoomType.Voice)
+        {
+          var voiceRoom = new ServerVoiceRoom(args.ConnectionId, content.RoomName);
+          server.Chat.AddVoiceRoom(voiceRoom);
+          room = voiceRoom;
+        }
+
+        if (room == null)
+          throw new ArgumentException("content.RoomType");
 
         var sendingContent = new ClientRoomOpenedCommand.MessageContent 
         {
-          Room = creatingRoom,
-          Type = content.Type,
-          Users = ServerModel.Api.GetRoomUsers(server, creatingRoom)
+          Room = room.ToDto(args.ConnectionId),
+          Users = server.Chat.GetRoomUserDtos(room.Name)
         };
 
         ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomOpenedCommand.CommandId, sendingContent);

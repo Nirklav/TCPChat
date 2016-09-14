@@ -1,4 +1,5 @@
 ﻿using Engine.Api;
+using Engine.Api.Client.P2P;
 using Engine.Helpers;
 using Engine.Model.Client;
 using Lidgren.Network;
@@ -118,7 +119,7 @@ namespace Engine.Network
       {
         var localPoint = new IPEndPoint(Connection.GetIpAddress(remotePoint.AddressFamily), _handler.Port);
 
-        hail.Write(client.User.Nick);
+        hail.Write(client.Chat.User.Nick);
         hail.Write(localPoint);
       }
 
@@ -346,7 +347,7 @@ namespace Engine.Network
     {
       string nick;
       using (var client = ClientModel.Get())
-        nick = client.User.Nick;
+        nick = client.Chat.User.Nick;
 
       var publicKeyBlob = _diffieHellman.PublicKey.ToByteArray();
       var hailMessage = _handler.CreateMessage();
@@ -373,7 +374,7 @@ namespace Engine.Network
         commands.Add(new WaitingCommandContainer(package, rawData, unreliable));
       }
 
-      ClientModel.Api.ConnectToPeer(peerId);
+      ClientModel.Api.Perform(new ClientConnectToPeerAction(peerId));
     }
 
     [SecurityCritical]
@@ -442,7 +443,8 @@ namespace Engine.Network
         {
           case NetIncomingMessageType.ErrorMessage:
           case NetIncomingMessageType.WarningMessage:
-            ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = new NetException(message.ReadString()) });
+            var error = new NetException(message.ReadString());
+            ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(error));
             break;
 
           case NetIncomingMessageType.ConnectionApproval:
@@ -550,7 +552,7 @@ namespace Engine.Network
       }
       catch (Exception exc)
       {
-        ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = exc });
+        ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(exc));
         ClientModel.Logger.Write(exc);
       }
     }

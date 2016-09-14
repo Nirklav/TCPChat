@@ -85,29 +85,6 @@ namespace Engine.Api.Server
     }
 
     /// <summary>
-    /// Напрямую соединяет пользователей.
-    /// </summary>
-    /// <param name="senderId">Пользователь запросивший соединение.</param>
-    /// <param name="senderPoint">Адрес пользователя запросившего соединение.</param>
-    /// <param name="requestId">Запрвшиваемый пользователь.</param>
-    /// <param name="requestPoint">Адрес запрашиваемого пользователя.</param>
-    [SecuritySafeCritical]
-    public void IntroduceConnections(string senderId, IPEndPoint senderPoint, string requestId, IPEndPoint requestPoint)
-    {
-      using (var server = ServerModel.Get())
-      {
-        var content = new ClientWaitPeerConnectionCommand.MessageContent
-        {
-          RequestPoint = requestPoint,
-          SenderPoint = senderPoint,
-          RemoteInfo = server.Users[senderId],
-        };
-
-        ServerModel.Server.SendMessage(requestId, ClientWaitPeerConnectionCommand.CommandId, content);
-      }
-    }
-
-    /// <summary>
     /// Посылает системное сообщение клиенту.
     /// </summary>
     /// <param name="nick">Пользователь получащий сообщение.</param>
@@ -171,7 +148,7 @@ namespace Engine.Api.Server
 
       // Closing the connection after model clearing
       ServerModel.Server.CloseConnection(nick);
-      ServerModel.Notifier.Unregistered(new ServerRegistrationEventArgs { Nick = nick });
+      ServerModel.Notifier.Unregistered(new ServerRegistrationEventArgs(nick));
     }
   }
 }

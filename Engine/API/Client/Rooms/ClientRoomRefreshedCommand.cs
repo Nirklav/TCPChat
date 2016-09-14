@@ -1,12 +1,12 @@
 ﻿using Engine.Model.Client;
-using Engine.Model.Server;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Security;
-using Engine.Model.Common.Dto;
 using Engine.Model.Client.Entities;
+using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
+using Engine.Model.Server.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security;
 
 namespace Engine.Api.Client
 {
@@ -26,7 +26,7 @@ namespace Engine.Api.Client
     protected override void OnRun(MessageContent content, ClientCommandArgs args)
     {
       if (content.Room == null)
-        throw new ArgumentNullException("room");
+        throw new ArgumentNullException("content.Room");
 
       using (var client = ClientModel.Get())
       {
@@ -37,21 +37,18 @@ namespace Engine.Api.Client
         UpdateRoomFiles(chat, room, content.Room);
         var removedUsers = UpdateRoomUsers(chat, room, content.Room);
 
-        if (room.Name == ServerModel.MainRoomName)
+        if (room.Name == ServerChat.MainRoomName)
         {
           foreach (var nick in removedUsers)
             chat.RemoveUser(nick);
         }
       }
 
-      var eventArgs = new RoomEventArgs
-      {
-        RoomName = content.Room.Name,
-        Users = content.Users
-          .Select(u => u.Nick)
-          .ToList()
-      };
-      ClientModel.Notifier.RoomRefreshed(eventArgs);
+      var users = content.Users
+        .Select(u => u.Nick)
+        .ToList();
+
+      ClientModel.Notifier.RoomRefreshed(new RoomEventArgs(content.Room.Name, users));
     }
 
     [SecurityCritical]

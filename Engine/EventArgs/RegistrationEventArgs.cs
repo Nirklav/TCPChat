@@ -8,5 +8,11 @@ namespace Engine
   {
     public bool Registered { get; set; }
     public SystemMessageId Message { get; set; }
+
+    public RegistrationEventArgs(bool registered, SystemMessageId message)
+    {
+      Registered = registered;
+      Message = message;
+    }
   }
 }
