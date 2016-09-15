@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Server.Messages;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
@@ -35,7 +36,7 @@ namespace Engine.Api.Server
 
         if (!room.IsUserExist(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAccessDenied));
           return;
         }
 

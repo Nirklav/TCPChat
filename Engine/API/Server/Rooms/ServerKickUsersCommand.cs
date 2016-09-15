@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Server.Messages;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using Engine.Model.Server.Entities;
@@ -31,7 +32,7 @@ namespace Engine.Api.Server
 
       if (content.RoomName == ServerChat.MainRoomName)
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAccessDenied));
         return;
       }
 
@@ -43,7 +44,7 @@ namespace Engine.Api.Server
 
         if (room.Admin != args.ConnectionId)
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAccessDenied));
           return;
         }
 
@@ -56,7 +57,7 @@ namespace Engine.Api.Server
 
           if (userNick == room.Admin)
           {
-            ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
+            ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAccessDenied));
             continue;
           }
 
@@ -64,7 +65,7 @@ namespace Engine.Api.Server
           ServerModel.Server.SendMessage(userNick, ClientRoomClosedCommand.CommandId, sendingContent);
         }
 
-        RefreshRoom(server, room);
+        RefreshRoom(server.Chat, room);
       }
     }
 

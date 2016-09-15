@@ -44,6 +44,7 @@ namespace Engine.Model.Client.Entities
     /// </summary>
     /// <param name="roomName">Room name that be removed.</param>
     /// <returns>Removed room.</returns>
+    [SecuritySafeCritical]
     public override Room RemoveRoom(string roomName)
     {
       var room = base.RemoveRoom(roomName);
@@ -123,10 +124,20 @@ namespace Engine.Model.Client.Entities
     }
 
     /// <summary>
+    /// Return all posted files.
+    /// </summary>
+    public IEnumerable<PostedFile> PostedFiles
+    {
+      [SecuritySafeCritical]
+      get { return _postedFiles.Values; }
+    }
+
+    /// <summary>
     /// Returns posted file.
     /// </summary>
     /// <param name="fileId">File identifier.</param>
     /// <returns>Returns PostedFile if it exist, otherwise null.</returns>
+    [SecuritySafeCritical]
     public PostedFile TryGetPostedFile(FileId fileId)
     {
       PostedFile posted;
@@ -188,6 +199,7 @@ namespace Engine.Model.Client.Entities
       }
     }
 
+    [SecurityCritical]
     private void RemovePostedFileImpl(string roomName, FileId fileId)
     {
       PostedFile posted;

@@ -104,7 +104,9 @@
     <Compile Include="Api\Client\Rooms\ClientRoomOpenedCommand.cs" />
     <Compile Include="Api\Client\Rooms\ClientRoomRefreshedCommand.cs" />
     <Compile Include="Api\Client\Voice\ClientPlayVoiceCommand.cs" />
+    <Compile Include="Api\Server\Messages\ServerSendSystemMessageAction.cs" />
     <Compile Include="Api\Server\P2P\ServerIntroduceConnectionsAction.cs" />
+    <Compile Include="Api\Server\P2P\ServerSendP2PConnectRequestAction.cs" />
     <Compile Include="Api\Server\ServerCommand.cs" />
     <Compile Include="Api\Server\Files\ServerAddFileToRoomCommand.cs" />
     <Compile Include="Api\Server\Files\ServerRemoveFileFromRoomCommand.cs" />

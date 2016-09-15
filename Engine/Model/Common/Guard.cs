@@ -34,9 +34,10 @@ namespace Engine.Model
       if (_current == this)
         _current = null;
 
+      var obj = _obj;
       _obj = default(T);
 
-      Monitor.Exit(_obj);
+      Monitor.Exit(obj);
     }
   }
 }

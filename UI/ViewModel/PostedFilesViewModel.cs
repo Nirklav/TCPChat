@@ -1,5 +1,6 @@
-﻿using Engine.Model.Client;
-using Engine.Model.Entities;
+﻿using Engine.Api.Client.Files;
+using Engine.Model.Client;
+using Engine.Model.Common.Entities;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -20,17 +21,20 @@ namespace UI.ViewModel
       {
         var items = new Dictionary<string, PostedFileRoomViewModel>();
 
-        foreach (var file in client.PostedFiles)
+        foreach (var file in client.Chat.PostedFiles)
         {
-          PostedFileRoomViewModel item;
-          if (!items.TryGetValue(file.RoomName, out item))
+          foreach (var roomName in file.RoomNames)
           {
-            item = new PostedFileRoomViewModel(client, file.RoomName, this);
-            items.Add(file.RoomName, item);
-            Rooms.Add(item);
-          }
+            PostedFileRoomViewModel item;
+            if (!items.TryGetValue(roomName, out item))
+            {
+              item = new PostedFileRoomViewModel(client, roomName, this);
+              items.Add(roomName, item);
+              Rooms.Add(item);
+            }
 
-          item.PostedFiles.Add(new PostedFileViewModel(client, file, item));
+            item.PostedFiles.Add(new PostedFileViewModel(client, file, item));
+          }
         }
       }
     }
@@ -92,7 +96,7 @@ namespace UI.ViewModel
     {
       parent.RemoveFile(this);
 
-      ClientModel.Api.RemoveFileFromRoom(parent.RoomName, FileId);
+      ClientModel.Api.Perform(new ClientRemoveFileAction(parent.RoomName, FileId));
     }
   }
 }

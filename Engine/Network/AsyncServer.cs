@@ -280,7 +280,6 @@ namespace Engine.Network
     private void OnTimer(object arg)
     {
       RefreshConnections();
-      RefreshRooms();
 
       lock (_timerSync)
         if (_systemTimer != null)
@@ -334,28 +333,6 @@ namespace Engine.Network
             ServerModel.Logger.Write(e);
             CloseConnection(id);
           }
-        }
-      }
-    }
-
-    // TODO: move to api
-    [SecurityCritical]
-    private void RefreshRooms()
-    {
-      if (!ServerModel.IsInited)
-        return;
-
-      using (var server = ServerModel.Get())
-      {
-        var roomsNames = server.Rooms.Keys.ToArray();
-        foreach (var name in roomsNames)
-        {
-          if (name == ServerModel.MainRoomName)
-            continue;
-
-          var room = server.Rooms[name];
-          if (room.Users.Count == 0)
-            server.Rooms.Remove(name);
         }
       }
     }

@@ -137,7 +137,7 @@ namespace Engine.Network
     [SecurityCritical]
     private void TrySendConnectRequest(string connectionId)
     {
-      bool needSend = false;
+      var needSend = false;
 
       lock (_syncObject)
       {
@@ -150,7 +150,7 @@ namespace Engine.Network
       }
 
       if (needSend)
-        ServerModel.Api.SendP2PConnectRequest(connectionId, Port);
+        ServerModel.Api.Perform(new ServerSendP2PConnectRequestAction(connectionId, Port));
     }
 
     [SecurityCritical]

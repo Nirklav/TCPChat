@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Server.Messages;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
@@ -35,13 +36,13 @@ namespace Engine.Api.Server
 
         if (!room.IsUserExist(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAccessDenied));
           return;
         }
 
         if (content.MessageId != null && !room.IsMessageBelongToUser(args.ConnectionId, content.MessageId.Value))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.MessageEditAccessDenied);
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.MessageEditAccessDenied));
           return;
         }
 

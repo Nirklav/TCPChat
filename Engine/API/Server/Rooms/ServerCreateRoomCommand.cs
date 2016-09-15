@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Server.Messages;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using Engine.Model.Server.Entities;
@@ -29,7 +30,7 @@ namespace Engine.Api.Server
       {
         if (server.Chat.IsRoomExist(content.RoomName))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAlreadyExist);
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAlreadyExist));
           return;
         }
 

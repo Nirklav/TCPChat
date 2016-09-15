@@ -1,7 +1,11 @@
 ﻿using Engine;
+using Engine.Api.Client.Files;
+using Engine.Api.Client.Messages;
+using Engine.Api.Client.Rooms;
 using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
+using Engine.Model.Server.Entities;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -145,7 +149,7 @@ namespace UI.ViewModel
     {
       Init(main, null);
 
-      Name = ServerModel.MainRoomName;
+      Name = ServerChat.MainRoomName;
       Type = RoomType.Chat;
       Enabled = true;
     }
@@ -157,12 +161,10 @@ namespace UI.ViewModel
 
       using (var client = ClientModel.Get())
       {
-        Room room;
-        if (!client.Rooms.TryGetValue(roomName, out room))
-          throw new ArgumentException("roomName");
+        var room = client.Chat.GetRoom(roomName);
 
         Name = room.Name;
-        Type = room.Type;
+        Type = room is VoiceRoom ? RoomType.Voice : RoomType.Chat;
         Enabled = room.Enabled;
 
         FillMessages(client);
@@ -278,10 +280,16 @@ namespace UI.ViewModel
       try
       {
         if (SelectedReceiver.IsAllInRoom)
-          ClientModel.Api.SendMessage(SelectedMessageId, Message, Name);
+        {
+          var action = SelectedMessageId == null
+            ? new ClientSendMessageAction(Name, Message)
+            : new ClientSendMessageAction(Name, SelectedMessageId.Value, Message);
+
+          ClientModel.Api.Perform(action);
+        }
         else
         {
-          ClientModel.Api.SendPrivateMessage(SelectedReceiver.Nick, Message);
+          ClientModel.Api.Perform(new ClientSendPrivateMessageAction(SelectedReceiver.Nick, Message));
           AddPrivateMessage(ClientModel.Client.Id, SelectedReceiver.Nick, Message);
         }
       }
@@ -311,7 +319,7 @@ namespace UI.ViewModel
         var result = openDialog.ShowDialog();
 
         if (result == DialogResult.OK)
-          ClientModel.Api.AddFileToRoom(Name, openDialog.FileName);
+          ClientModel.Api.Perform(new ClientAddFileAction(Name, openDialog.FileName));
       }
       catch (SocketException se)
       {
@@ -325,7 +333,8 @@ namespace UI.ViewModel
       {
         using (var client = ClientModel.Get())
         {
-          var availableUsers = client.Users.Keys.Except(Users.Select(u => u.Nick));
+          var allUsers = client.Chat.GetUsers();
+          var availableUsers = allUsers.Select(u => u.Nick).Except(Users.Select(u => u.Nick));
           if (!availableUsers.Any())
           {
             AddSystemMessage(Localizer.Instance.Localize(NoBodyToInviteKey));
@@ -334,7 +343,7 @@ namespace UI.ViewModel
 
           var dialog = new UsersOperationDialog(InviteInRoomTitleKey, availableUsers);
           if (dialog.ShowDialog() == true)
-            ClientModel.Api.InviteUsers(Name, dialog.Users);
+            ClientModel.Api.Perform(new ClientInviteUsersAction(Name, dialog.Users));
         }
       }
       catch (SocketException se)
@@ -349,7 +358,7 @@ namespace UI.ViewModel
       {
         var dialog = new UsersOperationDialog(KickFormRoomTitleKey, Users.Select(u => u.Nick));
         if (dialog.ShowDialog() == true)
-          ClientModel.Api.KickUsers(Name, dialog.Users);
+          ClientModel.Api.Perform(new ClientKickUsersAction(Name, dialog.Users));
       }
       catch (SocketException se)
       {
@@ -369,13 +378,21 @@ namespace UI.ViewModel
     private void EnableVoice(object obj)
     {
       Enabled = true;
-      ClientModel.Api.EnableVoiceRoom(Name);
+      using (var client = ClientModel.Get())
+      {
+        var room = client.Chat.GetRoom(Name);
+        room.Enable();
+      }
     }
 
     private void DisableVoice(object obj)
     {
       Enabled = false;
-      ClientModel.Api.DisableVoiceRoom(Name);
+      using (var client = ClientModel.Get())
+      {
+        var room = client.Chat.GetRoom(Name);
+        room.Disable();
+      }
     }
     #endregion
 
@@ -419,7 +436,7 @@ namespace UI.ViewModel
         if (e.RoomName == Name)
           RefreshUsers(client);
         
-        if (e.RoomName == ServerModel.MainRoomName)
+        if (e.RoomName == ServerChat.MainRoomName)
           RefreshReceivers(client);
       }
     }
@@ -432,10 +449,7 @@ namespace UI.ViewModel
         user.Dispose();
       Users.Clear();
 
-      Room room;
-      if (!client.Rooms.TryGetValue(Name, out room))
-        throw new ArgumentException("e.RoomName");
-
+      var room = client.Chat.GetRoom(Name);
       foreach (var user in room.Users)
         Users.Add(new UserViewModel(user, this));
 
@@ -453,9 +467,9 @@ namespace UI.ViewModel
         : selectedReceiver.Nick;
       var newReciver = (UserViewModel) null;
 
-      foreach (var user in client.Users.Values)
+      foreach (var user in client.Chat.GetUsers())
       {
-        if (user.Nick == client.User.Nick)
+        if (user.Nick == client.Chat.User.Nick)
           continue;
 
         var receiver = new UserViewModel(user.Nick, this);
@@ -474,10 +488,7 @@ namespace UI.ViewModel
 
     private void FillMessages(ClientGuard client)
     {
-      Room room;
-      if (!client.Rooms.TryGetValue(Name, out room))
-        throw new ArgumentException("e.RoomName");
-
+      var room = client.Chat.GetRoom(Name);
       var ordered = room.Messages.OrderBy(m => m.Time);
       foreach (var msg in ordered)
         AddMessage(msg.Id, msg.Time, msg.Owner, msg.Text);

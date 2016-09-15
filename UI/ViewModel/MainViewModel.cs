@@ -1,7 +1,9 @@
 ﻿using Engine;
+using Engine.Api.Client.Registrations;
+using Engine.Api.Client.Rooms;
 using Engine.Exceptions;
 using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Collections.ObjectModel;
@@ -205,7 +207,7 @@ namespace UI.ViewModel
       try
       {
         if (ClientModel.Api != null)
-          ClientModel.Api.Unregister();
+          ClientModel.Api.Perform(new ClientUnregisterAction());
       }
       catch (Exception) { }
 
@@ -221,7 +223,7 @@ namespace UI.ViewModel
       {
         var dialog = new CreateRoomDialog();
         if (dialog.ShowDialog() == true && ClientModel.Api != null)
-          ClientModel.Api.CreateRoom(dialog.Name, dialog.Type);
+          ClientModel.Api.Perform(new ClientCreateRoomAction(dialog.Name, dialog.Type));
       }
       catch (SocketException se)
       {
@@ -238,7 +240,7 @@ namespace UI.ViewModel
           return;
 
         if (ClientModel.Api != null)
-          ClientModel.Api.DeleteRoom(SelectedRoom.Name);
+          ClientModel.Api.Perform(new ClientDeleteRoomAction(SelectedRoom.Name));
       }
       catch (SocketException se)
       {
@@ -255,7 +257,7 @@ namespace UI.ViewModel
           return;
 
         if (ClientModel.Api != null)
-          ClientModel.Api.ExitFromRoom(SelectedRoom.Name);
+          ClientModel.Api.Perform(new ClientExitFromRoomAction(SelectedRoom.Name));
       }
       catch (SocketException se)
       {
@@ -294,7 +296,7 @@ namespace UI.ViewModel
     private void ClientConnect(ConnectEventArgs args)
     {
       if (args.Error == null)
-        ClientModel.Api.Register();
+        ClientModel.Api.Perform(new ClientRegisterAction());
       else
       {
         SelectedRoom.AddSystemMessage(args.Error.Message);
@@ -444,7 +446,7 @@ namespace UI.ViewModel
         try
         {
           if (ClientModel.Api != null)
-            ClientModel.Api.Unregister();
+            ClientModel.Api.Perform(new ClientUnregisterAction());
         }
         catch (Exception)
         {

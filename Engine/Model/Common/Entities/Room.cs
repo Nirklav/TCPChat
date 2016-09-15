@@ -98,6 +98,14 @@ namespace Engine.Model.Common.Entities
 
     #region users
     /// <summary>
+    /// Returns true if room is empty, otherwise false.
+    /// </summary>
+    public bool IsEmpty
+    {
+      get { return _users.Count == 0; }
+    }
+
+    /// <summary>
     /// Users collection, including administrator.
     /// </summary>
     public IEnumerable<string> Users

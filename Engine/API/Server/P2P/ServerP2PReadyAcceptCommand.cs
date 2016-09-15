@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Server.Messages;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
@@ -34,7 +35,7 @@ namespace Engine.Api.Server
 
       if (!ServerModel.Server.ContainsConnection(content.ReceiverNick))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.P2PUserNotExist);
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.P2PUserNotExist));
         return;
       }
 

@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Server.Messages;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using Engine.Model.Server.Entities;
@@ -28,7 +29,7 @@ namespace Engine.Api.Server
 
       if (content.RoomName == ServerChat.MainRoomName)
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomCantLeaveMainRoom);
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomCantLeaveMainRoom));
         return;
       }
 
@@ -40,22 +41,27 @@ namespace Engine.Api.Server
 
         if (!room.IsUserExist(args.ConnectionId))
         {
-          ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.RoomAccessDenied);
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAccessDenied));
           return;
         }
 
-        room.RemoveUser(args.ConnectionId);
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { RoomName = room.Name };
         ServerModel.Server.SendMessage(args.ConnectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
 
-        if (room.Admin == args.ConnectionId)
+        room.RemoveUser(args.ConnectionId);
+        if (room.IsEmpty)
+          server.Chat.RemoveRoom(room.Name);
+        else
         {
-          room.Admin = room.Users.FirstOrDefault();
-          if (room.Admin != null)
-            ServerModel.Api.SendSystemMessage(room.Admin, SystemMessageId.RoomAdminChanged, room.Name);
-        }
+          if (room.Admin == args.ConnectionId)
+          {
+            room.Admin = room.Users.FirstOrDefault();
+            if (room.Admin != null)
+              ServerModel.Api.Perform(new ServerSendSystemMessageAction(room.Admin, SystemMessageId.RoomAdminChanged, room.Name));
+          }
 
-        RefreshRoom(server, room);
+          RefreshRoom(server.Chat, room);
+        }
       }
     }
 

@@ -1,4 +1,5 @@
-﻿using Engine.Model.Common.Entities;
+﻿using Engine.Api.Server.Messages;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
@@ -25,7 +26,7 @@ namespace Engine.Api.Server
 
       if (!ServerModel.Server.ContainsConnection(content.Nick))
       {
-        ServerModel.Api.SendSystemMessage(args.ConnectionId, SystemMessageId.P2PUserNotExist);
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.P2PUserNotExist));
         return;
       }
 

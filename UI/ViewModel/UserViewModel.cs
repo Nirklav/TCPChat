@@ -1,5 +1,6 @@
-﻿using Engine.Model.Client;
-using Engine.Model.Entities;
+﻿using Engine.Api.Client.Rooms;
+using Engine.Model.Client;
+using Engine.Model.Common.Entities;
 using System;
 using System.Net.Sockets;
 using System.Windows.Input;
@@ -60,8 +61,8 @@ namespace UI.ViewModel
 
         using (var client = ClientModel.Get())
         {
-          User user;
-          if (!client.Users.TryGetValue(nick, out user))
+          var user = client.Chat.TryGetUser(nick);
+          if (user == null)
             return WPFColor.FromRgb(0, 0, 0);
           return WPFColor.FromRgb(user.NickColor.R, user.NickColor.G, user.NickColor.B);
         }
@@ -106,7 +107,7 @@ namespace UI.ViewModel
     {
       try
       {
-        ClientModel.Api.SetRoomAdmin(parent.Name, nick);
+        ClientModel.Api.Perform(new ClientSetRoomAdminAction(parent.Name, nick));
       }
       catch (SocketException se)
       {

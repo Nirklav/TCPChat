@@ -49,14 +49,27 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Get user from room.
     /// </summary>
-    /// <param name="nick">Nick of user that be returns.</param>
+    /// <param name="nick">Nick of user who be returns.</param>
     /// <returns>User.</returns>
     [SecuritySafeCritical]
     public TUser GetUser(string nick)
     {
-      TUser result;
-      if (!_users.TryGetValue(nick, out result))
+      var user = TryGetUser(nick);
+      if (user == null)
         throw new ArgumentException("User does not exist");
+      return user;
+    }
+
+    /// <summary>
+    /// Try get user from room.
+    /// </summary>
+    /// <param name="nick">Nick of user who be returns.></param>
+    /// <returns>Returns user if he exist, otherwise false.</returns>
+    [SecuritySafeCritical]
+    public TUser TryGetUser(string nick)
+    {
+      TUser result;
+      _users.TryGetValue(nick, out result);
       return result;
     }
 

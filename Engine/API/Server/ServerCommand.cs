@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Server.Messages;
 using Engine.Exceptions;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
@@ -64,7 +65,7 @@ namespace Engine.Api.Server
       {
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { RoomName = roomName };
         ServerModel.Server.SendMessage(connectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
-        ServerModel.Api.SendSystemMessage(connectionId, SystemMessageId.RoomNotExist);
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(connectionId, SystemMessageId.RoomNotExist));
       }
       return room != null;
     }
