@@ -6,6 +6,7 @@ using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
+  // TODO: Add the dispose methid
   [Serializable]
   public class Room : IEquatable<Room>
   {

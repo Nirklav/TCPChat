@@ -27,6 +27,6 @@
     /// <summary>
     /// Name and version of Api.
     /// </summary>
-    public const string Name = "StandardAPI v3.4";
+    public const string Name = "StandardAPI v4.0";
   }
 }
