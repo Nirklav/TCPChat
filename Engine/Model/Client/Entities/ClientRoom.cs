@@ -21,5 +21,26 @@ namespace Engine.Model.Client.Entities
       foreach (var message in dto.Messages)
         _messages.Add(message.Id, message);
     }
+
+    #region files
+    [SecuritySafeCritical]
+    public override bool RemoveFile(FileId fileId)
+    {
+      var result = base.RemoveFile(fileId);
+      if (result)
+      {
+        var chat = ClientGuard.CurrentChat;
+
+        // Remove downloading
+        if (chat.IsFileDownloading(fileId))
+          chat.RemoveFileDownload(fileId);
+
+        // Notify
+        var downloadEventArgs = new FileDownloadEventArgs(Name, fileId, 0);
+        ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
+      }
+      return result;
+    }
+    #endregion
   }
 }

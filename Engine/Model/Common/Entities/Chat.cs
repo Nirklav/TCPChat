@@ -103,6 +103,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="roomName">Room name.</param>
     /// <returns>Returns true if room exist, otherwise false.</returns>
+    [SecuritySafeCritical]
     public bool IsRoomExist(string roomName)
     {
       return _rooms.ContainsKey(roomName) || _voiceRooms.ContainsKey(roomName);

@@ -240,7 +240,10 @@ namespace UI.ViewModel
     private FileDescription GetFile(ClientGuard client, FileId fileId)
     {
       var room = client.Chat.GetRoom(parentRoom.Name);
-      return room.TryGetFile(fileId);
+      var file = room.TryGetFile(fileId);
+      if (file == null)
+        throw new InvalidOperationException("File not found");
+      return file;
     }
     #endregion
   }

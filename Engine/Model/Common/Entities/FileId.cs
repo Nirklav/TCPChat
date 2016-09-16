@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
@@ -13,22 +14,26 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="id">Identification.</param>
     /// <param name="owner">File owner nick.</param>
+    [SecuritySafeCritical]
     public FileId(int id, string owner)
     {
       Id = id;
       Owner = owner;
     }
 
+    [SecuritySafeCritical]
     public static bool operator == (FileId first, FileId second)
     {
       return first.Equals(second);
     }
 
+    [SecuritySafeCritical]
     public static bool operator != (FileId first, FileId second)
     {
       return !first.Equals(second);
     }
 
+    [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
       if (obj == null)
@@ -38,11 +43,13 @@ namespace Engine.Model.Common.Entities
       return Equals((FileId)obj);
     }
 
+    [SecuritySafeCritical]
     public bool Equals(FileId other)
     {
       return Id == other.Id && Owner == other.Owner;
     }
 
+    [SecuritySafeCritical]
     public override int GetHashCode()
     {
       return (Id * 397) ^ Owner.GetHashCode();

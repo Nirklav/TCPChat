@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
@@ -15,6 +16,7 @@ namespace Engine.Model.Common.Entities
     /// <param name="id">File identification.</param>
     /// <param name="size">File size.</param>
     /// <param name="name">File name.</param>
+    [SecuritySafeCritical]
     public FileDescription(FileId id, long size, string name)
     {
       _id = id;
@@ -27,6 +29,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public FileId Id
     {
+      [SecuritySafeCritical]
       get { return _id; }
     }
 
@@ -35,6 +38,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public string Name
     {
+      [SecuritySafeCritical]
       get { return _name; }
     }
 
@@ -43,9 +47,11 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public long Size
     {
+      [SecuritySafeCritical]
       get { return _size; }
     }
 
+    [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
       if (ReferenceEquals(obj, null))
@@ -61,6 +67,7 @@ namespace Engine.Model.Common.Entities
       return Equals(file);
     }
 
+    [SecuritySafeCritical]
     public bool Equals(FileDescription file)
     {
       if (ReferenceEquals(file, null))
@@ -72,6 +79,7 @@ namespace Engine.Model.Common.Entities
       return _id == file._id;
     }
 
+    [SecuritySafeCritical]
     public override int GetHashCode()
     {
       return _id.GetHashCode();

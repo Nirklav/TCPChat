@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Common.Dto;
 using System;
 using System.Drawing;
+using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
@@ -20,6 +21,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="nick">User nick.</param>
     /// <param name="nickColor">Nick color.</param>
+    [SecuritySafeCritical]
     public User(string nick, Color nickColor)
     {
       _nick = nick;
@@ -30,6 +32,7 @@ namespace Engine.Model.Common.Entities
     /// Creates new instance of user.
     /// </summary>
     /// <param name="dto">Data transfer object of user.</param>
+    [SecuritySafeCritical]
     public User(UserDto dto)
     {
       _nick = dto.Nick;
@@ -41,6 +44,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public string Nick
     {
+      [SecuritySafeCritical]
       get { return _nick; }
     }
 
@@ -49,9 +53,11 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public Color NickColor
     {
+      [SecuritySafeCritical]
       get { return _nickColor; }
     }
 
+    [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
       if (ReferenceEquals(obj, null))
@@ -67,16 +73,19 @@ namespace Engine.Model.Common.Entities
       return Equals(user);
     }
 
+    [SecuritySafeCritical]
     public override int GetHashCode()
     {
       return _nick.GetHashCode();
     }
 
+    [SecuritySafeCritical]
     public bool Equals(string nick)
     {
       return string.Equals(_nick, nick, StringComparison.OrdinalIgnoreCase);
     }
 
+    [SecuritySafeCritical]
     public bool Equals(User user)
     {
       if (ReferenceEquals(user, null))

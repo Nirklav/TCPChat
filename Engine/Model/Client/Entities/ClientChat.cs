@@ -51,7 +51,10 @@ namespace Engine.Model.Client.Entities
 
       // Remove all posted files.
       foreach (var file in room.Files)
-        RemovePostedFileImpl(roomName, file.Id);
+      {
+        if (file.Id.Owner == _user.Nick)
+          RemovePostedFile(roomName, file.Id);
+      }
 
       return room;
     }
@@ -166,7 +169,7 @@ namespace Engine.Model.Client.Entities
             break;
         }
         var file = new FileDescription(id, info.Length, Path.GetFileName(info.Name));
-        posted = new PostedFile(file, info.Name);
+        posted = new PostedFile(file, info.FullName);
         _postedFiles.Add(posted.File.Id, posted);
       }
 
@@ -175,39 +178,19 @@ namespace Engine.Model.Client.Entities
     }
 
     /// <summary>
-    /// Remove posted file on client from all rooms.
+    /// Remove posted file.
     /// </summary>
     /// <param name="roomName">Room where file was posted.</param>
     /// <param name="fileId">File identifier.</param>
     [SecuritySafeCritical]
     public void RemovePostedFile(string roomName, FileId fileId)
     {
-      // Remove posted files
-      RemovePostedFileImpl(roomName, fileId);
-
-      // Remove file from room
-      var room = TryGetRoom(roomName);
-      if (room != null)
-      {
-        var removed = room.RemoveFile(fileId);
-        if (removed)
-        {
-          // Notify
-          var downloadEventArgs = new FileDownloadEventArgs(roomName, fileId, 0);
-          ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
-        }
-      }
-    }
-
-    [SecurityCritical]
-    private void RemovePostedFileImpl(string roomName, FileId fileId)
-    {
       PostedFile posted;
       if (!_postedFiles.TryGetValue(fileId, out posted))
-        throw new InvalidOperationException("File not posted");
+        throw new InvalidOperationException("Posted file not found");
 
       if (!posted.RoomNames.Remove(roomName))
-        throw new InvalidOperationException("File not posted");
+        throw new InvalidOperationException("Posted file not found");
 
       if (posted.RoomNames.Count == 0)
       {

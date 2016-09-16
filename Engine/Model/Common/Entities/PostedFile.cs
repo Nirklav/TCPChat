@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
@@ -13,23 +14,42 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// File description.
     /// </summary>
-    public FileDescription File { get; private set; }
+    public FileDescription File
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecuritySafeCritical]
+      private set;
+    }
 
     /// <summary>
     /// Rooms where file was posted.
     /// </summary>
-    public HashSet<string> RoomNames { get; private set; }
+    public HashSet<string> RoomNames
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecuritySafeCritical]
+      private set;
+    }
 
     /// <summary>
     /// Opened file stream.
     /// </summary>
-    public FileStream ReadStream { get; private set; }
+    public FileStream ReadStream
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecuritySafeCritical]
+      private set;
+    }
 
     /// <summary>
     /// Creates the posted file instance.
     /// </summary>
     /// <param name="file">File description.</param>
     /// <param name="fileName">Full path to file.</param>
+    [SecuritySafeCritical]
     public PostedFile(FileDescription file, string fileName)
     {
       File = file;
@@ -40,6 +60,7 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Dispose posted file resources.
     /// </summary>
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (_disposed)
@@ -51,6 +72,7 @@ namespace Engine.Model.Common.Entities
         ReadStream.Dispose();
     }
 
+    [SecuritySafeCritical]
     public bool Equals(PostedFile other)
     {
       if (ReferenceEquals(other, null))
@@ -60,6 +82,7 @@ namespace Engine.Model.Common.Entities
       return File.Equals(other.File);
     }
 
+    [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
       if (ReferenceEquals(obj, null))
@@ -72,6 +95,7 @@ namespace Engine.Model.Common.Entities
       return Equals(other);
     }
 
+    [SecuritySafeCritical]
     public override int GetHashCode()
     {
       unchecked

@@ -38,9 +38,6 @@ namespace Engine.Api.Client.Files
     [SecuritySafeCritical]
     public void Perform()
     {
-      if (File.Exists(_savePath))
-        throw new InvalidOperationException("File already exist.");
-
       using (var client = ClientModel.Get())
       {
         var chat = client.Chat;

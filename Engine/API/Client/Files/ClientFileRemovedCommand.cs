@@ -6,10 +6,10 @@ using System.Security;
 namespace Engine.Api.Client
 {
   [SecurityCritical]
-  class ClientPostedFileDeletedCommand :
-    ClientCommand<ClientPostedFileDeletedCommand.MessageContent>
+  class ClientFileRemovedCommand :
+    ClientCommand<ClientFileRemovedCommand.MessageContent>
   {
-    public const long CommandId = (long)ClientCommandId.PostedFileDeleted;
+    public const long CommandId = (long)ClientCommandId.FileRemoved;
 
     public override long Id
     {
@@ -24,7 +24,12 @@ namespace Engine.Api.Client
         throw new ArgumentException("content.RoomName");
 
       using (var client = ClientModel.Get())
-        client.Chat.RemovePostedFile(content.RoomName, content.FileId);
+      {
+        // Remove file from room
+        var room = client.Chat.TryGetRoom(content.RoomName);
+        if (room != null)
+          room.RemoveFile(content.FileId);
+      }
     }
 
     [Serializable]

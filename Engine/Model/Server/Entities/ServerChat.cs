@@ -13,7 +13,7 @@ namespace Engine.Model.Server.Entities
     [SecurityCritical]
     public ServerChat()
     {
-
+      AddRoom(new ServerRoom(null, MainRoomName));
     }
 
     #region users

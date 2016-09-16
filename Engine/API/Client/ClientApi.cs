@@ -34,7 +34,7 @@ namespace Engine.Api.Client
       AddCommand(new ClientFilePostedCommand());
       AddCommand(new ClientRoomOpenedCommand());
       AddCommand(new ClientRoomClosedCommand());
-      AddCommand(new ClientPostedFileDeletedCommand());
+      AddCommand(new ClientFileRemovedCommand());
       AddCommand(new ClientReadFilePartCommand());
       AddCommand(new ClientWriteFilePartCommand());
       AddCommand(new ClientPingResponceCommand());

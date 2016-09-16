@@ -89,7 +89,7 @@
     <Compile Include="Api\ICommand.cs" />
     <Compile Include="Api\Client\ClientCommandId.cs" />
     <Compile Include="Api\Client\Files\ClientFilePostedCommand.cs" />
-    <Compile Include="Api\Client\Files\ClientPostedFileDeletedCommand.cs" />
+    <Compile Include="Api\Client\Files\ClientFileRemovedCommand.cs" />
     <Compile Include="Api\Client\Files\ClientReadFilePartCommand.cs" />
     <Compile Include="Api\Client\Files\ClientWriteFilePartCommand.cs" />
     <Compile Include="Api\Client\Messages\ClientOutRoomMessageCommand.cs" />

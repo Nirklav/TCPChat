@@ -2,6 +2,7 @@
 using Engine.Model.Common.Entities;
 using System;
 using System.Drawing;
+using System.Security;
 
 namespace Engine.Model.Client.Entities
 {
@@ -15,6 +16,7 @@ namespace Engine.Model.Client.Entities
     /// </summary>
     /// <param name="nick">User nick.</param>
     /// <param name="nickColor">Nick color.</param>
+    [SecuritySafeCritical]
     public ClientUser(string nick, Color color)
       : base(nick, color)
     {
@@ -25,6 +27,7 @@ namespace Engine.Model.Client.Entities
     /// Creates new instance of user.
     /// </summary>
     /// <param name="dto">Data transfer object of user.</param>
+    [SecuritySafeCritical]
     public ClientUser(UserDto dto)
       : base(dto)
     {
@@ -35,6 +38,7 @@ namespace Engine.Model.Client.Entities
     /// Checks is voice active for user.
     /// </summary>
     /// <returns>Returns true if voice active, otherwise false.</returns>
+    [SecuritySafeCritical]
     public bool IsVoiceActive()
     {
       return _voiceCounter > 0;
@@ -44,6 +48,7 @@ namespace Engine.Model.Client.Entities
     /// Increments voice counter.
     /// Counter used to check voice state (enabled/disabled). 
     /// </summary>
+    [SecuritySafeCritical]
     public void IncVoiceCounter()
     {
       _voiceCounter++;
@@ -53,6 +58,7 @@ namespace Engine.Model.Client.Entities
     /// Decrements voice counter.
     /// Counter used to check voice state (enabled/disabled). 
     /// </summary>
+    [SecuritySafeCritical]
     public void DecVoiceCounter()
     {
       if (_voiceCounter == 0)

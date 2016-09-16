@@ -50,14 +50,14 @@ namespace Engine.Api.Server
         room.RemoveFile(file.Id);
         ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.FileRemoved, file.Name));
 
-        var postedFileDeletedContent = new ClientPostedFileDeletedCommand.MessageContent
+        var postedFileDeletedContent = new ClientFileRemovedCommand.MessageContent
         {
           RoomName = room.Name,
           FileId = file.Id
         };
 
         foreach (string user in room.Users)
-          ServerModel.Server.SendMessage(user, ClientPostedFileDeletedCommand.CommandId, postedFileDeletedContent);
+          ServerModel.Server.SendMessage(user, ClientFileRemovedCommand.CommandId, postedFileDeletedContent);
       }
     }
 

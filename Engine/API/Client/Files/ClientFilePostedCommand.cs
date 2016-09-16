@@ -29,7 +29,10 @@ namespace Engine.Api.Client
       using (var client = ClientModel.Get())
       {
         var room = client.Chat.GetRoom(content.RoomName);
-        room.AddFile(content.File);
+
+        // File may be posted twice, it's allowed
+        if (!room.IsFileExist(content.File.Id))
+          room.AddFile(content.File);
       }
 
       var receiveMessageArgs = new ReceiveMessageEventArgs

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
@@ -12,23 +13,42 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// File Description.
     /// </summary>
-    public FileDescription File { get; private set; }
+    public FileDescription File
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Saving file stream.
     /// </summary>
-    public FileStream WriteStream { get; private set; }
+    public FileStream WriteStream
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Path where file stored.
     /// </summary>
-    public string FullName { get; private set; }
+    public string FullName
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
 
     /// <summary>
     /// Create the instance of DownloadingFile.
     /// </summary>
     /// <param name="file">File description.</param>
     /// <param name="fullName">Path where the file will be stored on disc.</param>
+    [SecuritySafeCritical]
     public DownloadingFile(FileDescription file, string fullName)
     {
       File = file;
@@ -39,6 +59,7 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Dispose the resources of DownloadingFile.
     /// </summary>
+    [SecuritySafeCritical]
     public void Dispose()
     {
       if (_disposed)

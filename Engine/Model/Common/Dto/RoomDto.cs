@@ -36,7 +36,9 @@ namespace Engine.Model.Common.Dto
       Messages = messages.Select(m => m.Clone()).ToList();
 
       Type = type;
-      ConnectTo = new List<string>(connectTo);
+
+      if (connectTo != null)
+        ConnectTo = new List<string>(connectTo);
     }
   }
 }

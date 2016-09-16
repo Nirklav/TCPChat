@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
@@ -9,6 +10,7 @@ namespace Engine.Model.Common.Entities
     public int Bits { get; set; }
     public int Frequency { get; set; }
 
+    [SecuritySafeCritical]
     public AudioQuality(int channels, int bits, int frequency)
     {
       if (channels != 2 && channels != 1)
@@ -25,11 +27,13 @@ namespace Engine.Model.Common.Entities
       Frequency = frequency;
     }
 
+    [SecuritySafeCritical]
     public override string ToString()
     {
       return string.Format("{0} бит / {1} Гц", Bits, Frequency);
     }
 
+    [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
       if (ReferenceEquals(obj, null))
@@ -45,6 +49,7 @@ namespace Engine.Model.Common.Entities
       return Equals(quality);
     }
 
+    [SecuritySafeCritical]
     public bool Equals(AudioQuality other)
     {
       if (ReferenceEquals(other, null))
@@ -58,6 +63,7 @@ namespace Engine.Model.Common.Entities
         Frequency == other.Frequency;
     }
 
+    [SecuritySafeCritical]
     public override int GetHashCode()
     {
       int hashCode = Channels;

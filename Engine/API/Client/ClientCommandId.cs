@@ -41,7 +41,7 @@
     RoomRefreshed = 0xF0032,
 
     FilePosted = 0xF0040,
-    PostedFileDeleted = 0xF0041,
+    FileRemoved = 0xF0041,
     ReadFilePart = 0xF0042,
     WriteFilePart = 0xF0043,
 

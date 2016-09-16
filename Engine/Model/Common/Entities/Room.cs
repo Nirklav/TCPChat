@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
@@ -28,6 +29,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="admin">User nick which be administrator of the room.</param>
     /// <param name="name">Room name.</param>
+    [SecuritySafeCritical]
     public Room(string admin, string name)
     {
       _admin = admin;
@@ -46,6 +48,7 @@ namespace Engine.Model.Common.Entities
     /// <param name="admin">User nick which be administrator of the room.</param>
     /// <param name="name">Room name.</param>
     /// <param name="initialUsers">Initial room users list.</param>
+    [SecuritySafeCritical]
     public Room(string admin, string name, IEnumerable<User> initialUsers)
       : this(admin, name)
     {
@@ -58,6 +61,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public string Name
     {
+      [SecuritySafeCritical]
       get { return _name; }
     }
 
@@ -66,7 +70,9 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public string Admin
     {
+      [SecuritySafeCritical]
       get { return _admin; }
+      [SecuritySafeCritical]
       set { _admin = value; }
     }
 
@@ -76,12 +82,14 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public bool Enabled
     {
+      [SecuritySafeCritical]
       get { return _enabled; }
     }
 
     /// <summary>
     /// Enable room.
     /// </summary>
+    [SecuritySafeCritical]
     public virtual void Enable()
     {
       _enabled = true;
@@ -90,6 +98,7 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Disable room.
     /// </summary>
+    [SecuritySafeCritical]
     public virtual void Disable()
     {
       _enabled = false;
@@ -102,6 +111,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public bool IsEmpty
     {
+      [SecuritySafeCritical]
       get { return _users.Count == 0; }
     }
 
@@ -110,6 +120,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public IEnumerable<string> Users
     {
+      [SecuritySafeCritical]
       get { return _users; }
     }
 
@@ -117,6 +128,7 @@ namespace Engine.Model.Common.Entities
     /// Returns true if user with this nick exist in room, otherwise false.
     /// </summary>
     /// <param name="nick">User nick.</param>
+    [SecuritySafeCritical]
     public bool IsUserExist(string nick)
     {
       if (string.IsNullOrEmpty(nick))
@@ -129,6 +141,7 @@ namespace Engine.Model.Common.Entities
     /// Add user to room.
     /// </summary>
     /// <param name="nick">User nick.</param>
+    [SecuritySafeCritical]
     public virtual void AddUser(string nick)
     {
       if (string.IsNullOrEmpty(nick))
@@ -143,6 +156,7 @@ namespace Engine.Model.Common.Entities
     /// Remove user from room, including all his files.
     /// </summary>
     /// <param name="nick">User nick.</param>
+    [SecuritySafeCritical]
     public virtual void RemoveUser(string nick)
     {
       if (string.IsNullOrEmpty(nick))
@@ -169,6 +183,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public IEnumerable<Message> Messages
     {
+      [SecuritySafeCritical]
       get { return _messages.Values; }
     }
 
@@ -178,6 +193,7 @@ namespace Engine.Model.Common.Entities
     /// <param name="nick">User nick which is message owner.</param>
     /// <param name="text">Message text.</param>
     /// <returns>Added message.</returns>
+    [SecuritySafeCritical]
     public Message AddMessage(string nick, string text)
     {
       var message = AddMessage(nick, _lastMessageId, text);
@@ -194,6 +210,7 @@ namespace Engine.Model.Common.Entities
     /// <param name="messageId">Message id. If message with this id already exist then added text be contacted to him.</param>
     /// <param name="text">Message text.</param>
     /// <returns>Added message.</returns>
+    [SecuritySafeCritical]
     public Message AddMessage(string nick, long messageId, string text)
     {
       var message = new Message(nick, messageId, text);
@@ -206,6 +223,11 @@ namespace Engine.Model.Common.Entities
       return message;
     }
 
+    /// <summary>
+    /// Add message to room.
+    /// </summary>
+    /// <param name="message">Message which will be added. If message already exist then it will be replaced.</param>
+    [SecuritySafeCritical]
     public void AddMessage(Message message)
     {
       _messages[message.Id] = message;
@@ -216,6 +238,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="messageId">Message id.</param>
     /// <returns>Message.</returns>
+    [SecuritySafeCritical]
     public Message GetMessage(long messageId)
     {
       Message message;
@@ -228,6 +251,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="nick">User nick.</param>
     /// <param name="messageId">Message that be checked.</param>
+    [SecuritySafeCritical]
     public bool IsMessageBelongToUser(string nick, long messageId)
     {
       var message = GetMessage(messageId);
@@ -244,6 +268,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     public IEnumerable<FileDescription> Files
     {
+      [SecuritySafeCritical]
       get { return _files.Values; }
     }
 
@@ -252,6 +277,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="fileId"></param>
     /// <returns>Returns true if file exist, otherwise false.</returns>
+    [SecuritySafeCritical]
     public bool IsFileExist(FileId fileId)
     {
       return _files.ContainsKey(fileId);
@@ -262,6 +288,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="fileId">File identifier.</param>
     /// <returns>Returns FileDescription if it exist, otherwise null.</returns>
+    [SecuritySafeCritical]
     public FileDescription TryGetFile(FileId fileId)
     {
       FileDescription file;
@@ -273,6 +300,7 @@ namespace Engine.Model.Common.Entities
     /// Add file to room.
     /// </summary>
     /// <param name="file">File description.</param>
+    [SecuritySafeCritical]
     public void AddFile(FileDescription file)
     {
       if (_files.ContainsKey(file.Id))
@@ -284,19 +312,22 @@ namespace Engine.Model.Common.Entities
     /// Remove file from room.
     /// </summary>
     /// <param name="file">File identifier.</param>
-    public bool RemoveFile(FileId fileId)
+    [SecuritySafeCritical]
+    public virtual bool RemoveFile(FileId fileId)
     {
       return _files.Remove(fileId);
     }
     #endregion
 
     #region toDto
+    [SecuritySafeCritical]
     public virtual RoomDto ToDto(string dtoReciver)
     {
       return new RoomDto(_name, _admin, _users, _files.Values, _messages.Values, RoomType.Chat, null);
     }
     #endregion
 
+    [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
       if (ReferenceEquals(obj, null))
@@ -312,11 +343,13 @@ namespace Engine.Model.Common.Entities
       return Equals(room);
     }
 
+    [SecuritySafeCritical]
     public override int GetHashCode()
     {
       return _name.GetHashCode();
     }
 
+    [SecuritySafeCritical]
     public bool Equals(Room room)
     {
       if (ReferenceEquals(room, null))

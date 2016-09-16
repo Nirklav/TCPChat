@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
@@ -11,28 +12,54 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Message id.
     /// </summary>
-    public long Id { get; private set; }
+    public long Id
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecuritySafeCritical]
+      private set;
+    }
 
     /// <summary>
     /// Time when message was sent.
     /// </summary>
-    public DateTime Time { get; private set; }
+    public DateTime Time
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecuritySafeCritical]
+      private set;
+    }
 
     /// <summary>
     /// Message text.
     /// </summary>
-    public string Text { get; set; }
+    public string Text
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecuritySafeCritical]
+      set;
+    }
 
     /// <summary>
     /// Message sender.
     /// </summary>
-    public string Owner { get; private set; }
+    public string Owner
+    {
+      [SecuritySafeCritical]
+      get;
+      [SecuritySafeCritical]
+      private set;
+    }
 
+    [SecuritySafeCritical]
     public Message(string owner, long id, string text)
       : this(owner, id, text, DateTime.UtcNow)
     {
     }
 
+    [SecuritySafeCritical]
     public Message(string owner, long id, string text, DateTime time)
     {
       Owner = owner;
@@ -46,6 +73,7 @@ namespace Engine.Model.Common.Entities
     /// </summary>
     /// <param name="other">Other message which trying to contact with this.</param>
     /// <returns>If result is true then message was concated, otherwise - false.</returns>
+    [SecuritySafeCritical]
     public bool TryConcat(Message other)
     {
       if (Owner != null && !Owner.Equals(other.Owner))
@@ -59,6 +87,7 @@ namespace Engine.Model.Common.Entities
       return true;
     }
 
+    [SecuritySafeCritical]
     public Message Clone()
     {
       return new Message(Owner, Id, Text, Time);

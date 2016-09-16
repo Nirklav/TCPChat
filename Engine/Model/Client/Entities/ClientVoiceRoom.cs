@@ -27,6 +27,7 @@ namespace Engine.Model.Client.Entities
     /// Add user to room.
     /// </summary>
     /// <param name="nick">User nick.</param>
+    [SecuritySafeCritical]
     public override void AddUser(string nick)
     {
       base.AddUser(nick);
@@ -39,6 +40,7 @@ namespace Engine.Model.Client.Entities
     /// Remove user from room, including all his files.
     /// </summary>
     /// <param name="nick">User nick.</param>
+    [SecuritySafeCritical]
     public override void RemoveUser(string nick)
     {
       base.RemoveUser(nick);
@@ -52,6 +54,7 @@ namespace Engine.Model.Client.Entities
     /// <summary>
     /// Enable room.
     /// </summary>
+    [SecuritySafeCritical]
     public override void Enable()
     {
       if (!Enabled)
@@ -66,6 +69,7 @@ namespace Engine.Model.Client.Entities
     /// <summary>
     /// Disable room.
     /// </summary>
+    [SecuritySafeCritical]
     public override void Disable()
     {
       if (!Enabled)
@@ -77,17 +81,26 @@ namespace Engine.Model.Client.Entities
       base.Disable();
     }
 
-
+    [SecuritySafeCritical]
     private void IncVoiceCoutner(string nick)
     {
-      var user = ClientGuard.CurrentChat.GetUser(nick);
-      user.IncVoiceCounter();
+      // User can be already removed from chat.
+      // e.g.
+      //  1) We receive RoomRefreshed on MainRoom and remove user form chat.
+      //  2) We receive RoomRefresged on other audio room.
+
+      var user = ClientGuard.CurrentChat.TryGetUser(nick);
+      if (user != null)
+        user.IncVoiceCounter();
     }
 
+    [SecuritySafeCritical]
     private void DecVoiceCoutner(string nick)
     {
-      var user = ClientGuard.CurrentChat.GetUser(nick);
-      user.DecVoiceCounter();
+      // See comment above.
+      var user = ClientGuard.CurrentChat.TryGetUser(nick);
+      if (user != null)
+        user.DecVoiceCounter();
     }
     #endregion
   }
