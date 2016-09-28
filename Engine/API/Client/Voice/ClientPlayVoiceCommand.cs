@@ -2,6 +2,7 @@
 using Engine.Model.Common.Entities;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -35,22 +36,14 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientPlayVoice")]
     public class MessageContent
     {
-      private SoundPack _pack;
-      private long _number;
+      [BinField("p")]
+      public SoundPack Pack;
 
-      public SoundPack Pack
-      {
-        get { return _pack; }
-        set { _pack = value; }
-      }
-
-      public long Number
-      {
-        get { return _number; }
-        set { _number = value; }
-      }
+      [BinField("n")]
+      public long Number;
     }
   }
 }

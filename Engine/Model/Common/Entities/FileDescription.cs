@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Engine.Model.Common.Dto;
+using System;
 using System.Security;
 
 namespace Engine.Model.Common.Entities
@@ -9,6 +10,16 @@ namespace Engine.Model.Common.Entities
     private readonly FileId _id;
     private readonly long _size;
     private readonly string _name;
+
+    /// <summary>
+    /// Create new file description instance.
+    /// </summary>
+    /// <param name="dto">File description dto.</param>
+    public FileDescription(FileDescriptionDto dto)
+      : this(dto.Id, dto.Size, dto.Name)
+    {
+
+    }
 
     /// <summary>
     /// Create new file description instance.
@@ -83,6 +94,12 @@ namespace Engine.Model.Common.Entities
     public override int GetHashCode()
     {
       return _id.GetHashCode();
+    }
+
+    [SecuritySafeCritical]
+    public FileDescriptionDto ToDto()
+    {
+      return new FileDescriptionDto(this);
     }
   }
 }

@@ -39,8 +39,10 @@ namespace Engine.Api.Server.P2P
         var senderUser = server.Chat.GetUser(_senderId);
         var content = new ClientWaitPeerConnectionCommand.MessageContent
         {
-          RequestPoint = _requestPoint,
-          SenderPoint = _senderPoint,
+          RequestIPAddress = _requestPoint.Address.GetAddressBytes(),
+          RequestPort = _requestPoint.Port,
+          SenderIPAddress = _senderPoint.Address.GetAddressBytes(),
+          SenderPort = _senderPoint.Port,
           RemoteInfo = new UserDto(senderUser),
         };
 

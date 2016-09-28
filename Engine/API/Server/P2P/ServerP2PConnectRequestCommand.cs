@@ -3,6 +3,7 @@ using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -34,15 +35,11 @@ namespace Engine.Api.Server
     }
 
     [Serializable]
+    [BinType("ServerP2PConnectRequest")]
     public class MessageContent
     {
-      private string _nick;
-
-      public string Nick
-      {
-        get { return _nick; }
-        set { _nick = value; }
-      }
+      [BinField("n")]
+      public string Nick;
     }
   }
 }

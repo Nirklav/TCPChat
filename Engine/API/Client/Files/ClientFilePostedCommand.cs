@@ -1,7 +1,9 @@
 ﻿using Engine.Model.Client;
+using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -32,7 +34,7 @@ namespace Engine.Api.Client
 
         // File may be posted twice, it's allowed
         if (!room.IsFileExist(content.File.Id))
-          room.AddFile(content.File);
+          room.AddFile(new FileDescription(content.File));
       }
 
       var receiveMessageArgs = new ReceiveMessageEventArgs
@@ -50,22 +52,14 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientFilePosted")]
     public class MessageContent
     {
-      private FileDescription _file;
-      private string _roomName;
+      [BinField("f")]
+      public FileDescriptionDto File;
 
-      public FileDescription File
-      {
-        get { return _file; }
-        set { _file = value; }
-      }
-
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
+      [BinField("r")]
+      public string RoomName;
     }
   }
 }

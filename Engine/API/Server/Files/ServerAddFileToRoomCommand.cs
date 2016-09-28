@@ -1,9 +1,11 @@
 ﻿using Engine.Api.Client;
 using Engine.Api.Server.Messages;
+using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -41,7 +43,7 @@ namespace Engine.Api.Server
         }
 
         if (!room.IsFileExist(content.File.Id))
-          room.AddFile(content.File);
+          room.AddFile(new FileDescription(content.File));
 
         var sendingContent = new ClientFilePostedCommand.MessageContent
         {
@@ -55,22 +57,14 @@ namespace Engine.Api.Server
     }
 
     [Serializable]
+    [BinType("ServerAddFileToRoom")]
     public class MessageContent
     {
-      private string _roomName;
-      private FileDescription _file;
+      [BinField("r")]
+      public string RoomName;
 
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
-
-      public FileDescription File
-      {
-        get { return _file; }
-        set { _file = value; }
-      }
+      [BinField("f")]
+      public FileDescriptionDto File;
     }
   }
 }

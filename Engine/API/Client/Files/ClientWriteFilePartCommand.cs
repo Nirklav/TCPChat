@@ -1,8 +1,9 @@
 ﻿using Engine.Model.Client;
-using Engine.Model.Common.Entities;
+using Engine.Model.Common.Dto;
 using Engine.Network;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -86,29 +87,17 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientWriteFilePart")]
     public class MessageContent
     {
-      private string _roomName;
-      private FileDescription _file;
-      private long _startPartPosition;
+      [BinField("r")]
+      public string RoomName;
 
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
+      [BinField("f")]
+      public FileDescriptionDto File;
 
-      public FileDescription File
-      {
-        get { return _file; }
-        set { _file = value; }
-      }
-
-      public long StartPartPosition
-      {
-        get { return _startPartPosition; }
-        set { _startPartPosition = value; }
-      }
+      [BinField("p")]
+      public long StartPartPosition;
     }
   }
 }

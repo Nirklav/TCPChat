@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Common.Entities;
 using System;
 using System.Drawing;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Model.Common.Dto
 {
@@ -8,21 +9,24 @@ namespace Engine.Model.Common.Dto
   /// User data transfer object.
   /// </summary>
   [Serializable]
+  [BinType("UserDto")]
   public class UserDto
   {
-    public readonly string Nick;
-    public readonly Color NickColor;
+    [BinField("n")]
+    public string Nick;
+
+    [BinField("c")]
+    public ColorDto NickColor;
+
+    public UserDto(User user)
+      : this(user.Nick, user.NickColor)
+    {
+    }
 
     public UserDto(string nick, Color color)
     {
       Nick = nick;
-      NickColor = color;
-    }
-    
-    public UserDto(User user)
-    {
-      Nick = user.Nick;
-      NickColor = user.NickColor;
+      NickColor = new ColorDto(color);
     }
   }
 }

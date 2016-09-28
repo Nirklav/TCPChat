@@ -4,8 +4,8 @@ using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
-using System.Net;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -27,9 +27,6 @@ namespace Engine.Api.Server
       if (content.RemoteInfo == null)
         throw new ArgumentNullException("content.RemoteInfo");
 
-      if (content.PeerPoint == null)
-        throw new ArgumentNullException("content.PeerPoint");
-
       if (string.IsNullOrEmpty(content.ReceiverNick))
         throw new ArgumentException("content.ReceiverNick");
 
@@ -41,37 +38,29 @@ namespace Engine.Api.Server
 
       var connectContent = new ClientConnectToPeerCommand.MessageContent
       {
-        PeerPoint = content.PeerPoint,
-        RemoteInfo = content.RemoteInfo,
+        Port = content.PeerPort,
+        IPAddress = content.PeerIPAddress,
+        RemoteInfo = content.RemoteInfo
       };
 
       ServerModel.Server.SendMessage(content.ReceiverNick, ClientConnectToPeerCommand.CommandId, connectContent);
     }
 
     [Serializable]
+    [BinType("ServerP2PReadyAccept")]
     public class MessageContent
     {
-      private string _receiverNick;
-      private IPEndPoint _peerPoint;
-      private UserDto _remoteInfo;
+      [BinField("r")]
+      public string ReceiverNick;
 
-      public string ReceiverNick
-      {
-        get { return _receiverNick; }
-        set { _receiverNick = value; }
-      }
+      [BinField("p")]
+      public int PeerPort;
 
-      public IPEndPoint PeerPoint
-      {
-        get { return _peerPoint; }
-        set { _peerPoint = value; }
-      }
+      [BinField("a")]
+      public byte[] PeerIPAddress;
 
-      public UserDto RemoteInfo
-      {
-        get { return _remoteInfo; }
-        set { _remoteInfo = value; }
-      }
+      [BinField("u")]
+      public UserDto RemoteInfo;
     }
   }
 }

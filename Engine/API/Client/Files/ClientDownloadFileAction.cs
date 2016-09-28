@@ -57,7 +57,7 @@ namespace Engine.Api.Client.Files
 
         var sendingContent = new ClientReadFilePartCommand.MessageContent
         {
-          File = file,
+          File = file.ToDto(),
           Length = AsyncClient.DefaultFilePartSize,
           RoomName = _roomName,
           StartPartPosition = 0,

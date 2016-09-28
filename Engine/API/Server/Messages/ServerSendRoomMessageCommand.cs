@@ -1,9 +1,11 @@
 ﻿using Engine.Api.Client;
 using Engine.Api.Server.Messages;
+using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -57,7 +59,7 @@ namespace Engine.Api.Server
 
         var sendingContent = new ClientOutRoomMessageCommand.MessageContent
         {
-          Message = message,
+          Message = message.ToDto(),
           RoomName = content.RoomName,
         };
 
@@ -67,29 +69,17 @@ namespace Engine.Api.Server
     }
 
     [Serializable]
+    [BinType("ServerSendRoomMessage")]
     public class MessageContent
     {
-      private string _roomName;
-      private long? _messageId;
-      private string _text;
+      [BinField("r")]
+      public string RoomName;
 
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
+      [BinField("m")]
+      public BinNullable<long> MessageId;
 
-      public long? MessageId
-      {
-        get { return _messageId; }
-        set { _messageId = value; }
-      }
-
-      public string Text
-      {
-        get { return _text; }
-        set { _text = value; }
-      }
+      [BinField("t")]
+      public string Text;
     }
   }
 }

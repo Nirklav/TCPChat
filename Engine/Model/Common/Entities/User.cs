@@ -5,9 +5,7 @@ using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
-  /// <summary>
-  /// User description.
-  /// </summary>
+  // TODO: add dispose
   [Serializable]
   public class User : 
     IEquatable<User>,
@@ -36,7 +34,7 @@ namespace Engine.Model.Common.Entities
     public User(UserDto dto)
     {
       _nick = dto.Nick;
-      _nickColor = dto.NickColor;
+      _nickColor = dto.NickColor.ToColor();
     }
 
     /// <summary>

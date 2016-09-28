@@ -2,6 +2,7 @@
 using Engine.Model.Common.Entities;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -33,22 +34,14 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientFileRemoved")]
     public class MessageContent
     {
-      private string _roomName;
-      private FileId _fileId;
+      [BinField("r")]
+      public string RoomName;
 
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
-
-      public FileId FileId
-      {
-        get { return _fileId; }
-        set { _fileId = value; }
-      }
+      [BinField("f")]
+      public FileId FileId;
     }
   }
 }

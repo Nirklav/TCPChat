@@ -1,16 +1,21 @@
 ﻿using System;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Network
 {
   [Serializable]
+  [BinType("ConnectionInfo")]
   public class ConnectionInfo
   {
-    public byte[] PublicKey { get; set; }
+    [BinField("p")]
+    public byte[] PublicKey;
   }
 
   [Serializable]
+  [BinType("ServerConnectionInfo")]
   public class ServerConnectionInfo : ConnectionInfo
   {
-    public string ApiName { get; set; }
+    [BinField("a")]
+    public string ApiName;
   }
 }

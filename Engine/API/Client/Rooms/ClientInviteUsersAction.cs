@@ -11,7 +11,7 @@ namespace Engine.Api.Client.Rooms
   public class ClientInviteUsersAction : IAction
   {
     private readonly string _roomName;
-    private readonly List<string> _users;
+    private readonly string[] _users;
 
     /// <summary>
     /// Invites users to room.
@@ -28,7 +28,7 @@ namespace Engine.Api.Client.Rooms
         throw new ArgumentNullException("users");
 
       _roomName = roomName;
-      _users = users as List<string> ?? users.ToList();
+      _users = users as string[] ?? users.ToArray();
     }
 
     [SecuritySafeCritical]

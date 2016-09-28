@@ -67,7 +67,7 @@ namespace Engine.Api.Client
     /// <param name="chat">Chat.</param>
     /// <param name="users">User dtos.</param>
     [SecuritySafeCritical]
-    protected void AddUsers(ClientChat chat, List<UserDto> users)
+    protected void AddUsers(ClientChat chat, IEnumerable<UserDto> users)
     {
       foreach (var userDto in users)
       {

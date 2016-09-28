@@ -6,6 +6,7 @@ using Engine.Model.Server.Entities;
 using System;
 using System.Collections.Generic;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -89,22 +90,14 @@ namespace Engine.Api.Server
     }
 
     [Serializable]
+    [BinType("ServerInviteUsers")]
     public class MessageContent
     {
-      private string _roomName;
-      private List<string> _users;
+      [BinField("r")]
+      public string RoomName;
 
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
-
-      public List<string> Users
-      {
-        get { return _users; }
-        set { _users = value; }
-      }
+      [BinField("u")]
+      public string[] Users;
     }
   }
 }

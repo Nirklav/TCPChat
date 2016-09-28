@@ -2,6 +2,7 @@
 using System;
 using System.Net;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -27,15 +28,11 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientConnectToP2PService")]
     public class MessageContent
     {
-      private int _port;
-
-      public int Port
-      {
-        get { return _port; }
-        set { _port = value; }
-      }
+      [BinField("p")]
+      public int Port;
     }
   }
 }

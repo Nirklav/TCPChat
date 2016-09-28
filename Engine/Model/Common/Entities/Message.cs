@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Engine.Model.Common.Dto;
+using System;
 using System.Security;
 
 namespace Engine.Model.Common.Entities
@@ -12,55 +13,38 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Message id.
     /// </summary>
-    public long Id
-    {
-      [SecuritySafeCritical]
-      get;
-      [SecuritySafeCritical]
-      private set;
-    }
-
-    /// <summary>
-    /// Time when message was sent.
-    /// </summary>
-    public DateTime Time
-    {
-      [SecuritySafeCritical]
-      get;
-      [SecuritySafeCritical]
-      private set;
-    }
-
-    /// <summary>
-    /// Message text.
-    /// </summary>
-    public string Text
-    {
-      [SecuritySafeCritical]
-      get;
-      [SecuritySafeCritical]
-      set;
-    }
+    public readonly long Id;
 
     /// <summary>
     /// Message sender.
     /// </summary>
-    public string Owner
+    public readonly string Owner;
+
+    /// <summary>
+    /// Time when message was sent.
+    /// </summary>
+    public readonly DateTime Time;
+
+    /// <summary>
+    /// Message text.
+    /// </summary>
+    public string Text;
+
+    [SecuritySafeCritical]
+    public Message(MessageDto dto)
+      : this(dto.Id, dto.Owner, dto.Text, dto.Time)
     {
-      [SecuritySafeCritical]
-      get;
-      [SecuritySafeCritical]
-      private set;
+
     }
 
     [SecuritySafeCritical]
-    public Message(string owner, long id, string text)
-      : this(owner, id, text, DateTime.UtcNow)
+    public Message(long id, string owner, string text)
+      : this(id, owner, text, DateTime.UtcNow)
     {
     }
 
     [SecuritySafeCritical]
-    public Message(string owner, long id, string text, DateTime time)
+    public Message(long id, string owner, string text, DateTime time)
     {
       Owner = owner;
       Id = id;
@@ -88,9 +72,9 @@ namespace Engine.Model.Common.Entities
     }
 
     [SecuritySafeCritical]
-    public Message Clone()
+    public MessageDto ToDto()
     {
-      return new Message(Owner, Id, Text, Time);
+      return new MessageDto(this);
     }
   }
 }

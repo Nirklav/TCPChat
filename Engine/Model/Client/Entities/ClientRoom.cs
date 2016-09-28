@@ -16,10 +16,10 @@ namespace Engine.Model.Client.Entities
         _users.Add(nick);
 
       foreach (var file in dto.Files)
-        _files.Add(file.Id, file);
+        _files.Add(file.Id, new FileDescription(file));
 
       foreach (var message in dto.Messages)
-        _messages.Add(message.Id, message);
+        _messages.Add(message.Id, new Message(message));
     }
 
     #region files
@@ -40,6 +40,21 @@ namespace Engine.Model.Client.Entities
         ClientModel.Notifier.PostedFileDeleted(downloadEventArgs);
       }
       return result;
+    }
+    #endregion
+
+    #region dispose
+    protected override void ReleaseManagedResources()
+    {
+      base.ReleaseManagedResources();
+
+      // Remove all posted files.
+      var chat = ClientGuard.CurrentChat;
+      foreach (var file in Files)
+      {
+        if (file.Id.Owner == chat.User.Nick)
+          chat.RemovePostedFile(Name, file.Id);
+      }
     }
     #endregion
   }

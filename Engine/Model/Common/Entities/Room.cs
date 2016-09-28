@@ -6,9 +6,8 @@ using System.Security;
 
 namespace Engine.Model.Common.Entities
 {
-  // TODO: Add the dispose methid
   [Serializable]
-  public class Room : IEquatable<Room>
+  public class Room : IEquatable<Room>, IDisposable
   {
     /// <summary>
     /// Identifier which mark messages that can't be edited.
@@ -191,13 +190,13 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Add message to room.
     /// </summary>
-    /// <param name="nick">User nick which is message owner.</param>
+    /// <param name="ownerNick">User nick which is message owner.</param>
     /// <param name="text">Message text.</param>
     /// <returns>Added message.</returns>
     [SecuritySafeCritical]
-    public Message AddMessage(string nick, string text)
+    public Message AddMessage(string ownerNick, string text)
     {
-      var message = AddMessage(nick, _lastMessageId, text);
+      var message = AddMessage(_lastMessageId, ownerNick, text);
       if (message.Id == _lastMessageId)
         _lastMessageId++;
 
@@ -207,14 +206,14 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Add message to room.
     /// </summary>
-    /// <param name="nick">User nick which is message owner.</param>
     /// <param name="messageId">Message id. If message with this id already exist then added text be contacted to him.</param>
+    /// <param name="ownerNick">User nick which is message owner.</param>
     /// <param name="text">Message text.</param>
     /// <returns>Added message.</returns>
     [SecuritySafeCritical]
-    public Message AddMessage(string nick, long messageId, string text)
+    public Message AddMessage(long messageId, string ownerNick, string text)
     {
-      var message = new Message(nick, messageId, text);
+      var message = new Message(messageId, ownerNick, text);
       var lastMessage = GetMessage(_lastMessageId - 1);
 
       if (lastMessage != null && lastMessage.TryConcat(message))
@@ -328,6 +327,7 @@ namespace Engine.Model.Common.Entities
     }
     #endregion
 
+    #region equals
     [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
@@ -361,5 +361,20 @@ namespace Engine.Model.Common.Entities
 
       return string.Equals(_name, room._name);
     }
+    #endregion
+
+    #region dispose
+    [SecuritySafeCritical]
+    protected virtual void ReleaseManagedResources()
+    {
+
+    }
+
+    [SecuritySafeCritical]
+    public void Dispose()
+    {
+      ReleaseManagedResources();
+    }
+    #endregion
   }
 }

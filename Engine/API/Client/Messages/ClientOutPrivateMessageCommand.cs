@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Client;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -40,15 +41,11 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientOutPrivateMessage")]
     public class MessageContent
     {
-      private string _text;
-
-      public string Text
-      {
-        get { return _text; }
-        set { _text = value; }
-      }
+      [BinField("t")]
+      public string Text;
     }
   }
 }

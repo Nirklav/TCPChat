@@ -1,4 +1,5 @@
 ﻿using System;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Model.Common.Entities
 {
@@ -6,26 +7,31 @@ namespace Engine.Model.Common.Entities
   /// Recorderd voice data.
   /// </summary>
   [Serializable]
+  [BinType("SoundPack")]
   public class SoundPack
   {
     /// <summary>
     /// Recorded data.
     /// </summary>
-    public byte[] Data { get; set; }
+    [BinField("d")]
+    public byte[] Data;
 
     /// <summary>
     /// Channels count.
     /// </summary>
-    public int Channels { get; set; }
+    [BinField("c")]
+    public int Channels;
 
     /// <summary>
     /// Pits per channel count.
     /// </summary>
-    public int BitPerChannel { get; set; }
+    [BinField("b")]
+    public int BitPerChannel;
 
     /// <summary>
     /// Frequency.
     /// </summary>
-    public int Frequency { get; set; }
+    [BinField("f")]
+    public int Frequency;
   } 
 }

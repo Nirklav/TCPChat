@@ -7,6 +7,7 @@ using Engine.Network;
 using System;
 using System.Collections.Generic;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -75,7 +76,7 @@ namespace Engine.Api.Server
       ServerModel.Server.SendMessage(userNick, ClientRegistrationResponseCommand.CommandId, messageContent);
     }
 
-    private void SendRefresh(string userNick, Room room, List<UserDto> users)
+    private void SendRefresh(string userNick, Room room, UserDto[] users)
     {
       foreach (var nick in room.Users)
       {
@@ -92,7 +93,7 @@ namespace Engine.Api.Server
       }
     }
 
-    private void SendOpened(string userNick, Room room, List<UserDto> users)
+    private void SendOpened(string userNick, Room room, UserDto[] users)
     {
       var messageContent = new ClientRoomOpenedCommand.MessageContent
       {
@@ -111,15 +112,11 @@ namespace Engine.Api.Server
     }
 
     [Serializable]
+    [BinType("ServerRegister")]
     public class MessageContent
     {
-      private UserDto _user;
-
-      public UserDto UserDto
-      {
-        get { return _user; }
-        set { _user = value; }
-      }
+      [BinField("u")]
+      public UserDto UserDto;
     }
   }
 }

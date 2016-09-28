@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Model.Common.Dto
 {
@@ -9,16 +10,29 @@ namespace Engine.Model.Common.Dto
   /// Room data transfer object.
   /// </summary>
   [Serializable]
+  [BinType("RoomDto")]
   public class RoomDto
   {
-    public readonly string Name;
-    public readonly string Admin;
-    public readonly List<string> Users;
-    public readonly List<FileDescription> Files;
-    public readonly List<Message> Messages;
+    [BinField("n")]
+    public string Name;
 
-    public readonly RoomType Type;
-    public readonly List<string> ConnectTo;
+    [BinField("a")]
+    public string Admin;
+
+    [BinField("u")]
+    public string[] Users;
+
+    [BinField("f")]
+    public FileDescriptionDto[] Files;
+
+    [BinField("m")]
+    public MessageDto[] Messages;
+
+    [BinField("t")]
+    public RoomType Type;
+
+    [BinField("c")]
+    public string[] ConnectTo;
 
     public RoomDto(
       string name
@@ -27,18 +41,18 @@ namespace Engine.Model.Common.Dto
       , IEnumerable<FileDescription> files
       , IEnumerable<Message> messages
       , RoomType type
-      , List<string> connectTo)
+      , IEnumerable<string> connectTo)
     {
       Name = name;
       Admin = admin;
-      Users = new List<string>(users);
-      Files = new List<FileDescription>(files);
-      Messages = messages.Select(m => m.Clone()).ToList();
+      Users = users.ToArray();
+      Files = files.Select(f => f.ToDto()).ToArray();
+      Messages = messages.Select(m => m.ToDto()).ToArray();
 
       Type = type;
 
       if (connectTo != null)
-        ConnectTo = new List<string>(connectTo);
+        ConnectTo = connectTo.ToArray();
     }
   }
 }

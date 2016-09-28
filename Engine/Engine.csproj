@@ -59,8 +59,12 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="OpenAL">
-      <HintPath>..\OpenAL.dll</HintPath>
+    <Reference Include="BinSerializer">
+      <HintPath>..\Libraries\BinSerializer.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenAL, Version=1.1.0.0, Culture=neutral, PublicKeyToken=2c8b266bc3b03e01, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libraries\OpenAL.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -144,6 +148,10 @@
     <Compile Include="Model\Client\Entities\ClientRoom.cs" />
     <Compile Include="Model\Client\Entities\ClientUser.cs" />
     <Compile Include="Model\Client\Entities\ClientVoiceRoom.cs" />
+    <Compile Include="Model\Common\Dto\BinNullable.cs" />
+    <Compile Include="Model\Common\Dto\ColorDto.cs" />
+    <Compile Include="Model\Common\Dto\FileDescriptionDto.cs" />
+    <Compile Include="Model\Common\Dto\MessageDto.cs" />
     <Compile Include="Model\Common\Dto\RoomDto.cs" />
     <Compile Include="Model\Common\Dto\UserDto.cs" />
     <Compile Include="Model\Common\Notifier.cs" />

@@ -4,6 +4,7 @@ using Engine.Model.Common.Dto;
 using System;
 using System.Net;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -25,17 +26,13 @@ namespace Engine.Api.Client
       if (content.RemoteInfo == null)
         throw new ArgumentNullException("content.RemoteInfo");
 
-      if (content.RequestPoint == null)
-        throw new ArgumentNullException("content.RequestPoint");
-
-      if (content.SenderPoint == null)
-        throw new ArgumentNullException("content.SenderPoint");
-
-      ClientModel.Peer.WaitConnection(content.SenderPoint);
+      var senderPoint = new IPEndPoint(new IPAddress(content.SenderIPAddress), content.SenderPort);
+      ClientModel.Peer.WaitConnection(senderPoint);
 
       var sendingContent = new ServerP2PReadyAcceptCommand.MessageContent
       {
-        PeerPoint = content.RequestPoint,
+        PeerPort = content.RequestPort,
+        PeerIPAddress = content.RequestIPAddress,
         ReceiverNick = content.RemoteInfo.Nick
       };
 
@@ -46,29 +43,23 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientWaitPeerConnection")]
     public class MessageContent
     {
-      private UserDto _remoteInfo;
-      private IPEndPoint _senderPoint;
-      private IPEndPoint _requestPoint;
+      [BinField("u")]
+      public UserDto RemoteInfo;
 
-      public UserDto RemoteInfo
-      {
-        get { return _remoteInfo; }
-        set { _remoteInfo = value; }
-      }
+      [BinField("sp")]
+      public int SenderPort;
 
-      public IPEndPoint SenderPoint
-      {
-        get { return _senderPoint; }
-        set { _senderPoint = value; }
-      }
+      [BinField("sa")]
+      public byte[] SenderIPAddress;
 
-      public IPEndPoint RequestPoint
-      {
-        get { return _requestPoint; }
-        set { _requestPoint = value; }
-      }
+      [BinField("rp")]
+      public int RequestPort;
+
+      [BinField("ra")]
+      public byte[] RequestIPAddress;
     }
   }
 }

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -92,27 +93,19 @@ namespace Engine.Api.Client
         if (!added.Contains(file.Id))
           continue;
 
-        room.AddFile(file);
+        room.AddFile(new FileDescription(file));
       }
     }
 
     [Serializable]
+    [BinType("ClientRoomRefreshed")]
     public class MessageContent
     {
-      private RoomDto _room;
-      private List<UserDto> _users;
- 
-      public RoomDto Room
-      {
-        get { return _room; }
-        set { _room = value; }
-      }
+      [BinField("r")]
+      public RoomDto Room;
 
-      public List<UserDto> Users
-      {
-        get { return _users; }
-        set { _users = value; }
-      }
+      [BinField("u")]
+      public UserDto[] Users;
     }
   }
 }

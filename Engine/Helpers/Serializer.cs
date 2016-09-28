@@ -1,6 +1,7 @@
-﻿using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+﻿using Engine.Network;
+using System.IO;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Helpers
 {
@@ -11,8 +12,7 @@ namespace Engine.Helpers
     {
       using (MemoryStream stream = new MemoryStream())
       {
-        var formatter = new BinaryFormatter();
-        formatter.Serialize(stream, obj);
+        BinSerializer.Serialize(stream, obj);
         return stream.ToArray();
       }
     }
@@ -20,25 +20,20 @@ namespace Engine.Helpers
     [SecuritySafeCritical]
     public static void Serialize<T>(Stream stream, T obj)
     {
-      var formatter = new BinaryFormatter();
-      formatter.Serialize(stream, obj);
+      BinSerializer.Serialize(stream, obj);
     }
 
     [SecuritySafeCritical]
     public static T Deserialize<T>(byte[] message)
     {
       using (MemoryStream stream = new MemoryStream(message))
-      {
-        var formatter = new BinaryFormatter();
-        return (T)formatter.Deserialize(stream);
-      }
+        return BinSerializer.Deserialize<T>(stream);
     }
 
     [SecuritySafeCritical]
     public static T Deserialize<T>(Stream stream)
     {
-      var formatter = new BinaryFormatter();
-      return (T)formatter.Deserialize(stream);
+      return BinSerializer.Deserialize<T>(stream);
     }
   }
 }

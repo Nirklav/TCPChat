@@ -40,7 +40,7 @@ namespace Engine.Api.Client.Files
       using (var client = ClientModel.Get())
       {
         var posted = client.Chat.GetOrCreatePostedFile(info, _roomName);
-        var sendingContent = new ServerAddFileToRoomCommand.MessageContent { RoomName = _roomName, File = posted.File };
+        var sendingContent = new ServerAddFileToRoomCommand.MessageContent { RoomName = _roomName, File = posted.File.ToDto() };
         ClientModel.Client.SendMessage(ServerAddFileToRoomCommand.CommandId, sendingContent);
       }
     }

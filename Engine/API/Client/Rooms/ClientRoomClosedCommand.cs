@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Client;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -29,15 +30,11 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientRoomClosed")]
     public class MessageContent
     {
-      private string _roomName;
-
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
+      [BinField("r")]
+      public string RoomName;
     }
   }
 }

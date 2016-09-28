@@ -3,6 +3,7 @@ using Engine.Model.Common.Dto;
 using System;
 using System.Net;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -24,29 +25,22 @@ namespace Engine.Api.Client
       if (content.RemoteInfo == null)
         throw new ArgumentNullException("content.RemoteInfo");
 
-      if (content.PeerPoint == null)
-        throw new ArgumentNullException("content.PeerPoint");
-
-      ClientModel.Peer.ConnectToPeer(content.RemoteInfo.Nick, content.PeerPoint);
+      var peerPoint = new IPEndPoint(new IPAddress(content.IPAddress), content.Port);
+      ClientModel.Peer.ConnectToPeer(content.RemoteInfo.Nick, peerPoint);
     }
 
     [Serializable]
+    [BinType("ClientConnectToPeer")]
     public class MessageContent
     {
-      private IPEndPoint _peerPoint;
-      private UserDto _remoteInfo;
+      [BinField("p")]
+      public int Port;
 
-      public IPEndPoint PeerPoint
-      {
-        get { return _peerPoint; }
-        set { _peerPoint = value; }
-      }
+      [BinField("a")]
+      public byte[] IPAddress;
 
-      public UserDto RemoteInfo
-      {
-        get { return _remoteInfo; }
-        set { _remoteInfo = value; }
-      }
+      [BinField("u")]
+      public UserDto RemoteInfo;
     }
   }
 }

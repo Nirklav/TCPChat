@@ -4,9 +4,9 @@ using Engine.Model.Client.Entities;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -65,22 +65,14 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientRoomOpened")]
     public class MessageContent
     {
-      private RoomDto _room;
-      private List<UserDto> _users;
+      [BinField("r")]
+      public RoomDto Room;
 
-      public RoomDto Room
-      {
-        get { return _room; }
-        set { _room = value; }
-      }
-
-      public List<UserDto> Users
-      {
-        get { return _users; }
-        set { _users = value; }
-      }
+      [BinField("u")]
+      public UserDto[] Users;
     }
   }
 }

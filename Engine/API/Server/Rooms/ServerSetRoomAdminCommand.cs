@@ -4,6 +4,7 @@ using Engine.Model.Server;
 using Engine.Model.Server.Entities;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -58,22 +59,14 @@ namespace Engine.Api.Server
     }
 
     [Serializable]
+    [BinType("ServerSetRoomAdmin")]
     public class MessageContent
     {
-      private string _roomName;
-      private string _newAdmin;
+      [BinField("r")]
+      public string RoomName;
 
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
-
-      public string NewAdmin
-      {
-        get { return _newAdmin; }
-        set { _newAdmin = value; }
-      }
+      [BinField("a")]
+      public string NewAdmin;
     }
   }
 }

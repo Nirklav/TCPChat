@@ -4,6 +4,7 @@ using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -48,15 +49,11 @@ namespace Engine.Api.Server
     }
 
     [Serializable]
+    [BinType("ServerRefreshRoom")]
     public class MessageContent
     {
-      private string _roomName;
-
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
+      [BinField("r")]
+      public string RoomName;
     }
   }
 }

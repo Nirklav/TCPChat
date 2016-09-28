@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Network
 {
@@ -14,11 +16,17 @@ namespace Engine.Network
   }
 
   [Serializable]
+  [BinType("Package")]
+  [SecuritySafeCritical]
   public class Package : IPackage
   {
+    [BinField("i")]
     private long _id;
+
+    [BinField("t")]
     private long _trackedId;
 
+    [SecuritySafeCritical]
     public Package(long id)
     {
       _id = id;
@@ -33,10 +41,14 @@ namespace Engine.Network
   }
 
   [Serializable]
+  [BinType("PackageT")]
+  [SecuritySafeCritical]
   public class Package<T> : Package, IPackage<T>
   {  
+    [BinField("c")]
     private T _content;
 
+    [SecuritySafeCritical]
     public Package(long id, T content)
       : base(id)
     {

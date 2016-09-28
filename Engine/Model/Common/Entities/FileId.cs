@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Model.Common.Entities
 {
   [Serializable]
+  [BinType("FieldId")]
   public struct FileId : IEquatable<FileId>
   {
+    [BinField("i")]
     public readonly int Id;
+
+    [BinField("o")]
     public readonly string Owner;
 
     /// <summary>

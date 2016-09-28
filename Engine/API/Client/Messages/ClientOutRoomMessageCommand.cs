@@ -1,7 +1,9 @@
 ﻿using Engine.Model.Client;
+using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -29,7 +31,7 @@ namespace Engine.Api.Client
       using (var client = ClientModel.Get())
       {
         var room = client.Chat.GetRoom(content.RoomName);
-        room.AddMessage(content.Message);
+        room.AddMessage(new Message(content.Message));
 
         var receiveMessageArgs = new ReceiveMessageEventArgs
         {
@@ -46,22 +48,14 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientOutRoomMessage")]
     public class MessageContent
     {
-      private Message _message;
-      private string _roomName;
-
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
-
-      public Message Message
-      {
-        get { return _message; }
-        set { _message = value; }
-      }
+      [BinField("m")]
+      public MessageDto Message;
+      
+      [BinField("r")]
+      public string RoomName;
     }
   }
 }

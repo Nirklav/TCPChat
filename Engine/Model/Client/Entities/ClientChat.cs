@@ -38,28 +38,6 @@ namespace Engine.Model.Client.Entities
     }
     #endregion
 
-    #region rooms
-    /// <summary>
-    /// Remove text or voice room by name.
-    /// </summary>
-    /// <param name="roomName">Room name that be removed.</param>
-    /// <returns>Removed room.</returns>
-    [SecuritySafeCritical]
-    public override Room RemoveRoom(string roomName)
-    {
-      var room = base.RemoveRoom(roomName);
-
-      // Remove all posted files.
-      foreach (var file in room.Files)
-      {
-        if (file.Id.Owner == _user.Nick)
-          RemovePostedFile(roomName, file.Id);
-      }
-
-      return room;
-    }
-    #endregion
-
     #region files
     /// <summary>
     /// Check file is downloading.

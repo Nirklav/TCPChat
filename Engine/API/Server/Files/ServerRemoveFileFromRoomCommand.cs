@@ -4,6 +4,7 @@ using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server
 {
@@ -62,22 +63,14 @@ namespace Engine.Api.Server
     }
 
     [Serializable]
+    [BinType("ServerRemoveFileFromRoom")]
     public class MessageContent
     {
-      private string _roomName;
-      private FileId _fileId;
+      [BinField("r")]
+      public string RoomName;
 
-      public string RoomName
-      {
-        get { return _roomName; }
-        set { _roomName = value; }
-      }
-
-      public FileId FileId
-      {
-        get { return _fileId; }
-        set { _fileId = value; }
-      }
+      [BinField("f")]
+      public FileId FileId;
     }
   }
 }

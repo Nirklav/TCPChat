@@ -2,6 +2,7 @@
 using Engine.Model.Common.Entities;
 using System;
 using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Client
 {
@@ -25,22 +26,14 @@ namespace Engine.Api.Client
     }
 
     [Serializable]
+    [BinType("ClientRegistrationResponse")]
     public class MessageContent
     {
-      private bool _registered;
-      private SystemMessageId _message;
+      [BinField("r")]
+      public bool Registered;
 
-      public bool Registered
-      {
-        get { return _registered; }
-        set { _registered = value; }
-      }
-
-      public SystemMessageId Message
-      {
-        get { return _message; }
-        set { _message = value; }
-      }
+      [BinField("m")]
+      public SystemMessageId Message;
     }
   }
 }

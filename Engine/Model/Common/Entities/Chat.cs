@@ -6,7 +6,7 @@ using System.Security;
 namespace Engine.Model.Common.Entities
 {
   [Serializable]
-  public abstract class Chat<TUser, TRoom, TVoiceRoom>
+  public abstract class Chat<TUser, TRoom, TVoiceRoom> : IDisposable
     where TUser : User
     where TRoom : Room
     where TVoiceRoom : VoiceRoom
@@ -25,7 +25,7 @@ namespace Engine.Model.Common.Entities
       _voiceRooms = new Dictionary<string, TVoiceRoom>();
     }
 
-    #region Users
+    #region users
     /// <summary>
     /// Returns true if user exist, otherwise false.
     /// </summary>
@@ -97,7 +97,7 @@ namespace Engine.Model.Common.Entities
     }
     #endregion
 
-    #region Rooms
+    #region rooms
     /// <summary>
     /// Checks the existence of chat rooms by name.
     /// </summary>
@@ -207,18 +207,19 @@ namespace Engine.Model.Common.Entities
     }
 
     /// <summary>
-    /// Remove text or voice room by name.
+    /// Remove text or voice room by name and dispose it.
     /// </summary>
     /// <param name="roomName">Room name that be removed.</param>
     /// <returns>Removed room.</returns>
     [SecuritySafeCritical]
-    public virtual Room RemoveRoom(string roomName)
+    public Room RemoveRoom(string roomName)
     {
       TRoom textRoom;
       if (_rooms.TryGetValue(roomName, out textRoom))
       {
         _rooms.Remove(roomName);
         textRoom.Disable();
+        textRoom.Dispose();
         return textRoom;
       }
 
@@ -227,10 +228,26 @@ namespace Engine.Model.Common.Entities
       {
         _voiceRooms.Remove(roomName);
         voiceRoom.Disable();
+        voiceRoom.Dispose();
         return voiceRoom;
       }
 
       return null;
+    }
+    #endregion
+
+    #region dispose
+    [SecuritySafeCritical]
+    protected virtual void ReleaseManagedResources()
+    {
+      foreach (var room in GetRooms())
+        room.Dispose();
+    }
+
+    [SecuritySafeCritical]
+    public void Dispose()
+    {
+      ReleaseManagedResources();
     }
     #endregion
   }
