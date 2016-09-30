@@ -72,7 +72,7 @@ namespace Engine.Network
     public void GetObjectData(SerializationInfo info, StreamingContext context)
     {
       byte[] data;
-      if (_data == null)
+      if (_data != null)
         data = _data;
       else
       {
