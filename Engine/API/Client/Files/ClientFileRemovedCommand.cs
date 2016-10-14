@@ -19,7 +19,7 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("content.RoomName");

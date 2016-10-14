@@ -1,4 +1,4 @@
-﻿using Engine.Api.Server;
+﻿using Engine.Api;
 using Engine.Helpers;
 using Engine.Model.Server;
 using Engine.Network;
@@ -9,7 +9,7 @@ namespace Engine.Plugins.Server
   public class ServerModelWrapper :
     CrossDomainObject
   {
-    public ServerApi Api
+    public IApi Api
     {
       [SecuritySafeCritical]
       get { return ServerModel.Api; }

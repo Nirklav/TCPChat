@@ -7,7 +7,7 @@ namespace Engine.Model.Common.Entities
   /// Recorderd voice data.
   /// </summary>
   [Serializable]
-  [BinType("SoundPack")]
+  [BinType("SoundPackDto")]
   public class SoundPack
   {
     /// <summary>

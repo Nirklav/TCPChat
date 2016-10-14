@@ -19,7 +19,7 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (content.Message == SystemMessageId.None)
         throw new ArgumentException("content.Message");

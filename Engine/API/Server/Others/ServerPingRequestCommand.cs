@@ -16,9 +16,9 @@ namespace Engine.Api.Server
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(ServerCommandArgs args)
+    protected override void OnRun(CommandArgs args)
     {
-      ServerModel.Server.SendMessage(args.ConnectionId, ClientPingResponceCommand.CommandId, true);
+      ServerModel.Server.SendMessage(args.ConnectionId, ClientPingResponseCommand.CommandId, true);
     }
   }
 }

@@ -27,7 +27,7 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (content.File == null)
         throw new ArgumentNullException("content.File");
@@ -51,7 +51,7 @@ namespace Engine.Api.Client
         }
 
         var room = client.Chat.GetRoom(content.RoomName);
-        if (!room.IsUserExist(args.PeerConnectionId))
+        if (!room.IsUserExist(args.ConnectionId))
         {
           SendFileNotPost(content.RoomName, content.File.Id);
           return;
@@ -78,7 +78,7 @@ namespace Engine.Api.Client
         posted.ReadStream.Position = content.StartPartPosition;
         posted.ReadStream.Read(part, 0, part.Length);
 
-        ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientWriteFilePartCommand.CommandId, sendingContent, part);
+        ClientModel.Peer.SendMessage(args.ConnectionId, ClientWriteFilePartCommand.CommandId, sendingContent, part);
       }
     }
 

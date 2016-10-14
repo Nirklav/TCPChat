@@ -56,7 +56,7 @@ namespace Engine.Network
     [SecurityCritical] private int _state; //PeerState
     [SecurityCritical] private bool _disposed;
     [SecurityCritical] private SynchronizationContext _syncContext;
-    [SecurityCritical] private ClientRequestQueue _requestQueue;
+    [SecurityCritical] private RequestQueue _requestQueue;
     [SecurityCritical] private ECDiffieHellmanCng _diffieHellman;
     #endregion
 
@@ -73,12 +73,12 @@ namespace Engine.Network
 
     #region constructor
     [SecurityCritical]
-    internal AsyncPeer()
+    internal AsyncPeer(IApi api)
     {
       _waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
       _packers = new Dictionary<string, Packer>();
       _syncContext = new EngineSyncContext();
-      _requestQueue = new ClientRequestQueue();
+      _requestQueue = new RequestQueue(api);
 
       _diffieHellman = new ECDiffieHellmanCng(KeySize);
       _diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
@@ -545,10 +545,7 @@ namespace Engine.Network
         var packer = GetPacker(peerId);
         var unpacked = packer.Unpack<IPackage>(message.Data);
 
-        var command = ClientModel.Api.GetCommand(unpacked.Package.Id);
-        var args = new ClientCommandArgs(peerId, unpacked);
-        
-        _requestQueue.Add(peerId, command, args);
+        _requestQueue.Add(peerId, unpacked);
       }
       catch (Exception exc)
       {

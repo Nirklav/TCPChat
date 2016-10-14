@@ -1,4 +1,5 @@
-﻿using Engine.Api.Server;
+﻿using Engine.Api;
+using Engine.Api.Server;
 using Engine.Helpers;
 using Engine.Model.Common;
 using Engine.Model.Server.Entities;
@@ -15,22 +16,13 @@ namespace Engine.Model.Server
   {
     #region static model
     private static ServerChat _chat;
-    private static Logger _logger = new Logger("Server.log");
     private static IServerNotifier _notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
-
-    /// <summary>
-    /// Logger.
-    /// </summary>
-    public static Logger Logger
-    {
-      [SecurityCritical]
-      get { return _logger; }
-    }
+    private static Logger _logger = new Logger("Server.log");
 
     /// <summary>
     /// Серверный API
     /// </summary>
-    public static ServerApi Api
+    public static IApi Api
     {
       [SecurityCritical]
       get;
@@ -70,6 +62,15 @@ namespace Engine.Model.Server
     }
 
     /// <summary>
+    /// Logger.
+    /// </summary>
+    public static Logger Logger
+    {
+      [SecurityCritical]
+      get { return _logger; }
+    }
+
+    /// <summary>
     /// Исользовать только с конструкцией using
     /// </summary>
     /// <example>using (var server = SeeverModel.Get()) { ... }</example>
@@ -98,8 +99,8 @@ namespace Engine.Model.Server
       if (Interlocked.CompareExchange(ref _chat, new ServerChat(), null) != null)
         throw new InvalidOperationException("model already inited");
 
-      Server = new AsyncServer();
       Api = new ServerApi();
+      Server = new AsyncServer(Api, _notifier, Logger);
 
       Plugins = new ServerPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
@@ -113,18 +114,18 @@ namespace Engine.Model.Server
 
       Dispose(Server);
       Dispose(Plugins);
+      Dispose(Api);
 
       Server = null;
+      Plugins = null;
       Api = null;
     }
 
     [SecurityCritical]
     private static void Dispose(IDisposable disposable)
     {
-      if (disposable == null)
-        return;
-
-      disposable.Dispose();
+      if (disposable != null)
+        disposable.Dispose();
     }
 
     [SecurityCritical]

@@ -16,12 +16,12 @@ namespace Engine.Network
     /// <summary>
     /// Время неактивности соединения, после прошествия которого соединение будет закрыто.
     /// </summary>
-    public const int ConnectionTimeOut = 7 * 1000;
+    public const int SilenceTimeout = 7 * 1000;
 
     /// <summary>
     /// Время ожидания регистрации. После того как данное время закончится соединение будет закрыто.
     /// </summary>
-    public const int UnregisteredTimeOut = 60 * 1000;
+    public const int UnregisteredTimeout = 60 * 1000;
     #endregion
 
     #region private field
@@ -57,7 +57,7 @@ namespace Engine.Network
     /// <summary>
     /// Интервал нективности подключения.
     /// </summary>
-    public int IntervalOfSilence
+    public int SilenceInterval
     {
       [SecurityCritical]
       get
@@ -70,7 +70,7 @@ namespace Engine.Network
     /// <summary>
     /// Интервал незарегистрированности соединения.
     /// </summary>
-    public int UnregisteredTimeInterval
+    public int UnregisteredInterval
     {
       [SecurityCritical]
       get

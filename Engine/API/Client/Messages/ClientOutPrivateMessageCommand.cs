@@ -24,7 +24,7 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (content.Text == null)
         throw new ArgumentNullException("content.Text");
@@ -34,7 +34,7 @@ namespace Engine.Api.Client
         Type = MessageType.Private,
         Time = DateTime.UtcNow,
         Message = content.Text,
-        Sender = args.PeerConnectionId,
+        Sender = args.ConnectionId,
       };
 
       ClientModel.Notifier.ReceiveMessage(receiveMessageArgs);

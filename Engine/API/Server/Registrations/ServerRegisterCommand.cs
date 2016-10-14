@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Server.Registrations;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
@@ -24,7 +25,7 @@ namespace Engine.Api.Server
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(MessageContent content, ServerCommandArgs args)
+    protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (content.UserDto == null)
         throw new ArgumentNullException("content.UserDto");
@@ -63,7 +64,7 @@ namespace Engine.Api.Server
           SendOpened(content.UserDto.Nick, mainRoom, userDtos);
 
           // Notify
-          ServerModel.Notifier.Registered(new ServerRegistrationEventArgs(content.UserDto.Nick));
+          ServerModel.Notifier.ConnectionRegistered(new ConnectionEventArgs(content.UserDto.Nick));
         }
       }
     }
@@ -108,7 +109,7 @@ namespace Engine.Api.Server
     {
       var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
       ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.CommandId, regResponseContent, true);
-      ServerModel.Api.RemoveUser(connectionId);
+      ServerModel.Api.Perform(new ServerRemoveUserAction(connectionId));
     }
 
     [Serializable]

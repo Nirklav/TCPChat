@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -19,69 +21,70 @@ namespace Engine.Model.Common
     private static readonly ModuleBuilder _moduleBuilder;
 
     private static readonly ConcurrentDictionary<Type, Type> _invokers;
-    private static readonly ConcurrentDictionary<Type, Type> _contexts;
+    private static readonly ConcurrentDictionary<Type, Type> _events;
 
     [SecuritySafeCritical]
     static NotifierGenerator()
     {
       _invokers = new ConcurrentDictionary<Type, Type>();
-      _contexts = new ConcurrentDictionary<Type, Type>();
+      _events = new ConcurrentDictionary<Type, Type>();
 
       _assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(GeneretedAssemblyName), AssemblyBuilderAccess.Run);
       _moduleBuilder = _assemblyBuilder.DefineDynamicModule(GeneretedModuleName);
     }
 
-    #region Context
+    #region Events
 
     /// <summary>
-    /// Создает тип, на основе интерфейса.
-    /// Содержащий в себе набор событий, а также методов для их вызова.
+    /// Сreates a type based on the interface.
+    /// Containing a set of events, and methods for their call.
     /// </summary>
-    /// <typeparam name="TInterface">Интерфейс, объявляющий какие события должны быть реализованы.</typeparam>
-    /// <returns>Экземпляр созданного типа, на основе интерфейса.</returns>
+    /// <typeparam name="TInterface">Interface that declares the event.</typeparam>
+    /// <returns>Returns object that implement interface.</returns>
     [SecuritySafeCritical]
     [PermissionSet(SecurityAction.Assert, Unrestricted = true)]
-    public static TInterface MakeContext<TInterface>()
+    public static TInterface MakeEvents<TInterface>()
     {
       var interfaceType = typeof(TInterface);
 
       if (!interfaceType.IsInterface)
         throw new InvalidOperationException("TInterface must be an interface");
 
-      var contextType = _contexts.GetOrAdd(interfaceType, CreateContext);
-      return (TInterface)Activator.CreateInstance(contextType);
+      var eventsType = _events.GetOrAdd(interfaceType, CreateEvents);
+      return (TInterface)Activator.CreateInstance(eventsType);
     }
 
     [SecurityCritical]
-    private static Type CreateContext(Type interfaceType)
+    private static Type CreateEvents(Type interfaceType)
     {
-      var invokeMethod = typeof(NotifierContext).GetMethod("Invoke", BindingFlags.Instance | BindingFlags.NonPublic);
+      var invokeMethod = typeof(NotifierEvents).GetMethod("Invoke", BindingFlags.Instance | BindingFlags.NonPublic);
 
       var builder = _moduleBuilder.DefineType(interfaceType.Name + GeneretedTypePostfix);
       builder.AddInterfaceImplementation(interfaceType);
-      builder.SetParent(typeof(NotifierContext));
+      builder.SetParent(typeof(NotifierEvents));
 
-      var events = interfaceType.GetEvents();
-      foreach (var eventInfo in events)
+      foreach (var eventInfo in interfaceType.GetEvents())
       {
         var eventType = eventInfo.EventHandlerType;
+        if (eventType.GetGenericTypeDefinition() != typeof(EventHandler<>))
+          throw new InvalidOperationException("Event should be EventHanler<T>");
+
         var eventGenericArg = eventType.GetGenericArguments()[0];
 
         var eventFiledInfo = AddEvent(builder, eventInfo, eventGenericArg);
 
-        var parameters = new Type[] { typeof(object), eventGenericArg };
+        var parameters = new[] { typeof(object), eventGenericArg, typeof(Action<Exception>) };
+        var invokeBuilder = builder.DefineMethod(InvokeEventPrefix + eventInfo.Name, MethodAttributes.Public, null, parameters);
 
-        var invokeMethodBuilder = builder.DefineMethod(InvokeEventPrefix + eventInfo.Name, MethodAttributes.Public, null, parameters);
-        var il = invokeMethodBuilder.GetILGenerator();
-        il.DeclareLocal(eventType);
+        var il = invokeBuilder.GetILGenerator();
 
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldfld, eventFiledInfo);
-        il.Emit(OpCodes.Stloc_0);
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldloc_0);
-        il.Emit(OpCodes.Ldarg_1);
-        il.Emit(OpCodes.Ldarg_2);
+        // Load field
+        il.Emit(OpCodes.Ldarg_0);               // Load events object (this)
+        il.Emit(OpCodes.Dup);                   // Duplicate events object (for field load)
+        il.Emit(OpCodes.Ldfld, eventFiledInfo); // Load event
+        il.Emit(OpCodes.Ldarg_1);               // Load sender
+        il.Emit(OpCodes.Ldarg_2);               // Load args
+        il.Emit(OpCodes.Ldarg_3);               // Load callback
         il.Emit(OpCodes.Callvirt, invokeMethod.MakeGenericMethod(eventGenericArg));
         il.Emit(OpCodes.Ret);
       }
@@ -92,22 +95,19 @@ namespace Engine.Model.Common
     [SecurityCritical]
     private static FieldInfo AddEvent(TypeBuilder builder, EventInfo info, Type eventGenericArg)
     {
-      var helperAddMethod = typeof(NotifierContext).GetMethod("Add", BindingFlags.Instance | BindingFlags.NonPublic);
-      helperAddMethod = helperAddMethod.MakeGenericMethod(eventGenericArg);
-
-      var helperRemoveMethod = typeof(NotifierContext).GetMethod("Remove", BindingFlags.Instance | BindingFlags.NonPublic);
-      helperRemoveMethod = helperRemoveMethod.MakeGenericMethod(eventGenericArg);
-
       var eventFieldBuilder = builder.DefineField(info.Name, info.EventHandlerType, FieldAttributes.Private);
 
-      var addMethod = GenerateEventMethod(builder, info.GetAddMethod(), helperAddMethod, eventFieldBuilder);
-      var removeMethod = GenerateEventMethod(builder, info.GetRemoveMethod(), helperRemoveMethod, eventFieldBuilder);
+      var add = typeof(NotifierEvents).GetMethod("Add", BindingFlags.Instance | BindingFlags.NonPublic).MakeGenericMethod(eventGenericArg);
+      GenerateEventMethod(builder, info.GetAddMethod(), add, eventFieldBuilder);
+
+      var remove = typeof(NotifierEvents).GetMethod("Remove", BindingFlags.Instance | BindingFlags.NonPublic).MakeGenericMethod(eventGenericArg);
+      GenerateEventMethod(builder, info.GetRemoveMethod(), remove, eventFieldBuilder);
 
       return eventFieldBuilder;
     }
 
     [SecurityCritical]
-    private static MethodBuilder GenerateEventMethod(TypeBuilder builder, MethodInfo overriding, MethodInfo helperMethod, FieldInfo eventField)
+    private static void GenerateEventMethod(TypeBuilder builder, MethodInfo overriding, MethodInfo helperMethod, FieldInfo eventField)
     {
       var methodParameters = overriding
         .GetParameters()
@@ -119,15 +119,13 @@ namespace Engine.Model.Common
 
       var il = methodBuilder.GetILGenerator();
   
-      il.Emit(OpCodes.Ldarg_0);
-      il.Emit(OpCodes.Ldarg_0);
-      il.Emit(OpCodes.Ldflda, eventField);
-      il.Emit(OpCodes.Ldarg_1);
-      il.Emit(OpCodes.Callvirt, helperMethod);
+      il.Emit(OpCodes.Ldarg_0);                 // Load events objects (this)
+      il.Emit(OpCodes.Dup);                     // Dublicate evenst object (for field load)
+      il.Emit(OpCodes.Ldflda, eventField);      // Load field address
+      il.Emit(OpCodes.Ldarg_1);                 // Load event arg
+      il.Emit(OpCodes.Callvirt, helperMethod);  // Call helper (add or remove)
 
       il.Emit(OpCodes.Ret);
-
-      return methodBuilder;
     }
 
     #endregion
@@ -135,18 +133,17 @@ namespace Engine.Model.Common
     #region Invoker
 
     /// <summary>
-    /// Создает тип, на основе интерфейса.
-    /// Содержит в себе набор контекстов с событиями, а также методы.
-    /// При вызове которых будут вызыватся события у контекстов.
+    /// Creates type based on the interface.
+    /// That contains set of objects with events.
+    /// And methods that invoke events.
     /// </summary>
-    /// <typeparam name="TInterface">Интерфейс объявлящий набор методов.</typeparam>
-    /// <param name="context">
-    /// Конексты которые будут сразу помещены в экземпляп типа. 
-    /// Для добавления новых экземпляр необходимо привести к типу <typeparamref name="Notifier"/>
+    /// <typeparam name="TInterface">Inteface that declares methods.</typeparam>
+    /// <param name="events">
+    /// Objects with events that be added to inovker.
     /// </param>
-    /// <returns>Экземпляр созданного типа, на основе интерфейса.</returns>
+    /// <returns>Returns object that implement interface.</returns>
     [SecurityCritical]
-    internal static TInterface MakeInvoker<TInterface>(params object[] context)
+    internal static TInterface MakeInvoker<TInterface>(params object[] events)
     {
       var interfaceType = typeof(TInterface);
 
@@ -155,7 +152,7 @@ namespace Engine.Model.Common
 
       var invokerType = _invokers.GetOrAdd(interfaceType, CreateInvoker);
       var invoker = (Notifier)Activator.CreateInstance(invokerType);
-      foreach (var ctx in context)
+      foreach (var ctx in events)
         invoker.Add(ctx);
 
       return (TInterface)(object)invoker;
@@ -178,21 +175,23 @@ namespace Engine.Model.Common
         notifierType = invokerAttribute.BaseNotifier;
       }
 
-      var contextsGetMethod = notifierType.GetMethod("GetContexts", BindingFlags.Instance | BindingFlags.Public);
-      var arrayGetMethod = typeof(object[]).GetMethod("Get", BindingFlags.Instance | BindingFlags.Public, null, new[] { typeof(int) }, null);
+      var getEvents = notifierType.GetMethod("GetEvents", BindingFlags.Instance | BindingFlags.Public);
+      var getEnumerator = typeof(IEnumerable<object>).GetMethod("GetEnumerator", BindingFlags.Instance | BindingFlags.Public);
+      var moveNext = typeof(IEnumerator).GetMethod("MoveNext", BindingFlags.Instance | BindingFlags.Public);
+      var current = typeof(IEnumerator<object>).GetProperty("Current", BindingFlags.Instance | BindingFlags.Public);
+      var dispose = typeof(IDisposable).GetMethod("Dispose", BindingFlags.Instance | BindingFlags.Public);
 
-      var contextType = _contexts.GetOrAdd(invokerAttribute.Context, CreateContext);
+      var eventsType = _events.GetOrAdd(invokerAttribute.Events, CreateEvents);
 
       var builder = _moduleBuilder.DefineType(interfaceType.Name + GeneretedTypePostfix);
       builder.SetParent(notifierType);
       builder.AddInterfaceImplementation(interfaceType);
-
-      var ctorBuilder = builder.DefineDefaultConstructor(MethodAttributes.Public);
+      builder.DefineDefaultConstructor(MethodAttributes.Public);
 
       var methods = interfaceType.GetMethods();
       foreach (var method in methods)
       {
-        var eventInvoker = contextType.GetMethod(InvokeEventPrefix + method.Name, BindingFlags.Instance | BindingFlags.Public);
+        var eventInvoker = eventsType.GetMethod(InvokeEventPrefix + method.Name, BindingFlags.Instance | BindingFlags.Public);
 
         var returnType = method.ReturnType;
         var methodParameters = method
@@ -200,49 +199,74 @@ namespace Engine.Model.Common
           .Select(p => p.ParameterType)
           .ToArray();
 
+        if (methodParameters.Length == 1)
+        {
+          if (!typeof(EventArgs).IsAssignableFrom(methodParameters[0]))
+            throw new InvalidOperationException("First argument should be EventArgs");
+        }
+        else if (methodParameters.Length == 2)
+        {
+          if (!typeof(EventArgs).IsAssignableFrom(methodParameters[0]))
+            throw new InvalidOperationException("First argument should be EventArgs");
+
+          if (typeof(Action<Exception>) != methodParameters[1])
+            throw new InvalidOperationException("Second argument should be Action<Exception>");
+        }
+        else
+          throw new InvalidOperationException("Invalid parameters count");
+
         var methodBuilder = builder.DefineMethod(method.Name, MethodAttributes.Public | MethodAttributes.Virtual, returnType, methodParameters);
         builder.DefineMethodOverride(methodBuilder, method);
 
         var il = methodBuilder.GetILGenerator();
+
         var cycleLabel = il.DefineLabel();
         var donotExitLabel = il.DefineLabel();
+        var exitLabel = il.DefineLabel();
 
-        il.DeclareLocal(typeof(object[]));
-        il.DeclareLocal(typeof(int));
-        il.DeclareLocal(contextType);
+        il.DeclareLocal(typeof(IEnumerator<object>));
 
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Callvirt, contextsGetMethod);
-        il.Emit(OpCodes.Stloc_0);
+        // Set enumerator local
+        il.Emit(OpCodes.Ldarg_0);                 // Load notifier
+        il.Emit(OpCodes.Callvirt, getEvents);     // Call get event method (returns IEnumearable)
+        il.Emit(OpCodes.Callvirt, getEnumerator); // Call get enumerator method
+        il.Emit(OpCodes.Stloc_0);                 // Set enumerator to local
 
-        il.Emit(OpCodes.Ldloc_0);
-        il.Emit(OpCodes.Ldlen);
-        il.Emit(OpCodes.Stloc_1);
+        il.BeginExceptionBlock();
 
         il.MarkLabel(cycleLabel);
 
-        il.Emit(OpCodes.Ldloc_1);
-        il.Emit(OpCodes.Brtrue_S, donotExitLabel);
-        il.Emit(OpCodes.Ret);
+        il.Emit(OpCodes.Ldloc_0);                  // Load enumerator
+        il.Emit(OpCodes.Callvirt, moveNext);       // Call move next
+        il.Emit(OpCodes.Brtrue_S, donotExitLabel); // Check move next result, if false - break method
+        il.Emit(OpCodes.Leave_S, exitLabel);       // Exit and call finally block
 
         il.MarkLabel(donotExitLabel);
 
-        il.Emit(OpCodes.Ldloc_1);
-        il.Emit(OpCodes.Ldc_I4_1);
-        il.Emit(OpCodes.Sub);
-        il.Emit(OpCodes.Stloc_1);
+        il.Emit(OpCodes.Ldloc_0);                          // Load enumerator
+        il.Emit(OpCodes.Callvirt, current.GetGetMethod()); // Get current
+        il.Emit(OpCodes.Ldnull);                           // Load null (sender)
+        il.Emit(OpCodes.Ldarg_1);                          // Load args
 
+        if (methodParameters.Length == 1)                  // Load callback
+          il.Emit(OpCodes.Ldnull);  
+        else
+          il.Emit(OpCodes.Ldarg_2);
+
+        il.Emit(OpCodes.Callvirt, eventInvoker);           // Call invoker
+
+        il.Emit(OpCodes.Br, cycleLabel);                   // Process next element
+
+        il.BeginFinallyBlock();
+
+        // Call enumerator dispose
         il.Emit(OpCodes.Ldloc_0);
-        il.Emit(OpCodes.Ldloc_1);
-        il.Emit(OpCodes.Callvirt, arrayGetMethod);
-        il.Emit(OpCodes.Stloc_2);
+        il.Emit(OpCodes.Callvirt, dispose);
 
-        il.Emit(OpCodes.Ldloc_2);
-        il.Emit(OpCodes.Ldnull);
-        il.Emit(OpCodes.Ldarg_1);
-        il.Emit(OpCodes.Callvirt, eventInvoker);
+        il.EndExceptionBlock();
 
-        il.Emit(OpCodes.Br, cycleLabel);
+        il.MarkLabel(exitLabel);
+        il.Emit(OpCodes.Ret);
       }
 
       return builder.CreateType();

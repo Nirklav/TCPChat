@@ -11,9 +11,9 @@ namespace Engine.Api.Client
 {
   public sealed class ClientApi :
     CrossDomainObject,
-    IApi<ClientCommandArgs>
+    IApi
   {
-    [SecurityCritical] private readonly Dictionary<long, ICommand<ClientCommandArgs>> _commands;
+    [SecurityCritical] private readonly Dictionary<long, ICommand> _commands;
     [SecurityCritical] private long _lastSendedNumber;
 
     /// <summary>
@@ -22,10 +22,9 @@ namespace Engine.Api.Client
     [SecurityCritical]
     public ClientApi()
     {
-      _commands = new Dictionary<long, ICommand<ClientCommandArgs>>();
-
       ClientModel.Recorder.Recorded += OnRecorded;
 
+      _commands = new Dictionary<long, ICommand>();
       AddCommand(new ClientRegistrationResponseCommand());
       AddCommand(new ClientRoomRefreshedCommand());
       AddCommand(new ClientOutPrivateMessageCommand());
@@ -37,7 +36,7 @@ namespace Engine.Api.Client
       AddCommand(new ClientFileRemovedCommand());
       AddCommand(new ClientReadFilePartCommand());
       AddCommand(new ClientWriteFilePartCommand());
-      AddCommand(new ClientPingResponceCommand());
+      AddCommand(new ClientPingResponseCommand());
       AddCommand(new ClientConnectToPeerCommand());
       AddCommand(new ClientWaitPeerConnectionCommand());
       AddCommand(new ClientConnectToP2PServiceCommand());
@@ -45,9 +44,15 @@ namespace Engine.Api.Client
     }
 
     [SecurityCritical]
-    private void AddCommand(ICommand<ClientCommandArgs> command)
+    private void AddCommand(ICommand command)
     {
       _commands.Add(command.Id, command);
+    }
+
+    [SecuritySafeCritical]
+    public void Dispose()
+    {
+      ClientModel.Recorder.Recorded -= OnRecorded;
     }
 
     [SecurityCritical]
@@ -103,9 +108,9 @@ namespace Engine.Api.Client
     /// <param name="id">Command identifier.</param>
     /// <returns>Command.</returns>
     [SecuritySafeCritical]
-    public ICommand<ClientCommandArgs> GetCommand(long id)
+    public ICommand GetCommand(long id)
     {
-      ICommand<ClientCommandArgs> command;
+      ICommand command;
       if (_commands.TryGetValue(id, out command))
         return command;
 

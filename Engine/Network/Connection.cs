@@ -10,7 +10,7 @@ using System.Security.Cryptography;
 namespace Engine.Network
 {
   /// <summary>
-  /// Базовый класс соединения, реализовывает прием и передачу данных.
+  /// Base connection.
   /// </summary>
   public abstract class Connection :
     MarshalByRefObject,
@@ -62,7 +62,7 @@ namespace Engine.Network
 
     #region properties
     /// <summary>
-    /// Идентификатор соединения.
+    /// Connection id.
     /// </summary>
     public string Id
     {
@@ -77,7 +77,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Удаленная точка.
+    /// Remote address.
     /// </summary>
     public IPEndPoint RemotePoint
     {
@@ -90,7 +90,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Локальная точка.
+    /// Local address.
     /// </summary>
     public IPEndPoint LocalPoint
     {
@@ -105,9 +105,9 @@ namespace Engine.Network
 
     #region public methods
     /// <summary>
-    /// Отправляет пакет.
+    /// Send package.
     /// </summary>
-    /// <param name="id">Индетификатор пакета.</param>
+    /// <param name="id">Package id. (Command.Id)</param>
     [SecuritySafeCritical]
     public void SendMessage(long id)
     {
@@ -115,10 +115,10 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отправляет пакет.
+    /// Send package.
     /// </summary>
-    /// <param name="id">Индетификатор пакета.</param>
-    /// <param name="content">Данные пакета.</param>
+    /// <param name="id">Package id. (Command.Id)</param>
+    /// <param name="content">Package content.</param>
     [SecuritySafeCritical]
     public void SendMessage<T>(long id, T content)
     {
@@ -126,9 +126,9 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отправляет пакет.
+    /// Send package.
     /// </summary>
-    /// <param name="package">Отправляемый пакет.</param>
+    /// <param name="package">Package.</param>
     [SecurityCritical]
     public void SendMessage(IPackage package)
     {
@@ -155,7 +155,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отправляет информацию о соединении.
+    /// Send connection info.
     /// </summary>
     [SecurityCritical]
     public void SendInfo()
@@ -171,7 +171,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Инциирует отключение соединения.
+    /// Start disconnect from remote.
     /// </summary>
     [SecurityCritical]
     public void Disconnect()
@@ -300,58 +300,51 @@ namespace Engine.Network
 
     #region protected virtual/abstract methods
     /// <summary>
-    /// Создает объект содержащий информацию о содединении.
+    /// Creates the object that contains info about connection.
     /// </summary>
-    /// <returns>Объект содержащий информацию о содединении.</returns>
     [SecuritySafeCritical]
-    protected virtual ConnectionInfo CreateConnectionInfo()
-    {
-      return new ConnectionInfo();
-    }
+    protected virtual ConnectionInfo CreateConnectionInfo() { return new ConnectionInfo(); }
 
     /// <summary>
-    /// Происходит при получении информации о удаленном соединении.
+    /// Invokes when connection receive info about remote connection.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void OnInfoReceived(ConnectionInfo info) { }
 
     /// <summary>
-    /// Происходит когда получено полное сообщение.
+    /// Invokes when connection receive package.
     /// </summary>
-    /// <param name="args">Инормация о данных, и данные.</param>
+    /// <param name="args">Package event args.</param>
     [SecuritySafeCritical]
     protected abstract void OnPackageReceived(PackageReceivedEventArgs args);
 
     /// <summary>
-    /// Происходит при отправке данных. Или при возниконовении ошибки произошедшей во время передачи данных.
+    /// Invokes when data is sent or when error is thrown.
     /// </summary>
-    /// <param name="args">Информация о отправленных данных.</param>
+    /// <param name="args">Package event args.</param>
     [SecuritySafeCritical]
     protected abstract void OnPackageSent(PackageSendedEventArgs args);
 
     /// <summary>
-    /// Происходит при получении части данных.
+    /// Invokes when part of data was read.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void OnPackagePartReceived() { }
 
     /// <summary>
-    /// Происходит при отсоединении.
+    /// Invokes when disconnected.
     /// </summary>
-    /// <param name="e">Ошибка которая могла возникнуть в процессе отсоединения.</param>
     [SecuritySafeCritical]
     protected virtual void OnDisconnected(Exception e) { }
 
+    // TODO: rus
     /// <summary>
     /// Происходит при SocketException. Без переопределение возращает всегда false.
     /// </summary>
     /// <param name="se">Словленое исключение.</param>
     /// <returns>Вовзращает значение говорящее о том, нужно ли дальше выкидывать исключение или оно обработано. true - обработано. false - не обработано.</returns>
     [SecuritySafeCritical]
-    protected virtual bool OnSocketException(SocketException se)
-    {
-      return false;
-    }
+    protected virtual bool OnSocketException(SocketException se) { return false; }
     #endregion
 
     #region private methods
@@ -380,7 +373,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Очишает соединение. После вызова класс может быть переиспользован.
+    /// Clean the connection. After call connection can be reused.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void Clean()
@@ -415,8 +408,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Освобождает управляемые ресурсы соедиенения.
-    /// Не может быть переиспользован после вызова.
+    /// Cealn the connection. After call connection cannot be reused.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void DisposeManagedResources()
@@ -436,6 +428,7 @@ namespace Engine.Network
     #endregion
 
     #region utils
+    // TODO: rus
     /// <summary>
     /// Проверяет TCP порт на занятость.
     /// </summary>

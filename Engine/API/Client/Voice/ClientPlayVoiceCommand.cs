@@ -25,13 +25,13 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, CommandArgs args)
     {
       using (var client = ClientModel.Get())
       {
-        var user = client.Chat.GetUser(args.PeerConnectionId);
+        var user = client.Chat.GetUser(args.ConnectionId);
         if (user.IsVoiceActive())
-          ClientModel.Player.Enqueue(args.PeerConnectionId, content.Number, content.Pack);
+          ClientModel.Player.Enqueue(args.ConnectionId, content.Number, content.Pack);
       }
     }
 

@@ -13,7 +13,7 @@ namespace UI.ViewModel
   {
     private bool disposed;
     protected Dispatcher Dispatcher;
-    protected IClientNotifierContext NotifierContext;
+    protected IClientEvents NotifierContext;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -24,7 +24,7 @@ namespace UI.ViewModel
 
       if (initializeNotifier)
       {
-        NotifierContext = NotifierGenerator.MakeContext<IClientNotifierContext>();
+        NotifierContext = NotifierGenerator.MakeEvents<IClientEvents>();
         ClientModel.Notifier.Add(NotifierContext);
       }
     }

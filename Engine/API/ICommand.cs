@@ -7,21 +7,18 @@ namespace Engine.Api
   public interface ICommand
   {
     long Id { get; }
-  }
-
-  public interface ICommand<in TArgs> : ICommand
-    where TArgs : CommandArgs
-  {
-    void Run(TArgs args);
+    void Run(CommandArgs args);
   }
 
   [Serializable]
   public class CommandArgs : IDisposable
   {
+    public string ConnectionId { get; private set; }
     public Unpacked<IPackage> Unpacked { get; private set; }
 
-    public CommandArgs(Unpacked<IPackage> unpacked)
+    public CommandArgs(string connectionId, Unpacked<IPackage> unpacked)
     {
+      ConnectionId = connectionId;
       Unpacked = unpacked;
     }
 
@@ -29,32 +26,6 @@ namespace Engine.Api
     public void Dispose()
     {
       Unpacked.Dispose();
-    }
-  }
-
-  [Serializable]
-  public class ServerCommandArgs 
-    : CommandArgs
-  {
-    public string ConnectionId { get; private set; }
-    
-    public ServerCommandArgs(string connectionId, Unpacked<IPackage> unpacked)
-      : base(unpacked)
-    {
-      ConnectionId = connectionId;
-    }
-  }
-
-  [Serializable]
-  public class ClientCommandArgs 
-    : CommandArgs
-  {
-    public string PeerConnectionId { get; private set; }
-
-    public ClientCommandArgs(string peerConnectionId, Unpacked<IPackage> unpacked)
-      : base(unpacked)
-    {
-      PeerConnectionId = peerConnectionId;
     }
   }
 }

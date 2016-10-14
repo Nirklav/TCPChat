@@ -1,6 +1,8 @@
-﻿using Engine.Plugins;
+﻿using Engine.Helpers;
+using Engine.Plugins;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace Engine.Model.Common
@@ -8,54 +10,60 @@ namespace Engine.Model.Common
   [AttributeUsage(AttributeTargets.Interface, AllowMultiple = false)]
   public class NotifierAttribute : Attribute
   {
-    public Type Context { get; private set; }
+    public Type Events { get; private set; }
     public Type BaseNotifier { get; set; }
 
-    public NotifierAttribute(Type context)
+    public NotifierAttribute(Type events)
     {
-      Context = context;
+      Events = events;
     }
   }
 
   public interface INotifier
   {
-    void Add(object context);
-    bool Remove(object context);
+    void Add(object events);
+    bool Remove(object events);
   }
 
   public abstract class Notifier : 
     CrossDomainObject, 
     INotifier
   {
-    private readonly List<object> _contexts = new List<object>();
+    private readonly object _syncObject = new object();
+    private List<object> _events = new List<object>();
 
-    public virtual object[] GetContexts()
+    public virtual IEnumerable<object> GetEvents()
     {
-      lock (_contexts)
-        return _contexts.ToArray();
+      lock (_syncObject)
+        return _events;
     }
 
-    public void Add(object context)
+    public void Add(object events)
     {
-      lock (_contexts)
-        _contexts.Add(context);
+      lock (_syncObject)
+      {
+        _events = new List<object>(_events); // Creates new, old value returned outside
+        _events.Add(events);
+      }
     }
 
-    public bool Remove(object context)
+    public bool Remove(object events)
     {
-      lock (_contexts)
-        return _contexts.Remove(context);
+      lock (_syncObject)
+      {
+        _events = new List<object>(_events); // Creates new, old value returned outside
+        return _events.Remove(events);
+      }
     }
   }
 
-  public abstract class NotifierContext : CrossDomainObject
+  public abstract class NotifierEvents : CrossDomainObject
   {
-    protected void Invoke<TArgs>(EventHandler<TArgs> handler, object sender, TArgs args)
+    protected void Invoke<TArgs>(EventHandler<TArgs> handler, object sender, TArgs args, Action<Exception> callback)
       where TArgs : EventArgs
     {
-      var e = Interlocked.CompareExchange(ref handler, null, null);
-      if (e != null)
-        e(sender, args);
+      if (handler != null)
+        handler.BeginDispatch(sender, args, callback);
     }
 
     protected void Add<TArgs>(ref EventHandler<TArgs> value, EventHandler<TArgs> added)

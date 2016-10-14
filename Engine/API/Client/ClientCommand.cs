@@ -10,7 +10,7 @@ namespace Engine.Api.Client
 {
   public abstract class ClientCommand : 
     CrossDomainObject, 
-    ICommand<ClientCommandArgs>
+    ICommand
   {
     public abstract long Id
     {
@@ -25,16 +25,16 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    public void Run(ClientCommandArgs args)
+    public void Run(CommandArgs args)
     {
       if (IsPeerCommand)
       {
-        if (args.PeerConnectionId == null)
+        if (args.ConnectionId == AsyncClient.ClientId)
           throw new ModelException(ErrorCode.IllegalInvoker, string.Format("Command cannot be runned from server package. {0}", GetType().FullName));
       }
       else
       {
-        if (args.PeerConnectionId != null)
+        if (args.ConnectionId != AsyncClient.ClientId)
           throw new ModelException(ErrorCode.IllegalInvoker, string.Format("Command cannot be runned from peer package. {0}", GetType().FullName));
       }
 
@@ -42,13 +42,13 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected abstract void OnRun(ClientCommandArgs args);
+    protected abstract void OnRun(CommandArgs args);
   }
 
   public abstract class ClientCommand<TContent> : ClientCommand
   {
     [SecuritySafeCritical]
-    protected sealed override void OnRun(ClientCommandArgs args)
+    protected sealed override void OnRun(CommandArgs args)
     {
       var package = args.Unpacked.Package as IPackage<TContent>;
       if (package == null)
@@ -58,7 +58,7 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected abstract void OnRun(TContent content, ClientCommandArgs args);
+    protected abstract void OnRun(TContent content, CommandArgs args);
 
     #region Helpers
     /// <summary>

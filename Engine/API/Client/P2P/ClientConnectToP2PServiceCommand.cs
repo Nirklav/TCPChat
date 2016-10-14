@@ -19,7 +19,7 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, CommandArgs args)
     {
       var address = ClientModel.Client.RemotePoint.Address;
       var endPoint = new IPEndPoint(address, content.Port);

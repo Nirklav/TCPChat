@@ -26,7 +26,7 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(MessageContent content, ClientCommandArgs args)
+    protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (content.File == null)
         throw new ArgumentNullException("content.File");
@@ -77,7 +77,7 @@ namespace Engine.Api.Client
             StartPartPosition = stream.Position,
           };
 
-          ClientModel.Peer.SendMessage(args.PeerConnectionId, ClientReadFilePartCommand.CommandId, sendingContent);
+          ClientModel.Peer.SendMessage(args.ConnectionId, ClientReadFilePartCommand.CommandId, sendingContent);
 
           progress = (int)((stream.Position * 100) / content.File.Size);
         }

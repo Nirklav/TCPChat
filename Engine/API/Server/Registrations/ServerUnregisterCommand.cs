@@ -1,4 +1,5 @@
-﻿using Engine.Model.Server;
+﻿using Engine.Api.Server.Registrations;
+using Engine.Model.Server;
 using System.Security;
 
 namespace Engine.Api.Server
@@ -15,9 +16,9 @@ namespace Engine.Api.Server
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(ServerCommandArgs args)
+    protected override void OnRun(CommandArgs args)
     {
-      ServerModel.Api.RemoveUser(args.ConnectionId);
+      ServerModel.Api.Perform(new ServerRemoveUserAction(args.ConnectionId));
     }
   }
 }

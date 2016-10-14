@@ -21,7 +21,7 @@ namespace Engine.Api.Server
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(ServerCommandArgs args)
+    protected override void OnRun(CommandArgs args)
     {
 
     }

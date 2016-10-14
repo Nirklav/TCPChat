@@ -5,26 +5,36 @@ using ThirtyNineEighty.BinarySerializer;
 namespace Engine.Model.Common.Entities
 {
   [Serializable]
-  [BinType("FieldId")]
+  [BinType("FieldIdDto")]
   public struct FileId : IEquatable<FileId>
   {
     [BinField("i")]
-    public readonly int Id;
+    private int _id;
 
     [BinField("o")]
-    public readonly string Owner;
+    private string _owner;
 
     /// <summary>
     /// Create file identification.
     /// </summary>
-    /// <param name="id">Identification.</param>
+    /// <param name="id">File identificator.</param>
     /// <param name="owner">File owner nick.</param>
     [SecuritySafeCritical]
     public FileId(int id, string owner)
     {
-      Id = id;
-      Owner = owner;
+      _id = id;
+      _owner = owner;
     }
+
+    /// <summary>
+    /// File identificator.
+    /// </summary>
+    public int Id { get { return _id; } }
+
+    /// <summary>
+    /// File owner nick.
+    /// </summary>
+    public string Owner {  get { return _owner; } }
 
     [SecuritySafeCritical]
     public static bool operator == (FileId first, FileId second)

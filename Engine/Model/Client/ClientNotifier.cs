@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 
 namespace Engine.Model.Client
@@ -9,34 +10,35 @@ namespace Engine.Model.Client
   public class ClientNotifier : Notifier
   {
     [SecuritySafeCritical]
-    public override object[] GetContexts()
+    public override IEnumerable<object> GetEvents()
     {
-      var contexts = new List<object>(base.GetContexts());
-
-      foreach (var context in ClientModel.Plugins.GetNotifierContexts())
-        contexts.Add(context);
-
-      return contexts.ToArray();
+      var events = base.GetEvents();
+      return events.Concat(ClientModel.Plugins.GetNotifierEvents());
     }
   }
 
-  [Notifier(typeof(IClientNotifierContext), BaseNotifier = typeof(ClientNotifier))]
+  [Notifier(typeof(IClientEvents), BaseNotifier = typeof(ClientNotifier))]
   public interface IClientNotifier : INotifier
   {
     void Connected(ConnectEventArgs args);
     void ReceiveRegistrationResponse(RegistrationEventArgs args);
+
     void ReceiveMessage(ReceiveMessageEventArgs args);
+
     void AsyncError(AsyncErrorEventArgs args);
+
     void RoomRefreshed(RoomEventArgs args);
     void RoomOpened(RoomEventArgs args);
     void RoomClosed(RoomEventArgs args);
+
     void DownloadProgress(FileDownloadEventArgs args);
     void PostedFileDeleted(FileDownloadEventArgs args);
+
     void PluginLoaded(PluginEventArgs args);
     void PluginUnloading(PluginEventArgs args);
   }
 
-  public interface IClientNotifierContext
+  public interface IClientEvents
   {
     /// <summary>
     /// Событие происходит при подключении клиента к серверу.

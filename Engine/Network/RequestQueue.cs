@@ -1,7 +1,6 @@
 ﻿using Engine.Api;
 using Engine.Helpers;
 using Engine.Model.Client;
-using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,31 +10,9 @@ using System.Threading;
 namespace Engine.Network
 {
   [SecurityCritical]
-  class ServerRequestQueue : RequestQueue<ServerCommandArgs>
-  {
-    [SecurityCritical]
-    protected override void OnError(Exception exc)
-    {
-      ServerModel.Logger.Write(exc);
-    }
-  }
-
-  [SecurityCritical]
-  class ClientRequestQueue : RequestQueue<ClientCommandArgs>
-  {
-    [SecurityCritical]
-    protected override void OnError(Exception exc)
-    {
-      ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(exc));
-      ClientModel.Logger.Write(exc);
-    }
-  }
-
-  [SecurityCritical]
-  abstract class RequestQueue<TArgs> :
+  class RequestQueue :
     MarshalByRefObject,
     IDisposable
-    where TArgs : CommandArgs
   {
     private const int Timeout = 1000;
 
@@ -44,10 +21,10 @@ namespace Engine.Network
     [SecurityCritical]
     private class QueueContainer : IDisposable
     {
-      [SecurityCritical] private readonly RequestQueue<TArgs> _queue;
+      [SecurityCritical] private readonly RequestQueue _queue;
 
       [SecurityCritical] private readonly object _syncObject = new object();
-      [SecurityCritical] private readonly Queue<CommandContainer> _commands = new Queue<CommandContainer>();
+      [SecurityCritical] private readonly Queue<CommandArgs> _commands = new Queue<CommandArgs>();
       [SecurityCritical] private volatile bool _inProcess;
 
       [SecurityCritical] private static readonly TimeSpan _disposeEventTimeout = TimeSpan.FromSeconds(10);
@@ -55,17 +32,17 @@ namespace Engine.Network
       [SecurityCritical] private bool _disposed;
 
       [SecurityCritical]
-      public QueueContainer(RequestQueue<TArgs> queue)
+      public QueueContainer(RequestQueue queue)
       {
         _queue = queue;
       }
 
       [SecurityCritical]
-      public void Enqueue(ICommand<TArgs> command, TArgs args)
+      public void Enqueue(CommandArgs args)
       {
         using(new TryLock(_syncObject, Timeout))
         {
-          _commands.Enqueue(new CommandContainer(command, args));
+          _commands.Enqueue(args);
           if (!_inProcess)
           {
             _inProcess = true;
@@ -80,7 +57,7 @@ namespace Engine.Network
       {
         while (true)
         {
-          CommandContainer commandContainer;
+          CommandArgs args;
 
           using (new TryLock(_syncObject, Timeout))
           {
@@ -91,12 +68,16 @@ namespace Engine.Network
               return;
             }
 
-            commandContainer = _commands.Dequeue();
+            args = _commands.Dequeue();
           }
 
           try
           {
-            commandContainer.Run();
+            using (args)
+            {
+              var command = _queue._api.GetCommand(args.Unpacked.Package.Id);
+              command.Run(args);
+            }
           }
           catch (Exception e)
           {
@@ -121,43 +102,25 @@ namespace Engine.Network
       }
     }
 
-    [SecurityCritical]
-    private class CommandContainer
-    {
-      [SecurityCritical] private ICommand<TArgs> _command;
-      [SecurityCritical] private TArgs _args;
-
-      [SecurityCritical]
-      public CommandContainer(ICommand<TArgs> command, TArgs args)
-      {
-        _command = command;
-        _args = args;
-      }
-
-      [SecurityCritical]
-      public void Run()
-      {
-        using (_args)
-          _command.Run(_args);
-      }
-    }
-
     #endregion
 
     [SecurityCritical] private readonly object _syncObject;
     [SecurityCritical] private readonly Dictionary<string, QueueContainer> _requests;
-
+    [SecurityCritical] private readonly IApi _api;
     [SecurityCritical] private volatile bool _disposed;
 
+    public event EventHandler<AsyncErrorEventArgs> Error;
+
     [SecurityCritical]
-    public RequestQueue()
+    public RequestQueue(IApi api)
     {
+      _api = api;
       _syncObject = new object();
       _requests = new Dictionary<string, QueueContainer>();
     }
 
     [SecurityCritical]
-    internal void Add(string connectionId, ICommand<TArgs> command, TArgs args)
+    internal void Add(string connectionId, Unpacked<IPackage> unpacked)
     {
       ThrowIfDisposed();
 
@@ -170,7 +133,7 @@ namespace Engine.Network
           _requests.Add(connectionId, queueContainer = new QueueContainer(this));
       }
 
-      queueContainer.Enqueue(command, args);
+      queueContainer.Enqueue(new CommandArgs(connectionId, unpacked));
     }
 
     internal void Clean()
@@ -188,9 +151,6 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    protected abstract void OnError(Exception e);
-
-    [SecurityCritical]
     private void ThrowIfDisposed()
     {
       if (_disposed)
@@ -205,6 +165,24 @@ namespace Engine.Network
 
       _disposed = true;
       Clean();
+    }
+
+    [SecurityCritical]
+    private void OnError(Exception e)
+    {
+      var errorEvent = Interlocked.CompareExchange(ref Error, null, null);
+      if (errorEvent != null)
+      {
+        var eventArgs = new AsyncErrorEventArgs(e);
+        errorEvent.BeginInvoke(this, eventArgs, OnErrorResult, errorEvent);
+      }
+    }
+
+    [SecuritySafeCritical]
+    private void OnErrorResult(IAsyncResult result)
+    {
+      var errorEvent = (EventHandler<AsyncErrorEventArgs>) result.AsyncState;
+      errorEvent.EndInvoke(result);
     }
   }
 }

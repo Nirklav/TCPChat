@@ -40,7 +40,8 @@ namespace Engine.Plugins
     protected readonly object SyncObject = new object();
     protected readonly Dictionary<string, PluginContainer> Plugins = new Dictionary<string, PluginContainer>();
     protected readonly Dictionary<long, TCommand> Commands = new Dictionary<long, TCommand>();
-    protected readonly Dictionary<string, object> NotifierContexts = new Dictionary<string, object>();
+
+    protected Dictionary<string, object> NotifierEvents = new Dictionary<string, object>();
 
     private string _path;
     private List<PluginInfo> _infos;
@@ -208,10 +209,13 @@ namespace Engine.Plugins
     [SecurityCritical]
     protected virtual void OnPluginLoaded(PluginContainer loaded)
     {
-      // Context
-      var context = loaded.Plugin.NotifierContext;
-      if (context != null)
-        NotifierContexts.Add(loaded.Plugin.Name, context);
+      // Events
+      var events = loaded.Plugin.NotifierEvents;
+      if (events != null)
+      {
+        NotifierEvents = new Dictionary<string, object>(NotifierEvents); // Create new (NotifierEvents.Values returned from outside)
+        NotifierEvents.Add(loaded.Plugin.Name, events);
+      }
 
       // Commands
       foreach (var command in loaded.Plugin.Commands)
@@ -227,8 +231,9 @@ namespace Engine.Plugins
     [SecurityCritical]
     protected virtual void OnPluginUnlodaing(PluginContainer unloading)
     {
-      // Context
-      NotifierContexts.Remove(unloading.Plugin.Name);
+      // Events
+      NotifierEvents = new Dictionary<string, object>(NotifierEvents); // Create new (NotifierEvents.Values returned from outside)
+      NotifierEvents.Remove(unloading.Plugin.Name);
 
       // Commands
       if (unloading.CommandsLoaded)
@@ -253,10 +258,10 @@ namespace Engine.Plugins
     }
 
     [SecurityCritical]
-    internal IEnumerable GetNotifierContexts()
+    internal IEnumerable<object> GetNotifierEvents()
     {
       lock (SyncObject)
-        return NotifierContexts.Values.ToArray();
+        return NotifierEvents.Values;
     }
 
     [SecurityCritical]

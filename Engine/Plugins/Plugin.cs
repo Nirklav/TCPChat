@@ -17,7 +17,7 @@ namespace Engine.Plugins
 
     public abstract string Name { get; }
     public abstract IEnumerable<TCommand> Commands { get; }
-    public abstract object NotifierContext { get; }
+    public abstract object NotifierEvents { get; }
 
     protected abstract void Initialize();
   }

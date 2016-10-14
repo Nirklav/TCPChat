@@ -1,7 +1,8 @@
-﻿namespace Engine.Api
+﻿using System;
+
+namespace Engine.Api
 {
-  public interface IApi<in TArgs>
-    where TArgs : CommandArgs
+  public interface IApi : IDisposable
   {
     /// <summary>
     /// Name and version of Api.
@@ -13,7 +14,7 @@
     /// </summary>
     /// <param name="id">Command identifier.</param>
     /// <returns>Command.</returns>
-    ICommand<TArgs> GetCommand(long id);
+    ICommand GetCommand(long id);
 
     /// <summary>
     /// Perform the remote action.

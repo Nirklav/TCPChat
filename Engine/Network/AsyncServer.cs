@@ -1,4 +1,5 @@
 ﻿using Engine.Api;
+using Engine.Helpers;
 using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,10 @@ namespace Engine.Network
 
     #region fields
     [SecurityCritical] private readonly Dictionary<string, ServerConnection> _connections;
-    [SecurityCritical] private readonly ServerRequestQueue _requestQueue;
+
+    [SecurityCritical] private readonly IApi _api;
+    [SecurityCritical] private readonly RequestQueue _requestQueue;
+    [SecurityCritical] private readonly IServerNotifier _notifier;
 
     [SecurityCritical] private P2PService _p2pService;
     [SecurityCritical] private Socket _listener;
@@ -33,11 +37,13 @@ namespace Engine.Network
 
     [SecurityCritical] private readonly object _timerSync = new object();
     [SecurityCritical] private Timer _systemTimer;
+
+    [SecurityCritical] private readonly Logger _logger;
     #endregion
 
-    #region properties and events
+    #region properties
     /// <summary>
-    /// Возвращает true если сервер запущен.
+    /// Returns true if server is runned.
     /// </summary>
     public bool IsServerRunning
     {
@@ -50,7 +56,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Сервис используемый для прямого соединения пользователей.
+    /// P2P service that used for direct users connecting.
     /// </summary>
     internal P2PService P2PService
     {
@@ -63,7 +69,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Использует ли сервер IPv6 адреса. Если нет, используется IPv4.
+    /// Returns true if server use IPv6, otherwise false.
     /// </summary>
     public bool UsingIPv6
     {
@@ -74,22 +80,27 @@ namespace Engine.Network
 
     #region constructors
     [SecurityCritical]
-    public AsyncServer()
+    public AsyncServer(IApi api, IServerNotifier notifier, Logger logger)
     {
       _connections = new Dictionary<string, ServerConnection>();
-      _requestQueue = new ServerRequestQueue();
+
+      _api = api;
+      _requestQueue = new RequestQueue(api);
+      _requestQueue.Error += OnRequestQueueError;
+      _notifier = notifier;
+
       _isServerRunning = false;
+      _logger = logger;
     }
     #endregion
 
     #region public methods
     /// <summary>
-    /// Включает сервер.
+    /// Starts the server.
     /// </summary>
-    /// <param name="serverPort">TCP порт для соединение с сервером.</param>
-    /// <param name="p2pServicePort">Порт UDP P2P сервиса.</param>
-    /// <param name="usingIPv6">Использовать ли IPv6, при ложном значении будет использован IPv4.</param>
-    /// <exception cref="System.ArgumentException"/>
+    /// <param name="serverPort">TCP port that server be listening.</param>
+    /// <param name="p2pServicePort">UDP port that p2p service be listening.</param>
+    /// <param name="usingIPv6">Use the ipv6.</param>
     [SecurityCritical]
     public void Start(int serverPort, int p2pServicePort, bool usingIPv6)
     {
@@ -116,11 +127,10 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Регистрирует соединение.
+    /// Register the connections.
     /// </summary>
-    /// <param name="tempId">Временный идентификатор соединения.</param>
-    /// <param name="id">Новый идентификатор соединения.</param>
-    /// <param name="openKey">Публичный ключ соединения.</param>
+    /// <param name="tempId">Previous connection id.</param>
+    /// <param name="id">New connection id.</param>
     [SecurityCritical]
     public void RegisterConnection(string tempId, string id)
     {
@@ -137,9 +147,9 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Закрывает соединение.
+    /// Close the connection.
     /// </summary>
-    /// <param name="id">Id cоединения, которое будет закрыто.</param>
+    /// <param name="id">Connection id.</param>
     [SecuritySafeCritical]
     public void CloseConnection(string id)
     {
@@ -156,11 +166,11 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отсправляет пакет клиенту.
+    /// Send package to client.
     /// </summary>
-    /// <param name="connectionId">Id соединения.</param>
-    /// <param name="id">Тип пакета. (Command.Id)</param>
-    /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
+    /// <param name="connectionId">Connection id.</param>
+    /// <param name="id">Package id. (Command.Id)</param>
+    /// <param name="allowTempConnections">Allow not registered connection.</param>
     [SecuritySafeCritical]
     public void SendMessage(string connectionId, long id, bool allowTempConnections = false)
     {
@@ -168,12 +178,12 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отсправляет пакет клиенту.
+    /// Send package to client.
     /// </summary>
-    /// <param name="connectionId">Id соединения.</param>
-    /// <param name="id">Тип пакета. (Command.Id)</param>
-    /// <param name="content">Контект команды.</param>
-    /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
+    /// <param name="connectionId">Connection id.</param>
+    /// <param name="id">Package id. (Command.Id)</param>
+    /// <param name="content">Command content.</param>
+    /// <param name="allowTempConnections">Allow not registered connection.</param>
     [SecuritySafeCritical]
     public void SendMessage<T>(string connectionId, long id, T content, bool allowTempConnections = false)
     {
@@ -181,11 +191,11 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отсправляет пакет клиенту.
+    /// Send package to client.
     /// </summary>
-    /// <param name="connectionId">Id соединения.</param>
-    /// <param name="package">Отправляемый пакет.</param>
-    /// <param name="allowTempConnections">Разрешить незарегестрированные соединения.</param>
+    /// <param name="connectionId">Connection id.</param>
+    /// <param name="package">Sending package.</param>
+    /// <param name="allowTempConnections">Allow not registered connection.</param>
     [SecuritySafeCritical]
     public void SendMessage(string connectionId, IPackage package, bool allowTempConnections = false)
     {
@@ -198,9 +208,8 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Возвращает список зарегестрированых Id соединений.
+    /// Retuns list of registered ids.
     /// </summary>
-    /// <returns>Список зарегестрированых Id.</returns>
     [SecuritySafeCritical]
     public string[] GetConnetionsIds()
     {
@@ -209,10 +218,10 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Проверяет если на сервер соединение с таким Id.
+    /// Checks whether a connection exists.
     /// </summary>
-    /// <param name="id">Id соединения.</param>
-    /// <returns>Есть ли соединение.</returns>
+    /// <param name="id">Connection id.</param>
+    /// <returns>If connections exist true will be returned, otherwise false.</returns>
     [SecuritySafeCritical]
     public bool ContainsConnection(string id)
     {
@@ -233,7 +242,7 @@ namespace Engine.Network
         _listener.BeginAccept(OnAccept, null);
 
         var handler = _listener.EndAccept(result);
-        var connection = new ServerConnection(handler, ServerModel.Api.Name, OnPackageReceived);
+        var connection = new ServerConnection(handler, _api.Name, OnPackageReceived);
 
         connection.SendInfo();
 
@@ -242,10 +251,12 @@ namespace Engine.Network
           connection.Id = string.Format("{0}{1}", Connection.TempConnectionPrefix, _lastTempId++);
           _connections.Add(connection.Id, connection);
         }
+
+        _notifier.ConnectionOpened(new ConnectionEventArgs(connection.Id));
       }
       catch (Exception e)
       {
-        ServerModel.Logger.Write(e);
+        _logger.Write(e);
       }
     }
 
@@ -256,7 +267,7 @@ namespace Engine.Network
       {
         if (e.Exception != null)
         {
-          ServerModel.Logger.Write(e.Exception);
+          _logger.Write(e.Exception);
           return;
         }
 
@@ -264,15 +275,18 @@ namespace Engine.Network
           return;
 
         var connectionId = ((ServerConnection)sender).Id;
-        var command = ServerModel.Api.GetCommand(e.Unpacked.Package.Id);
-        var args = new ServerCommandArgs(connectionId, e.Unpacked);
-
-        _requestQueue.Add(connectionId, command, args);
+        _requestQueue.Add(connectionId, e.Unpacked);
       }
       catch (Exception exc)
       {
-        ServerModel.Logger.Write(exc);
+        _logger.Write(exc);
       }
+    }
+
+    [SecurityCritical]
+    private void OnRequestQueueError(object sender, AsyncErrorEventArgs e)
+    {
+      _logger.Write(e.Error);
     }
 
     #region timer process
@@ -289,7 +303,7 @@ namespace Engine.Network
     [SecurityCritical]
     private void RefreshConnections()
     {
-      HashSet<string> removingUsers = null; // Prevent deadlock (in RemoveUser locked ServerModel)
+      HashSet<string> removing = null; // Prevent deadlock
 
       lock (_connections)
       {
@@ -299,41 +313,57 @@ namespace Engine.Network
           try
           {
             var connection = _connections[id];
-            if (connection.UnregisteredTimeInterval >= ServerConnection.UnregisteredTimeOut)
+            if (connection.UnregisteredInterval >= ServerConnection.UnregisteredTimeout)
             {
+              // Just close connection, user not registered yet.
               CloseConnection(id);
               continue;
             }
 
-            if (connection.IntervalOfSilence >= ServerConnection.ConnectionTimeOut)
+            if (connection.SilenceInterval >= ServerConnection.SilenceTimeout)
             {
-              if (removingUsers == null)
-                removingUsers = new HashSet<string>();
-              removingUsers.Add(id);
+              if (removing == null)
+                removing = new HashSet<string>();
+              removing.Add(id);
               continue;
             }
           }
           catch (Exception e)
           {
-            ServerModel.Logger.Write(e);
+            _logger.Write(e);
           }
         }
       }
 
-      if (removingUsers != null)
+      if (removing != null)
       {
-        foreach (var id in removingUsers)
+        foreach (var id in removing)
         {
-          try
-          {
-            ServerModel.Api.RemoveUser(id);
-          }
-          catch (Exception e)
-          {
-            ServerModel.Logger.Write(e);
-            CloseConnection(id);
-          }
+          var closure = new ConnectionClosingClosure(this, id);
+          _notifier.ConnectionClosing(new ConnectionEventArgs(id), closure.Callback);
         }
+      }
+    }
+
+    private class ConnectionClosingClosure
+    {
+      private AsyncServer _server;
+      private string _id;
+
+      public ConnectionClosingClosure(AsyncServer server, string id)
+      {
+        _id = id;
+        _server = server;
+      }
+
+      [SecuritySafeCritical]
+      public void Callback(Exception e)
+      {
+        _server.CloseConnection(_id);
+        _server._notifier.ConnectionClosed(new ConnectionEventArgs(_id));
+
+        if (e != null)
+          _server._logger.Write(e);
       }
     }
     #endregion
@@ -349,7 +379,7 @@ namespace Engine.Network
       ServerConnection connection;
       if (!_connections.TryGetValue(connectionId, out connection))
       {
-        ServerModel.Logger.WriteWarning("Connection {0} don't finded", connectionId);
+        _logger.WriteWarning("Connection {0} don't finded", connectionId);
         return null;
       }
 
@@ -402,9 +432,6 @@ namespace Engine.Network
       }
     }
 
-    /// <summary>
-    /// Особождает все ресуры используемые сервером.
-    /// </summary>
     [SecuritySafeCritical]
     public void Dispose()
     {

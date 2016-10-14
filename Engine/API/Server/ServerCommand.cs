@@ -12,7 +12,7 @@ namespace Engine.Api.Server
 {
   public abstract class ServerCommand :
     CrossDomainObject,
-    ICommand<ServerCommandArgs>
+    ICommand
   {
     public abstract long Id
     {
@@ -21,7 +21,7 @@ namespace Engine.Api.Server
     }
 
     [SecuritySafeCritical]
-    public void Run(ServerCommandArgs args)
+    public void Run(CommandArgs args)
     {
       if (args.ConnectionId == null)
         throw new ModelException(ErrorCode.IllegalInvoker, string.Format("For the server command ConnectionId is required {0}", GetType().FullName));
@@ -30,13 +30,13 @@ namespace Engine.Api.Server
     }
 
     [SecuritySafeCritical]
-    protected abstract void OnRun(ServerCommandArgs args);
+    protected abstract void OnRun(CommandArgs args);
   }
 
   public abstract class ServerCommand<TContent> : ServerCommand
   {
     [SecuritySafeCritical]
-    protected sealed override void OnRun(ServerCommandArgs args)
+    protected sealed override void OnRun(CommandArgs args)
     {
       var package = args.Unpacked.Package as IPackage<TContent>;
       if (package == null)
@@ -46,7 +46,7 @@ namespace Engine.Api.Server
     }
 
     [SecuritySafeCritical]
-    protected abstract void OnRun(TContent content, ServerCommandArgs args);
+    protected abstract void OnRun(TContent content, CommandArgs args);
 
     #region Helpers
     /// <summary>

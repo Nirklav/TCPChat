@@ -1,20 +1,19 @@
-﻿using Engine.Api.Client;
-using Engine.Api.Server.Messages;
-using Engine.Model.Common.Entities;
+﻿using Engine.Api.Server.Registrations;
+using Engine.Model.Common;
 using Engine.Model.Server;
 using Engine.Plugins;
 using Engine.Plugins.Server;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security;
 
 namespace Engine.Api.Server
 {
   public sealed class ServerApi :
     CrossDomainObject,
-    IApi<ServerCommandArgs>
+    IApi
   {
-    [SecurityCritical] private readonly Dictionary<long, ICommand<ServerCommandArgs>> _commands;
+    [SecurityCritical] private readonly Dictionary<long, ICommand> _commands;
+    [SecurityCritical] private IServerEvents _events;
 
     /// <summary>
     /// Creates instance of ServerApi.
@@ -22,8 +21,11 @@ namespace Engine.Api.Server
     [SecurityCritical]
     public ServerApi()
     {
-      _commands = new Dictionary<long, ICommand<ServerCommandArgs>>();
+      _events = NotifierGenerator.MakeEvents<IServerEvents>();
+      _events.ConnectionClosing += OnConnectionClosing;
+      ServerModel.Notifier.Add(_events);
 
+      _commands = new Dictionary<long, ICommand>();
       AddCommand(new ServerRegisterCommand());
       AddCommand(new ServerUnregisterCommand());
       AddCommand(new ServerSendRoomMessageCommand());
@@ -42,9 +44,15 @@ namespace Engine.Api.Server
     }
 
     [SecurityCritical]
-    private void AddCommand(ICommand<ServerCommandArgs> command)
+    private void AddCommand(ICommand command)
     {
       _commands.Add(command.Id, command);
+    }
+
+    [SecuritySafeCritical]
+    public void Dispose()
+    {
+      ServerModel.Notifier.Remove(_events);
     }
 
     /// <summary>
@@ -62,9 +70,9 @@ namespace Engine.Api.Server
     /// <param name="id">Command identifier.</param>
     /// <returns>Command.</returns>
     [SecuritySafeCritical]
-    public ICommand<ServerCommandArgs> GetCommand(long id)
+    public ICommand GetCommand(long id)
     {
-      ICommand<ServerCommandArgs> command;
+      ICommand command;
       if (_commands.TryGetValue(id, out command))
         return command;
 
@@ -84,57 +92,11 @@ namespace Engine.Api.Server
       action.Perform();
     }
 
-    /// <summary>
-    /// Removes user form chat and close all him resources.
-    /// </summary>
-    /// <param name="nick">User nick who be removed.</param>
-    [SecuritySafeCritical]
-    public void RemoveUser(string nick)
+    #region server events
+    private void OnConnectionClosing(object sender, ConnectionEventArgs e)
     {
-      using (var server = ServerModel.Get())
-      {
-        var emptyRooms = new List<string>();
-        foreach (var room in server.Chat.GetRooms())
-        {
-          if (!room.Users.Contains(nick))
-            continue;
-
-          room.RemoveUser(nick);
-          if (room.IsEmpty)
-            emptyRooms.Add(room.Name);
-          else
-          {
-            if (room.Admin == nick)
-            {
-              room.Admin = room.Users.FirstOrDefault();
-              if (room.Admin != null)
-                ServerModel.Api.Perform(new ServerSendSystemMessageAction(room.Admin, SystemMessageId.RoomAdminChanged, room.Name));
-            }
-
-            foreach (var userNick in room.Users)
-            {
-              var sendingContent = new ClientRoomRefreshedCommand.MessageContent
-              {
-                Room = room.ToDto(userNick),
-                Users = server.Chat.GetRoomUserDtos(room.Name)
-              };
-              ServerModel.Server.SendMessage(userNick, ClientRoomRefreshedCommand.CommandId, sendingContent);
-            }
-          }
-
-        }
-
-        // Remove all empty rooms
-        foreach (var emptyRoomName in emptyRooms)
-          server.Chat.RemoveRoom(emptyRoomName);
-
-        // Removing user from chat after all rooms processing
-        server.Chat.RemoveUser(nick);
-      }
-
-      // Closing the connection after model clearing
-      ServerModel.Server.CloseConnection(nick);
-      ServerModel.Notifier.Unregistered(new ServerRegistrationEventArgs(nick));
+      Perform(new ServerRemoveUserAction(e.Id, false));
     }
+    #endregion
   }
 }

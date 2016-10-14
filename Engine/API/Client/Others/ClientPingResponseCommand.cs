@@ -3,7 +3,7 @@
 namespace Engine.Api.Client
 {
   [SecurityCritical]
-  class ClientPingResponceCommand : ClientCommand
+  class ClientPingResponseCommand : ClientCommand
   {
     public const long CommandId = (long)ClientCommandId.PingResponce;
 
@@ -14,7 +14,7 @@ namespace Engine.Api.Client
     }
 
     [SecuritySafeCritical]
-    protected override void OnRun(ClientCommandArgs args)
+    protected override void OnRun(CommandArgs args)
     {
 
     }

@@ -1,4 +1,5 @@
-﻿using Engine.Api.Client;
+﻿using Engine.Api;
+using Engine.Api.Client;
 using Engine.Audio;
 using Engine.Audio.OpenAL;
 using Engine.Helpers;
@@ -16,24 +17,15 @@ namespace Engine.Model.Client
   public static class ClientModel
   {
     private static ClientChat _chat;
-    private static Logger _logger = new Logger("Client.log");
     private static IPlayer _player = new OpenALPlayer();
     private static IRecorder _recorder = new OpenALRecorder();
     private static IClientNotifier _notifier = NotifierGenerator.MakeInvoker<IClientNotifier>();
-
-    /// <summary>
-    /// Logger.
-    /// </summary>
-    public static Logger Logger
-    {
-      [SecurityCritical]
-      get { return _logger; }
-    }
+    private static Logger _logger = new Logger("Client.log");
 
     /// <summary>
     /// Client api.
     /// </summary>
-    public static ClientApi Api
+    public static IApi Api
     {
       [SecurityCritical]
       get;
@@ -102,6 +94,15 @@ namespace Engine.Model.Client
     }
 
     /// <summary>
+    /// Logger.
+    /// </summary>
+    public static Logger Logger
+    {
+      [SecurityCritical]
+      get { return _logger; }
+    }
+
+    /// <summary>
     /// Creates and returns guard that lock chat data.
     /// </summary>
     /// <example>using (var client = ClientModel.Get()) { ... }</example>
@@ -137,8 +138,8 @@ namespace Engine.Model.Client
         throw new InvalidOperationException("model already inited");
 
       Api = new ClientApi();
-      Client = new AsyncClient(initializer.Nick);
-      Peer = new AsyncPeer();
+      Client = new AsyncClient(initializer.Nick, Api, _notifier, _logger);
+      Peer = new AsyncPeer(Api);
 
       Plugins = new ClientPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
@@ -155,22 +156,23 @@ namespace Engine.Model.Client
 
       Dispose(Client);
       Dispose(Peer);
+      Dispose(Plugins);
+      Dispose(Api);
+
       Dispose(Recorder);
       Dispose(Player);
-      Dispose(Plugins);
 
       Client = null;
       Peer = null;
+      Plugins = null;
       Api = null;
     }
 
     [SecurityCritical]
     private static void Dispose(IDisposable disposable)
     {
-      if (disposable == null)
-        return;
-
-      disposable.Dispose();
+      if (disposable != null)
+        disposable.Dispose();
     }
 
     /// <summary>

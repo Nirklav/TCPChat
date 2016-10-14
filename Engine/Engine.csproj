@@ -99,7 +99,7 @@
     <Compile Include="Api\Client\Messages\ClientOutRoomMessageCommand.cs" />
     <Compile Include="Api\Client\Messages\ClientOutSystemMessageCommand.cs" />
     <Compile Include="Api\Client\Others\ClientEmptyCommand.cs" />
-    <Compile Include="Api\Client\Others\ClientPingResponceCommand.cs" />
+    <Compile Include="Api\Client\Others\ClientPingResponseCommand.cs" />
     <Compile Include="Api\Client\P2P\ClientConnectToP2PServiceCommand.cs" />
     <Compile Include="Api\Client\P2P\ClientConnectToPeerCommand.cs" />
     <Compile Include="Api\Client\P2P\ClientWaitPeerConnectionCommand.cs" />
@@ -111,6 +111,7 @@
     <Compile Include="Api\Server\Messages\ServerSendSystemMessageAction.cs" />
     <Compile Include="Api\Server\P2P\ServerIntroduceConnectionsAction.cs" />
     <Compile Include="Api\Server\P2P\ServerSendP2PConnectRequestAction.cs" />
+    <Compile Include="Api\Server\Registrations\ServerRemoveUserAction.cs" />
     <Compile Include="Api\Server\ServerCommand.cs" />
     <Compile Include="Api\Server\Files\ServerAddFileToRoomCommand.cs" />
     <Compile Include="Api\Server\Files\ServerRemoveFileFromRoomCommand.cs" />
@@ -133,7 +134,8 @@
     <Compile Include="Api\Server\ServerApi.cs" />
     <Compile Include="EventArgs\PackageTrackerEventArgs.cs" />
     <Compile Include="EventArgs\RoomUsersEventArgs.cs" />
-    <Compile Include="EventArgs\ServerRegistrationEventArgs.cs" />
+    <Compile Include="EventArgs\ConnectionEventArgs.cs" />
+    <Compile Include="Helpers\EventDispatcher.cs" />
     <Compile Include="Helpers\Serializer.cs" />
     <Compile Include="Audio\IPlayer.cs" />
     <Compile Include="Audio\IRecorder.cs" />
