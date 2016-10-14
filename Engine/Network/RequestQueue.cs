@@ -1,6 +1,5 @@
 ﻿using Engine.Api;
 using Engine.Helpers;
-using Engine.Model.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -170,19 +169,7 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnError(Exception e)
     {
-      var errorEvent = Interlocked.CompareExchange(ref Error, null, null);
-      if (errorEvent != null)
-      {
-        var eventArgs = new AsyncErrorEventArgs(e);
-        errorEvent.BeginInvoke(this, eventArgs, OnErrorResult, errorEvent);
-      }
-    }
-
-    [SecuritySafeCritical]
-    private void OnErrorResult(IAsyncResult result)
-    {
-      var errorEvent = (EventHandler<AsyncErrorEventArgs>) result.AsyncState;
-      errorEvent.EndInvoke(result);
+      Error.BeginDispatch(this, new AsyncErrorEventArgs(e), null);
     }
   }
 }

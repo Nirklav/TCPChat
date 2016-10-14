@@ -110,14 +110,14 @@ namespace UI.ViewModel
       KeyBoard.KeyDown += OnKeyDown;
       KeyBoard.KeyUp += OnKeyUp;
 
-      NotifierContext.Connected += CreateSubscriber<ConnectEventArgs>(ClientConnect);
-      NotifierContext.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
-      NotifierContext.ReceiveRegistrationResponse += CreateSubscriber<RegistrationEventArgs>(ClientRegistration);
-      NotifierContext.RoomClosed += CreateSubscriber<RoomEventArgs>(ClientRoomClosed);
-      NotifierContext.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
-      NotifierContext.AsyncError += CreateSubscriber<AsyncErrorEventArgs>(ClientAsyncError);
-      NotifierContext.PluginLoaded += CreateSubscriber<PluginEventArgs>(ClientPluginLoaded);
-      NotifierContext.PluginUnloading += CreateSubscriber<PluginEventArgs>(ClientPluginUnloading);
+      Events.Connected += CreateSubscriber<ConnectEventArgs>(ClientConnect);
+      Events.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
+      Events.ReceiveRegistrationResponse += CreateSubscriber<RegistrationEventArgs>(ClientRegistration);
+      Events.RoomClosed += CreateSubscriber<RoomEventArgs>(ClientRoomClosed);
+      Events.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
+      Events.AsyncError += CreateSubscriber<AsyncErrorEventArgs>(ClientAsyncError);
+      Events.PluginLoaded += CreateSubscriber<PluginEventArgs>(ClientPluginLoaded);
+      Events.PluginUnloading += CreateSubscriber<PluginEventArgs>(ClientPluginUnloading);
 
       EnableServerCommand = new Command(EnableServer, _ => !ServerModel.IsInited && !ClientModel.IsInited);
       DisableServerCommand = new Command(DisableServer, _ => ServerModel.IsInited);

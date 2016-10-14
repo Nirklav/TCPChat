@@ -194,9 +194,9 @@ namespace UI.ViewModel
       EnableVoiceCommand = new Command(EnableVoice, _ => Type == RoomType.Voice && !Enabled);
       DisableVoiceCommand = new Command(DisableVoice, _ => Type == RoomType.Voice && Enabled);
 
-      NotifierContext.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
-      NotifierContext.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
-      NotifierContext.RoomRefreshed += CreateSubscriber<RoomEventArgs>(ClientRoomRefreshed);
+      Events.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
+      Events.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
+      Events.RoomRefreshed += CreateSubscriber<RoomEventArgs>(ClientRoomRefreshed);
     }
 
     protected override void DisposeManagedResources()

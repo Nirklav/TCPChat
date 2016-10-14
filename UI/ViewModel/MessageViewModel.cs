@@ -113,8 +113,8 @@ namespace UI.ViewModel
       Type = MessageType.File;
       DownloadFileCommand = new Command(DownloadFile, _ => ClientModel.Api != null);
 
-      NotifierContext.DownloadProgress += CreateSubscriber<FileDownloadEventArgs>(ClientDownloadProgress);
-      NotifierContext.PostedFileDeleted += CreateSubscriber<FileDownloadEventArgs>(ClientPostedFileDeleted);
+      Events.DownloadProgress += CreateSubscriber<FileDownloadEventArgs>(ClientDownloadProgress);
+      Events.PostedFileDeleted += CreateSubscriber<FileDownloadEventArgs>(ClientPostedFileDeleted);
     }
 
     public MessageViewModel(long messageId, DateTime messageTime, string senderNick, string receiverNick, string message, bool isPrivate, RoomViewModel room)
