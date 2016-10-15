@@ -7,7 +7,6 @@ namespace Engine.Network
   public interface IPackage
   {
     long Id { get; }
-    long TrackedId { get; set; }
   }
 
   public interface IPackage<out T> : IPackage
@@ -16,15 +15,12 @@ namespace Engine.Network
   }
 
   [Serializable]
-  [BinType("Package")]
+  [BinType("PackageDto")]
   [SecuritySafeCritical]
   public class Package : IPackage
   {
     [BinField("i")]
     private long _id;
-
-    [BinField("t")]
-    private long _trackedId;
 
     [SecuritySafeCritical]
     public Package(long id)
@@ -32,16 +28,14 @@ namespace Engine.Network
       _id = id;
     }
 
-    public long Id { get { return _id; } }
-    public long TrackedId
+    public long Id
     {
-      get { return _trackedId; }
-      set { _trackedId = value; }
+      get { return _id; }
     }
   }
 
   [Serializable]
-  [BinType("PackageT")]
+  [BinType("PackageTDto")]
   [SecuritySafeCritical]
   public class Package<T> : Package, IPackage<T>
   {  
