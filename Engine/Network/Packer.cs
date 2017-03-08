@@ -27,6 +27,12 @@ namespace Engine.Network
     
     private volatile byte[] _key;
 
+    [SecuritySafeCritical]
+    static Packer()
+    {
+
+    }
+
     [SecurityCritical]
     public Packer()
     {
