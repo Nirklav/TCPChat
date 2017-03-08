@@ -52,8 +52,8 @@ namespace Engine.Helpers
       Write(string.Format(DebugMessageTemplate, DateTime.Now, message), args);
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
     [SecuritySafeCritical]
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public void WriteWarning(string message, params object[] args)
     {
       StackTrace stackTrace = new StackTrace(1, true);

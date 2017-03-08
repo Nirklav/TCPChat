@@ -98,6 +98,8 @@ namespace Engine.Network
 
         if (!_disposeEvent.WaitOne(_disposeEventTimeout))
           _queue.OnError(new Exception("RequestQueue.Dispose() timeout"));
+
+        _disposeEvent.Close();
       }
     }
 

@@ -1,12 +1,12 @@
 ﻿using Engine.Api;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
 using System.Security.Permissions;
 using System.Security.Policy;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Plugins
 {
@@ -129,16 +129,23 @@ namespace Engine.Plugins
           FileIOPermissionAccess.Read,
           AppDomain.CurrentDomain.BaseDirectory));
 
-        var engineStrongName = typeof(TPlugin).Assembly.Evidence.GetHostEvidence<StrongName>();
+        var engineStrongName = typeof(PluginManager<,,>).Assembly.Evidence.GetHostEvidence<StrongName>();
         if (engineStrongName == null)
         {
           OnError("Can't load plugins. Engine library without strong name.", null);
           return;
         }
 
+        var binSerializerStrongName = typeof(BinSerializer).Assembly.Evidence.GetHostEvidence<StrongName>();
+        if (binSerializerStrongName == null)
+        {
+          OnError("Can't load plugins. BinSerializer library without strong name.", null);
+          return;
+        }
+
         var pluginName = string.Empty;
         var domainName = string.Format("Plugin Domain [{0}]", Path.GetFileNameWithoutExtension(info.AssemblyPath));
-        var domain = AppDomain.CreateDomain(domainName, null, domainSetup, permissions, engineStrongName);
+        var domain = AppDomain.CreateDomain(domainName, null, domainSetup, permissions, engineStrongName, binSerializerStrongName);
         try
         {
           var plugin = (TPlugin) domain.CreateInstanceFromAndUnwrap(info.AssemblyPath, info.TypeName);

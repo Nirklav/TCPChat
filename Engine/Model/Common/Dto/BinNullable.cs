@@ -19,11 +19,9 @@ namespace Engine.Model.Common.Dto
       Value = value;
     }
 
-    public static implicit operator T(BinNullable<T> nullable)
+    public static implicit operator T?(BinNullable<T> nullable)
     {
-      if (nullable == null)
-        throw new NullReferenceException("nullable == null");
-      return nullable.Value;
+      return nullable == null ? (T?)null : nullable.Value;
     }
 
     public static implicit operator BinNullable<T>(T value)

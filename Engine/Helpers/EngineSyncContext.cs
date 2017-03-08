@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Security;
 using System.Threading;
 
@@ -8,7 +9,7 @@ namespace Engine.Helpers
   class EngineSyncContext : SynchronizationContext
   {
     [SecurityCritical]
-    private class Event
+    private class Event : IDisposable
     {
       private SendOrPostCallback _callback;
       private object _state;
@@ -37,6 +38,12 @@ namespace Engine.Helpers
           e(_state);
 
         _resetEvent.Set();
+      }
+
+      [SecuritySafeCritical]
+      public void Dispose()
+      {
+        _resetEvent.Dispose();
       }
     }
 
@@ -114,6 +121,7 @@ namespace Engine.Helpers
         }
 
         e.Dispatch();
+        e.Dispose();
       }
     }
   }
