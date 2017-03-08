@@ -19,7 +19,7 @@ namespace Engine.Network
     private static long CryptedMessagesRecived;
 
     private const int PoolSize = 500;
-    private static Pool _pool;
+    private static readonly Pool _pool = new Pool(PoolSize);
 
     public const int HeadSize = sizeof(int) + sizeof(bool);
     public const int LengthHead = 0;
@@ -30,8 +30,6 @@ namespace Engine.Network
     [SecurityCritical]
     public Packer()
     {
-      if (_pool == null)
-        _pool = new Pool(PoolSize);
     }
 
     [SecurityCritical]
