@@ -30,7 +30,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public override string ToString()
     {
-      return string.Format("{0} бит / {1} Гц", Bits, Frequency);
+      return string.Format("{0} bits / {1} Hz", Bits, Frequency);
     }
 
     [SecuritySafeCritical]
