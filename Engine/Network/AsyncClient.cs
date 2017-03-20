@@ -1,5 +1,5 @@
 ﻿using Engine.Api;
-using Engine.Api.Server;
+using Engine.Api.Server.Others;
 using Engine.Exceptions;
 using Engine.Helpers;
 using Engine.Model.Client;
@@ -188,7 +188,7 @@ namespace Engine.Network
         throw new InvalidOperationException("info isn't ClientConnectionInfo");
 
       if (!string.Equals(clientInfo.ApiName, _api.Name, StringComparison.OrdinalIgnoreCase))
-        throw new ModelException(ErrorCode.APINotSupported, clientInfo.ApiName);
+        throw new ModelException(ErrorCode.ApiNotSupported, clientInfo.ApiName);
 
       _notifier.Connected(new ConnectEventArgs());
     }

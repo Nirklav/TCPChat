@@ -1,4 +1,5 @@
-﻿using Engine.Exceptions;
+﻿using System.Linq;
+using Engine.Exceptions;
 using System;
 using System.IO;
 using System.Net;
@@ -42,7 +43,7 @@ namespace Engine.Network
     protected void Construct(Socket handler)
     {
       if (handler == null)
-        throw new ArgumentNullException("socket");
+        throw new ArgumentNullException("handler");
 
       if (!handler.Connected)
         throw new ArgumentException("Socket should be connected.");
@@ -444,19 +445,11 @@ namespace Engine.Network
       var connections = properties.GetActiveTcpConnections();
       var listeners = properties.GetActiveTcpListeners();
 
-      foreach (var connection in connections)
-        if (connection.LocalEndPoint.Port == port)
-          return false;
-
-      foreach (var listener in listeners)
-        if (listener.Port == port)
-          return false;
-
-      return true;
+      return connections.All(c => c.LocalEndPoint.Port != port) && listeners.All(l => l.Port != port);
     }
 
     /// <summary>
-    /// Узнает IP адрес данного компьютера.
+    /// Возврашает IP адрес данного компьютера.
     /// </summary>
     /// <param name="type">Тип адреса.</param>
     /// <returns>IP адрес данного компьютера.</returns>

@@ -1,9 +1,9 @@
-﻿using Engine.Model.Client;
-using System;
+﻿using System;
 using System.Security;
+using Engine.Model.Client;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Client
+namespace Engine.Api.Client.Messages
 {
   [SecurityCritical]
   class ClientOutPrivateMessageCommand

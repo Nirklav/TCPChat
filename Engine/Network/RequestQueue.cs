@@ -26,7 +26,7 @@ namespace Engine.Network
       [SecurityCritical] private readonly Queue<CommandArgs> _commands = new Queue<CommandArgs>();
       [SecurityCritical] private volatile bool _inProcess;
 
-      [SecurityCritical] private static readonly TimeSpan _disposeEventTimeout = TimeSpan.FromSeconds(10);
+      [SecurityCritical] private static readonly TimeSpan DisposeEventTimeout = TimeSpan.FromSeconds(10);
       [SecurityCritical] private readonly ManualResetEvent _disposeEvent = new ManualResetEvent(true);
       [SecurityCritical] private bool _disposed;
 
@@ -96,7 +96,7 @@ namespace Engine.Network
         lock (_syncObject)
           _commands.Clear();
 
-        if (!_disposeEvent.WaitOne(_disposeEventTimeout))
+        if (!_disposeEvent.WaitOne(DisposeEventTimeout))
           _queue.OnError(new Exception("RequestQueue.Dispose() timeout"));
 
         _disposeEvent.Close();

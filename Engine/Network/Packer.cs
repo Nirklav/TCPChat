@@ -13,17 +13,17 @@ namespace Engine.Network
 
   public class Packer
   {
-    private static long NotCryptedMessagesSent;
-    private static long NotCryptedMessagesRecived;
-    private static long CryptedMessagesSent;
-    private static long CryptedMessagesRecived;
+    private static long _notCryptedMessagesSent;
+    private static long _notCryptedMessagesRecived;
+    private static long _cryptedMessagesSent;
+    private static long _cryptedMessagesRecived;
 
     private const int PoolSize = 500;
-    private static readonly Pool _pool = new Pool(PoolSize);
+    private static readonly Pool Pool = new Pool(PoolSize);
 
-    public const int HeadSize = sizeof(int) + sizeof(bool);
-    public const int LengthHead = 0;
-    public const int EncryptionHead = sizeof(int);
+    private const int HeadSize = sizeof(int) + sizeof(bool);
+    private const int LengthHead = 0;
+    private const int EncryptionHead = sizeof(int);
     
     private volatile byte[] _key;
 
@@ -41,10 +41,10 @@ namespace Engine.Network
     [SecurityCritical]
     public void SetKey(byte[] key)
     {
+      if (key == null)
+        throw new ArgumentNullException("key");
       if (_key != null)
         throw new InvalidOperationException("Key already set");
-      if (key == null)
-        throw new ArgumentNullException("symmetricKey");
       _key = key;
     }
 
@@ -59,14 +59,15 @@ namespace Engine.Network
     public Packed Pack<T>(T package, byte[] rawData)
       where T : IPackage
     {
-      var encrypt = _key != null;
+      var key = _key;
+      var encrypt = key != null;
       var resultCapacity = rawData == null ? (int?)null : rawData.Length;
-      var result = _pool.Get(resultCapacity);
+      var result = Pool.Get(resultCapacity);
 
       result.Write(BitConverter.GetBytes(0), 0, sizeof(int));
       result.Write(BitConverter.GetBytes(encrypt), 0, sizeof(bool));
 
-      using (var guard = _pool.GetWithGuard())
+      using (var guard = Pool.GetWithGuard())
       {
         Serializer.Serialize(guard.Stream, package);
         if (rawData != null)
@@ -77,18 +78,18 @@ namespace Engine.Network
           guard.Stream.Position = 0;
           using (var crypter = new Crypter())
           {
-            crypter.SetKey(_key);
+            crypter.SetKey(key);
             crypter.Encrypt(guard.Stream, result);
           }
 
-          Interlocked.Increment(ref CryptedMessagesSent);
+          Interlocked.Increment(ref _cryptedMessagesSent);
         }
         else
         {
           var guardStreamBuffer = guard.Stream.GetBuffer();
           result.Write(guardStreamBuffer, 0, (int)guard.Stream.Length);
 
-          Interlocked.Increment(ref NotCryptedMessagesSent);
+          Interlocked.Increment(ref _notCryptedMessagesSent);
         }
       }
 
@@ -118,12 +119,13 @@ namespace Engine.Network
       T result;
       MemoryStream rawData = null;
 
-      using (var inputGuard = _pool.GetWithGuard())
-      using (var outputGuard = _pool.GetWithGuard())
+      using (var inputGuard = Pool.GetWithGuard())
+      using (var outputGuard = Pool.GetWithGuard())
       {
         if (IsPackageEncrypted(input))
         {
-          if (_key == null)
+          var key = _key;
+          if (key == null)
             throw new InvalidOperationException("Key not set yet");
 
           var inputBuffer = input.GetBuffer();
@@ -132,13 +134,13 @@ namespace Engine.Network
 
           using (var crypter = new Crypter())
           {
-            crypter.SetKey(_key);
+            crypter.SetKey(key);
             crypter.Decrypt(inputGuard.Stream, outputGuard.Stream);
           }
 
           outputGuard.Stream.Position = 0;
 
-          Interlocked.Increment(ref CryptedMessagesRecived);
+          Interlocked.Increment(ref _cryptedMessagesRecived);
         }
         else
         {
@@ -146,7 +148,7 @@ namespace Engine.Network
           outputGuard.Stream.Write(inputBuffer, 0, size);
           outputGuard.Stream.Position = HeadSize;
 
-          Interlocked.Increment(ref NotCryptedMessagesRecived);
+          Interlocked.Increment(ref _notCryptedMessagesRecived);
         }
 
         result = Serializer.Deserialize<T>(outputGuard.Stream);
@@ -157,7 +159,7 @@ namespace Engine.Network
           var length = (int)outputGuard.Stream.Length;
           var rawDataSize = length - position;
 
-          rawData = _pool.Get(rawDataSize);
+          rawData = Pool.Get(rawDataSize);
           rawData.Write(outputBuffer, position, rawDataSize);
         }
       }
@@ -203,7 +205,7 @@ namespace Engine.Network
       where T : IPoolable
     {
       if (poolable.Stream != null)
-        _pool.Put(poolable.Stream);
+        Pool.Put(poolable.Stream);
     }
   }
 }

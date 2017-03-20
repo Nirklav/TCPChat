@@ -1,4 +1,4 @@
-﻿using Engine.Model.Server;
+﻿using Engine.Helpers;
 using System;
 using System.Net.Sockets;
 using System.Security;
@@ -6,6 +6,7 @@ using System.Threading;
 
 namespace Engine.Network
 {
+  // TODO: rus
   /// <summary>
   /// Серверное соединение с клиентом.
   /// </summary>
@@ -25,21 +26,26 @@ namespace Engine.Network
     #endregion
 
     #region private field
-    [SecurityCritical] private string _serverApiName;
+    [SecurityCritical] private readonly string _serverApiName;
+    [SecurityCritical] private readonly DateTime _createTime;
     [SecurityCritical] private DateTime _lastActivity;
-    [SecurityCritical] private DateTime _createTime;
+
     [SecurityCritical] private EventHandler<PackageReceivedEventArgs> _receivedCallback;
+
+    [SecurityCritical] private Logger _logger;
     #endregion
 
     #region constructors
+
     /// <summary>
     /// Создает серверное подключение.
     /// </summary>
     /// <param name="handler">Подключенный к клиенту сокет.</param>
     /// <param name="apiName">Текущая версия Api.</param>
+    /// <param name="logger">Logger</param>
     /// <param name="receivedCallback">Функция обратного вызова, для полученных данных.</param>
     [SecurityCritical]
-    public ServerConnection(Socket handler, string apiName, EventHandler<PackageReceivedEventArgs> receivedCallback)
+    public ServerConnection(Socket handler, string apiName, Logger logger, EventHandler<PackageReceivedEventArgs> receivedCallback)
     {
       if (receivedCallback == null)
         throw new ArgumentNullException();
@@ -47,9 +53,12 @@ namespace Engine.Network
       Construct(handler);
 
       _serverApiName = apiName;
-      _receivedCallback = receivedCallback;
-      _lastActivity = DateTime.UtcNow;
       _createTime = DateTime.UtcNow;
+      _lastActivity = DateTime.UtcNow;
+
+      _receivedCallback = receivedCallback;
+
+      _logger = logger;
     }
     #endregion
 
@@ -131,7 +140,7 @@ namespace Engine.Network
         if (se != null && se.SocketErrorCode == SocketError.ConnectionReset)
           return;
 
-        ServerModel.Logger.Write(args.Exception);
+        _logger.Write(args.Exception);
         return;
       }
 
@@ -144,7 +153,7 @@ namespace Engine.Network
     protected override void OnPackageSent(PackageSendedEventArgs args)
     {
       if (args.Exception != null)
-        ServerModel.Logger.Write(args.Exception);
+        _logger.Write(args.Exception);
       else
         _lastActivity = DateTime.UtcNow;
     }

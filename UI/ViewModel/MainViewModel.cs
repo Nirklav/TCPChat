@@ -369,7 +369,7 @@ namespace UI.ViewModel
       {
         switch (modelException.Code)
         {
-          case ErrorCode.APINotSupported:
+          case ErrorCode.ApiNotSupported:
             ClientModel.Reset();
             SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(APINotSupportedKey, modelException.Message));
             return;

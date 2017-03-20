@@ -1,4 +1,5 @@
 ﻿using Engine.Api.Client;
+using Engine.Api.Client.Rooms;
 using Engine.Api.Server.Messages;
 using Engine.Exceptions;
 using Engine.Model.Common.Entities;

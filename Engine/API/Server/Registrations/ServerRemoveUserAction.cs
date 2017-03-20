@@ -1,4 +1,4 @@
-﻿using Engine.Api.Client;
+﻿using Engine.Api.Client.Rooms;
 using Engine.Api.Server.Messages;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
@@ -12,8 +12,8 @@ namespace Engine.Api.Server.Registrations
   [Serializable]
   public class ServerRemoveUserAction : IAction
   {
-    private string _nick;
-    private bool _removeConnection;
+    private readonly string _nick;
+    private readonly bool _removeConnection;
 
     /// <summary>
     /// Removes user form chat and close all him resources.

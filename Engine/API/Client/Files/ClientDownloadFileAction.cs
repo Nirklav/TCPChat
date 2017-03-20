@@ -3,7 +3,6 @@ using Engine.Model.Client;
 using Engine.Model.Common.Entities;
 using Engine.Network;
 using System;
-using System.IO;
 using System.Security;
 
 namespace Engine.Api.Client.Files

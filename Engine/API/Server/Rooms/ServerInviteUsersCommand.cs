@@ -1,14 +1,14 @@
-﻿using Engine.Api.Client;
+﻿using System;
+using System.Collections.Generic;
+using System.Security;
+using Engine.Api.Client.Rooms;
 using Engine.Api.Server.Messages;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using Engine.Model.Server.Entities;
-using System;
-using System.Collections.Generic;
-using System.Security;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Server
+namespace Engine.Api.Server.Rooms
 {
   [SecurityCritical]
   class ServerInviteUsersCommand :

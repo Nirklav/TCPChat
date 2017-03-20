@@ -1,8 +1,8 @@
-﻿using Engine.Api.Client;
+﻿using System.Security;
+using Engine.Api.Client.Others;
 using Engine.Model.Server;
-using System.Security;
 
-namespace Engine.Api.Server
+namespace Engine.Api.Server.Others
 {
   [SecurityCritical]
   class ServerPingRequestCommand : ServerCommand

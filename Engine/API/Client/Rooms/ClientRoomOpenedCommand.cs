@@ -1,14 +1,15 @@
-﻿using Engine.Api.Client.P2P;
+﻿using System;
+using System.Linq;
+using System.Security;
+using Engine.Api.Client.P2P;
+using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Client.Entities;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
-using System;
-using System.Linq;
-using System.Security;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Client
+namespace Engine.Api.Client.Rooms
 {
   [SecurityCritical]
   class ClientRoomOpenedCommand :
@@ -44,6 +45,9 @@ namespace Engine.Api.Client
           client.Chat.AddVoiceRoom(voiceRoom);
           room = voiceRoom;
         }
+
+        if (room == null)
+          throw new ModelException(ErrorCode.UnknownRoomType);
 
         AddUsers(client.Chat, content.Users);
 

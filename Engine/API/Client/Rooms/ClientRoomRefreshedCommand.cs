@@ -1,15 +1,15 @@
-﻿using Engine.Model.Client;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security;
+using Engine.Model.Client;
 using Engine.Model.Client.Entities;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Client
+namespace Engine.Api.Client.Rooms
 {
   [SecurityCritical]
   class ClientRoomRefreshedCommand :

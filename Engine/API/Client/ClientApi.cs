@@ -1,4 +1,11 @@
-﻿using Engine.Model.Client;
+﻿using Engine.Api.Client.Files;
+using Engine.Api.Client.Messages;
+using Engine.Api.Client.Others;
+using Engine.Api.Client.P2P;
+using Engine.Api.Client.Registrations;
+using Engine.Api.Client.Rooms;
+using Engine.Api.Client.Voice;
+using Engine.Model.Client;
 using Engine.Model.Common.Entities;
 using Engine.Plugins;
 using Engine.Plugins.Client;

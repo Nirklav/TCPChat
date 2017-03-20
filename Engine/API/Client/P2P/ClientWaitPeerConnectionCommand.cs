@@ -1,12 +1,12 @@
-﻿using Engine.Api.Server;
-using Engine.Model.Client;
-using Engine.Model.Common.Dto;
-using System;
+﻿using System;
 using System.Net;
 using System.Security;
+using Engine.Api.Server.P2P;
+using Engine.Model.Client;
+using Engine.Model.Common.Dto;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Client
+namespace Engine.Api.Client.P2P
 {
   [SecurityCritical]
   class ClientWaitPeerConnectionCommand :
@@ -26,13 +26,13 @@ namespace Engine.Api.Client
       if (content.RemoteInfo == null)
         throw new ArgumentNullException("content.RemoteInfo");
 
-      var senderPoint = new IPEndPoint(new IPAddress(content.SenderIPAddress), content.SenderPort);
+      var senderPoint = new IPEndPoint(new IPAddress(content.SenderIpAddress), content.SenderPort);
       ClientModel.Peer.WaitConnection(senderPoint);
 
       var sendingContent = new ServerP2PReadyAcceptCommand.MessageContent
       {
         PeerPort = content.RequestPort,
-        PeerIPAddress = content.RequestIPAddress,
+        PeerIPAddress = content.RequestIpAddress,
         ReceiverNick = content.RemoteInfo.Nick
       };
 
@@ -53,13 +53,13 @@ namespace Engine.Api.Client
       public int SenderPort;
 
       [BinField("sa")]
-      public byte[] SenderIPAddress;
+      public byte[] SenderIpAddress;
 
       [BinField("rp")]
       public int RequestPort;
 
       [BinField("ra")]
-      public byte[] RequestIPAddress;
+      public byte[] RequestIpAddress;
     }
   }
 }

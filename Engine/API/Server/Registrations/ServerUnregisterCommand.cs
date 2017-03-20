@@ -1,8 +1,7 @@
-﻿using Engine.Api.Server.Registrations;
+﻿using System.Security;
 using Engine.Model.Server;
-using System.Security;
 
-namespace Engine.Api.Server
+namespace Engine.Api.Server.Registrations
 {
   [SecurityCritical]
   class ServerUnregisterCommand : ServerCommand

@@ -1,12 +1,12 @@
-﻿using Engine.Api.Server;
+﻿using System;
+using System.Security;
+using Engine.Api.Server.Files;
 using Engine.Model.Client;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
-using System;
-using System.Security;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Client
+namespace Engine.Api.Client.Files
 {
   [SecurityCritical]
   class ClientReadFilePartCommand :

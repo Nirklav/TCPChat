@@ -10,6 +10,7 @@ using System.Threading;
 
 namespace Engine.Network
 {
+  // TODO: rus
   public sealed class P2PService : IDisposable
   {
     #region nested types
@@ -114,13 +115,13 @@ namespace Engine.Network
       ThrowIfDisposed();
 
       if (ServerModel.Api == null)
-        throw new ArgumentNullException("API");
+        throw new InvalidOperationException("Api not initialized");
 
       if (requestId == null)
-        throw new ArgumentNullException("request");
+        throw new ArgumentNullException("requestId");
 
       if (senderId == null)
-        throw new ArgumentNullException("sender");
+        throw new ArgumentNullException("senderId");
 
       if (TryDoneRequest(senderId, requestId))
         return;
@@ -137,8 +138,7 @@ namespace Engine.Network
     [SecurityCritical]
     private void TrySendConnectRequest(string connectionId)
     {
-      var needSend = false;
-
+      bool needSend;
       lock (_syncObject)
       {
         needSend = !_clientsEndPoints.ContainsKey(connectionId);
@@ -250,11 +250,9 @@ namespace Engine.Network
     [SecurityCritical]
     private bool TryDoneRequest(string senderId, string requestId)
     {
-      bool received;
       IPEndPoint senderEndPoint;
       IPEndPoint requestEndPoint;
-
-      if (received = TryGetRequest(senderId, requestId, out senderEndPoint, out requestEndPoint))
+      if (TryGetRequest(senderId, requestId, out senderEndPoint, out requestEndPoint))
       {
         lock (_syncObject)
         {
@@ -265,9 +263,10 @@ namespace Engine.Network
         }
 
         ServerModel.Api.Perform(new ServerIntroduceConnectionsAction(senderId, senderEndPoint, requestId, requestEndPoint));
+        return true;
       }
 
-      return received;
+      return false;
     }
 
     [SecurityCritical]

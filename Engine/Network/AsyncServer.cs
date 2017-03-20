@@ -18,7 +18,6 @@ namespace Engine.Network
     #region const
     private const int ListenConnections = 100;
     private const int SystemTimerInterval = 1000;
-    public const int MaxDataSize = 2 * 1024 * 1024; // 2 Мб
     #endregion
 
     #region fields
@@ -242,7 +241,7 @@ namespace Engine.Network
         _listener.BeginAccept(OnAccept, null);
 
         var handler = _listener.EndAccept(result);
-        var connection = new ServerConnection(handler, _api.Name, OnPackageReceived);
+        var connection = new ServerConnection(handler, _api.Name, _logger, OnPackageReceived);
 
         connection.SendInfo();
 
@@ -325,7 +324,6 @@ namespace Engine.Network
               if (removing == null)
                 removing = new HashSet<string>();
               removing.Add(id);
-              continue;
             }
           }
           catch (Exception e)
@@ -347,8 +345,8 @@ namespace Engine.Network
 
     private class ConnectionClosingClosure
     {
-      private AsyncServer _server;
-      private string _id;
+      private readonly AsyncServer _server;
+      private readonly string _id;
 
       public ConnectionClosingClosure(AsyncServer server, string id)
       {

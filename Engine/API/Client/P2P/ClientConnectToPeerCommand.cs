@@ -1,11 +1,11 @@
-﻿using Engine.Model.Client;
-using Engine.Model.Common.Dto;
-using System;
+﻿using System;
 using System.Net;
 using System.Security;
+using Engine.Model.Client;
+using Engine.Model.Common.Dto;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Client
+namespace Engine.Api.Client.P2P
 {
   [SecurityCritical]
   class ClientConnectToPeerCommand :

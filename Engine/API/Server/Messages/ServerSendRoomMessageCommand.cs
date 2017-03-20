@@ -1,13 +1,12 @@
-﻿using Engine.Api.Client;
-using Engine.Api.Server.Messages;
+﻿using System;
+using System.Security;
+using Engine.Api.Client.Messages;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
-using System;
-using System.Security;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Server
+namespace Engine.Api.Server.Messages
 {
   [SecurityCritical]
   class ServerSendRoomMessageCommand :

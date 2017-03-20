@@ -1,10 +1,10 @@
-﻿using Engine.Model.Client;
-using Engine.Model.Common.Entities;
-using System;
+﻿using System;
 using System.Security;
+using Engine.Model.Client;
+using Engine.Model.Common.Entities;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Client
+namespace Engine.Api.Client.Files
 {
   [SecurityCritical]
   class ClientFileRemovedCommand :

@@ -1,6 +1,6 @@
 ﻿using System.Security;
 
-namespace Engine.Api.Client
+namespace Engine.Api.Client.Others
 {
   [SecurityCritical]
   class ClientPingResponseCommand : ClientCommand

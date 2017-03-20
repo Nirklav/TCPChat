@@ -84,9 +84,9 @@ namespace Engine.Network
       }
     }
 
-    private static long Misses;
-    private static long Hits;
-    private static long Puts;
+    private static long _misses;
+    private static long _hits;
+    private static long _puts;
 
     private readonly int _maxSize;
     private readonly List<Container> _storage;
@@ -126,7 +126,7 @@ namespace Engine.Network
               index = 0;
             else
             {
-              Interlocked.Increment(ref Misses);
+              Interlocked.Increment(ref _misses);
               return new MemoryStream(streamSize);
             }
           }
@@ -135,7 +135,7 @@ namespace Engine.Network
         var result = _storage[index];
         _storage.RemoveAt(index);
 
-        Interlocked.Increment(ref Hits);
+        Interlocked.Increment(ref _hits);
         return result.Data;
       }
     }
@@ -143,7 +143,7 @@ namespace Engine.Network
     [SecurityCritical]
     public void Put(MemoryStream data)
     {
-      Interlocked.Increment(ref Puts);
+      Interlocked.Increment(ref _puts);
 
       lock (_storage)
       {

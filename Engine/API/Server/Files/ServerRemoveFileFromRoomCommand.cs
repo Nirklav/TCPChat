@@ -1,12 +1,12 @@
-﻿using Engine.Api.Client;
+﻿using System;
+using System.Security;
+using Engine.Api.Client.Files;
 using Engine.Api.Server.Messages;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
-using System;
-using System.Security;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Server
+namespace Engine.Api.Server.Files
 {
   [SecurityCritical]
   class ServerRemoveFileFromRoomCommand :

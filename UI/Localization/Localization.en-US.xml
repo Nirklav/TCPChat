@@ -123,7 +123,7 @@
   <row key="roomViewModel-allInRoom" value="All in room"/>
   <row key="userViewModel-userNotExist" value="User does not exist."/>
 
-  <row key="errorCode-APINotSupported" value="Server api not supported by client. You probably need to update client or server."/>
+  <row key="errorCode-ApiNotSupported" value="Server api not supported by client. You probably need to update client or server."/>
   <row key="errorCode-FileAlreadyDownloading" value="This file already downloading."/>
   <row key="errorCode-FreePortDontFound" value="Free tcp/udp port nod found."/>
   <row key="errorCode-LargeReceivedData" value="Received data to large."/>
@@ -134,4 +134,5 @@
   <row key="errorCode-FileInRoomNotFound" value="File in room not found."/>
   <row key="errorCode-WrongContentType" value="Wrong content type (internal error)."/>
   <row key="errorCode-IllegalInvoker" value="Illegal invoker (internal error)."/>
+  <row key="errorCode-UnknownRoomType" value="Unknown room type was recived."/>
 </Localization>

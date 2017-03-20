@@ -1,16 +1,15 @@
-﻿using Engine.Api.Client;
-using Engine.Api.Server.Registrations;
+﻿using System;
+using System.Security;
+using Engine.Api.Client.Registrations;
+using Engine.Api.Client.Rooms;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using Engine.Model.Server.Entities;
 using Engine.Network;
-using System;
-using System.Collections.Generic;
-using System.Security;
 using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Api.Server
+namespace Engine.Api.Server.Registrations
 {
   [SecurityCritical]
   class ServerRegisterCommand :

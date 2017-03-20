@@ -134,4 +134,5 @@
   <row key="errorCode-FileInRoomNotFound" value="Файл в комнате не найден."/>
   <row key="errorCode-WrongContentType" value="Неправильный тип содержимого (internal error)."/>
   <row key="errorCode-IllegalInvoker" value="Недопустимый вызыватель (internal error)."/>
+  <row key="errorCode-UnknownRoomType" value="Получен неизвестный тип комнаты."/>
 </Localization>
