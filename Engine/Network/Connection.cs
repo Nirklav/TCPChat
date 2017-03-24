@@ -27,15 +27,18 @@ namespace Engine.Network
     #endregion
 
     #region fields
-    [SecurityCritical] protected string _id;
-    [SecurityCritical] protected ConnectionInfo _remoteInfo;
+    [SecurityCritical] private string _id;
+    [SecurityCritical] private Socket _handler;
+
+    [SecurityCritical] private ConnectionInfo _remoteInfo;
     [SecurityCritical] private bool _connectionInfoSent;
-    [SecurityCritical] protected byte[] _buffer;
-    [SecurityCritical] protected Socket _handler;
-    [SecurityCritical] protected MemoryStream _received;
-    [SecurityCritical] protected Packer _packer;
+
+    [SecurityCritical] private MemoryStream _received;
+    [SecurityCritical] private byte[] _buffer;
+    [SecurityCritical] private Packer _packer;
     [SecurityCritical] private ECDiffieHellmanCng _diffieHellman;
-    [SecurityCritical] protected volatile bool _disposed;
+
+    [SecurityCritical] private volatile bool _disposed;
     #endregion
 
     #region constructors
@@ -49,10 +52,10 @@ namespace Engine.Network
         throw new ArgumentException("Socket should be connected.");
 
       _handler = handler;
-      _buffer = new byte[BufferSize];
-      _received = new MemoryStream();
-      _packer = new Packer();
 
+      _received = new MemoryStream();
+      _buffer = new byte[BufferSize];
+      _packer = new Packer();
       _diffieHellman = new ECDiffieHellmanCng(KeySize);
       _diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
       _diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
@@ -75,6 +78,15 @@ namespace Engine.Network
         ThrowIfDisposed();
         _id = value;
       }
+    }
+
+    /// <summary>
+    /// Returns true if client connected to server, otherwise false.
+    /// </summary>
+    public bool IsConnected
+    {
+      [SecuritySafeCritical]
+      get { return _handler != null && _handler.Connected; }
     }
 
     /// <summary>
@@ -101,6 +113,15 @@ namespace Engine.Network
         ThrowIfDisposed();
         return (IPEndPoint)_handler.LocalEndPoint;
       }
+    }
+
+    /// <summary>
+    /// Returns true if Dispose method was invoked.
+    /// </summary>
+    protected bool IsClosed
+    {
+      [SecuritySafeCritical]
+      get { return _disposed; }
     }
     #endregion
 

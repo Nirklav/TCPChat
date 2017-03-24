@@ -11,10 +11,10 @@ namespace Engine.Helpers
     [SecurityCritical]
     private class Event : IDisposable
     {
-      private SendOrPostCallback _callback;
-      private object _state;
-      private ManualResetEvent _resetEvent;
-
+      private readonly ManualResetEvent _resetEvent;
+      private readonly SendOrPostCallback _callback;
+      private readonly object _state;
+      
       public WaitHandle Handle
       {
         [SecurityCritical]
@@ -47,9 +47,9 @@ namespace Engine.Helpers
       }
     }
 
-    private object _syncObject = new object();
+    private readonly object _syncObject = new object();
+    private readonly Queue<Event> _callbackQueue;
     private volatile bool _inProcess;
-    private Queue<Event> _callbackQueue;
 
     [SecurityCritical]
     public EngineSyncContext()

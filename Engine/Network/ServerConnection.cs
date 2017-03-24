@@ -28,11 +28,11 @@ namespace Engine.Network
     #region private field
     [SecurityCritical] private readonly string _serverApiName;
     [SecurityCritical] private readonly DateTime _createTime;
+    [SecurityCritical] private readonly Logger _logger;
+
     [SecurityCritical] private DateTime _lastActivity;
 
     [SecurityCritical] private EventHandler<PackageReceivedEventArgs> _receivedCallback;
-
-    [SecurityCritical] private Logger _logger;
     #endregion
 
     #region constructors
@@ -98,7 +98,7 @@ namespace Engine.Network
       get
       {
         ThrowIfDisposed();
-        return _id != null && !_id.Contains(TempConnectionPrefix);
+        return Id != null && !Id.Contains(TempConnectionPrefix);
       }
     }
     #endregion
@@ -112,7 +112,7 @@ namespace Engine.Network
     public void Register(string newId)
     {
       ThrowIfDisposed();
-      _id = newId;
+      Id = newId;
     }
     #endregion
 

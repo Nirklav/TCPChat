@@ -21,6 +21,7 @@ namespace Engine.Network
     ConnectedToPeers = 2,
   }
 
+  // TODO: rus
   public class AsyncPeer :
     MarshalByRefObject,
     IDisposable
@@ -43,21 +44,22 @@ namespace Engine.Network
 
     #region consts
     public const string NetConfigString = "Peer TCPChat";
-    public const int ConnectionTimeOut = 30 * 1000;
     private const int KeySize = 256;
     #endregion
 
     #region private fields
     [SecurityCritical] private readonly object _syncObject = new object();
-    [SecurityCritical] private Dictionary<string, List<WaitingCommandContainer>> _waitingCommands;
-    [SecurityCritical] private Dictionary<string, Packer> _packers;
+    [SecurityCritical] private readonly Dictionary<string, List<WaitingCommandContainer>> _waitingCommands;
+    [SecurityCritical] private readonly Dictionary<string, Packer> _packers;
+    [SecurityCritical] private readonly SynchronizationContext _syncContext;
+    [SecurityCritical] private readonly RequestQueue _requestQueue;
+    [SecurityCritical] private readonly ECDiffieHellmanCng _diffieHellman;
+
     [SecurityCritical] private NetConnection _serviceConnection;
     [SecurityCritical] private NetPeer _handler;
+
     [SecurityCritical] private int _state; //PeerState
     [SecurityCritical] private bool _disposed;
-    [SecurityCritical] private SynchronizationContext _syncContext;
-    [SecurityCritical] private RequestQueue _requestQueue;
-    [SecurityCritical] private ECDiffieHellmanCng _diffieHellman;
     #endregion
 
     #region events and properties
@@ -350,6 +352,9 @@ namespace Engine.Network
         nick = client.Chat.User.Nick;
 
       var publicKeyBlob = _diffieHellman.PublicKey.ToByteArray();
+      if (publicKeyBlob == null)
+        throw new InvalidOperationException("public key is null");
+
       var hailMessage = _handler.CreateMessage();
       hailMessage.Write(nick);
       hailMessage.Write(publicKeyBlob.Length);
@@ -393,37 +398,19 @@ namespace Engine.Network
       return _handler.Connections.SingleOrDefault(new Finder(id).Equals);
     }
 
-    [SecurityCritical]
-    private List<NetConnection> FindConnections(IEnumerable<string> ids)
-    {
-      return _handler.Connections.Where(new Finder(ids).Contains).ToList();
-    }
-
     private class Finder
     {
-      private string _id;
-      private IEnumerable<string> _ids;
+      private readonly string _id;
 
       public Finder(string id)
       {
         _id = id;
       }
 
-      public Finder(IEnumerable<string> ids)
-      {
-        _ids = ids;
-      }
-
       [SecurityCritical]
       public bool Equals(NetConnection connection)
       {
         return string.Equals((string)connection.Tag, _id);
-      }
-
-      [SecurityCritical]
-      public bool Contains(NetConnection connection)
-      {
-        return _ids.Contains((string)connection.Tag);
       }
     }
     #endregion

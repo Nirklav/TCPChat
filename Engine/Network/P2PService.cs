@@ -46,10 +46,10 @@ namespace Engine.Network
     [SecurityCritical] private readonly HashSet<string> _connectingClients;
     [SecurityCritical] private readonly List<RequestPair> _requests;
 
-    [SecurityCritical] private NetServer _server;
-    [SecurityCritical] private bool _disposed;
+    [SecurityCritical] private readonly NetServer _server;
+    [SecurityCritical] private readonly SynchronizationContext _syncContext;
 
-    [SecurityCritical] private SynchronizationContext _syncContext;
+    [SecurityCritical] private bool _disposed;
     #endregion
 
     #region constructors

@@ -26,7 +26,7 @@ namespace Engine.Network
     private const int ReconnectInterval = 10 * 1000;
     private const int PingInterval = 3000;
     
-    private static readonly SocketError[] reconnectErrors =
+    private static readonly SocketError[] ReconnectErrors =
     {
       SocketError.NetworkUnreachable,
       SocketError.NetworkDown,
@@ -43,18 +43,18 @@ namespace Engine.Network
     #region private fields
     [SecurityCritical] private readonly object _syncObject = new object();
 
-    [SecurityCritical] private IApi _api;
-    [SecurityCritical] private RequestQueue _requestQueue;
-    [SecurityCritical] private IClientNotifier _notifier;
-    
-    [SecurityCritical] private Timer _timer;
+    [SecurityCritical] private readonly IApi _api;
+    [SecurityCritical] private readonly RequestQueue _requestQueue;
+    [SecurityCritical] private readonly IClientNotifier _notifier;   
+    [SecurityCritical] private readonly Timer _timer;
+    [SecurityCritical] private readonly Logger _logger;
+
     [SecurityCritical] private IPEndPoint _hostAddress;
+    [SecurityCritical] private bool _connecting;
     [SecurityCritical] private bool _reconnect;
     [SecurityCritical] private bool _reconnecting;
     [SecurityCritical] private DateTime _lastReconnect;
     [SecurityCritical] private DateTime _lastPingRequest;
-
-    [SecurityCritical] private Logger _logger;
     #endregion
 
     #region constructors
@@ -79,15 +79,6 @@ namespace Engine.Network
     #endregion
 
     #region properties/events
-    /// <summary>
-    /// Returns true if client connected to server, otherwise false.
-    /// </summary>
-    public bool IsConnected
-    {
-      [SecuritySafeCritical]
-      get { return _handler == null ? false : _handler.Connected; }
-    }
-
     /// <summary>
     /// Sets or returns the value that will mean
     /// whether the client after a loss of communication to try to reconnect to the server.
@@ -121,13 +112,14 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (_handler != null && _handler.Connected)
+      if (IsConnected || _connecting)
         throw new InvalidOperationException("Client already connected");
 
+      _connecting = true;
       _hostAddress = hostAddress;
 
-      _handler = new Socket(hostAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-      _handler.BeginConnect(hostAddress, OnConnected, null);
+      Socket handler = new Socket(hostAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+      handler.BeginConnect(hostAddress, OnConnected, handler);
     }
     #endregion
 
@@ -135,18 +127,20 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnConnected(IAsyncResult result)
     {
-      if (_disposed)
+      if (IsClosed)
         return;
 
       try
       {
-        _handler.EndConnect(result);
+        Socket handler = (Socket)result.AsyncState;
+        handler.EndConnect(result);
+        _connecting = false;
 
-        Construct(_handler);
+        Construct(handler);
       }
       catch (SocketException se)
       {
-        if (reconnectErrors.Contains(se.SocketErrorCode))
+        if (ReconnectErrors.Contains(se.SocketErrorCode))
           _reconnecting = true;
         else
         {
@@ -206,7 +200,7 @@ namespace Engine.Network
       if (!_reconnect)
         return false;
 
-      if (!reconnectErrors.Contains(se.SocketErrorCode))
+      if (!ReconnectErrors.Contains(se.SocketErrorCode))
         return false;
 
       _reconnecting = true;
@@ -287,6 +281,7 @@ namespace Engine.Network
     {
       base.Clean();
 
+      _connecting = false;
       _requestQueue.Clean();
     }
 
@@ -296,18 +291,12 @@ namespace Engine.Network
       base.DisposeManagedResources();
 
       if (_requestQueue != null)
-      {
         _requestQueue.Dispose();
-        _requestQueue = null;
-      }
 
       lock (_syncObject)
       {
         if (_timer != null)
-        {
           _timer.Dispose();
-          _timer = null;
-        }
       }
     }
 
