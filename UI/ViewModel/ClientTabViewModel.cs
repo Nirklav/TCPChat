@@ -16,6 +16,8 @@ namespace UI.ViewModel
     private byte redValue;
     private byte greenValue;
     private byte blueValue;
+
+    private string adminPassword;
     #endregion
 
     #region properties
@@ -59,6 +61,12 @@ namespace UI.ViewModel
       set { SetValue(value, "NickColor", v => blueValue = v); }
     }
 
+    public string AdminPassword
+    {
+      get { return adminPassword; }
+      set { SetValue(value, "AdminPassword", v => adminPassword = v); }
+    }
+
     #endregion
 
     public ClientTabViewModel() 
@@ -71,6 +79,8 @@ namespace UI.ViewModel
       RedValue = Settings.Current.NickColor.R;
       GreenValue = Settings.Current.NickColor.G;
       BlueValue = Settings.Current.NickColor.B;
+
+      AdminPassword = Settings.Current.AdminPassword;
     }
 
     public override void SaveSettings()
@@ -80,6 +90,7 @@ namespace UI.ViewModel
       Settings.Current.Locale = Locale;
       Settings.Current.Nick = Nick;
       Settings.Current.NickColor = Color.FromArgb(RedValue, GreenValue, BlueValue);
+      Settings.Current.AdminPassword = adminPassword;
     }
   }
 }

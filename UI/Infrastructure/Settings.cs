@@ -80,6 +80,7 @@ namespace UI.Infrastructure
     public string Nick { get; set; }
     public SavedColor NickColor { get; set; }
     public bool RandomColor { get; set; }
+    public string AdminPassword { get; set; }
 
     public Size FormSize { get; set; }
     public bool Alerts { get; set; }
@@ -88,7 +89,7 @@ namespace UI.Infrastructure
     public int Port { get; set; }
     public int ServicePort { get; set; }
     public bool StateOfIPv6Protocol { get; set; }
-
+    
     public Keys RecorderKey { get; set; }
     public string OutputAudioDevice { get; set; }
     public string InputAudioDevice { get; set; }

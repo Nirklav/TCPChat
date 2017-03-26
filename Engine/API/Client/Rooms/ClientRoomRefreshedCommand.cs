@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 using Engine.Model.Client;
-using Engine.Model.Client.Entities;
 using Engine.Model.Common.Dto;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server.Entities;
@@ -29,14 +28,16 @@ namespace Engine.Api.Client.Rooms
       if (content.Room == null)
         throw new ArgumentNullException("content.Room");
 
+      UpdateMessagesResult messagesResult;
       using (var client = ClientModel.Get())
       {
         var chat = client.Chat;
         var room = chat.GetRoom(content.Room.Name);
 
         AddUsers(chat, content.Users);
-        UpdateRoomFiles(chat, room, content.Room);
-        var removedUsers = UpdateRoomUsers(chat, room, content.Room);
+        UpdateRoomFiles(room, content.Room);
+        messagesResult = UpdateRoomMessages(room, content.Room);
+        var removedUsers = UpdateRoomUsers(room, content.Room);
 
         if (room.Name == ServerChat.MainRoomName)
         {
@@ -45,15 +46,12 @@ namespace Engine.Api.Client.Rooms
         }
       }
 
-      var users = content.Users
-        .Select(u => u.Nick)
-        .ToList();
-
-      ClientModel.Notifier.RoomRefreshed(new RoomEventArgs(content.Room.Name, users));
+      var roomArgs = new RoomRefreshedEventArgs(content.Room.Name, messagesResult.Added, messagesResult.Removed);
+      ClientModel.Notifier.RoomRefreshed(roomArgs);
     }
 
     [SecurityCritical]
-    private static HashSet<string> UpdateRoomUsers(ClientChat chat, Room room, RoomDto dto)
+    private static HashSet<string> UpdateRoomUsers(Room room, RoomDto dto)
     {
       var removed = new HashSet<string>(room.Users);
       var added = new HashSet<string>(dto.Users);
@@ -73,14 +71,14 @@ namespace Engine.Api.Client.Rooms
     }
 
     [SecurityCritical]
-    private static void UpdateRoomFiles(ClientChat chat, Room room, RoomDto dto)
+    private static void UpdateRoomFiles(Room room, RoomDto dto)
     {
-      // Select removed and added files
-      var removed = new HashSet<FileId>(room.Files.Select(f => f.Id));
+      // Select removed and added files 
       var added = new HashSet<FileId>(dto.Files.Select(f => f.Id));
-
       foreach (var file in room.Files)
         added.Remove(file.Id);
+
+      var removed = new HashSet<FileId>(room.Files.Select(f => f.Id));
       foreach (var file in dto.Files)
         removed.Remove(file.Id);
 
@@ -94,6 +92,45 @@ namespace Engine.Api.Client.Rooms
           continue;
 
         room.AddFile(new FileDescription(file));
+      }
+    }
+
+    [SecurityCritical]
+    private static UpdateMessagesResult UpdateRoomMessages(Room room, RoomDto dto)
+    {
+      // Select removed and added messages 
+      var added = new HashSet<long>(dto.Messages.Select(m => m.Id));
+      foreach (var message in room.Messages)
+        added.Remove(message.Id);
+
+      var removed = new HashSet<long>(room.Messages.Select(m => m.Id));
+      foreach (var message in dto.Messages)
+        removed.Remove(message.Id);
+
+      // Add and remove messages
+      foreach (var messageId in removed)
+        room.RemoveMessage(messageId);
+
+      foreach (var message in dto.Messages)
+      {
+        if (!added.Contains(message.Id))
+          continue;
+
+        room.AddMessage(new Message(message));
+      }
+
+      return new UpdateMessagesResult(added, removed);
+    }
+
+    private struct UpdateMessagesResult
+    {
+      public readonly HashSet<long> Added;
+      public readonly HashSet<long> Removed;
+
+      public UpdateMessagesResult(HashSet<long> added, HashSet<long> removed)
+      {
+        Added = added;
+        Removed = removed;
       }
     }
 

@@ -1,5 +1,6 @@
 ﻿namespace Engine.Api.Server
 {
+  // TODO: rus
   //Команды для сервера: (формат сообщений XX XX Serialized(this.MessageContent))
   //Расшифровка XX XX:
   //8 00 00: Запрос регистрации (в главной комнате)
@@ -25,6 +26,8 @@
 
   //8 00 60: Запрос прямого соединения
   //8 00 61: Ответ, говорящий о готовности принять входное содеинение
+
+  //8 00 70: Text admin command
 
   //8 7F FF: Пустая команда
 
@@ -53,6 +56,8 @@
 
     P2PConnectRequest = 0x80060,
     P2PReadyAccept = 0x80061,
+
+    Admin = 0x80070,
 
     Empty = 0x87FFF
   }

@@ -99,7 +99,7 @@ namespace Engine.Model.Server
       if (Interlocked.CompareExchange(ref _chat, new ServerChat(), null) != null)
         throw new InvalidOperationException("model already inited");
 
-      Api = new ServerApi();
+      Api = new ServerApi(initializer.AdminPassword);
       Server = new AsyncServer(Api, _notifier, Logger);
 
       Plugins = new ServerPluginManager(initializer.PluginsPath);

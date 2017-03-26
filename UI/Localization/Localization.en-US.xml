@@ -24,6 +24,8 @@
   <row key="systemMessage-MessageEditAccessDenied" value="You can't edit this message."/>
   <row key="systemMessage-P2PUserNotExist" value="User with this nick not exist."/>
   <row key="systemMessage-RoomUserNotExist" value="User with this nick not exist in room."/>
+  <row key="systemMessage-InvalidPassword" value="Invalid password was recived."/>
+  <row key="systemMessage-TextCommandNotFound" value="Text command not found."/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Edit"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copy"/>
@@ -83,6 +85,7 @@
   <row key="settingsTabCategory-plugins" value="Plugins"/>
 
   <row key="settingsTab-audio-pressTheKey" value="Click on the button"/>
+  <row key="settingsTab-client-adminPassword" value="Admin password"/>
 
   <row key="aboutProgram-title" value="About program"/>
   <row key="aboutProgram-author" value="Author"/>

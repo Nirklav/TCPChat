@@ -113,8 +113,8 @@ namespace UI.ViewModel
       Events.Connected += CreateSubscriber<ConnectEventArgs>(ClientConnect);
       Events.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
       Events.ReceiveRegistrationResponse += CreateSubscriber<RegistrationEventArgs>(ClientRegistration);
-      Events.RoomClosed += CreateSubscriber<RoomEventArgs>(ClientRoomClosed);
-      Events.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
+      Events.RoomOpened += CreateSubscriber<RoomOpenedEventArgs>(ClientRoomOpened);
+      Events.RoomClosed += CreateSubscriber<RoomClosedEventArgs>(ClientRoomClosed);
       Events.AsyncError += CreateSubscriber<AsyncErrorEventArgs>(ClientAsyncError);
       Events.PluginLoaded += CreateSubscriber<PluginEventArgs>(ClientPluginLoaded);
       Events.PluginUnloading += CreateSubscriber<PluginEventArgs>(ClientPluginUnloading);
@@ -159,6 +159,7 @@ namespace UI.ViewModel
 
         var initializer = new ServerInitializer
         {
+          AdminPassword = Settings.Current.AdminPassword,
           PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
           ExcludedPlugins = excludedPlugins
         };
@@ -336,21 +337,21 @@ namespace UI.ViewModel
       Alert();
     }
 
-    private void ClientRoomOpened(RoomEventArgs e)
+    private void ClientRoomOpened(RoomOpenedEventArgs e)
     {
       // If room view model already exist then event will be processed by it self
       if (Rooms.Any(vm => vm.Name == e.RoomName))
         return;
 
       // Else create new view model
-      var roomViewModel = new RoomViewModel(this, e.RoomName, e.Users);
+      var roomViewModel = new RoomViewModel(this, e.RoomName);
       roomViewModel.Updated = true;
       Rooms.Add(roomViewModel);
 
       window.Alert();
     }
 
-    private void ClientRoomClosed(RoomEventArgs e)
+    private void ClientRoomClosed(RoomClosedEventArgs e)
     {
       var roomViewModel = Rooms.FirstOrDefault(vm => vm.Name == e.RoomName);
       if (roomViewModel == null)

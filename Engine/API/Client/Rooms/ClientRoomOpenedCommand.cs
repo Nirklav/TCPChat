@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Security;
 using Engine.Api.Client.P2P;
 using Engine.Exceptions;
@@ -60,12 +59,8 @@ namespace Engine.Api.Client.Rooms
 
         room.Enable();
       }
-
-      var users = content.Users
-          .Select(u => u.Nick)
-          .ToList();
-
-      ClientModel.Notifier.RoomOpened(new RoomEventArgs(content.Room.Name, users));
+      
+      ClientModel.Notifier.RoomOpened(new RoomOpenedEventArgs(content.Room.Name));
     }
 
     [Serializable]

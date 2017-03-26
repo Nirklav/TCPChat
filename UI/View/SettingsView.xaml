@@ -188,6 +188,7 @@
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -286,6 +287,21 @@
                                     UpdateSourceTrigger=PropertyChanged}"/>
           </Grid>
         </Expander>
+
+        <Label Grid.Column="0"
+               Grid.Row="3"
+               Padding="0"
+               Margin="0, 2.5, 2.5, 2.5"
+               Content="{Infrastructure:Localized settingsTab-client-adminPassword}"
+               VerticalAlignment="Center"/>
+
+        <TextBox Grid.Column="1"
+                 Grid.Row="3"
+                 Margin="2.5, 2.5, 0, 2.5"
+                 Text="{Binding ElementName=MainWindow,
+                                Path=DataContext.SelectedTab.AdminPassword,
+                                Mode=TwoWay,
+                                UpdateSourceTrigger=PropertyChanged}"/>
       </Grid>
     </DataTemplate>
 

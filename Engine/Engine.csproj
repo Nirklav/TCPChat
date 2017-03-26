@@ -71,11 +71,14 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Api\Client\Admin\ClientSendAdminAction.cs" />
     <Compile Include="Api\Client\ClientCommand.cs" />
     <Compile Include="Api\Client\Files\ClientAddFileAction.cs" />
     <Compile Include="Api\Client\Files\ClientDownloadFileAction.cs" />
     <Compile Include="Api\Client\Files\ClientRemoveFileAction.cs" />
     <Compile Include="Api\Client\Messages\ClientOutPrivateMessageCommand.cs" />
+    <Compile Include="Api\Server\Messages\ServerRemoveMessagesAction.cs" />
+    <Compile Include="Api\Client\Messages\ClientRemoveMessagesCommand.cs" />
     <Compile Include="Api\Client\Messages\ClientSendPrivateMessageAction.cs" />
     <Compile Include="Api\Client\Messages\ClientSendMessageAction.cs" />
     <Compile Include="Api\Client\P2P\ClientConnectToPeerAction.cs" />
@@ -108,6 +111,7 @@
     <Compile Include="Api\Client\Rooms\ClientRoomOpenedCommand.cs" />
     <Compile Include="Api\Client\Rooms\ClientRoomRefreshedCommand.cs" />
     <Compile Include="Api\Client\Voice\ClientPlayVoiceCommand.cs" />
+    <Compile Include="Api\Server\Admin\ServerAdminCommand.cs" />
     <Compile Include="Api\Server\Messages\ServerSendSystemMessageAction.cs" />
     <Compile Include="Api\Server\P2P\ServerIntroduceConnectionsAction.cs" />
     <Compile Include="Api\Server\P2P\ServerSendP2PConnectRequestAction.cs" />
@@ -132,6 +136,8 @@
     <Compile Include="Api\Server\ServerCommandId.cs" />
     <Compile Include="Api\Client\ClientApi.cs" />
     <Compile Include="Api\Server\ServerApi.cs" />
+    <Compile Include="EventArgs\RoomClosedEventArgs.cs" />
+    <Compile Include="EventArgs\RoomOpenedEventArgs.cs" />
     <Compile Include="EventArgs\RoomUsersEventArgs.cs" />
     <Compile Include="EventArgs\ConnectionEventArgs.cs" />
     <Compile Include="Helpers\EventDispatcher.cs" />
@@ -196,7 +202,7 @@
     <Compile Include="EventArgs\FileDownloadEventArgs.cs" />
     <Compile Include="EventArgs\ReceiveMessageEventArgs.cs" />
     <Compile Include="EventArgs\RegistrationEventArgs.cs" />
-    <Compile Include="EventArgs\RoomEventArgs.cs" />
+    <Compile Include="EventArgs\RoomRefreshedEventArgs.cs" />
     <Compile Include="Helpers\Crypter.cs" />
     <Compile Include="Model\Common\Entities\FileDescription.cs" />
     <Compile Include="Helpers\Logger.cs" />

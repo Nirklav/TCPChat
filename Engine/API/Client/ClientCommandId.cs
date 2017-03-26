@@ -1,5 +1,6 @@
 ﻿namespace Engine.Api.Client
 {
+  // TODO: rus
   //Команды для клиента: (формат сообщений XX XX Serialized(this.MessageContent))
   //Расшифровка XX XX:
   //F 00 00: Регистрация принята
@@ -7,7 +8,8 @@
 
   //F 00 10: Вывести общее сообщение для комнаты
   //F 00 11: Вывести личное сообщение
-  //F 00 12: Вывести системное сообщение
+  //F 00 13: Вывести системное сообщение
+  //F 00 14: Remove messages
 
   //F 00 30: Открыта комната
   //F 00 31: Закрыта комната
@@ -35,6 +37,7 @@
     OutRoomMessage = 0xF0010,
     OutPrivateMessage = 0xF0011,
     OutSystemMessage = 0xF0013,
+    RemoveMessages = 0xF0014,
 
     RoomOpened = 0xF0030,
     RoomClosed = 0xF0031,

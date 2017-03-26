@@ -129,6 +129,8 @@ namespace Engine.Plugins
           FileIOPermissionAccess.Read,
           AppDomain.CurrentDomain.BaseDirectory));
 
+        permissions.AddPermission(new ReflectionPermission(ReflectionPermissionFlag.RestrictedMemberAccess));
+
         var engineStrongName = typeof(PluginManager<,,>).Assembly.Evidence.GetHostEvidence<StrongName>();
         if (engineStrongName == null)
         {

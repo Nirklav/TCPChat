@@ -37,6 +37,7 @@ namespace Engine.Api.Client
       AddCommand(new ClientOutPrivateMessageCommand());
       AddCommand(new ClientOutRoomMessageCommand());
       AddCommand(new ClientOutSystemMessageCommand());
+      AddCommand(new ClientRemoveMessagesCommand());
       AddCommand(new ClientFilePostedCommand());
       AddCommand(new ClientRoomOpenedCommand());
       AddCommand(new ClientRoomClosedCommand());

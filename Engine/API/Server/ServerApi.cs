@@ -1,4 +1,5 @@
-﻿using Engine.Api.Server.Files;
+﻿using Engine.Api.Server.Admin;
+using Engine.Api.Server.Files;
 using Engine.Api.Server.Messages;
 using Engine.Api.Server.Others;
 using Engine.Api.Server.P2P;
@@ -23,8 +24,9 @@ namespace Engine.Api.Server
     /// <summary>
     /// Creates instance of ServerApi.
     /// </summary>
+    /// <param name="adminPassword">Password for chat admin actions.</param>
     [SecurityCritical]
-    public ServerApi()
+    public ServerApi(string adminPassword)
     {
       _events = NotifierGenerator.MakeEvents<IServerEvents>();
       _events.ConnectionClosing += OnConnectionClosing;
@@ -46,6 +48,7 @@ namespace Engine.Api.Server
       AddCommand(new ServerP2PConnectRequestCommand());
       AddCommand(new ServerP2PReadyAcceptCommand());
       AddCommand(new ServerPingRequestCommand());
+      AddCommand(new ServerAdminCommand(adminPassword));
     }
 
     [SecurityCritical]

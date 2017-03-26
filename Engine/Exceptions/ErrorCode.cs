@@ -17,6 +17,6 @@
     UnknownRoomType = 302,
 
     WrongContentType = 1000,
-    IllegalInvoker = 1001,
+    IllegalInvoker = 1001
   }
 }

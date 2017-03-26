@@ -8,29 +8,32 @@ namespace ConsoleServer
   {
     static void Main(string[] args)
     {
+      string password;
       int serverPort;
       int servicePort;
       bool usingIpV6;
 
-      if (args.Length < 3)
+      if (args.Length < 4)
       {
         WriteHelp();
         return;
       }
 
-      if (!int.TryParse(args[0], out serverPort))
+      password = args[0];
+
+      if (!int.TryParse(args[1], out serverPort))
       {
         WriteHelp();
         return;
       }
 
-      if (!int.TryParse(args[1], out servicePort))
+      if (!int.TryParse(args[2], out servicePort))
       {
         WriteHelp();
         return;
       }
 
-      if (!bool.TryParse(args[2], out usingIpV6))
+      if (!bool.TryParse(args[3], out usingIpV6))
       {
         WriteHelp();
         return;
@@ -38,6 +41,7 @@ namespace ConsoleServer
 
       var initializer = new ServerInitializer
       {
+        AdminPassword = password,
         PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
         ExcludedPlugins = new string[0]
       };
@@ -59,7 +63,7 @@ namespace ConsoleServer
 
     private static void WriteHelp()
     {
-      Console.WriteLine("Parameters: \"serverPort\" \"servicePort\" \"usingIpV6\"");
+      Console.WriteLine("Parameters: \"password\" \"serverPort\" \"servicePort\" \"usingIpV6\"");
     }
   }
 }

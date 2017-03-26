@@ -1,7 +1,9 @@
 ﻿using Engine;
+using Engine.Api.Client.Admin;
 using Engine.Api.Client.Files;
 using Engine.Api.Client.Messages;
 using Engine.Api.Client.Rooms;
+using Engine.Api.Server.Admin;
 using Engine.Model.Client;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
@@ -154,14 +156,14 @@ namespace UI.ViewModel
       Enabled = true;
     }
 
-    public RoomViewModel(MainViewModel main, string roomName, IList<string> usersNicks)
+    public RoomViewModel(MainViewModel main, string roomName)
       : base(main, true)
     {
-      Init(main, usersNicks);
-
       using (var client = ClientModel.Get())
       {
         var room = client.Chat.GetRoom(roomName);
+
+        Init(main, room.Users);
 
         Name = room.Name;
         Type = room is VoiceRoom ? RoomType.Voice : RoomType.Chat;
@@ -172,7 +174,7 @@ namespace UI.ViewModel
       }
     }
 
-    private void Init(MainViewModel main, IList<string> usersNicks)
+    private void Init(MainViewModel main, IEnumerable<string> usersNicks)
     {
       mainViewModel = main;
       Messages = new ObservableCollection<MessageViewModel>();
@@ -195,8 +197,8 @@ namespace UI.ViewModel
       DisableVoiceCommand = new Command(DisableVoice, _ => Type == RoomType.Voice && Enabled);
 
       Events.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
-      Events.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
-      Events.RoomRefreshed += CreateSubscriber<RoomEventArgs>(ClientRoomRefreshed);
+      Events.RoomOpened += CreateSubscriber<RoomOpenedEventArgs>(ClientRoomOpened);
+      Events.RoomRefreshed += CreateSubscriber<RoomRefreshedEventArgs>(ClientRoomRefreshed);
     }
 
     protected override void DisposeManagedResources()
@@ -279,7 +281,12 @@ namespace UI.ViewModel
 
       try
       {
-        if (SelectedReceiver.IsAllInRoom)
+        if (ServerAdminCommand.IsTextCommand(Message))
+        {
+          ClientModel.Api.Perform(new ClientSendAdminAction(Settings.Current.AdminPassword, Message));
+          AddSystemMessage(Message);
+        }
+        else if (SelectedReceiver.IsAllInRoom)
         {
           var action = SelectedMessageId == null
             ? new ClientSendMessageAction(Name, Message)
@@ -419,7 +426,7 @@ namespace UI.ViewModel
       mainViewModel.Alert();
     }
 
-    private void ClientRoomOpened(RoomEventArgs e)
+    private void ClientRoomOpened(RoomOpenedEventArgs e)
     {
       using (var client = ClientModel.Get())
       {
@@ -429,13 +436,16 @@ namespace UI.ViewModel
       }
     }
 
-    private void ClientRoomRefreshed(RoomEventArgs e)
+    private void ClientRoomRefreshed(RoomRefreshedEventArgs e)
     {
       using (var client = ClientModel.Get())
       {
         if (e.RoomName == Name)
+        {
           RefreshUsers(client);
-        
+          RefreshMessages(client, e);
+        }
+
         if (e.RoomName == ServerChat.MainRoomName)
           RefreshReceivers(client);
       }
@@ -456,6 +466,31 @@ namespace UI.ViewModel
       OnPropertyChanged("Name");
       OnPropertyChanged("Admin");
       OnPropertyChanged("Users");
+    }
+
+    private void RefreshMessages(ClientGuard client, RoomRefreshedEventArgs e)
+    {
+      var room = client.Chat.GetRoom(Name);
+
+      if (e.RemovedMessages != null && e.RemovedMessages.Count > 0)
+      {
+        for (int i = Messages.Count - 1; i >= 0; i--)
+        {
+          var message = Messages[i];
+          if (e.RemovedMessages.Contains(message.MessageId))
+            Messages.RemoveAt(i);
+          message.Dispose();
+        }
+      }
+
+      if (e.AddedMessages != null && e.AddedMessages.Count > 0)
+      {
+        foreach (var messageId in e.AddedMessages)
+        {
+          var message = room.GetMessage(messageId);
+          AddMessage(message.Id, message.Time, message.Owner, message.Text);
+        }
+      }
     }
 
     private void RefreshReceivers(ClientGuard client)

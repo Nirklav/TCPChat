@@ -179,6 +179,16 @@ namespace Engine.Model.Common.Entities
 
     #region messages
     /// <summary>
+    /// Returns true if message with this id exist in room.
+    /// </summary>
+    /// <param name="messageId">Message id.</param>
+    [SecuritySafeCritical]
+    public bool IsMessageExist(long messageId)
+    {
+      return _messages.ContainsKey(messageId);
+    }
+
+    /// <summary>
     /// Messages collection.
     /// </summary>
     public IEnumerable<Message> Messages
@@ -259,6 +269,31 @@ namespace Engine.Model.Common.Entities
         return false;
 
       return string.Equals(nick, message.Owner);
+    }
+
+    /// <summary>
+    /// Remove message from room.
+    /// </summary>
+    /// <param name="messageId">Message that be checked.</param>
+    /// <returns>Removed messages.</returns>
+    [SecuritySafeCritical]
+    public Message RemoveMessage(long messageId)
+    {
+      Message message;
+      if (_messages.TryGetValue(messageId, out message))
+        _messages.Remove(messageId);
+      return message;
+    }
+
+    /// <summary>
+    /// Remove messages from room.
+    /// </summary>
+    /// <param name="messageIds">Message ids that be removed from room.</param>
+    [SecuritySafeCritical]
+    public void RemoveMessages(IEnumerable<long> messageIds)
+    {
+      foreach(var messageId in messageIds)
+        _messages.Remove(messageId);
     }
     #endregion
 

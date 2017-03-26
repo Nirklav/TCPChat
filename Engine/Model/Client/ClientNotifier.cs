@@ -27,9 +27,9 @@ namespace Engine.Model.Client
 
     void AsyncError(AsyncErrorEventArgs args);
 
-    void RoomRefreshed(RoomEventArgs args);
-    void RoomOpened(RoomEventArgs args);
-    void RoomClosed(RoomEventArgs args);
+    void RoomRefreshed(RoomRefreshedEventArgs args);
+    void RoomOpened(RoomOpenedEventArgs args);
+    void RoomClosed(RoomClosedEventArgs args);
 
     void DownloadProgress(FileDownloadEventArgs args);
     void PostedFileDeleted(FileDownloadEventArgs args);
@@ -38,6 +38,7 @@ namespace Engine.Model.Client
     void PluginUnloading(PluginEventArgs args);
   }
 
+  // TODO: rus
   public interface IClientEvents
   {
     /// <summary>
@@ -63,17 +64,17 @@ namespace Engine.Model.Client
     /// <summary>
     /// Событие происходит при обновлении списка подключенных к серверу клиентов.
     /// </summary>
-    event EventHandler<RoomEventArgs> RoomRefreshed;
+    event EventHandler<RoomRefreshedEventArgs> RoomRefreshed;
 
     /// <summary>
     /// Событие происходит при открытии комнаты клиентом. Или когда клиента пригласили в комнату.
     /// </summary>
-    event EventHandler<RoomEventArgs> RoomOpened;
+    event EventHandler<RoomOpenedEventArgs> RoomOpened;
 
     /// <summary>
     /// Событие происходит при закрытии комнаты клиентом, когда клиента кикают из комнаты.
     /// </summary>
-    event EventHandler<RoomEventArgs> RoomClosed;
+    event EventHandler<RoomClosedEventArgs> RoomClosed;
 
     /// <summary>
     /// Событие происходит при получении части файла, а также при завершении загрузки файла.

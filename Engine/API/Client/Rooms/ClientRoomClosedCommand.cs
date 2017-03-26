@@ -26,7 +26,7 @@ namespace Engine.Api.Client.Rooms
       using (var client = ClientModel.Get())
         client.Chat.RemoveRoom(content.RoomName);
 
-      ClientModel.Notifier.RoomClosed(new RoomEventArgs(content.RoomName));
+      ClientModel.Notifier.RoomClosed(new RoomClosedEventArgs(content.RoomName));
     }
 
     [Serializable]
