@@ -8,6 +8,7 @@
     <B>50</B>
   </NickColor>
   <RandomColor>true</RandomColor>
+  <AdminPassword>HelloWorld</AdminPassword>
   <FormSize>
     <Width>380</Width>
     <Height>470</Height>

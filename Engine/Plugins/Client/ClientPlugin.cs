@@ -1,5 +1,6 @@
 ﻿namespace Engine.Plugins.Client
 {
+  // TODO: rus
   /// <summary>
   /// Представляет базовый класс для реализации клиентского плагина.
   /// </summary>

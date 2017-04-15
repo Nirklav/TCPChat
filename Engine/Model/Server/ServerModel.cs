@@ -1,34 +1,28 @@
-﻿using Engine.API;
+﻿using Engine.Api;
+using Engine.Api.Server;
 using Engine.Helpers;
 using Engine.Model.Common;
-using Engine.Model.Entities;
+using Engine.Model.Server.Entities;
 using Engine.Network;
 using Engine.Plugins.Server;
 using System;
-using System.Collections.Generic;
 using System.Security;
 using System.Threading;
 
 namespace Engine.Model.Server
 {
   [SecurityCritical]
-  public class ServerModel
+  public static class ServerModel
   {
     #region static model
-    private static ServerModel model;
-    private static Logger logger = new Logger("Server.log");
-    private static IServerNotifier notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
-
-    public static Logger Logger
-    {
-      [SecurityCritical]
-      get { return logger; }
-    }
+    private static ServerChat _chat;
+    private static IServerNotifier _notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
+    private static Logger _logger = new Logger("Server.log");
 
     /// <summary>
     /// Серверный API
     /// </summary>
-    public static ServerApi Api
+    public static IApi Api
     {
       [SecurityCritical]
       get;
@@ -64,7 +58,16 @@ namespace Engine.Model.Server
     public static IServerNotifier Notifier
     {
       [SecurityCritical]
-      get { return notifier; }
+      get { return _notifier; }
+    }
+
+    /// <summary>
+    /// Logger.
+    /// </summary>
+    public static Logger Logger
+    {
+      [SecurityCritical]
+      get { return _logger; }
     }
 
     /// <summary>
@@ -75,42 +78,10 @@ namespace Engine.Model.Server
     [SecurityCritical]
     public static ServerGuard Get()
     {
-      if (Interlocked.CompareExchange(ref model, null, null) == null)
+      if (Interlocked.CompareExchange(ref _chat, null, null) == null)
         throw new ArgumentException("model do not inited yet");
 
-      return new ServerGuard(model);
-    }
-    #endregion
-
-    #region consts
-    public const string MainRoomName = "Main room";
-    #endregion
-
-    #region properties
-    public Dictionary<string, Room> Rooms
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-    public Dictionary<string, User> Users
-    {
-      [SecurityCritical]
-      get;
-      [SecurityCritical]
-      private set;
-    }
-    #endregion
-
-    #region constructor
-    [SecurityCritical]
-    public ServerModel()
-    {
-      Users = new Dictionary<string, User>();
-      Rooms = new Dictionary<string, Room>();
-
-      Rooms.Add(MainRoomName, new Room(null, MainRoomName));
+      return new ServerGuard(_chat);
     }
     #endregion
 
@@ -119,17 +90,17 @@ namespace Engine.Model.Server
     public static bool IsInited
     {
       [SecurityCritical]
-      get { return Interlocked.CompareExchange(ref model, null, null) != null; }
+      get { return Interlocked.CompareExchange(ref _chat, null, null) != null; }
     }
 
     [SecurityCritical]
     public static void Init(ServerInitializer initializer)
     {
-      if (Interlocked.CompareExchange(ref model, new ServerModel(), null) != null)
+      if (Interlocked.CompareExchange(ref _chat, new ServerChat(), null) != null)
         throw new InvalidOperationException("model already inited");
 
-      Server = new AsyncServer();
-      Api = new ServerApi();
+      Api = new ServerApi(initializer.AdminPassword);
+      Server = new AsyncServer(Api, _notifier, Logger);
 
       Plugins = new ServerPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
@@ -138,23 +109,23 @@ namespace Engine.Model.Server
     [SecurityCritical]
     public static void Reset()
     {
-      if (Interlocked.Exchange(ref model, null) == null)
+      if (Interlocked.Exchange(ref _chat, null) == null)
         throw new InvalidOperationException("model not yet inited");
 
       Dispose(Server);
       Dispose(Plugins);
+      Dispose(Api);
 
       Server = null;
+      Plugins = null;
       Api = null;
     }
 
     [SecurityCritical]
     private static void Dispose(IDisposable disposable)
     {
-      if (disposable == null)
-        return;
-
-      disposable.Dispose();
+      if (disposable != null)
+        disposable.Dispose();
     }
 
     [SecurityCritical]

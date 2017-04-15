@@ -1,4 +1,5 @@
-﻿using Engine.Exceptions;
+﻿using System.Linq;
+using Engine.Exceptions;
 using System;
 using System.IO;
 using System.Net;
@@ -7,10 +8,10 @@ using System.Net.Sockets;
 using System.Security;
 using System.Security.Cryptography;
 
-namespace Engine.Network.Connections
+namespace Engine.Network
 {
   /// <summary>
-  /// Базовый класс соединения, реализовывает прием и передачу данных.
+  /// Base connection.
   /// </summary>
   public abstract class Connection :
     MarshalByRefObject,
@@ -26,58 +27,70 @@ namespace Engine.Network.Connections
     #endregion
 
     #region fields
-    [SecurityCritical] protected string id;
-    [SecurityCritical] protected ConnectionInfo remoteInfo;
-    [SecurityCritical] private bool connectionInfoSent;
-    [SecurityCritical] protected byte[] buffer;
-    [SecurityCritical] protected Socket handler;
-    [SecurityCritical] protected MemoryStream received;
-    [SecurityCritical] protected Packer packer;
-    [SecurityCritical] private ECDiffieHellmanCng diffieHellman;
-    [SecurityCritical] protected volatile bool disposed;
+    [SecurityCritical] private string _id;
+    [SecurityCritical] private Socket _handler;
+
+    [SecurityCritical] private ConnectionInfo _remoteInfo;
+    [SecurityCritical] private bool _connectionInfoSent;
+
+    [SecurityCritical] private MemoryStream _received;
+    [SecurityCritical] private byte[] _buffer;
+    [SecurityCritical] private Packer _packer;
+    [SecurityCritical] private ECDiffieHellmanCng _diffieHellman;
+
+    [SecurityCritical] private volatile bool _disposed;
     #endregion
 
     #region constructors
     [SecurityCritical]
-    protected void Construct(Socket socket)
+    protected void Construct(Socket handler)
     {
-      if (socket == null)
-        throw new ArgumentNullException("socket");
+      if (handler == null)
+        throw new ArgumentNullException("handler");
 
-      if (!socket.Connected)
+      if (!handler.Connected)
         throw new ArgumentException("Socket should be connected.");
 
-      handler = socket;
-      buffer = new byte[BufferSize];
-      received = new MemoryStream();
-      packer = new Packer();
+      _handler = handler;
 
-      diffieHellman = new ECDiffieHellmanCng(KeySize);
-      diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-      diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
+      _received = new MemoryStream();
+      _buffer = new byte[BufferSize];
+      _packer = new Packer();
+      _diffieHellman = new ECDiffieHellmanCng(KeySize);
+      _diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+      _diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
 
-      handler.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, OnReceive, null);
+      _handler.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, OnReceive, null);
     }
     #endregion
 
     #region properties
     /// <summary>
-    /// Идентификатор соединения.
+    /// Connection id.
     /// </summary>
     public string Id
     {
       [SecurityCritical]
-      get { return id; }
+      get { return _id; }
       [SecurityCritical]
       set
       {
         ThrowIfDisposed();
-        id = value;
+        _id = value;
       }
     }
 
     /// <summary>
-    /// Удаленная точка.
+    /// Returns true if client connected to server, otherwise false.
+    /// </summary>
+    public bool IsConnected
+    {
+      [SecuritySafeCritical]
+      get { return _handler != null && _handler.Connected; }
+    }
+
+    /// <summary>
+    /// Remote address.
     /// </summary>
     public IPEndPoint RemotePoint
     {
@@ -85,12 +98,12 @@ namespace Engine.Network.Connections
       get
       {
         ThrowIfDisposed();
-        return (IPEndPoint)handler.RemoteEndPoint;
+        return (IPEndPoint)_handler.RemoteEndPoint;
       }
     }
 
     /// <summary>
-    /// Локальная точка.
+    /// Local address.
     /// </summary>
     public IPEndPoint LocalPoint
     {
@@ -98,16 +111,25 @@ namespace Engine.Network.Connections
       get
       {
         ThrowIfDisposed();
-        return (IPEndPoint)handler.LocalEndPoint;
+        return (IPEndPoint)_handler.LocalEndPoint;
       }
+    }
+
+    /// <summary>
+    /// Returns true if Dispose method was invoked.
+    /// </summary>
+    protected bool IsClosed
+    {
+      [SecuritySafeCritical]
+      get { return _disposed; }
     }
     #endregion
 
     #region public methods
     /// <summary>
-    /// Отправляет пакет.
+    /// Send package.
     /// </summary>
-    /// <param name="id">Индетификатор пакета.</param>
+    /// <param name="id">Package id. (Command.Id)</param>
     [SecuritySafeCritical]
     public void SendMessage(long id)
     {
@@ -115,10 +137,10 @@ namespace Engine.Network.Connections
     }
 
     /// <summary>
-    /// Отправляет пакет.
+    /// Send package.
     /// </summary>
-    /// <param name="id">Индетификатор пакета.</param>
-    /// <param name="content">Данные пакета.</param>
+    /// <param name="id">Package id. (Command.Id)</param>
+    /// <param name="content">Package content.</param>
     [SecuritySafeCritical]
     public void SendMessage<T>(long id, T content)
     {
@@ -126,25 +148,25 @@ namespace Engine.Network.Connections
     }
 
     /// <summary>
-    /// Отправляет пакет.
+    /// Send package.
     /// </summary>
-    /// <param name="package">Отправляемый пакет.</param>
+    /// <param name="package">Package.</param>
     [SecurityCritical]
     public void SendMessage(IPackage package)
     {
       ThrowIfDisposed();
 
-      if (handler == null)
+      if (_handler == null)
         throw new InvalidOperationException("Socket not set");
 
-      if (!handler.Connected)
+      if (!_handler.Connected)
         throw new InvalidOperationException("Not connected");
 
-      using (var packed = packer.Pack(package))
+      using (var packed = _packer.Pack(package))
       {
         try
         {
-          handler.BeginSend(packed.Data, 0, packed.Length, SocketFlags.None, OnSend, null);
+          _handler.BeginSend(packed.Data, 0, packed.Length, SocketFlags.None, OnSend, null);
         }
         catch (SocketException se)
         {
@@ -155,36 +177,36 @@ namespace Engine.Network.Connections
     }
 
     /// <summary>
-    /// Отправляет информацию о соединении.
+    /// Send connection info.
     /// </summary>
     [SecurityCritical]
     public void SendInfo()
     {
-      if (connectionInfoSent)
+      if (_connectionInfoSent)
         throw new InvalidOperationException("Connection info already sent");
 
-      connectionInfoSent = true;
+      _connectionInfoSent = true;
 
       var info = CreateConnectionInfo();
-      info.PublicKey = diffieHellman.PublicKey.ToByteArray();
+      info.PublicKey = _diffieHellman.PublicKey.ToByteArray();
       SendMessage(RemoteInfoId, info);
     }
 
     /// <summary>
-    /// Инциирует отключение соединения.
+    /// Start disconnect from remote.
     /// </summary>
     [SecurityCritical]
     public void Disconnect()
     {
       ThrowIfDisposed();
 
-      if (handler == null)
+      if (_handler == null)
         throw new InvalidOperationException("Socket not set");
 
-      if (!handler.Connected)
+      if (!_handler.Connected)
         throw new InvalidOperationException("not connected");
 
-      handler.BeginDisconnect(true, OnDisconnect, null);
+      _handler.BeginDisconnect(true, OnDisconnect, null);
     }
     #endregion
 
@@ -192,42 +214,42 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     private void OnReceive(IAsyncResult result)
     {
-      if (disposed)
+      if (_disposed)
         return;
 
       try
       {
-        var bytesRead = handler.EndReceive(result);
+        var bytesRead = _handler.EndReceive(result);
         if (bytesRead > 0)
         {
           OnPackagePartReceived();
 
-          received.Write(buffer, 0, bytesRead);
+          _received.Write(_buffer, 0, bytesRead);
 
-          while (packer.IsPackageReceived(received))
+          while (_packer.IsPackageReceived(_received))
           {
-            var size = packer.GetPackageSize(received);
+            var size = _packer.GetPackageSize(_received);
             if (size > MaxReceivedDataSize)
               throw new ModelException(ErrorCode.LargeReceivedData);
 
-            var unpacked = packer.Unpack<IPackage>(received);
+            var unpacked = _packer.Unpack<IPackage>(_received);
 
-            var length = (int) received.Length;
+            var length = (int) _received.Length;
 
-            received.Position = 0;
-            received.SetLength(0);
+            _received.Position = 0;
+            _received.SetLength(0);
 
             var restDataSize = length - size;
             if (restDataSize > 0)
             {
-              var dataBuffer = received.GetBuffer();
-              received.Write(dataBuffer, size, restDataSize);
+              var dataBuffer = _received.GetBuffer();
+              _received.Write(dataBuffer, size, restDataSize);
             }
 
             switch (unpacked.Package.Id)
             {
               case RemoteInfoId:
-                if (!connectionInfoSent)
+                if (!_connectionInfoSent)
                   SendInfo();
 
                 SetRemoteInfo(unpacked.Package);
@@ -240,7 +262,7 @@ namespace Engine.Network.Connections
           }
         }
 
-        handler.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, OnReceive, null);
+        _handler.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, OnReceive, null);
       }
       catch (SocketException se)
       {
@@ -256,12 +278,12 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     private void OnSend(IAsyncResult result)
     {
-      if (disposed)
+      if (_disposed)
         return;
 
       try
       {
-        var size = handler.EndSend(result);
+        var size = _handler.EndSend(result);
         OnPackageSent(new PackageSendedEventArgs(size));
       }
       catch (SocketException se)
@@ -278,12 +300,12 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     private void OnDisconnect(IAsyncResult result)
     {
-      if (disposed)
+      if (_disposed)
         return;
 
       try
       {
-        handler.EndDisconnect(result);
+        _handler.EndDisconnect(result);
         OnDisconnected(null);
       }
       catch (SocketException se)
@@ -300,58 +322,51 @@ namespace Engine.Network.Connections
 
     #region protected virtual/abstract methods
     /// <summary>
-    /// Создает объект содержащий информацию о содединении.
+    /// Creates the object that contains info about connection.
     /// </summary>
-    /// <returns>Объект содержащий информацию о содединении.</returns>
     [SecuritySafeCritical]
-    protected virtual ConnectionInfo CreateConnectionInfo()
-    {
-      return new ConnectionInfo();
-    }
+    protected virtual ConnectionInfo CreateConnectionInfo() { return new ConnectionInfo(); }
 
     /// <summary>
-    /// Происходит при получении информации о удаленном соединении.
+    /// Invokes when connection receive info about remote connection.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void OnInfoReceived(ConnectionInfo info) { }
 
     /// <summary>
-    /// Происходит когда получено полное сообщение.
+    /// Invokes when connection receive package.
     /// </summary>
-    /// <param name="args">Инормация о данных, и данные.</param>
+    /// <param name="args">Package event args.</param>
     [SecuritySafeCritical]
     protected abstract void OnPackageReceived(PackageReceivedEventArgs args);
 
     /// <summary>
-    /// Происходит при отправке данных. Или при возниконовении ошибки произошедшей во время передачи данных.
+    /// Invokes when data is sent or when error is thrown.
     /// </summary>
-    /// <param name="args">Информация о отправленных данных.</param>
+    /// <param name="args">Package event args.</param>
     [SecuritySafeCritical]
     protected abstract void OnPackageSent(PackageSendedEventArgs args);
 
     /// <summary>
-    /// Происходит при получении части данных.
+    /// Invokes when part of data was read.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void OnPackagePartReceived() { }
 
     /// <summary>
-    /// Происходит при отсоединении.
+    /// Invokes when disconnected.
     /// </summary>
-    /// <param name="e">Ошибка которая могла возникнуть в процессе отсоединения.</param>
     [SecuritySafeCritical]
     protected virtual void OnDisconnected(Exception e) { }
 
+    // TODO: rus
     /// <summary>
     /// Происходит при SocketException. Без переопределение возращает всегда false.
     /// </summary>
     /// <param name="se">Словленое исключение.</param>
     /// <returns>Вовзращает значение говорящее о том, нужно ли дальше выкидывать исключение или оно обработано. true - обработано. false - не обработано.</returns>
     [SecuritySafeCritical]
-    protected virtual bool OnSocketException(SocketException se)
-    {
-      return false;
-    }
+    protected virtual bool OnSocketException(SocketException se) { return false; }
     #endregion
 
     #region private methods
@@ -363,11 +378,11 @@ namespace Engine.Network.Connections
         throw new ArgumentException("package isn't IPackage<ConnectionInfo>");
 
       // Set key
-      remoteInfo = remoteInfoPack.Content;
-      var publicKey = CngKey.Import(remoteInfo.PublicKey, CngKeyBlobFormat.EccPublicBlob);
-      packer.SetKey(diffieHellman.DeriveKeyMaterial(publicKey));
+      _remoteInfo = remoteInfoPack.Content;
+      var publicKey = CngKey.Import(_remoteInfo.PublicKey, CngKeyBlobFormat.EccPublicBlob);
+      _packer.SetKey(_diffieHellman.DeriveKeyMaterial(publicKey));
 
-      OnInfoReceived(remoteInfo);
+      OnInfoReceived(_remoteInfo);
     }
     #endregion
 
@@ -375,48 +390,47 @@ namespace Engine.Network.Connections
     [SecurityCritical]
     protected void ThrowIfDisposed()
     {
-      if (disposed)
+      if (_disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
     /// <summary>
-    /// Очишает соединение. После вызова класс может быть переиспользован.
+    /// Clean the connection. After call connection can be reused.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void Clean()
     {
-      if (handler != null)
+      if (_handler != null)
       {
-        if (handler.Connected)
+        if (_handler.Connected)
         {
-          handler.Shutdown(SocketShutdown.Both);
-          handler.Disconnect(false);
+          _handler.Shutdown(SocketShutdown.Both);
+          _handler.Disconnect(false);
           OnDisconnected(null);
         }
 
-        handler.Dispose();
-        handler = null;
+        _handler.Dispose();
+        _handler = null;
       }
 
-      if (diffieHellman != null)
+      if (_diffieHellman != null)
       {
-        diffieHellman.Dispose();
-        diffieHellman = null;
+        _diffieHellman.Dispose();
+        _diffieHellman = null;
       }
 
-      if (received != null)
+      if (_received != null)
       {
-        received.Dispose();
-        received = null;
+        _received.Dispose();
+        _received = null;
       }
 
-      connectionInfoSent = false;
-      remoteInfo = null;
+      _connectionInfoSent = false;
+      _remoteInfo = null;
     }
 
     /// <summary>
-    /// Освобождает управляемые ресурсы соедиенения.
-    /// Не может быть переиспользован после вызова.
+    /// Cealn the connection. After call connection cannot be reused.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void DisposeManagedResources()
@@ -427,15 +441,16 @@ namespace Engine.Network.Connections
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
       DisposeManagedResources();
     }
     #endregion
 
     #region utils
+    // TODO: rus
     /// <summary>
     /// Проверяет TCP порт на занятость.
     /// </summary>
@@ -451,19 +466,11 @@ namespace Engine.Network.Connections
       var connections = properties.GetActiveTcpConnections();
       var listeners = properties.GetActiveTcpListeners();
 
-      foreach (var connection in connections)
-        if (connection.LocalEndPoint.Port == port)
-          return false;
-
-      foreach (var listener in listeners)
-        if (listener.Port == port)
-          return false;
-
-      return true;
+      return connections.All(c => c.LocalEndPoint.Port != port) && listeners.All(l => l.Port != port);
     }
 
     /// <summary>
-    /// Узнает IP адрес данного компьютера.
+    /// Возврашает IP адрес данного компьютера.
     /// </summary>
     /// <param name="type">Тип адреса.</param>
     /// <returns>IP адрес данного компьютера.</returns>

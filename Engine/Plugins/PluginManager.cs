@@ -1,12 +1,12 @@
-﻿using Engine.API;
+﻿using Engine.Api;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
 using System.Security.Permissions;
 using System.Security.Policy;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Plugins
 {
@@ -40,30 +40,31 @@ namespace Engine.Plugins
     protected readonly object SyncObject = new object();
     protected readonly Dictionary<string, PluginContainer> Plugins = new Dictionary<string, PluginContainer>();
     protected readonly Dictionary<long, TCommand> Commands = new Dictionary<long, TCommand>();
-    protected readonly Dictionary<string, object> NotifierContexts = new Dictionary<string, object>();
 
-    private string path;
-    private List<PluginInfo> infos;
+    protected Dictionary<string, object> NotifierEvents = new Dictionary<string, object>();
 
-    private bool disposed;
+    private string _path;
+    private List<PluginInfo> _infos;
+
+    private bool _disposed;
 
     #endregion
 
     #region Initialization
 
     [SecurityCritical]
-    protected PluginManager(string pluginsPath)
+    protected PluginManager(string path)
     {
-      path = pluginsPath;
+      _path = path;
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
 
       var containers = Plugins.Values.ToList();
       foreach (var container in containers)
@@ -79,11 +80,11 @@ namespace Engine.Plugins
     {
       try
       {
-        var libs = FindLibraries(path);
+        var libs = FindLibraries(_path);
         var loader = new PluginInfoLoader();
-        infos = loader.LoadFrom(typeof(TPlugin).FullName, libs);
-        if (infos != null)
-          foreach (var info in infos)
+        _infos = loader.LoadFrom(typeof(TPlugin).FullName, libs);
+        if (_infos != null)
+          foreach (var info in _infos)
             LoadPlugin(info, excludedPlugins);
       }
       catch (Exception e)
@@ -95,10 +96,10 @@ namespace Engine.Plugins
     [SecurityCritical]
     public void LoadPlugin(string name)
     {
-      if (infos == null)
+      if (_infos == null)
         return;
 
-      var info = infos.Find(pi => pi.Name == name);
+      var info = _infos.Find(pi => pi.Name == name);
       if (info == null)
         return;
 
@@ -128,16 +129,25 @@ namespace Engine.Plugins
           FileIOPermissionAccess.Read,
           AppDomain.CurrentDomain.BaseDirectory));
 
-        var engineStrongName = typeof(TPlugin).Assembly.Evidence.GetHostEvidence<StrongName>();
+        permissions.AddPermission(new ReflectionPermission(ReflectionPermissionFlag.RestrictedMemberAccess));
+
+        var engineStrongName = typeof(PluginManager<,,>).Assembly.Evidence.GetHostEvidence<StrongName>();
         if (engineStrongName == null)
         {
           OnError("Can't load plugins. Engine library without strong name.", null);
           return;
         }
 
+        var binSerializerStrongName = typeof(BinSerializer).Assembly.Evidence.GetHostEvidence<StrongName>();
+        if (binSerializerStrongName == null)
+        {
+          OnError("Can't load plugins. BinSerializer library without strong name.", null);
+          return;
+        }
+
         var pluginName = string.Empty;
         var domainName = string.Format("Plugin Domain [{0}]", Path.GetFileNameWithoutExtension(info.AssemblyPath));
-        var domain = AppDomain.CreateDomain(domainName, null, domainSetup, permissions, engineStrongName);
+        var domain = AppDomain.CreateDomain(domainName, null, domainSetup, permissions, engineStrongName, binSerializerStrongName);
         try
         {
           var plugin = (TPlugin) domain.CreateInstanceFromAndUnwrap(info.AssemblyPath, info.TypeName);
@@ -208,10 +218,13 @@ namespace Engine.Plugins
     [SecurityCritical]
     protected virtual void OnPluginLoaded(PluginContainer loaded)
     {
-      // Context
-      var context = loaded.Plugin.NotifierContext;
-      if (context != null)
-        NotifierContexts.Add(loaded.Plugin.Name, context);
+      // Events
+      var events = loaded.Plugin.NotifierEvents;
+      if (events != null)
+      {
+        NotifierEvents = new Dictionary<string, object>(NotifierEvents); // Create new (NotifierEvents.Values returned from outside)
+        NotifierEvents.Add(loaded.Plugin.Name, events);
+      }
 
       // Commands
       foreach (var command in loaded.Plugin.Commands)
@@ -227,8 +240,9 @@ namespace Engine.Plugins
     [SecurityCritical]
     protected virtual void OnPluginUnlodaing(PluginContainer unloading)
     {
-      // Context
-      NotifierContexts.Remove(unloading.Plugin.Name);
+      // Events
+      NotifierEvents = new Dictionary<string, object>(NotifierEvents); // Create new (NotifierEvents.Values returned from outside)
+      NotifierEvents.Remove(unloading.Plugin.Name);
 
       // Commands
       if (unloading.CommandsLoaded)
@@ -253,10 +267,10 @@ namespace Engine.Plugins
     }
 
     [SecurityCritical]
-    internal IEnumerable GetNotifierContexts()
+    internal IEnumerable<object> GetNotifierEvents()
     {
       lock (SyncObject)
-        return NotifierContexts.Values.ToArray();
+        return NotifierEvents.Values;
     }
 
     [SecurityCritical]
@@ -271,9 +285,9 @@ namespace Engine.Plugins
     {
       lock (SyncObject)
       {
-        if (infos == null)
+        if (_infos == null)
           return null;
-        return infos.Select(pi => pi.Name).ToArray();
+        return _infos.Select(pi => pi.Name).ToArray();
       }
     }
 

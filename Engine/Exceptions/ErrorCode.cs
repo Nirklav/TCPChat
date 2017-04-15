@@ -2,7 +2,7 @@
 {
   public enum ErrorCode
   {
-    APINotSupported = 1,
+    ApiNotSupported = 1,
     FileAlreadyDownloading = 2,
     FreePortDontFound = 3,
     LargeReceivedData = 4,
@@ -14,8 +14,9 @@
 
     RoomNotFound = 300,
     FileInRoomNotFound = 301,
+    UnknownRoomType = 302,
 
     WrongContentType = 1000,
-    IllegalInvoker = 1001,
+    IllegalInvoker = 1001
   }
 }

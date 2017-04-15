@@ -1,7 +1,7 @@
-﻿using Engine.API;
+﻿using Engine.Api;
+using Engine.Api.Client.P2P;
 using Engine.Helpers;
 using Engine.Model.Client;
-using Engine.Network.Connections;
 using Lidgren.Network;
 using System;
 using System.Collections.Generic;
@@ -21,6 +21,7 @@ namespace Engine.Network
     ConnectedToPeers = 2,
   }
 
+  // TODO: rus
   public class AsyncPeer :
     MarshalByRefObject,
     IDisposable
@@ -43,21 +44,22 @@ namespace Engine.Network
 
     #region consts
     public const string NetConfigString = "Peer TCPChat";
-    public const int ConnectionTimeOut = 30 * 1000;
     private const int KeySize = 256;
     #endregion
 
     #region private fields
-    [SecurityCritical] private readonly object syncObject = new object();
-    [SecurityCritical] private Dictionary<string, List<WaitingCommandContainer>> waitingCommands;
-    [SecurityCritical] private Dictionary<string, Packer> packers;
-    [SecurityCritical] private NetConnection serviceConnection;
-    [SecurityCritical] private NetPeer handler;
-    [SecurityCritical] private int state; //PeerState
-    [SecurityCritical] private bool disposed;
-    [SecurityCritical] private SynchronizationContext syncContext;
-    [SecurityCritical] private ClientRequestQueue requestQueue;
-    [SecurityCritical] private ECDiffieHellmanCng diffieHellman;
+    [SecurityCritical] private readonly object _syncObject = new object();
+    [SecurityCritical] private readonly Dictionary<string, List<WaitingCommandContainer>> _waitingCommands;
+    [SecurityCritical] private readonly Dictionary<string, Packer> _packers;
+    [SecurityCritical] private readonly SynchronizationContext _syncContext;
+    [SecurityCritical] private readonly RequestQueue _requestQueue;
+    [SecurityCritical] private readonly ECDiffieHellmanCng _diffieHellman;
+
+    [SecurityCritical] private NetConnection _serviceConnection;
+    [SecurityCritical] private NetPeer _handler;
+
+    [SecurityCritical] private int _state; //PeerState
+    [SecurityCritical] private bool _disposed;
     #endregion
 
     #region events and properties
@@ -67,22 +69,22 @@ namespace Engine.Network
     public PeerState State
     {
       [SecuritySafeCritical]
-      get { return (PeerState)state; }
+      get { return (PeerState)_state; }
     }
     #endregion
 
     #region constructor
     [SecurityCritical]
-    internal AsyncPeer()
+    internal AsyncPeer(IApi api)
     {
-      waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
-      packers = new Dictionary<string, Packer>();
-      syncContext = new EngineSyncContext();
-      requestQueue = new ClientRequestQueue();
+      _waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
+      _packers = new Dictionary<string, Packer>();
+      _syncContext = new EngineSyncContext();
+      _requestQueue = new RequestQueue(api);
 
-      diffieHellman = new ECDiffieHellmanCng(KeySize);
-      diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-      diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
+      _diffieHellman = new ECDiffieHellmanCng(KeySize);
+      _diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+      _diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
     }
     #endregion
 
@@ -96,10 +98,10 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (Interlocked.CompareExchange(ref state, (int)PeerState.ConnectedToService, (int)PeerState.NotConnected) != (int)PeerState.NotConnected)
+      if (Interlocked.CompareExchange(ref _state, (int)PeerState.ConnectedToService, (int)PeerState.NotConnected) != (int)PeerState.NotConnected)
         throw new InvalidOperationException("Peer has not right state.");
 
-      if (handler != null && handler.Status == NetPeerStatus.Running)
+      if (_handler != null && _handler.Status == NetPeerStatus.Running)
         throw new ArgumentException("Already runned.");
 
       var config = new NetPeerConfiguration(NetConfigString);
@@ -110,20 +112,20 @@ namespace Engine.Network
       if (remotePoint.AddressFamily == AddressFamily.InterNetworkV6)
         config.LocalAddress = IPAddress.IPv6Any;
 
-      handler = new NetPeer(config);
-      syncContext.Send(RegisterReceived, handler);
-      handler.Start();
+      _handler = new NetPeer(config);
+      _syncContext.Send(RegisterReceived, _handler);
+      _handler.Start();
 
-      var hail = handler.CreateMessage();
+      var hail = _handler.CreateMessage();
       using (var client = ClientModel.Get())
       {
-        var localPoint = new IPEndPoint(Connection.GetIpAddress(remotePoint.AddressFamily), handler.Port);
+        var localPoint = new IPEndPoint(Connection.GetIpAddress(remotePoint.AddressFamily), _handler.Port);
 
-        hail.Write(client.User.Nick);
+        hail.Write(client.Chat.User.Nick);
         hail.Write(localPoint);
       }
 
-      serviceConnection = handler.Connect(remotePoint, hail);
+      _serviceConnection = _handler.Connect(remotePoint, hail);
 
       ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToService({0})", remotePoint);
     }
@@ -145,15 +147,15 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      int oldState = Interlocked.CompareExchange(ref state, (int)PeerState.ConnectedToPeers, (int)PeerState.ConnectedToService);
+      int oldState = Interlocked.CompareExchange(ref _state, (int)PeerState.ConnectedToPeers, (int)PeerState.ConnectedToService);
       if (oldState == (int)PeerState.NotConnected)
         throw new InvalidOperationException("Peer has not right state.");
 
       // Создания и отправка сообщения для пробивания NAT,
       // и возможности принять входящее соединение
-      var holePunchMessage = handler.CreateMessage();
+      var holePunchMessage = _handler.CreateMessage();
       holePunchMessage.Write((byte)0);
-      handler.SendUnconnectedMessage(holePunchMessage, waitingPoint);
+      _handler.SendUnconnectedMessage(holePunchMessage, waitingPoint);
 
       DisconnectFromService();
 
@@ -171,14 +173,14 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      int oldState = Interlocked.CompareExchange(ref state, (int)PeerState.ConnectedToPeers, (int)PeerState.ConnectedToService);
+      int oldState = Interlocked.CompareExchange(ref _state, (int)PeerState.ConnectedToPeers, (int)PeerState.ConnectedToService);
       if (oldState == (int)PeerState.NotConnected)
         throw new InvalidOperationException("Peer has not right state.");
 
-      if (handler == null)
+      if (_handler == null)
         throw new InvalidOperationException("Handler not created.");
 
-      handler.Connect(remotePoint, CreateHailMessage());
+      _handler.Connect(remotePoint, CreateHailMessage());
       
       DisconnectFromService();
 
@@ -194,7 +196,7 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (handler == null || handler.Status != NetPeerStatus.Running)
+      if (_handler == null || _handler.Status != NetPeerStatus.Running)
         return false;
 
       return FindConnection(peerId) != null;
@@ -254,7 +256,7 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (handler == null || handler.Status != NetPeerStatus.Running)
+      if (_handler == null || _handler.Status != NetPeerStatus.Running)
       {
         SaveCommandAndConnect(peerId, package, rawData, unreliable);
         return;
@@ -269,7 +271,7 @@ namespace Engine.Network
 
       var deliveryMethod = unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered;
       var message = CreateMessage(peerId, package, rawData);
-      handler.SendMessage(message, connection, deliveryMethod, 0);
+      _handler.SendMessage(message, connection, deliveryMethod, 0);
     }
     #endregion
 
@@ -302,7 +304,7 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (handler == null || handler.Status != NetPeerStatus.Running)
+      if (_handler == null || _handler.Status != NetPeerStatus.Running)
         return false;
 
       var connection = FindConnection(peerId);
@@ -311,7 +313,7 @@ namespace Engine.Network
 
       var deliveryMethod = unreliable ? NetDeliveryMethod.Unreliable : NetDeliveryMethod.ReliableOrdered;
       var message = CreateMessage(peerId, package, rawData);
-      handler.SendMessage(message, connection, deliveryMethod, 0);
+      _handler.SendMessage(message, connection, deliveryMethod, 0);
       return true;
     }
     #endregion
@@ -322,8 +324,8 @@ namespace Engine.Network
     private Packer GetPacker(string peerId)
     {
       Packer packer;
-      lock (syncObject)
-        packers.TryGetValue(peerId, out packer);
+      lock (_syncObject)
+        _packers.TryGetValue(peerId, out packer);
 
       if (packer == null)
         throw new InvalidOperationException(string.Format("Packer not set, for connection {0}", peerId));
@@ -337,7 +339,7 @@ namespace Engine.Network
       var packer = GetPacker(peerId);
       var packed = packer.Pack(package, rawData);
       
-      var message = handler.CreateMessage(packed.Length);
+      var message = _handler.CreateMessage(packed.Length);
       message.Write(packed.Data, 0, packed.Length);
       return message;
     }
@@ -347,10 +349,13 @@ namespace Engine.Network
     {
       string nick;
       using (var client = ClientModel.Get())
-        nick = client.User.Nick;
+        nick = client.Chat.User.Nick;
 
-      var publicKeyBlob = diffieHellman.PublicKey.ToByteArray();
-      var hailMessage = handler.CreateMessage();
+      var publicKeyBlob = _diffieHellman.PublicKey.ToByteArray();
+      if (publicKeyBlob == null)
+        throw new InvalidOperationException("public key is null");
+
+      var hailMessage = _handler.CreateMessage();
       hailMessage.Write(nick);
       hailMessage.Write(publicKeyBlob.Length);
       hailMessage.Write(publicKeyBlob);
@@ -361,69 +366,51 @@ namespace Engine.Network
     [SecurityCritical]
     private void SaveCommandAndConnect(string peerId, IPackage package, byte[] rawData, bool unreliable)
     {
-      lock (syncObject)
+      lock (_syncObject)
       {
         List<WaitingCommandContainer> commands;
 
-        if (!waitingCommands.TryGetValue(peerId, out commands))
+        if (!_waitingCommands.TryGetValue(peerId, out commands))
         {
           commands = new List<WaitingCommandContainer>();
-          waitingCommands.Add(peerId, commands);
+          _waitingCommands.Add(peerId, commands);
         }
 
         commands.Add(new WaitingCommandContainer(package, rawData, unreliable));
       }
 
-      ClientModel.Api.ConnectToPeer(peerId);
+      ClientModel.Api.Perform(new ClientConnectToPeerAction(peerId));
     }
 
     [SecurityCritical]
     private void DisconnectFromService()
     {
-      if (serviceConnection != null)
+      if (_serviceConnection != null)
       {
-        serviceConnection.Disconnect(string.Empty);
-        serviceConnection = null;
+        _serviceConnection.Disconnect(string.Empty);
+        _serviceConnection = null;
       }
     }
 
     [SecurityCritical]
     private NetConnection FindConnection(string id)
     {
-      return handler.Connections.SingleOrDefault(new Finder(id).Equals);
-    }
-
-    [SecurityCritical]
-    private List<NetConnection> FindConnections(IEnumerable<string> ids)
-    {
-      return handler.Connections.Where(new Finder(ids).Contains).ToList();
+      return _handler.Connections.SingleOrDefault(new Finder(id).Equals);
     }
 
     private class Finder
     {
-      private string id;
-      private IEnumerable<string> ids;
+      private readonly string _id;
 
       public Finder(string id)
       {
-        this.id = id;
-      }
-
-      public Finder(IEnumerable<string> ids)
-      {
-        this.ids = ids;
+        _id = id;
       }
 
       [SecurityCritical]
       public bool Equals(NetConnection connection)
       {
-        return string.Equals((string)connection.Tag, id);
-      }
-
-      [SecurityCritical]
-      public bool Contains(NetConnection connection)
-      {
-        return ids.Contains((string)connection.Tag);
+        return string.Equals((string)connection.Tag, _id);
       }
     }
     #endregion
@@ -432,18 +419,19 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnReceive(object obj)
     {
-      if (handler == null || handler.Status != NetPeerStatus.Running)
+      if (_handler == null || _handler.Status != NetPeerStatus.Running)
         return;
 
       NetIncomingMessage message;
 
-      while ((message = handler.ReadMessage()) != null)
+      while ((message = _handler.ReadMessage()) != null)
       {
         switch (message.MessageType)
         {
           case NetIncomingMessageType.ErrorMessage:
           case NetIncomingMessageType.WarningMessage:
-            ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = new NetException(message.ReadString()) });
+            var error = new NetException(message.ReadString());
+            ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(error));
             break;
 
           case NetIncomingMessageType.ConnectionApproval:
@@ -453,10 +441,10 @@ namespace Engine.Network
           case NetIncomingMessageType.StatusChanged:
             NetConnectionStatus status = (NetConnectionStatus)message.ReadByte();
 
-            if (status == NetConnectionStatus.Connected && state == (int)PeerState.ConnectedToPeers)
+            if (status == NetConnectionStatus.Connected && _state == (int)PeerState.ConnectedToPeers)
               OnPeerConnected(message);
 
-            if (status == NetConnectionStatus.Connected && state == (int)PeerState.ConnectedToService)
+            if (status == NetConnectionStatus.Connected && _state == (int)PeerState.ConnectedToService)
               OnServiceConnected(message);
 
             if (status == NetConnectionStatus.Disconnecting || status == NetConnectionStatus.Disconnected)
@@ -465,7 +453,7 @@ namespace Engine.Network
 
           case NetIncomingMessageType.Data:
           case NetIncomingMessageType.UnconnectedData:
-            if (state == (int)PeerState.ConnectedToPeers)
+            if (_state == (int)PeerState.ConnectedToPeers)
               OnPackageReceived(message);
             break;
         }
@@ -500,25 +488,25 @@ namespace Engine.Network
       var publicKeySize = hailMessage.ReadInt32();
       var publicKeyBlob = hailMessage.ReadBytes(publicKeySize);
       var publicKey = CngKey.Import(publicKeyBlob, CngKeyBlobFormat.EccPublicBlob);
-      var key = diffieHellman.DeriveKeyMaterial(publicKey);
+      var key = _diffieHellman.DeriveKeyMaterial(publicKey);
 
       message.SenderConnection.Tag = connectionId;
 
-      lock (syncObject)
+      lock (_syncObject)
       {
         // Add connection packer
         var packer = new Packer();
         packer.SetKey(key);
-        packers.Add(connectionId, packer);
+        _packers.Add(connectionId, packer);
 
         // Invoke waiting commands
         List<WaitingCommandContainer> commands;
-        if (waitingCommands.TryGetValue(connectionId, out commands))
+        if (_waitingCommands.TryGetValue(connectionId, out commands))
         {
           foreach (var command in commands)
             SendMessage(connectionId, command.Package, command.RawData, command.Unreliable);
 
-          waitingCommands.Remove(connectionId);
+          _waitingCommands.Remove(connectionId);
         }
       }
 
@@ -532,7 +520,7 @@ namespace Engine.Network
       message.SenderConnection.Tag = null;
 
       if (connectionId != null)
-        packers.Remove(connectionId);
+        _packers.Remove(connectionId);
     }
 
     [SecurityCritical]
@@ -544,14 +532,11 @@ namespace Engine.Network
         var packer = GetPacker(peerId);
         var unpacked = packer.Unpack<IPackage>(message.Data);
 
-        var command = ClientModel.Api.GetCommand(unpacked.Package.Id);
-        var args = new ClientCommandArgs(peerId, unpacked);
-        
-        requestQueue.Add(peerId, command, args);
+        _requestQueue.Add(peerId, unpacked);
       }
       catch (Exception exc)
       {
-        ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs { Error = exc });
+        ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(exc));
         ClientModel.Logger.Write(exc);
       }
     }
@@ -561,31 +546,31 @@ namespace Engine.Network
     [SecurityCritical]
     private void ThrowIfDisposed()
     {
-      if (disposed)
+      if (_disposed)
         throw new ObjectDisposedException("Object disposed");
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
 
-      disposed = true;
+      _disposed = true;
 
-      if (requestQueue != null)
-        requestQueue.Dispose();
+      if (_requestQueue != null)
+        _requestQueue.Dispose();
 
-      if (handler != null)
-        handler.Shutdown(string.Empty);
+      if (_handler != null)
+        _handler.Shutdown(string.Empty);
 
-      if (diffieHellman != null)
-        diffieHellman.Dispose();
+      if (_diffieHellman != null)
+        _diffieHellman.Dispose();
 
-      lock (syncObject)
+      lock (_syncObject)
       {
-        waitingCommands.Clear();
-        packers.Clear();
+        _waitingCommands.Clear();
+        _packers.Clear();
       }
     }
     #endregion

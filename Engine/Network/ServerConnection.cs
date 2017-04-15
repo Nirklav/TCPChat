@@ -1,11 +1,12 @@
-﻿using Engine.Model.Server;
+﻿using Engine.Helpers;
 using System;
 using System.Net.Sockets;
 using System.Security;
 using System.Threading;
 
-namespace Engine.Network.Connections
+namespace Engine.Network
 {
+  // TODO: rus
   /// <summary>
   /// Серверное соединение с клиентом.
   /// </summary>
@@ -16,40 +17,48 @@ namespace Engine.Network.Connections
     /// <summary>
     /// Время неактивности соединения, после прошествия которого соединение будет закрыто.
     /// </summary>
-    public const int ConnectionTimeOut = 7 * 1000;
+    public const int SilenceTimeout = 7 * 1000;
 
     /// <summary>
     /// Время ожидания регистрации. После того как данное время закончится соединение будет закрыто.
     /// </summary>
-    public const int UnregisteredTimeOut = 60 * 1000;
+    public const int UnregisteredTimeout = 60 * 1000;
     #endregion
 
     #region private field
-    [SecurityCritical] private string serverApiName;
-    [SecurityCritical] private DateTime lastActivity;
-    [SecurityCritical] private DateTime createTime;
-    [SecurityCritical] private EventHandler<PackageReceivedEventArgs> dataReceivedCallback;
+    [SecurityCritical] private readonly string _serverApiName;
+    [SecurityCritical] private readonly DateTime _createTime;
+    [SecurityCritical] private readonly Logger _logger;
+
+    [SecurityCritical] private DateTime _lastActivity;
+
+    [SecurityCritical] private EventHandler<PackageReceivedEventArgs> _receivedCallback;
     #endregion
 
     #region constructors
+
     /// <summary>
     /// Создает серверное подключение.
     /// </summary>
     /// <param name="handler">Подключенный к клиенту сокет.</param>
     /// <param name="apiName">Текущая версия Api.</param>
+    /// <param name="logger">Logger</param>
     /// <param name="receivedCallback">Функция обратного вызова, для полученных данных.</param>
     [SecurityCritical]
-    public ServerConnection(Socket handler, string apiName, EventHandler<PackageReceivedEventArgs> receivedCallback)
+    public ServerConnection(Socket handler, string apiName, Logger logger, EventHandler<PackageReceivedEventArgs> receivedCallback)
     {
       if (receivedCallback == null)
         throw new ArgumentNullException();
 
       Construct(handler);
 
-      serverApiName = apiName;
-      dataReceivedCallback = receivedCallback;
-      lastActivity = DateTime.Now;
-      createTime = DateTime.Now;
+      _serverApiName = apiName;
+      _createTime = DateTime.UtcNow;
+      _lastActivity = DateTime.UtcNow;
+
+      _receivedCallback = receivedCallback;
+
+      _logger = logger;
     }
     #endregion
 
@@ -57,26 +66,26 @@ namespace Engine.Network.Connections
     /// <summary>
     /// Интервал нективности подключения.
     /// </summary>
-    public int IntervalOfSilence
+    public int SilenceInterval
     {
       [SecurityCritical]
       get
       {
         ThrowIfDisposed();
-        return (int)(DateTime.Now - lastActivity).TotalMilliseconds;
+        return (int)(DateTime.UtcNow - _lastActivity).TotalMilliseconds;
       }
     }
 
     /// <summary>
     /// Интервал незарегистрированности соединения.
     /// </summary>
-    public int UnregisteredTimeInterval
+    public int UnregisteredInterval
     {
       [SecurityCritical]
       get
       {
         ThrowIfDisposed();
-        return (IsRegistered) ? 0 : (int)(DateTime.Now - createTime).TotalMilliseconds;
+        return (IsRegistered) ? 0 : (int)(DateTime.UtcNow - _createTime).TotalMilliseconds;
       }
     }
 
@@ -89,7 +98,7 @@ namespace Engine.Network.Connections
       get
       {
         ThrowIfDisposed();
-        return id != null && !id.Contains(TempConnectionPrefix);
+        return Id != null && !Id.Contains(TempConnectionPrefix);
       }
     }
     #endregion
@@ -103,7 +112,7 @@ namespace Engine.Network.Connections
     public void Register(string newId)
     {
       ThrowIfDisposed();
-      id = newId;
+      Id = newId;
     }
     #endregion
 
@@ -112,14 +121,14 @@ namespace Engine.Network.Connections
     protected override ConnectionInfo CreateConnectionInfo()
     {
       var info = new ServerConnectionInfo();
-      info.ApiName = serverApiName;
+      info.ApiName = _serverApiName;
       return info;
     }
 
     [SecuritySafeCritical]
     protected override void OnPackagePartReceived()
     {
-      lastActivity = DateTime.Now;
+      _lastActivity = DateTime.UtcNow;
     }
 
     [SecuritySafeCritical]
@@ -131,11 +140,11 @@ namespace Engine.Network.Connections
         if (se != null && se.SocketErrorCode == SocketError.ConnectionReset)
           return;
 
-        ServerModel.Logger.Write(args.Exception);
+        _logger.Write(args.Exception);
         return;
       }
 
-      var temp = Interlocked.CompareExchange(ref dataReceivedCallback, null, null);
+      var temp = Interlocked.CompareExchange(ref _receivedCallback, null, null);
       if (temp != null)
         temp(this, args);
     }
@@ -144,9 +153,9 @@ namespace Engine.Network.Connections
     protected override void OnPackageSent(PackageSendedEventArgs args)
     {
       if (args.Exception != null)
-        ServerModel.Logger.Write(args.Exception);
+        _logger.Write(args.Exception);
       else
-        lastActivity = DateTime.Now;
+        _lastActivity = DateTime.UtcNow;
     }
     #endregion
   }

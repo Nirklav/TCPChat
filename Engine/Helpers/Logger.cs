@@ -19,24 +19,24 @@ namespace Engine.Helpers
 
     private const int WriteAttempts = 5;
 
-    private static readonly Dictionary<string, object> syncObjects = new Dictionary<string, object>();
+    private static readonly Dictionary<string, object> _syncObjects = new Dictionary<string, object>();
     private static object GetSyncObject(string fileName)
     {
-      lock (syncObjects)
+      lock (_syncObjects)
       {
         object syncObject;
-        syncObjects.TryGetValue(fileName, out syncObject);
+        _syncObjects.TryGetValue(fileName, out syncObject);
         return syncObject;
       }
     }
 
-    private string logFileName;
+    private readonly string _logFileName;
     
     [SecurityCritical]
     public Logger(string fileName)
     {
-      logFileName = fileName;
-      syncObjects.Add(logFileName, new object());
+      _logFileName = fileName;
+      _syncObjects.Add(_logFileName, new object());
     }
 
     [SecuritySafeCritical]
@@ -52,8 +52,8 @@ namespace Engine.Helpers
       Write(string.Format(DebugMessageTemplate, DateTime.Now, message), args);
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
     [SecuritySafeCritical]
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public void WriteWarning(string message, params object[] args)
     {
       StackTrace stackTrace = new StackTrace(1, true);
@@ -71,7 +71,7 @@ namespace Engine.Helpers
     [FileIOPermission(SecurityAction.Assert, AllLocalFiles = FileIOPermissionAccess.Append)]
     private void Write(string message, params object[] args)
     {
-      lock (GetSyncObject(logFileName))
+      lock (GetSyncObject(_logFileName))
       {
         int attempts = 0;
         while (true)
@@ -80,7 +80,7 @@ namespace Engine.Helpers
           StreamWriter logWriter = null;
           try
           {
-            logFile = new FileStream(logFileName, FileMode.Append, FileAccess.Write);
+            logFile = new FileStream(_logFileName, FileMode.Append, FileAccess.Write);
             logWriter = new StreamWriter(logFile);
           
             logWriter.WriteLine(string.Format(message, args));

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Security;
+using ThirtyNineEighty.BinarySerializer;
 
-namespace Engine.Network.Connections
+namespace Engine.Network
 {
   public interface IPackage
   {
@@ -13,29 +15,40 @@ namespace Engine.Network.Connections
   }
 
   [Serializable]
+  [BinType("PackageDto")]
+  [SecuritySafeCritical]
   public class Package : IPackage
   {
-    private long id;
+    [BinField("i")]
+    private long _id;
 
+    [SecuritySafeCritical]
     public Package(long id)
     {
-      this.id = id;
+      _id = id;
     }
 
-    public long Id { get { return id; } }
+    public long Id
+    {
+      get { return _id; }
+    }
   }
 
   [Serializable]
+  [BinType("PackageTDto")]
+  [SecuritySafeCritical]
   public class Package<T> : Package, IPackage<T>
   {  
-    private T content;
+    [BinField("c")]
+    private T _content;
 
+    [SecuritySafeCritical]
     public Package(long id, T content)
       : base(id)
     {
-      this.content = content;
+      _content = content;
     }
   
-    public T Content { get { return content; } }
+    public T Content { get { return _content; } }
   }
 }

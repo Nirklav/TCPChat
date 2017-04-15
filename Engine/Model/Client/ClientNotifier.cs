@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 
 namespace Engine.Model.Client
@@ -9,34 +10,36 @@ namespace Engine.Model.Client
   public class ClientNotifier : Notifier
   {
     [SecuritySafeCritical]
-    public override object[] GetContexts()
+    public override IEnumerable<object> GetEvents()
     {
-      var contexts = new List<object>(base.GetContexts());
-
-      foreach (var context in ClientModel.Plugins.GetNotifierContexts())
-        contexts.Add(context);
-
-      return contexts.ToArray();
+      var events = base.GetEvents();
+      return events.Concat(ClientModel.Plugins.GetNotifierEvents());
     }
   }
 
-  [Notifier(typeof(IClientNotifierContext), BaseNotifier = typeof(ClientNotifier))]
+  [Notifier(typeof(IClientEvents), BaseNotifier = typeof(ClientNotifier))]
   public interface IClientNotifier : INotifier
   {
     void Connected(ConnectEventArgs args);
     void ReceiveRegistrationResponse(RegistrationEventArgs args);
+
     void ReceiveMessage(ReceiveMessageEventArgs args);
+
     void AsyncError(AsyncErrorEventArgs args);
-    void RoomRefreshed(RoomEventArgs args);
-    void RoomOpened(RoomEventArgs args);
-    void RoomClosed(RoomEventArgs args);
+
+    void RoomRefreshed(RoomRefreshedEventArgs args);
+    void RoomOpened(RoomOpenedEventArgs args);
+    void RoomClosed(RoomClosedEventArgs args);
+
     void DownloadProgress(FileDownloadEventArgs args);
     void PostedFileDeleted(FileDownloadEventArgs args);
+
     void PluginLoaded(PluginEventArgs args);
     void PluginUnloading(PluginEventArgs args);
   }
 
-  public interface IClientNotifierContext
+  // TODO: rus
+  public interface IClientEvents
   {
     /// <summary>
     /// Событие происходит при подключении клиента к серверу.
@@ -61,17 +64,17 @@ namespace Engine.Model.Client
     /// <summary>
     /// Событие происходит при обновлении списка подключенных к серверу клиентов.
     /// </summary>
-    event EventHandler<RoomEventArgs> RoomRefreshed;
+    event EventHandler<RoomRefreshedEventArgs> RoomRefreshed;
 
     /// <summary>
     /// Событие происходит при открытии комнаты клиентом. Или когда клиента пригласили в комнату.
     /// </summary>
-    event EventHandler<RoomEventArgs> RoomOpened;
+    event EventHandler<RoomOpenedEventArgs> RoomOpened;
 
     /// <summary>
     /// Событие происходит при закрытии комнаты клиентом, когда клиента кикают из комнаты.
     /// </summary>
-    event EventHandler<RoomEventArgs> RoomClosed;
+    event EventHandler<RoomClosedEventArgs> RoomClosed;
 
     /// <summary>
     /// Событие происходит при получении части файла, а также при завершении загрузки файла.

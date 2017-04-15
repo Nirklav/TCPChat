@@ -12,22 +12,22 @@ namespace Engine.Network
     
     public struct Guard : IDisposable
     {
-      private readonly Pool owner;
-      private readonly MemoryStream stream;
+      private readonly Pool _owner;
+      private readonly MemoryStream _stream;
 
-      public MemoryStream Stream { get { return stream; } }
+      public MemoryStream Stream { get { return _stream; } }
 
       [SecurityCritical]
       public Guard(Pool guardOwner, MemoryStream memoryStream)
       {
-        owner = guardOwner;
-        stream = memoryStream;
+        _owner = guardOwner;
+        _stream = memoryStream;
       }
 
       [SecuritySafeCritical]
       public void Dispose()
       {
-        owner.Put(Stream);
+        _owner.Put(Stream);
       }
     }
 
@@ -84,20 +84,20 @@ namespace Engine.Network
       }
     }
 
-    private static long Misses;
-    private static long Hits;
-    private static long Puts;
+    private static long _misses;
+    private static long _hits;
+    private static long _puts;
 
-    private readonly int maxSize;
-    private readonly List<Container> storage;
-    private readonly Comparer comaprer;
+    private readonly int _maxSize;
+    private readonly List<Container> _storage;
+    private readonly Comparer _comaprer;
     
     [SecurityCritical]
-    public Pool(int maxPoolSize)
+    public Pool(int maxSize)
     {
-      maxSize = maxPoolSize;
-      storage = new List<Container>(maxSize);
-      comaprer = new Comparer();
+      _maxSize = maxSize;
+      _storage = new List<Container>(_maxSize);
+      _comaprer = new Comparer();
     }
     
     [SecurityCritical]
@@ -109,33 +109,33 @@ namespace Engine.Network
     [SecurityCritical]
     public MemoryStream Get(int? size = null)
     {
-      lock (storage)
+      lock (_storage)
       {
         var streamSize = size ?? DefaultSize;
         if (streamSize <= 0)
           throw new ArgumentException("size");
 
-        var index = storage.BinarySearch(new Container(streamSize), comaprer);
+        var index = _storage.BinarySearch(new Container(streamSize), _comaprer);
         if (index < 0)
         {
           index = ~index;
 
-          if (index >= storage.Count)
+          if (index >= _storage.Count)
           {
-            if (size == null && storage.Count >= 1)
+            if (size == null && _storage.Count >= 1)
               index = 0;
             else
             {
-              Interlocked.Increment(ref Misses);
+              Interlocked.Increment(ref _misses);
               return new MemoryStream(streamSize);
             }
           }
         }
         
-        var result = storage[index];
-        storage.RemoveAt(index);
+        var result = _storage[index];
+        _storage.RemoveAt(index);
 
-        Interlocked.Increment(ref Hits);
+        Interlocked.Increment(ref _hits);
         return result.Data;
       }
     }
@@ -143,21 +143,21 @@ namespace Engine.Network
     [SecurityCritical]
     public void Put(MemoryStream data)
     {
-      Interlocked.Increment(ref Puts);
+      Interlocked.Increment(ref _puts);
 
-      lock (storage)
+      lock (_storage)
       {
-        if (storage.Count < maxSize)
+        if (_storage.Count < _maxSize)
         {
           data.Position = 0;
           data.SetLength(0);
 
           var container = new Container(data);
-          var index = storage.BinarySearch(container, comaprer);
+          var index = _storage.BinarySearch(container, _comaprer);
           if (index >= 0)
-            storage.Insert(index, container);
+            _storage.Insert(index, container);
           else
-            storage.Insert(~index, container);
+            _storage.Insert(~index, container);
         }
       }
     }

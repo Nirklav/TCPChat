@@ -1,6 +1,7 @@
 ﻿using Engine.Model.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 
 namespace Engine.Model.Server
@@ -9,27 +10,31 @@ namespace Engine.Model.Server
   public class ServerNotifier : Notifier
   {
     [SecuritySafeCritical]
-    public override object[] GetContexts()
+    public override IEnumerable<object> GetEvents()
     {
-      var contexts = new List<object>(base.GetContexts());
-
-      foreach (var context in ServerModel.Plugins.GetNotifierContexts())
-        contexts.Add(context);
-
-      return contexts.ToArray();
+      var events = base.GetEvents();
+      return events.Concat(ServerModel.Plugins.GetNotifierEvents());
     }
   }
 
-  [Notifier(typeof(IServerNotifierContext), BaseNotifier = typeof(ServerNotifier))]
+  [Notifier(typeof(IServerEvents), BaseNotifier = typeof(ServerNotifier))]
   public interface IServerNotifier : INotifier
   {
-    void Registered(ServerRegistrationEventArgs args);
-    void Unregistered(ServerRegistrationEventArgs args);
+    void ConnectionOpened(ConnectionEventArgs args);
+    void ConnectionClosing(ConnectionEventArgs args, Action<Exception> callback);
+    void ConnectionClosed(ConnectionEventArgs args);
+
+    void ConnectionRegistered(ConnectionEventArgs args);
+    void ConnectionUnregistered(ConnectionEventArgs args);
   }
 
-  public interface IServerNotifierContext
+  public interface IServerEvents
   {
-    event EventHandler<ServerRegistrationEventArgs> Registered;
-    event EventHandler<ServerRegistrationEventArgs> Unregistered;
+    event EventHandler<ConnectionEventArgs> ConnectionOpened;
+    event EventHandler<ConnectionEventArgs> ConnectionClosing;
+    event EventHandler<ConnectionEventArgs> ConnectionClosed;
+
+    event EventHandler<ConnectionEventArgs> ConnectionRegistered;
+    event EventHandler<ConnectionEventArgs> ConnectionUnregistered;
   }
 }

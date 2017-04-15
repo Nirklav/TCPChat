@@ -1,7 +1,9 @@
 ﻿using Engine;
+using Engine.Api.Client.Registrations;
+using Engine.Api.Client.Rooms;
 using Engine.Exceptions;
 using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Collections.ObjectModel;
@@ -108,14 +110,14 @@ namespace UI.ViewModel
       KeyBoard.KeyDown += OnKeyDown;
       KeyBoard.KeyUp += OnKeyUp;
 
-      NotifierContext.Connected += CreateSubscriber<ConnectEventArgs>(ClientConnect);
-      NotifierContext.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
-      NotifierContext.ReceiveRegistrationResponse += CreateSubscriber<RegistrationEventArgs>(ClientRegistration);
-      NotifierContext.RoomClosed += CreateSubscriber<RoomEventArgs>(ClientRoomClosed);
-      NotifierContext.RoomOpened += CreateSubscriber<RoomEventArgs>(ClientRoomOpened);
-      NotifierContext.AsyncError += CreateSubscriber<AsyncErrorEventArgs>(ClientAsyncError);
-      NotifierContext.PluginLoaded += CreateSubscriber<PluginEventArgs>(ClientPluginLoaded);
-      NotifierContext.PluginUnloading += CreateSubscriber<PluginEventArgs>(ClientPluginUnloading);
+      Events.Connected += CreateSubscriber<ConnectEventArgs>(ClientConnect);
+      Events.ReceiveMessage += CreateSubscriber<ReceiveMessageEventArgs>(ClientReceiveMessage);
+      Events.ReceiveRegistrationResponse += CreateSubscriber<RegistrationEventArgs>(ClientRegistration);
+      Events.RoomOpened += CreateSubscriber<RoomOpenedEventArgs>(ClientRoomOpened);
+      Events.RoomClosed += CreateSubscriber<RoomClosedEventArgs>(ClientRoomClosed);
+      Events.AsyncError += CreateSubscriber<AsyncErrorEventArgs>(ClientAsyncError);
+      Events.PluginLoaded += CreateSubscriber<PluginEventArgs>(ClientPluginLoaded);
+      Events.PluginUnloading += CreateSubscriber<PluginEventArgs>(ClientPluginUnloading);
 
       EnableServerCommand = new Command(EnableServer, _ => !ServerModel.IsInited && !ClientModel.IsInited);
       DisableServerCommand = new Command(DisableServer, _ => ServerModel.IsInited);
@@ -157,6 +159,7 @@ namespace UI.ViewModel
 
         var initializer = new ServerInitializer
         {
+          AdminPassword = Settings.Current.AdminPassword,
           PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
           ExcludedPlugins = excludedPlugins
         };
@@ -205,7 +208,7 @@ namespace UI.ViewModel
       try
       {
         if (ClientModel.Api != null)
-          ClientModel.Api.Unregister();
+          ClientModel.Api.Perform(new ClientUnregisterAction());
       }
       catch (Exception) { }
 
@@ -221,7 +224,7 @@ namespace UI.ViewModel
       {
         var dialog = new CreateRoomDialog();
         if (dialog.ShowDialog() == true && ClientModel.Api != null)
-          ClientModel.Api.CreateRoom(dialog.Name, dialog.Type);
+          ClientModel.Api.Perform(new ClientCreateRoomAction(dialog.Name, dialog.Type));
       }
       catch (SocketException se)
       {
@@ -238,7 +241,7 @@ namespace UI.ViewModel
           return;
 
         if (ClientModel.Api != null)
-          ClientModel.Api.DeleteRoom(SelectedRoom.Name);
+          ClientModel.Api.Perform(new ClientDeleteRoomAction(SelectedRoom.Name));
       }
       catch (SocketException se)
       {
@@ -255,7 +258,7 @@ namespace UI.ViewModel
           return;
 
         if (ClientModel.Api != null)
-          ClientModel.Api.ExitFromRoom(SelectedRoom.Name);
+          ClientModel.Api.Perform(new ClientExitFromRoomAction(SelectedRoom.Name));
       }
       catch (SocketException se)
       {
@@ -294,7 +297,7 @@ namespace UI.ViewModel
     private void ClientConnect(ConnectEventArgs args)
     {
       if (args.Error == null)
-        ClientModel.Api.Register();
+        ClientModel.Api.Perform(new ClientRegisterAction());
       else
       {
         SelectedRoom.AddSystemMessage(args.Error.Message);
@@ -334,21 +337,21 @@ namespace UI.ViewModel
       Alert();
     }
 
-    private void ClientRoomOpened(RoomEventArgs e)
+    private void ClientRoomOpened(RoomOpenedEventArgs e)
     {
       // If room view model already exist then event will be processed by it self
       if (Rooms.Any(vm => vm.Name == e.RoomName))
         return;
 
       // Else create new view model
-      var roomViewModel = new RoomViewModel(this, e.RoomName, e.Users);
+      var roomViewModel = new RoomViewModel(this, e.RoomName);
       roomViewModel.Updated = true;
       Rooms.Add(roomViewModel);
 
       window.Alert();
     }
 
-    private void ClientRoomClosed(RoomEventArgs e)
+    private void ClientRoomClosed(RoomClosedEventArgs e)
     {
       var roomViewModel = Rooms.FirstOrDefault(vm => vm.Name == e.RoomName);
       if (roomViewModel == null)
@@ -367,7 +370,7 @@ namespace UI.ViewModel
       {
         switch (modelException.Code)
         {
-          case ErrorCode.APINotSupported:
+          case ErrorCode.ApiNotSupported:
             ClientModel.Reset();
             SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(APINotSupportedKey, modelException.Message));
             return;
@@ -444,7 +447,7 @@ namespace UI.ViewModel
         try
         {
           if (ClientModel.Api != null)
-            ClientModel.Api.Unregister();
+            ClientModel.Api.Perform(new ClientUnregisterAction());
         }
         catch (Exception)
         {

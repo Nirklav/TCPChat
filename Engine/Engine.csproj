@@ -59,57 +59,88 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="OpenAL">
-      <HintPath>..\OpenAL.dll</HintPath>
+    <Reference Include="BinSerializer">
+      <HintPath>..\Libraries\BinSerializer.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenAL, Version=1.1.0.0, Culture=neutral, PublicKeyToken=2c8b266bc3b03e01, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libraries\OpenAL.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API\ClientCommands\ClientCommand.cs" />
-    <Compile Include="API\ClientCommands\Messages\ClientOutPrivateMessageCommand.cs" />
-    <Compile Include="API\IApi.cs" />
-    <Compile Include="API\ICommand.cs" />
-    <Compile Include="API\ClientCommands\ClientCommandId.cs" />
-    <Compile Include="API\ClientCommands\Files\ClientFilePostedCommand.cs" />
-    <Compile Include="API\ClientCommands\Files\ClientPostedFileDeletedCommand.cs" />
-    <Compile Include="API\ClientCommands\Files\ClientReadFilePartCommand.cs" />
-    <Compile Include="API\ClientCommands\Files\ClientWriteFilePartCommand.cs" />
-    <Compile Include="API\ClientCommands\Messages\ClientOutRoomMessageCommand.cs" />
-    <Compile Include="API\ClientCommands\Messages\ClientOutSystemMessageCommand.cs" />
-    <Compile Include="API\ClientCommands\Others\ClientEmptyCommand.cs" />
-    <Compile Include="API\ClientCommands\Others\ClientPingResponceCommand.cs" />
-    <Compile Include="API\ClientCommands\P2P\ClientConnectToP2PServiceCommand.cs" />
-    <Compile Include="API\ClientCommands\P2P\ClientConnectToPeerCommand.cs" />
-    <Compile Include="API\ClientCommands\P2P\ClientWaitPeerConnectionCommand.cs" />
-    <Compile Include="API\ClientCommands\Registrations\ClientRegistrationResponseCommand.cs" />
-    <Compile Include="API\ClientCommands\Rooms\ClientRoomClosedCommand.cs" />
-    <Compile Include="API\ClientCommands\Rooms\ClientRoomOpenedCommand.cs" />
-    <Compile Include="API\ClientCommands\Rooms\ClientRoomRefreshedCommand.cs" />
-    <Compile Include="API\ClientCommands\Voice\ClientPlayVoiceCommand.cs" />
-    <Compile Include="API\ServerCommands\ServerCommand.cs" />
-    <Compile Include="API\ServerCommands\Files\ServerAddFileToRoomCommand.cs" />
-    <Compile Include="API\ServerCommands\Files\ServerRemoveFileFromRoomCommand.cs" />
-    <Compile Include="API\ServerCommands\Messages\ServerSendRoomMessageCommand.cs" />
-    <Compile Include="API\ServerCommands\Others\ServerEmptyCommand.cs" />
-    <Compile Include="API\ServerCommands\Others\ServerPingRequestCommand.cs" />
-    <Compile Include="API\ServerCommands\P2P\ServerP2PConnectRequestCommand.cs" />
-    <Compile Include="API\ServerCommands\P2P\ServerP2PReadyAcceptCommand.cs" />
-    <Compile Include="API\ServerCommands\Registrations\ServerRegisterCommand.cs" />
-    <Compile Include="API\ServerCommands\Registrations\ServerUnregisterCommand.cs" />
-    <Compile Include="API\ServerCommands\Rooms\ServerCreateRoomCommand.cs" />
-    <Compile Include="API\ServerCommands\Rooms\ServerDeleteRoomCommand.cs" />
-    <Compile Include="API\ServerCommands\Rooms\ServerExitFromRoomCommand.cs" />
-    <Compile Include="API\ServerCommands\Rooms\ServerInviteUsersCommand.cs" />
-    <Compile Include="API\ServerCommands\Rooms\ServerKickUsersCommand.cs" />
-    <Compile Include="API\ServerCommands\Rooms\ServerRefreshRoomCommand.cs" />
-    <Compile Include="API\ServerCommands\Rooms\ServerSetRoomAdminCommand.cs" />
-    <Compile Include="API\ServerCommands\ServerCommandId.cs" />
-    <Compile Include="API\ClientApi.cs" />
-    <Compile Include="API\ServerApi.cs" />
+    <Compile Include="Api\Client\Admin\ClientSendAdminAction.cs" />
+    <Compile Include="Api\Client\ClientCommand.cs" />
+    <Compile Include="Api\Client\Files\ClientAddFileAction.cs" />
+    <Compile Include="Api\Client\Files\ClientDownloadFileAction.cs" />
+    <Compile Include="Api\Client\Files\ClientRemoveFileAction.cs" />
+    <Compile Include="Api\Client\Messages\ClientOutPrivateMessageCommand.cs" />
+    <Compile Include="Api\Server\Messages\ServerRemoveMessagesAction.cs" />
+    <Compile Include="Api\Client\Messages\ClientRemoveMessagesCommand.cs" />
+    <Compile Include="Api\Client\Messages\ClientSendPrivateMessageAction.cs" />
+    <Compile Include="Api\Client\Messages\ClientSendMessageAction.cs" />
+    <Compile Include="Api\Client\P2P\ClientConnectToPeerAction.cs" />
+    <Compile Include="Api\Client\Registrations\ClientRegisterAction.cs" />
+    <Compile Include="Api\Client\Registrations\ClientUnregistrerAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientCreateRoomAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientDeleteRoomAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientExitFromRoomAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientInviteUsersAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientKickUsersAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientRefreshRoomAction.cs" />
+    <Compile Include="Api\Client\Rooms\ClientSetRoomAdminAction.cs" />
+    <Compile Include="Api\IAction.cs" />
+    <Compile Include="Api\IApi.cs" />
+    <Compile Include="Api\ICommand.cs" />
+    <Compile Include="Api\Client\ClientCommandId.cs" />
+    <Compile Include="Api\Client\Files\ClientFilePostedCommand.cs" />
+    <Compile Include="Api\Client\Files\ClientFileRemovedCommand.cs" />
+    <Compile Include="Api\Client\Files\ClientReadFilePartCommand.cs" />
+    <Compile Include="Api\Client\Files\ClientWriteFilePartCommand.cs" />
+    <Compile Include="Api\Client\Messages\ClientOutRoomMessageCommand.cs" />
+    <Compile Include="Api\Client\Messages\ClientOutSystemMessageCommand.cs" />
+    <Compile Include="Api\Client\Others\ClientEmptyCommand.cs" />
+    <Compile Include="Api\Client\Others\ClientPingResponseCommand.cs" />
+    <Compile Include="Api\Client\P2P\ClientConnectToP2PServiceCommand.cs" />
+    <Compile Include="Api\Client\P2P\ClientConnectToPeerCommand.cs" />
+    <Compile Include="Api\Client\P2P\ClientWaitPeerConnectionCommand.cs" />
+    <Compile Include="Api\Client\Registrations\ClientRegistrationResponseCommand.cs" />
+    <Compile Include="Api\Client\Rooms\ClientRoomClosedCommand.cs" />
+    <Compile Include="Api\Client\Rooms\ClientRoomOpenedCommand.cs" />
+    <Compile Include="Api\Client\Rooms\ClientRoomRefreshedCommand.cs" />
+    <Compile Include="Api\Client\Voice\ClientPlayVoiceCommand.cs" />
+    <Compile Include="Api\Server\Admin\ServerAdminCommand.cs" />
+    <Compile Include="Api\Server\Messages\ServerSendSystemMessageAction.cs" />
+    <Compile Include="Api\Server\P2P\ServerIntroduceConnectionsAction.cs" />
+    <Compile Include="Api\Server\P2P\ServerSendP2PConnectRequestAction.cs" />
+    <Compile Include="Api\Server\Registrations\ServerRemoveUserAction.cs" />
+    <Compile Include="Api\Server\ServerCommand.cs" />
+    <Compile Include="Api\Server\Files\ServerAddFileToRoomCommand.cs" />
+    <Compile Include="Api\Server\Files\ServerRemoveFileFromRoomCommand.cs" />
+    <Compile Include="Api\Server\Messages\ServerSendRoomMessageCommand.cs" />
+    <Compile Include="Api\Server\Others\ServerEmptyCommand.cs" />
+    <Compile Include="Api\Server\Others\ServerPingRequestCommand.cs" />
+    <Compile Include="Api\Server\P2P\ServerP2PConnectRequestCommand.cs" />
+    <Compile Include="Api\Server\P2P\ServerP2PReadyAcceptCommand.cs" />
+    <Compile Include="Api\Server\Registrations\ServerRegisterCommand.cs" />
+    <Compile Include="Api\Server\Registrations\ServerUnregisterCommand.cs" />
+    <Compile Include="Api\Server\Rooms\ServerCreateRoomCommand.cs" />
+    <Compile Include="Api\Server\Rooms\ServerDeleteRoomCommand.cs" />
+    <Compile Include="Api\Server\Rooms\ServerExitFromRoomCommand.cs" />
+    <Compile Include="Api\Server\Rooms\ServerInviteUsersCommand.cs" />
+    <Compile Include="Api\Server\Rooms\ServerKickUsersCommand.cs" />
+    <Compile Include="Api\Server\Rooms\ServerRefreshRoomCommand.cs" />
+    <Compile Include="Api\Server\Rooms\ServerSetRoomAdminCommand.cs" />
+    <Compile Include="Api\Server\ServerCommandId.cs" />
+    <Compile Include="Api\Client\ClientApi.cs" />
+    <Compile Include="Api\Server\ServerApi.cs" />
+    <Compile Include="EventArgs\RoomClosedEventArgs.cs" />
+    <Compile Include="EventArgs\RoomOpenedEventArgs.cs" />
     <Compile Include="EventArgs\RoomUsersEventArgs.cs" />
-    <Compile Include="EventArgs\ServerRegistrationEventArgs.cs" />
+    <Compile Include="EventArgs\ConnectionEventArgs.cs" />
+    <Compile Include="Helpers\EventDispatcher.cs" />
     <Compile Include="Helpers\Serializer.cs" />
     <Compile Include="Audio\IPlayer.cs" />
     <Compile Include="Audio\IRecorder.cs" />
@@ -120,19 +151,33 @@
     <Compile Include="Helpers\TryLock.cs" />
     <Compile Include="Model\Client\ClientNotifier.cs" />
     <Compile Include="Model\Client\ClientInitializer.cs" />
+    <Compile Include="Model\Client\Entities\ClientChat.cs" />
+    <Compile Include="Model\Client\Entities\ClientRoom.cs" />
+    <Compile Include="Model\Client\Entities\ClientUser.cs" />
+    <Compile Include="Model\Client\Entities\ClientVoiceRoom.cs" />
+    <Compile Include="Model\Common\Dto\BinNullable.cs" />
+    <Compile Include="Model\Common\Dto\ColorDto.cs" />
+    <Compile Include="Model\Common\Dto\FileDescriptionDto.cs" />
+    <Compile Include="Model\Common\Dto\MessageDto.cs" />
+    <Compile Include="Model\Common\Dto\RoomDto.cs" />
+    <Compile Include="Model\Common\Dto\UserDto.cs" />
     <Compile Include="Model\Common\Notifier.cs" />
     <Compile Include="Model\Common\NotifierGenerator.cs" />
-    <Compile Include="Model\Entities\AudioQuality.cs" />
-    <Compile Include="Model\Entities\FileId.cs" />
-    <Compile Include="Model\Entities\Message.cs" />
-    <Compile Include="Model\Entities\SystemMessageId.cs" />
-    <Compile Include="Model\Entities\SoundPack.cs" />
+    <Compile Include="Model\Common\Entities\AudioQuality.cs" />
+    <Compile Include="Model\Common\Entities\Chat.cs" />
+    <Compile Include="Model\Common\Entities\FileId.cs" />
+    <Compile Include="Model\Common\Entities\Message.cs" />
+    <Compile Include="Model\Common\Entities\SystemMessageId.cs" />
+    <Compile Include="Model\Common\Entities\SoundPack.cs" />
     <Compile Include="EventArgs\RecordedEventArgs.cs" />
     <Compile Include="Exceptions\ErrorCode.cs" />
     <Compile Include="Exceptions\ModelException.cs" />
     <Compile Include="Model\Client\ClientGuard.cs" />
-    <Compile Include="Model\Entities\RoomType.cs" />
-    <Compile Include="Model\Entities\VoiceRoom.cs" />
+    <Compile Include="Model\Common\Entities\RoomType.cs" />
+    <Compile Include="Model\Common\Entities\VoiceRoom.cs" />
+    <Compile Include="Model\Server\Entities\ServerChat.cs" />
+    <Compile Include="Model\Server\Entities\ServerRoom.cs" />
+    <Compile Include="Model\Server\Entities\ServerVoiceRoom.cs" />
     <Compile Include="Model\Server\ServerGuard.cs" />
     <Compile Include="Model\Server\ServerNotifier.cs" />
     <Compile Include="Model\Server\ServerInitializer.cs" />
@@ -146,9 +191,9 @@
     <Compile Include="Network\Packer.cs" />
     <Compile Include="Network\ServerConnection.cs" />
     <Compile Include="Model\Client\ClientModel.cs" />
-    <Compile Include="Model\Entities\DownloadingFile.cs" />
-    <Compile Include="Model\Common\ModelGuard.cs" />
-    <Compile Include="Model\Entities\PostedFile.cs" />
+    <Compile Include="Model\Common\Entities\DownloadingFile.cs" />
+    <Compile Include="Model\Common\Guard.cs" />
+    <Compile Include="Model\Common\Entities\PostedFile.cs" />
     <Compile Include="Model\Server\ServerModel.cs" />
     <Compile Include="EventArgs\AsyncErrorEventArgs.cs" />
     <Compile Include="EventArgs\ConnectEventArgs.cs" />
@@ -157,13 +202,13 @@
     <Compile Include="EventArgs\FileDownloadEventArgs.cs" />
     <Compile Include="EventArgs\ReceiveMessageEventArgs.cs" />
     <Compile Include="EventArgs\RegistrationEventArgs.cs" />
-    <Compile Include="EventArgs\RoomEventArgs.cs" />
+    <Compile Include="EventArgs\RoomRefreshedEventArgs.cs" />
     <Compile Include="Helpers\Crypter.cs" />
-    <Compile Include="Model\Entities\FileDescription.cs" />
+    <Compile Include="Model\Common\Entities\FileDescription.cs" />
     <Compile Include="Helpers\Logger.cs" />
     <Compile Include="Network\P2PService.cs" />
-    <Compile Include="Model\Entities\Room.cs" />
-    <Compile Include="Model\Entities\User.cs" />
+    <Compile Include="Model\Common\Entities\Room.cs" />
+    <Compile Include="Model\Common\Entities\User.cs" />
     <Compile Include="Network\Package.cs" />
     <Compile Include="Network\RequestQueue.cs" />
     <Compile Include="Network\Unpacked.cs" />
@@ -191,6 +236,7 @@
   <ItemGroup>
     <None Include="EngineStrongName.snk" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

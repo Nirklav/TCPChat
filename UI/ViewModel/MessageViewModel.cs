@@ -1,7 +1,8 @@
 ﻿using Engine;
+using Engine.Api.Client.Files;
 using Engine.Exceptions;
 using Engine.Model.Client;
-using Engine.Model.Entities;
+using Engine.Model.Common.Entities;
 using System;
 using System.Net.Sockets;
 using System.Windows;
@@ -112,8 +113,8 @@ namespace UI.ViewModel
       Type = MessageType.File;
       DownloadFileCommand = new Command(DownloadFile, _ => ClientModel.Api != null);
 
-      NotifierContext.DownloadProgress += CreateSubscriber<FileDownloadEventArgs>(ClientDownloadProgress);
-      NotifierContext.PostedFileDeleted += CreateSubscriber<FileDownloadEventArgs>(ClientPostedFileDeleted);
+      Events.DownloadProgress += CreateSubscriber<FileDownloadEventArgs>(ClientDownloadProgress);
+      Events.PostedFileDeleted += CreateSubscriber<FileDownloadEventArgs>(ClientPostedFileDeleted);
     }
 
     public MessageViewModel(long messageId, DateTime messageTime, string senderNick, string receiverNick, string message, bool isPrivate, RoomViewModel room)
@@ -193,13 +194,13 @@ namespace UI.ViewModel
         try
         {
           // File already downloading
-          if (client.DownloadingFiles.Exists(f => f.File.Id == fileId))
+          if (client.Chat.IsFileDownloading(fileId.Value))
           {
             var msg = Localizer.Instance.Localize(CancelDownloadingQuestionKey);
             var result = MessageBox.Show(msg, MainViewModel.ProgramName, MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result == MessageBoxResult.Yes)
             {
-              ClientModel.Api.CancelDownloading(file.Id, true);
+              client.Chat.CancelFileDownload(file.Id, true);
               Progress = 0;
             }
             return;
@@ -212,7 +213,7 @@ namespace UI.ViewModel
           saveDialog.FileName = file.Name;
 
           if (saveDialog.ShowDialog() == DialogResult.OK)
-            ClientModel.Api.DownloadFile(saveDialog.FileName, parentRoom.Name, file.Id);
+            ClientModel.Api.Perform(new ClientDownloadFileAction(parentRoom.Name, file.Id, saveDialog.FileName));
         }
         catch (ModelException me)
         {
@@ -238,8 +239,11 @@ namespace UI.ViewModel
     #region Helpers
     private FileDescription GetFile(ClientGuard client, FileId fileId)
     {
-      var room = client.Rooms[parentRoom.Name];
-      return room.Files.Find(f => f.Id == fileId);
+      var room = client.Chat.GetRoom(parentRoom.Name);
+      var file = room.TryGetFile(fileId);
+      if (file == null)
+        throw new InvalidOperationException("File not found");
+      return file;
     }
     #endregion
   }

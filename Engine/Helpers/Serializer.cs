@@ -1,44 +1,43 @@
 ﻿using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
+using System.Security.Permissions;
+using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Helpers
 {
   public static class Serializer
   {
     [SecuritySafeCritical]
+    [PermissionSet(SecurityAction.Assert, Unrestricted = true)]
     public static byte[] Serialize<T>(T obj)
     {
       using (MemoryStream stream = new MemoryStream())
       {
-        var formatter = new BinaryFormatter();
-        formatter.Serialize(stream, obj);
+        BinSerializer.Serialize(stream, obj);
         return stream.ToArray();
       }
     }
 
     [SecuritySafeCritical]
+    [PermissionSet(SecurityAction.Assert, Unrestricted = true)]
     public static void Serialize<T>(Stream stream, T obj)
     {
-      var formatter = new BinaryFormatter();
-      formatter.Serialize(stream, obj);
+      BinSerializer.Serialize(stream, obj);
     }
 
     [SecuritySafeCritical]
+    [PermissionSet(SecurityAction.Assert, Unrestricted = true)]
     public static T Deserialize<T>(byte[] message)
     {
       using (MemoryStream stream = new MemoryStream(message))
-      {
-        var formatter = new BinaryFormatter();
-        return (T)formatter.Deserialize(stream);
-      }
+        return BinSerializer.Deserialize<T>(stream);
     }
 
     [SecuritySafeCritical]
+    [PermissionSet(SecurityAction.Assert, Unrestricted = true)]
     public static T Deserialize<T>(Stream stream)
     {
-      var formatter = new BinaryFormatter();
-      return (T)formatter.Deserialize(stream);
+      return BinSerializer.Deserialize<T>(stream);
     }
   }
 }

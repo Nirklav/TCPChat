@@ -24,6 +24,8 @@
   <row key="systemMessage-MessageEditAccessDenied" value="Вы не можете редактировать это сообщение."/>
   <row key="systemMessage-P2PUserNotExist" value="Данного пользователя не существует."/>
   <row key="systemMessage-RoomUserNotExist" value="Данного пользователя нет в комнате."/>
+  <row key="systemMessage-InvalidPassword" value="Получен неверный пароль."/>
+  <row key="systemMessage-TextCommandNotFound" value="Текстовая команда не найдена."/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Редактировать"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>
@@ -83,6 +85,7 @@
   <row key="settingsTabCategory-plugins" value="Плагины"/>
 
   <row key="settingsTab-audio-pressTheKey" value="Нажмите на клавишу"/>
+  <row key="settingsTab-client-adminPassword" value="Пароль администратора"/>
 
   <row key="aboutProgram-title" value="О программе"/>
   <row key="aboutProgram-author" value="Автор"/>
@@ -134,4 +137,5 @@
   <row key="errorCode-FileInRoomNotFound" value="Файл в комнате не найден."/>
   <row key="errorCode-WrongContentType" value="Неправильный тип содержимого (internal error)."/>
   <row key="errorCode-IllegalInvoker" value="Недопустимый вызыватель (internal error)."/>
+  <row key="errorCode-UnknownRoomType" value="Получен неизвестный тип комнаты."/>
 </Localization>

@@ -1,5 +1,4 @@
-﻿using Engine.Network.Connections;
-using System;
+﻿using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Security;
@@ -11,16 +10,16 @@ namespace Engine.Network
   public struct Unpacked<T> : IPoolable, ISerializable
       where T : IPackage
   {
-    private readonly Packer owner;
-    private readonly MemoryStream stream;
+    private readonly Packer _owner;
+    private readonly MemoryStream _stream;
 
-    private readonly T package;
-    private readonly byte[] rawData;
+    private readonly T _package;
+    private readonly byte[] _rawData;
 
     public T Package
     {
       [SecuritySafeCritical]
-      get { return package; }
+      get { return _package; }
     }
 
     public byte[] RawData
@@ -28,10 +27,10 @@ namespace Engine.Network
       [SecuritySafeCritical]
       get
       {
-        if (rawData != null)
-          return rawData;
-        if (stream != null)
-          return stream.GetBuffer();
+        if (_rawData != null)
+          return _rawData;
+        if (_stream != null)
+          return _stream.GetBuffer();
         return null;
       }
     }
@@ -41,10 +40,10 @@ namespace Engine.Network
       [SecuritySafeCritical]
       get
       {
-        if (rawData != null)
-          return rawData.Length;
-        if (stream != null)
-          return (int)stream.Length;
+        if (_rawData != null)
+          return _rawData.Length;
+        if (_stream != null)
+          return (int)_stream.Length;
         return 0;
       }
     }
@@ -52,60 +51,60 @@ namespace Engine.Network
     MemoryStream IPoolable.Stream
     {
       [SecuritySafeCritical]
-      get { return stream; }
+      get { return _stream; }
     }
 
     [SecurityCritical]
     public Unpacked(Packer owner, T package, MemoryStream stream)
     {
-      this.owner = owner;
-      this.stream = stream;
-      this.rawData = null;
-      this.package = package;
+      _owner = owner;
+      _stream = stream;
+      _rawData = null;
+      _package = package;
     }
 
     [SecurityCritical]
     public Unpacked(T package, byte[] rawData)
     {
-      this.owner = null;
-      this.stream = null;
-      this.rawData = rawData;
-      this.package = package;
+      _owner = null;
+      _stream = null;
+      _rawData = rawData;
+      _package = package;
     }
 
     [SecurityCritical]
     private Unpacked(SerializationInfo info, StreamingContext context)
     {
-      owner = null;
-      stream = null;
-      rawData = (byte[]) info.GetValue("rawData", typeof(byte[]));
-      package = (T) info.GetValue("Package", typeof(T));
+      _owner = null;
+      _stream = null;
+      _rawData = (byte[]) info.GetValue("_rawData", typeof(byte[]));
+      _package = (T) info.GetValue("_package", typeof(T));
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (owner != null)
-        owner.Release(this);
+      if (_owner != null)
+        _owner.Release(this);
     }
 
     [SecurityCritical]
     [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
     public void GetObjectData(SerializationInfo info, StreamingContext context)
     {
-      byte[] rawDataArray = null;
-      if (rawData != null)
+      byte[] rawData = null;
+      if (_rawData != null)
       {
-        rawDataArray = rawData;
+        rawData = _rawData;
       }
-      else if (stream != null)
+      else if (_stream != null)
       {
-        rawDataArray = new byte[(int)stream.Length];
-        Array.Copy(stream.GetBuffer(), rawDataArray, rawDataArray.Length);
+        rawData = new byte[(int)_stream.Length];
+        Array.Copy(_stream.GetBuffer(), rawData, rawData.Length);
       }
 
-      info.AddValue("rawData", rawDataArray, typeof(byte[]));
-      info.AddValue("Package", Package, typeof(T));
+      info.AddValue("_rawData", rawData, typeof(byte[]));
+      info.AddValue("_package", Package, typeof(T));
     }
   }
 }

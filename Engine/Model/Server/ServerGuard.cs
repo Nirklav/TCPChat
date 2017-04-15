@@ -1,31 +1,27 @@
-﻿using Engine.Model.Entities;
-using System.Collections.Generic;
+﻿using Engine.Model.Server.Entities;
 using System.Security;
 
 namespace Engine.Model.Server
 {
-  public class ServerGuard : ModelGuard<ServerModel>
+  public class ServerGuard : Guard<ServerChat>
   {
-    #region constructor
     [SecurityCritical]
-    public ServerGuard(ServerModel model) : base(model)
+    public ServerGuard(ServerChat chat)
+      : base(chat)
     {
 
     }
-    #endregion
 
-    #region properties
-    public Dictionary<string, User> Users
-    {
-      [SecuritySafeCritical]
-      get { return model.Users; }
-    }
-
-    public Dictionary<string, Room> Rooms
+    public ServerChat Chat
     {
       [SecuritySafeCritical]
-      get { return model.Rooms; }
+      get { return _obj; }
     }
-    #endregion
+
+    public static ServerChat Current
+    {
+      [SecuritySafeCritical]
+      get { return ((ServerGuard)_current).Chat; }
+    }
   }
 }

@@ -11,36 +11,35 @@ namespace Engine.Helpers
   {
     #region Nested types
     /// <summary>
-    /// CryptoStream closes outputStream, this class avoids this behaviour
+    /// CryptoStream closes outputStream, this class avoid this behaviour
     /// </summary>
-    /// <typeparam name="TStream">Real stream type</typeparam>
     private class NotDisposableStream : Stream
     {
-      private Stream real;
+      private Stream _real;
 
       public NotDisposableStream(Stream stream)
       {
         if (stream == null)
           throw new ArgumentNullException("stream");
-        real = stream;
+        _real = stream;
       }
 
-      public override bool CanRead { get { return real.CanRead; } }
-      public override bool CanSeek { get { return real.CanSeek; } }
-      public override bool CanWrite { get { return real.CanWrite; } }
-      public override long Length { get { return real.Length; } }
+      public override bool CanRead { get { return _real.CanRead; } }
+      public override bool CanSeek { get { return _real.CanSeek; } }
+      public override bool CanWrite { get { return _real.CanWrite; } }
+      public override long Length { get { return _real.Length; } }
 
       public override long Position
       {
-        get { return real.Position; }
-        set { real.Position = value; }
+        get { return _real.Position; }
+        set { _real.Position = value; }
       }
 
-      public override void Flush() { real.Flush(); }
-      public override int Read(byte[] buffer, int offset, int count) { return real.Read(buffer, offset, count); }
-      public override long Seek(long offset, SeekOrigin origin) { return real.Seek(offset, origin); }
-      public override void SetLength(long value) { real.SetLength(value); }
-      public override void Write(byte[] buffer, int offset, int count) { real.Write(buffer, offset, count); }
+      public override void Flush() { _real.Flush(); }
+      public override int Read(byte[] buffer, int offset, int count) { return _real.Read(buffer, offset, count); }
+      public override long Seek(long offset, SeekOrigin origin) { return _real.Seek(offset, origin); }
+      public override void SetLength(long value) { _real.SetLength(value); }
+      public override void Write(byte[] buffer, int offset, int count) { _real.Write(buffer, offset, count); }
     }
     #endregion
 
@@ -49,17 +48,17 @@ namespace Engine.Helpers
     #endregion
 
     #region Private Values
-    private SymmetricAlgorithm algorithm;
-    private bool disposed;
+    private SymmetricAlgorithm _algorithm;
+    private bool _disposed;
     #endregion
 
     #region Constructors
     /// <summary>
-    /// Создает экемпляр класса Crypter. C алгоритмом AES-256
+    /// Create the instance of crypter. With AES-256 CBC algorithm.
     /// </summary>
     public Crypter()
     {
-      algorithm = new AesCryptoServiceProvider()
+      _algorithm = new AesCryptoServiceProvider()
       {
         KeySize = 256,
         Mode = CipherMode.CBC,
@@ -68,54 +67,52 @@ namespace Engine.Helpers
     }
 
     /// <summary>
-    /// Создает экемпляр класса Crypter.
+    /// Create the instance of crypter.
     /// </summary>
-    /// <param name="symmetricAlg">Алгоритм шифрования.</param>
+    /// <param name="algorithm">Symmetric algorithm.</param>
     [SecuritySafeCritical]
-    public Crypter(SymmetricAlgorithm symmetricAlg)
+    public Crypter(SymmetricAlgorithm algorithm)
     {
-      if (symmetricAlg == null)
-        throw new ArgumentNullException();
-
-      algorithm = symmetricAlg;
+      if (algorithm == null)
+        throw new ArgumentNullException("algorithm");
+      _algorithm = algorithm;
     }
     #endregion
 
     #region Public Methods
     /// <summary>
-    /// Генерирует ключ и вектор инициализации.
+    /// Generate key, and IV.
     /// </summary>
-    /// <returns>Ключ.</returns>
+    /// <returns>Returns generated key.</returns>
     [SecuritySafeCritical]
     public byte[] GenerateKey()
     {
       ThrowIfDisposed();
 
-      algorithm.GenerateKey();
-      algorithm.GenerateIV();
+      _algorithm.GenerateKey();
+      _algorithm.GenerateIV();
 
-      return algorithm.Key;
+      return _algorithm.Key;
     }
 
     /// <summary>
-    /// Устанавливает ключ и генерирует вектор инициализации.
+    /// Set key, and generate IV.
     /// </summary>
-    /// <param name="key">Ключ шифрования.</param>
+    /// <param name="key">Key.</param>
     [SecuritySafeCritical]
     public void SetKey(byte[] key)
     {
       ThrowIfDisposed();
 
-      algorithm.Key = key;
-      algorithm.GenerateIV();
+      _algorithm.Key = key;
+      _algorithm.GenerateIV();
     }
 
     /// <summary>
-    /// Производит шифрование потока.
+    /// Encrypt the stream.
     /// </summary>
-    /// <param name="inputStream">Поток, который будет зашифрован.</param>
-    /// <param name="outputStream">Поток, в который будет записан результат шифрования.</param>
-    /// <param name="length">Размер данных для шифрования.</param>
+    /// <param name="inputStream">Stream that be encrypted.</param>
+    /// <param name="outputStream">Stream that be used to write encrypted data.</param>
     [SecuritySafeCritical]
     public void Encrypt(Stream inputStream, Stream outputStream)
     {
@@ -129,11 +126,11 @@ namespace Engine.Helpers
 
       var outputWrapper = new NotDisposableStream(outputStream);
 
-      using (var transform = algorithm.CreateEncryptor())
+      using (var transform = _algorithm.CreateEncryptor())
       using (var encrypter = new CryptoStream(outputWrapper, transform, CryptoStreamMode.Write))
       using (var writer = new BinaryWriter(outputWrapper, Encoding.Unicode, true))
       {
-        writer.Write(algorithm.IV);
+        writer.Write(_algorithm.IV);
 
         var dataBuffer = new byte[BufferSize];
         while (inputStream.Position < inputStream.Length)
@@ -145,11 +142,10 @@ namespace Engine.Helpers
     }
 
     /// <summary>
-    /// Производит дешифрование потока.
+    /// Decypt the stream.
     /// </summary>
-    /// <param name="inputStream">Поток, который будет дешифрован.</param>
-    /// <param name="outputStream">Поток, в который будет записан результат дешифрования.</param>
-    /// <param name="length">Размер данных для дешифрования.</param>
+    /// <param name="inputStream">Stream that be decrypted.</param>
+    /// <param name="outputStream">Stream that be used to write decypted data.</param>
     [SecuritySafeCritical]
     public void Decrypt(Stream inputStream, Stream outputStream)
     {
@@ -165,9 +161,9 @@ namespace Engine.Helpers
 
       using (var reader = new BinaryReader(inputWrapper))
       {
-        algorithm.IV = reader.ReadBytes(algorithm.BlockSize / 8);
+        _algorithm.IV = reader.ReadBytes(_algorithm.BlockSize / 8);
 
-        using (var transform = algorithm.CreateDecryptor())
+        using (var transform = _algorithm.CreateDecryptor())
         using (var decryptor = new CryptoStream(inputWrapper, transform, CryptoStreamMode.Read))
         {
           var dataBuffer = new byte[BufferSize];
@@ -185,19 +181,19 @@ namespace Engine.Helpers
     [SecuritySafeCritical]
     private void ThrowIfDisposed()
     {
-      if (disposed)
+      if (_disposed)
         throw new ObjectDisposedException("Object Disposed");
     }
 
     [SecuritySafeCritical]
     public void Dispose()
     {
-      if (disposed == true)
+      if (_disposed == true)
         return;
 
-      algorithm.Clear();
+      _algorithm.Clear();
 
-      disposed = true;
+      _disposed = true;
     }
     #endregion
   }

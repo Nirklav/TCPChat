@@ -1,8 +1,8 @@
-﻿using Engine.API;
-using Engine.API.ServerCommands;
+﻿using Engine.Api;
+using Engine.Api.Server;
 using Engine.Exceptions;
 using Engine.Helpers;
-using Engine.Network.Connections;
+using Engine.Network;
 
 namespace Engine.Plugins.Server
 {
@@ -12,7 +12,7 @@ namespace Engine.Plugins.Server
 
   public abstract class ServerPluginCommand<TContent> : ServerPluginCommand
   {
-    protected sealed override void OnRun(ServerCommandArgs args)
+    protected sealed override void OnRun(CommandArgs args)
     {
       var package = args.Unpacked.Package as IPackage<byte[]>;
       if (package == null)
@@ -22,6 +22,6 @@ namespace Engine.Plugins.Server
       OnRun(content, args);
     }
 
-    protected abstract void OnRun(TContent content, ServerCommandArgs args);
+    protected abstract void OnRun(TContent content, CommandArgs args);
   }
 }

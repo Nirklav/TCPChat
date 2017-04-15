@@ -1,49 +1,26 @@
-﻿using Engine.Model.Entities;
-using System.Collections.Generic;
+﻿using Engine.Model.Client.Entities;
 using System.Security;
 
 namespace Engine.Model.Client
 {
-  public class ClientGuard : ModelGuard<ClientModel>
+  public class ClientGuard : Guard<ClientChat>
   {
-    #region contructor
     [SecurityCritical]
-    public ClientGuard(ClientModel model) : base(model)
+    public ClientGuard(ClientChat chat)
+      : base(chat)
     {
 
     }
-    #endregion
 
-    #region properties
-    public User User
+    public ClientChat Chat
     {
-      [SecuritySafeCritical]
-      get { return model.User; }
+      get { return _obj; }
     }
 
-    public Dictionary<string, User> Users
+    public static ClientChat CurrentChat
     {
       [SecuritySafeCritical]
-      get { return model.Users; }
+      get { return ((ClientGuard)_current).Chat; }
     }
-
-    public Dictionary<string, Room> Rooms
-    {
-      [SecuritySafeCritical]
-      get { return model.Rooms; }
-    }
-
-    public List<DownloadingFile> DownloadingFiles
-    {
-      [SecuritySafeCritical]
-      get { return model.DownloadingFiles; }
-    }
-
-    public List<PostedFile> PostedFiles
-    {
-      [SecuritySafeCritical]
-      get { return model.PostedFiles; }
-    }
-    #endregion
   }
 }

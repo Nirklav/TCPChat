@@ -13,7 +13,7 @@ namespace UI.ViewModel
   {
     private bool disposed;
     protected Dispatcher Dispatcher;
-    protected IClientNotifierContext NotifierContext;
+    protected IClientEvents Events;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -24,15 +24,15 @@ namespace UI.ViewModel
 
       if (initializeNotifier)
       {
-        NotifierContext = NotifierGenerator.MakeContext<IClientNotifierContext>();
-        ClientModel.Notifier.Add(NotifierContext);
+        Events = NotifierGenerator.MakeEvents<IClientEvents>();
+        ClientModel.Notifier.Add(Events);
       }
     }
 
     protected virtual void DisposeManagedResources()
     {
-      if (NotifierContext != null)
-        ClientModel.Notifier.Remove(NotifierContext);
+      if (Events != null)
+        ClientModel.Notifier.Remove(Events);
     }
 
     public void Dispose()
@@ -59,8 +59,8 @@ namespace UI.ViewModel
     protected EventHandler<TArgs> CreateSubscriber<TArgs>(Action<TArgs> method)
       where TArgs : EventArgs
     {
-      // For subscribing on NotifierContext event, it can not unsubscribe.
-      // Because notifier context creatred for each viewmodel, and removed with viewmodel.
+      // For subscribing on events object event, it can not unsubscribe.
+      // Because events object creatred for each viewmodel, and removed with viewmodel.
       return (sender, eventArgs) => Dispatcher.BeginInvoke(method, eventArgs);
     }
   }
