@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
+using System.Text;
 using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Api.Server.Admin
@@ -16,9 +17,12 @@ namespace Engine.Api.Server.Admin
   {
     public const long CommandId = (long)ServerCommandId.Admin;
 
+    private delegate void AdminCommand(MessageContent content, CommandArgs args);
+
     private const char TextCommandStart = '/';
-    private static readonly Dictionary<string, Action> TextCommands = new Dictionary<string, Action>
+    private static readonly Dictionary<string, AdminCommand> TextCommands = new Dictionary<string, AdminCommand>
     {
+      { "/list", List },
       { "/clearMainRoom", ClearMainRoom }
     };
 
@@ -44,17 +48,17 @@ namespace Engine.Api.Server.Admin
         return;
       }
 
-      Action command;
+      AdminCommand command;
       if (!TextCommands.TryGetValue(content.TextCommand, out command))
       {
         ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandNotFound));
         return;
       }
 
-      command();
+      command(content, args);
     }
 
-    private static void ClearMainRoom()
+    private static void ClearMainRoom(MessageContent content, CommandArgs args)
     {
       using (var server = ServerModel.Get())
       {
@@ -66,6 +70,16 @@ namespace Engine.Api.Server.Admin
         foreach (var nick in room.Users)
           ServerModel.Api.Perform(new ServerRemoveMessagesAction(nick, room.Name, messageIds));
       }
+    }
+
+    private static void List(MessageContent content, CommandArgs args)
+    {
+      var commandsBuilder = new StringBuilder();
+      commandsBuilder.AppendLine();
+      foreach (var command in TextCommands.Keys)
+        commandsBuilder.AppendLine(command);
+
+      ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandsList, commandsBuilder.ToString()));
     }
 
     [Serializable]

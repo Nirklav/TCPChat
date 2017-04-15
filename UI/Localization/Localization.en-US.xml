@@ -26,6 +26,7 @@
   <row key="systemMessage-RoomUserNotExist" value="User with this nick not exist in room."/>
   <row key="systemMessage-InvalidPassword" value="Invalid password was recived."/>
   <row key="systemMessage-TextCommandNotFound" value="Text command not found."/>
+  <row key="systemMessage-TextCommandsList" value="There is list of server commands:{0}"/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Edit"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copy"/>

@@ -26,6 +26,7 @@
   <row key="systemMessage-RoomUserNotExist" value="Данного пользователя нет в комнате."/>
   <row key="systemMessage-InvalidPassword" value="Получен неверный пароль."/>
   <row key="systemMessage-TextCommandNotFound" value="Текстовая команда не найдена."/>
+  <row key="systemMessage-TextCommandsList" value="Список серверных команд:{0}"/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Редактировать"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>

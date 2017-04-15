@@ -28,5 +28,6 @@
 
     InvalidPassword = 60,                  // Invalid password.
     TextCommandNotFound = 61,              // Text command not found.
+    TextCommandsList = 62                  // Text commands list.
   }
 }
