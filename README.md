@@ -21,4 +21,4 @@ Supports:
 
 P2P means that connection is established directly between clients without server.
 
-OpenAL required for audio services. You can downliad it from [official site](https://www.openal.org/downloads/).
+OpenAL required for audio services. You can download it from [official site](https://www.openal.org/downloads/).
