@@ -276,7 +276,7 @@ namespace UI.ViewModel
     #region command methods
     private void SendMessage(object obj)
     {
-      if (Message == string.Empty)
+      if (string.IsNullOrWhiteSpace(Message))
         return;
 
       try
