@@ -25,6 +25,7 @@ namespace UI.ViewModel
     private const string CantDownloadItsFileKey = "messageViewModel-cantDownloadItsFile";
     private const string CancelDownloadingQuestionKey = "messageViewModel-cancelDownloadingQuestion";
     private const string FileDownloadedKey = "messageViewModel-fileDownloaded";
+    private const string FileRemoved = "messageViewModel-fileRemoved";
 
     private const string TimeFormat = "hh:mm";
     private const string SizeFormat = " ({0:#,##0.0} {1})";
@@ -158,13 +159,15 @@ namespace UI.ViewModel
       using (var client = ClientModel.Get())
       {
         var file = GetFile(client, fileId.Value);
-
-        if (e.Progress < 100)
-          Progress = e.Progress;
-        else
+        if (file != null)
         {
-          Progress = 0;
-          parentRoom.AddSystemMessage(Localizer.Instance.Localize(FileDownloadedKey, file.Name));
+          if (e.Progress < 100)
+            Progress = e.Progress;
+          else
+          {
+            Progress = 0;
+            parentRoom.AddSystemMessage(Localizer.Instance.Localize(FileDownloadedKey, file.Name));
+          }
         }
       }
     }
@@ -190,9 +193,17 @@ namespace UI.ViewModel
 
       using (var client = ClientModel.Get())
       {
-        var file = GetFile(client, fileId.Value);
         try
         {
+          var file = GetFile(client, fileId.Value);
+
+          // File removed
+          if (file == null)
+          {
+            parentRoom.AddSystemMessage(Localizer.Instance.Localize(FileRemoved));
+            return;
+          }
+
           // File already downloading
           if (client.Chat.IsFileDownloading(fileId.Value))
           {
@@ -240,10 +251,7 @@ namespace UI.ViewModel
     private FileDescription GetFile(ClientGuard client, FileId fileId)
     {
       var room = client.Chat.GetRoom(parentRoom.Name);
-      var file = room.TryGetFile(fileId);
-      if (file == null)
-        throw new InvalidOperationException("File not found");
-      return file;
+      return room.TryGetFile(fileId);
     }
     #endregion
   }

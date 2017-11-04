@@ -120,7 +120,8 @@
   <row key="messageViewModel-fileNotFound" value="File not availavle"/>
   <row key="messageViewModel-cantDownloadItsFile" value="You must not download own file."/>
   <row key="messageViewModel-cancelDownloadingQuestion" value="You aleady download this file. Cancel downloading?"/>
-  <row key="messageViewModel-fileDownloaded" value="File  {0} downloaded."/>
+  <row key="messageViewModel-fileDownloaded" value="File {0} downloaded."/>
+  <row key="messageViewModel-fileRemoved" value="File removed form server."/>
 
   <row key="roomViewModel-inviteInRoomTitle" value="Invite in room"/>
   <row key="roomViewModel-kickFormRoomTitle" value="Kick from room"/>
