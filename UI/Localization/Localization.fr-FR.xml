@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Localization>
+  <row key="accept" value="Accepter"/>
+  <row key="cancel" value="Annuler"/>
+  <row key="ok" value="Ok"/>
+  <row key="delete" value="Supprimer"/>
+  <row key="nick" value="Pseudonyme"/>
+  <row key="nickColor" value="Paramètres couleurs"/>
+  <row key="port" value="Port"/>
+  <row key="protocol" value="Protocol"/>
+
+  <row key="systemMessage-ApiNotSupported" value="L'API n'est pas supporté par le serveur."/>
+  <row key="systemMessage-ConnectionRetryAttempt" value="Tentative de connexion au serveur..."/>
+  <row key="systemMessage-NotRegisteredBadName" value="La connexion ne peut aboutir avec ce pseudonyme."/>
+  <row key="systemMessage-NotRegisteredNameAlreadyExist" value="La connexion ne peut aboutir avec ce pseudonyme (Déjà utilisé)."/>
+  <row key="systemMessage-RoomAdminChanged" value="Vous êtes maintenant administrateur de la salle {0}."/>
+  <row key="systemMessage-RoomAccessDenied" value="Accès refusé pour cette action."/>
+  <row key="systemMessage-RoomAlreadyExist" value="Une salle porte déjà ce nom. Choisissez-en un autre."/>
+  <row key="systemMessage-RoomCantLeaveMainRoom" value="Vus ne pouvez quitter la salle principale."/>
+  <row key="systemMessage-RoomItsMainRoom" value="Cette action n'est pas possible dans la salle principale."/>
+  <row key="systemMessage-RoomNotExist" value="La salle de ce nom n'existe pas."/>
+  <row key="systemMessage-FileRemoveAccessDenied" value="Vous ne pouvez pas supprimer ce fichier. Accès refusé."/>
+  <row key="systemMessage-FileRemoved" value="Le fichier {0} a été supprimé."/>
+  <row key="systemMessage-MessageEditAccessDenied" value="Vous ne pouvez pas éditer ce message."/>
+  <row key="systemMessage-P2PUserNotExist" value="Aucun utilisateur de ce nom n'a été trouvé."/>
+  <row key="systemMessage-RoomUserNotExist" value="Aucun utilisateur de ce nom n'est présent dans la salle."/>
+  <row key="systemMessage-InvalidPassword" value="Un mauvais mot de passe a été reçu."/>
+  <row key="systemMessage-TextCommandNotFound" value="Commande introuvable."/>
+  <row key="systemMessage-TextCommandsList" value="Liste des commandes du serveur :{0}"/>
+  <row key="systemMessage-TextCommandInvalidParams" value="La commande comporte une erreur sur l'un des arguments."/>
+
+  <row key="commonMessageTemplate-contextMenu-edit" value="Editer"/>
+  <row key="commonMessageTemplate-contextMenu-copy" value="Copier"/>
+  <row key="userTemplate-SetRoomAdmin" value="Assigner en tant qu'administrateur."/>
+  <row key="menu-header-connect" value="Connexion"/>
+  <row key="menu-connect" value="Connecter"/>
+  <row key="menu-disconnect" value="Déconnecter"/>
+  <row key="menu-enableServer" value="Activer le server"/>
+  <row key="menu-disableServer" value="Désactiver le server"/>
+  <row key="menu-exit" value="Quitter"/>
+
+  <row key="menu-header-rooms" value="Salles"/>
+  <row key="menu-createRoom" value="Créer"/>
+  <row key="menu-closeRoom" value="Fermer"/>
+  <row key="menu-inviteInRoom" value="Inviter"/>
+  <row key="menu-kickFromRoom" value="Exclure"/>
+  <row key="menu-enableVoiceInRoom" value="Voix activée"/>
+  <row key="menu-disableVoiceInRoom" value="Voix désactivée"/>
+  <row key="menu-exitFromRoom" value="Quitter"/>
+
+  <row key="menu-header-File" value="Fichiers"/>
+  <row key="menu-distributedFiles" value="Fichers envoyés"/>
+  <row key="menu-addFileToRoom" value="Ajouter un fichier à la salle"/>
+
+  <row key="menu-header-plugins" value="Plugins"/>
+
+  <row key="menu-header-other" value="Autres"/>
+  <row key="menu-notifications" value="Notifications"/>
+  <row key="menu-settings" value="Paramètres"/>
+  <row key="menu-about" value="A propos..."/>
+
+  <row key="main-reciver" value="Destinataire"/>
+
+  <row key="serverTemplate-p2pPort" value="Port P2P"/>
+  <row key="serverTemplate-p2pPort-default" value="Default"/>
+
+  <row key="audioTemplate-microphone" value="Microphone"/>
+  <row key="audioTemplate-audioQuality" value="Qualité audio"/>
+  <row key="audioTemplate-microphoneActivation" value="Activation du microphone"/>
+  <row key="audioTemplate-speakers" value="Sortie audio"/>
+
+  <row key="clientTemplate-Language" value="Langue"/>
+
+  <row key="pluginsTemplate-nameHeader" value="Nom"/>
+  <row key="pluginsTemplate-enabledHeader" value="Activé"/>
+  <row key="pluginsTemplate-typeHeader" value="Type"/>
+  <row key="pluginsTemplate-unloadPlugin" value="Décharger"/>
+  <row key="pluginsTemplate-loadPlugin" value="Charger"/>
+
+  <row key="settings-title" value="Paramètres"/>
+  <row key="settings-Categories" value="Cathégories"/>
+  <row key="settings-done" value="Terminé"/>
+
+  <row key="settingsTabCategory-client" value="Client"/>
+  <row key="settingsTabCategory-server" value="Serveur"/>
+  <row key="settingsTabCategory-audio" value="Audio"/>
+  <row key="settingsTabCategory-plugins" value="Plugins"/>
+
+  <row key="settingsTab-audio-pressTheKey" value="Cliquer sur le bouton"/>
+  <row key="settingsTab-client-adminPassword" value="Mot de passe administrateur"/>
+
+  <row key="aboutProgram-title" value="A propos..."/>
+  <row key="aboutProgram-author" value="Auteur"/>
+  <row key="aboutProgram-feedback" value="Feedback"/>
+
+  <row key="connectDialog-title" value="Connexion"/>
+  <row key="connectDialog-ipAddress" value="Adresse IP"/>
+
+  <row key="createRoomDialog-title" value="Créer une salle"/>
+  <row key="createRoomDialog-roomName" value="Nom"/>
+  <row key="createRoomDialog-audioRoom" value="Salle audio"/>
+
+  <row key="postedFilesDialog-title" value="Fichiers envoyés"/>
+
+  <row key="mainViewModel-paramsError" value="Erreur dans les données entrées."/>
+  <row key="mainViewModel-clientNotCreated" value="Le client n'est connecté à aucun serveur. Commencez par vous connecter."/>
+  <row key="mainViewModel-apiNotSupported" value="L'application ne peut supporter cette version d'API ({0}). Connexion refusé."/>
+  <row key="mainViewModel-roomExitQuestion" value="Voulez-vous quitter cette salle ?"/>
+  <row key="mainViewModel-roomCloseQuestion" value="Voulez-vous fermer cette salle ?"/>
+  <row key="mainViewModel-serverDisableQuestion" value="Voulez-vous désactiver le serveur ?"/>
+  <row key="mainViewModel-fileMustDontExist" value="Vous devez sélectionnez un nom de fichier inexistant."/>
+  <row key="mainViewModel-allInRoom" value="Tous dans la salle"/>
+  <row key="mainViewModel-audioInitializationFailed" value="Le système audio n'est initialisé. Chat vocale désactivé."/>
+
+  <row key="messageViewModel-from" value="[{0}] depuis : "/>
+  <row key="messageViewModel-pmForm" value="[{0}] PM depuis : "/>
+  <row key="messageViewModel-byteStr" value="octets"/>
+  <row key="messageViewModel-kbyteStr" value="Ko"/>
+  <row key="messageViewModel-mbyteStr" value="Mo"/>
+  <row key="messageViewModel-fileNotFound" value="Fichier non valide"/>
+  <row key="messageViewModel-cantDownloadItsFile" value="Vous ne devez pas télécharger vos propres fichiers."/>
+  <row key="messageViewModel-cancelDownloadingQuestion" value="Vous avez déjà télécharger ce fichier. Annuler ?"/>
+  <row key="messageViewModel-fileDownloaded" value="Fichier {0} téléchargé."/>
+  <row key="messageViewModel-fileRemoved" value="Fichier supprimé du serveur."/>
+
+  <row key="roomViewModel-inviteInRoomTitle" value="Inviter en salle"/>
+  <row key="roomViewModel-kickFormRoomTitle" value="Exclure de la salle"/>
+  <row key="roomViewModel-nobodyToInvite" value="Personne à inviter. Tout le monde est déjà dans cette salle."/>
+  <row key="roomViewModel-allInRoom" value="Tous dans la salle"/>
+  <row key="userViewModel-userNotExist" value="Utilisation inexistant"/>
+
+  <row key="errorCode-ApiNotSupported" value="L'API du Serveur n'est pas supporté par le client. Il sera probablement nécessaire d'effectuer une MAJ du client ou du serveur."/>
+  <row key="errorCode-FileAlreadyDownloading" value="Ce fichier est déjà en téléchargement."/>
+  <row key="errorCode-FreePortDontFound" value="Port TCP/UDP libre introuvable"/>
+  <row key="errorCode-LargeReceivedData" value="Received data to large."/>
+  <row key="errorCode-CantDownloadOwnFile" value="Impossible de télécharger ce fichier"/>
+  <row key="errorCode-AudioNotEnabled" value="Audio désactivé"/>
+  <row key="errorCode-PluginError" value="Des erreurs d'extension se sont produites."/>
+  <row key="errorCode-RoomNotFound" value="Salle introuvable"/>
+  <row key="errorCode-FileInRoomNotFound" value="Fichier en salle introuvable"/>
+  <row key="errorCode-WrongContentType" value="Mauvais type de contenu (erreur interne)."/>
+  <row key="errorCode-IllegalInvoker" value="Invocateur illégal (erreur interne)"/>
+  <row key="errorCode-UnknownRoomType" value="Type de salle inconnue"/>
+</Localization>
