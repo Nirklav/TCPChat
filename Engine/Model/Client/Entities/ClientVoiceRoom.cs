@@ -72,7 +72,7 @@ namespace Engine.Model.Client.Entities
     [SecuritySafeCritical]
     public override void Disable()
     {
-      if (!Enabled)
+      if (Enabled)
       {
         foreach (var nick in _users)
           DecVoiceCoutner(nick);

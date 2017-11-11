@@ -27,6 +27,7 @@ namespace Engine.Api.Client.P2P
 
       var peerPoint = new IPEndPoint(new IPAddress(content.IPAddress), content.Port);
       ClientModel.Peer.ConnectToPeer(content.RemoteInfo.Nick, peerPoint);
+      ClientModel.Logger.WriteDebug("ClientConnectToPeerCommand: {0}|{1}", content.RemoteInfo.Nick, peerPoint.ToString());
     }
 
     [Serializable]

@@ -53,7 +53,10 @@ namespace Engine.Network
     [SecurityCritical] private readonly Dictionary<string, Packer> _packers;
     [SecurityCritical] private readonly SynchronizationContext _syncContext;
     [SecurityCritical] private readonly RequestQueue _requestQueue;
+    [SecurityCritical] private readonly IApi _api;
     [SecurityCritical] private readonly ECDiffieHellmanCng _diffieHellman;
+    [SecurityCritical] private readonly IClientNotifier _notifier;
+    [SecurityCritical] private readonly Logger _logger;
 
     [SecurityCritical] private NetConnection _serviceConnection;
     [SecurityCritical] private NetPeer _handler;
@@ -75,16 +78,18 @@ namespace Engine.Network
 
     #region constructor
     [SecurityCritical]
-    internal AsyncPeer(IApi api)
+    internal AsyncPeer(IApi api, IClientNotifier notifier, Logger logger)
     {
       _waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
       _packers = new Dictionary<string, Packer>();
       _syncContext = new EngineSyncContext();
       _requestQueue = new RequestQueue(api);
-
+      _api = api;
       _diffieHellman = new ECDiffieHellmanCng(KeySize);
       _diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
       _diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
+      _notifier = notifier;
+      _logger = logger;
     }
     #endregion
 
@@ -127,7 +132,7 @@ namespace Engine.Network
 
       _serviceConnection = _handler.Connect(remotePoint, hail);
 
-      ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToService({0})", remotePoint);
+      _logger.WriteDebug("AsyncPeer.ConnectToService({0})", remotePoint);
     }
 
     [SecurityCritical]
@@ -159,7 +164,7 @@ namespace Engine.Network
 
       DisconnectFromService();
 
-      ClientModel.Logger.WriteDebug("AsyncPeer.WaitConnection({0})", waitingPoint);
+      _logger.WriteDebug("AsyncPeer.WaitConnection({0})", waitingPoint);
     }
 
     /// <summary>
@@ -184,7 +189,7 @@ namespace Engine.Network
       
       DisconnectFromService();
 
-      ClientModel.Logger.WriteDebug("AsyncPeer.ConnectToPeer({0}, {1})", peerId, remotePoint);
+      _logger.WriteDebug("AsyncPeer.ConnectToPeer({0}, {1})", peerId, remotePoint);
     }
 
     /// <summary>
@@ -379,7 +384,7 @@ namespace Engine.Network
         commands.Add(new WaitingCommandContainer(package, rawData, unreliable));
       }
 
-      ClientModel.Api.Perform(new ClientConnectToPeerAction(peerId));
+      _api.Perform(new ClientConnectToPeerAction(peerId));
     }
 
     [SecurityCritical]
@@ -431,7 +436,7 @@ namespace Engine.Network
           case NetIncomingMessageType.ErrorMessage:
           case NetIncomingMessageType.WarningMessage:
             var error = new NetException(message.ReadString());
-            ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(error));
+            _notifier.AsyncError(new AsyncErrorEventArgs(error));
             break;
 
           case NetIncomingMessageType.ConnectionApproval:
@@ -464,13 +469,13 @@ namespace Engine.Network
     private void OnApprove(NetIncomingMessage message)
     {
       message.SenderConnection.Approve(CreateHailMessage());
-      ClientModel.Logger.WriteDebug("AsyncPeer.Approve()");
+      _logger.WriteDebug("AsyncPeer.Approve()");
     }
 
     [SecurityCritical]
     private void OnServiceConnected(NetIncomingMessage message)
     {
-      ClientModel.Logger.WriteDebug("AsyncPeer.ServiceConnect()");
+      _logger.WriteDebug("AsyncPeer.ServiceConnect()");
     }
 
     [SecurityCritical]
@@ -480,7 +485,7 @@ namespace Engine.Network
       if (hailMessage == null)
       {
         message.SenderConnection.Deny();
-        ClientModel.Logger.WriteWarning("ConnectionId is null [Message: {0}, SenderEndPoint: {1}]", message.ToString(), message.SenderEndPoint);
+        _logger.WriteWarning("ConnectionId is null [Message: {0}, SenderEndPoint: {1}]", message.ToString(), message.SenderEndPoint);
         return;
       }
 
@@ -510,7 +515,7 @@ namespace Engine.Network
         }
       }
 
-      ClientModel.Logger.WriteDebug("AsyncPeer.PeerConnected({0})", connectionId);
+      _logger.WriteDebug("AsyncPeer.PeerConnected({0})", connectionId);
     }
 
     [SecurityCritical]
@@ -536,8 +541,8 @@ namespace Engine.Network
       }
       catch (Exception exc)
       {
-        ClientModel.Notifier.AsyncError(new AsyncErrorEventArgs(exc));
-        ClientModel.Logger.Write(exc);
+        _notifier.AsyncError(new AsyncErrorEventArgs(exc));
+        _logger.Write(exc);
       }
     }
     #endregion

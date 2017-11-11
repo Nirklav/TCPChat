@@ -139,7 +139,7 @@ namespace Engine.Model.Client
 
       Api = new ClientApi();
       Client = new AsyncClient(initializer.Nick, Api, _notifier, _logger);
-      Peer = new AsyncPeer(Api);
+      Peer = new AsyncPeer(Api, _notifier, _logger);
 
       Plugins = new ClientPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);

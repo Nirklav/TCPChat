@@ -111,7 +111,7 @@ namespace Engine.Network
       if (!Connection.TcpPortIsAvailable(serverPort))
         throw new ArgumentException("port not available", "serverPort");
 
-      _p2pService = new P2PService(p2pServicePort, usingIPv6);
+      _p2pService = new P2PService(_api, _logger, p2pServicePort, usingIPv6);
       _systemTimer = new Timer(OnTimer, null, SystemTimerInterval, -1);
 
       var address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;

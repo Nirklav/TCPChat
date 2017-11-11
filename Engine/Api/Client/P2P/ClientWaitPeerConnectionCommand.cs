@@ -40,6 +40,7 @@ namespace Engine.Api.Client.P2P
         sendingContent.RemoteInfo = new UserDto(client.Chat.User);
 
       ClientModel.Client.SendMessage(ServerP2PReadyAcceptCommand.CommandId, sendingContent);
+      ClientModel.Logger.WriteDebug("ClientWaitPeerConnectionCommand: {0}|{1}|{2}|{3}", sendingContent.PeerIPAddress, sendingContent.PeerPort, sendingContent.ReceiverNick, sendingContent.RemoteInfo.Nick);
     }
 
     [Serializable]

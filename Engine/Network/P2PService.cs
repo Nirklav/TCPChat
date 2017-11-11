@@ -1,6 +1,6 @@
-﻿using Engine.Api.Server.P2P;
+﻿using Engine.Api;
+using Engine.Api.Server.P2P;
 using Engine.Helpers;
-using Engine.Model.Server;
 using Lidgren.Network;
 using System;
 using System.Collections.Generic;
@@ -45,6 +45,9 @@ namespace Engine.Network
     [SecurityCritical] private readonly Dictionary<string, ClientDescription> _clientsEndPoints;
     [SecurityCritical] private readonly HashSet<string> _connectingClients;
     [SecurityCritical] private readonly List<RequestPair> _requests;
+    
+    [SecurityCritical] private readonly IApi _api;
+    [SecurityCritical] private readonly Logger _logger;
 
     [SecurityCritical] private readonly NetServer _server;
     [SecurityCritical] private readonly SynchronizationContext _syncContext;
@@ -59,23 +62,23 @@ namespace Engine.Network
     /// <param name="port">UDP порт сервиса. Для входящих данных.</param>
     /// <param name="usingIPv6">Использовать IPv6.</param>
     [SecurityCritical]
-    public P2PService(int port, bool usingIPv6)
+    public P2PService(IApi api, Logger logger, int port, bool usingIPv6)
     {
-      _disposed = false;
-      _requests = new List<RequestPair>();
       _clientsEndPoints = new Dictionary<string, ClientDescription>();
       _connectingClients = new HashSet<string>();
+      _requests = new List<RequestPair>();
 
+      _api = api;
+      _logger = logger;
+      
       NetPeerConfiguration config = new NetPeerConfiguration(AsyncPeer.NetConfigString);
       config.MaximumConnections = 100;
       config.Port = port;
-
       if (usingIPv6)
         config.LocalAddress = IPAddress.IPv6Any;
 
-      _syncContext = new EngineSyncContext();
-
       _server = new NetServer(config);
+      _syncContext = new EngineSyncContext();
       _syncContext.Send(RegisterReceived, _server);
       _server.Start();
     }
@@ -114,9 +117,6 @@ namespace Engine.Network
     {
       ThrowIfDisposed();
 
-      if (ServerModel.Api == null)
-        throw new InvalidOperationException("Api not initialized");
-
       if (requestId == null)
         throw new ArgumentNullException("requestId");
 
@@ -150,14 +150,17 @@ namespace Engine.Network
       }
 
       if (needSend)
-        ServerModel.Api.Perform(new ServerSendP2PConnectRequestAction(connectionId, Port));
+        _api.Perform(new ServerSendP2PConnectRequestAction(connectionId, Port));
     }
 
     [SecurityCritical]
     internal void RemoveEndPoint(string id)
     {
       lock (_syncObject)
+      {
+        _connectingClients.Remove(id);
         _clientsEndPoints.Remove(id);
+      }
     }
     #endregion
 
@@ -175,7 +178,7 @@ namespace Engine.Network
           {
             case NetIncomingMessageType.ErrorMessage:
             case NetIncomingMessageType.WarningMessage:
-              ServerModel.Logger.Write(new NetException(message.ReadString()));
+              _logger.Write(new NetException(message.ReadString()));
               break;
 
             case NetIncomingMessageType.StatusChanged:
@@ -203,7 +206,7 @@ namespace Engine.Network
         }
         catch (Exception e)
         {
-          ServerModel.Logger.Write(e);
+          _logger.Write(e);
         }
       }
     }
@@ -262,7 +265,7 @@ namespace Engine.Network
           _connectingClients.Remove(requestId);
         }
 
-        ServerModel.Api.Perform(new ServerIntroduceConnectionsAction(senderId, senderEndPoint, requestId, requestEndPoint));
+        _api.Perform(new ServerIntroduceConnectionsAction(senderId, senderEndPoint, requestId, requestEndPoint));
         return true;
       }
 
@@ -288,7 +291,7 @@ namespace Engine.Network
             (removedIds ?? (removedIds = new List<string>())).Add(request.SenderId);
             (removedIds ?? (removedIds = new List<string>())).Add(request.RequestId);
 
-            ServerModel.Api.Perform(new ServerIntroduceConnectionsAction(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint));
+            _api.Perform(new ServerIntroduceConnectionsAction(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint));
             _requests.RemoveAt(i);
           }
         }

@@ -27,10 +27,15 @@ namespace Engine.Api.Client.P2P
     public void Perform()
     {
       if (ClientModel.Peer.IsConnected(_nick))
-        return;
-
-      var sendingContent = new ServerP2PConnectRequestCommand.MessageContent { Nick = _nick };
-      ClientModel.Client.SendMessage(ServerP2PConnectRequestCommand.CommandId, sendingContent);
+      {
+        ClientModel.Logger.WriteDebug("Client already connected to {0}", _nick);
+      }
+      else
+      {
+        var sendingContent = new ServerP2PConnectRequestCommand.MessageContent { Nick = _nick };
+        ClientModel.Client.SendMessage(ServerP2PConnectRequestCommand.CommandId, sendingContent);
+        ClientModel.Logger.WriteDebug("Connecting directly to {0}...", _nick);
+      }
     }
   }
 }
