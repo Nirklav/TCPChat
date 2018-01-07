@@ -59,9 +59,21 @@ namespace UI.ViewModel
     protected EventHandler<TArgs> CreateSubscriber<TArgs>(Action<TArgs> method)
       where TArgs : EventArgs
     {
+      Action<TArgs> safeMethod = a =>
+      {
+        try
+        {
+          method(a);
+        }
+        catch (Exception e)
+        {
+          ClientModel.Logger.Write(e);
+        }
+      };
+
       // For subscribing on events object event, it can not unsubscribe.
       // Because events object creatred for each viewmodel, and removed with viewmodel.
-      return (sender, eventArgs) => Dispatcher.BeginInvoke(method, eventArgs);
+      return (sender, eventArgs) => Dispatcher.BeginInvoke(safeMethod, eventArgs);
     }
   }
 }

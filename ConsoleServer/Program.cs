@@ -1,4 +1,5 @@
-﻿using Engine.Model.Server;
+﻿using Engine.Helpers;
+using Engine.Model.Server;
 using System;
 using System.IO;
 
@@ -38,6 +39,16 @@ namespace ConsoleServer
         WriteHelp();
         return;
       }
+
+      AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+      {
+        var error = e.ExceptionObject as Exception;
+        if (error == null)
+          return;
+
+        var logger = new Logger(AppDomain.CurrentDomain.BaseDirectory + "/UnhandledError.log");
+        logger.Write(error);
+      };
 
       var initializer = new ServerInitializer
       {
