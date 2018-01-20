@@ -45,6 +45,7 @@ namespace Engine.Network
     #endregion
 
     #region constructors
+    [SecurityCritical]
     public Connection(Logger logger)
     {
       _logger = logger;
