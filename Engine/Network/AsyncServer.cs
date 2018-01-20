@@ -292,7 +292,14 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnTimer(object arg)
     {
-      RefreshConnections();
+      try
+      {
+        RefreshConnections();
+      }
+      catch (Exception e)
+      {
+        _logger.Write(e);
+      }
 
       lock (_timerSync)
         if (_systemTimer != null)
@@ -357,11 +364,18 @@ namespace Engine.Network
       [SecuritySafeCritical]
       public void Callback(Exception e)
       {
-        _server.CloseConnection(_id);
-        _server._notifier.ConnectionClosed(new ConnectionEventArgs(_id));
+        try
+        {
+          _server.CloseConnection(_id);
+          _server._notifier.ConnectionClosed(new ConnectionEventArgs(_id));
 
-        if (e != null)
-          _server._logger.Write(e);
+          if (e != null)
+            _server._logger.Write(e);
+        }
+        catch(Exception e2)
+        {
+          _server._logger.Write(e2);
+        }
       }
     }
     #endregion
