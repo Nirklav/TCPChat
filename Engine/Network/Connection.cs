@@ -7,6 +7,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security;
 using System.Security.Cryptography;
+using Engine.Helpers;
 
 namespace Engine.Network
 {
@@ -38,10 +39,17 @@ namespace Engine.Network
     [SecurityCritical] private Packer _packer;
     [SecurityCritical] private ECDiffieHellmanCng _diffieHellman;
 
+    [SecurityCritical] private Logger _logger;
+
     [SecurityCritical] private volatile bool _disposed;
     #endregion
 
     #region constructors
+    public Connection(Logger logger)
+    {
+      _logger = logger;
+    }
+
     [SecurityCritical]
     protected void Construct(Socket handler)
     {
@@ -193,7 +201,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Start disconnect from remote.
+    /// Starts disconnect from remote.
     /// </summary>
     [SecurityCritical]
     public void Disconnect()
@@ -400,13 +408,24 @@ namespace Engine.Network
     [SecuritySafeCritical]
     protected virtual void Clean()
     {
+
       if (_handler != null)
       {
         if (_handler.Connected)
         {
-          _handler.Shutdown(SocketShutdown.Both);
-          _handler.Disconnect(false);
-          OnDisconnected(null);
+          try
+          {
+            _handler.Shutdown(SocketShutdown.Both);
+            _handler.Disconnect(false);
+          }
+          catch (Exception e)
+          {
+            _logger.Write(e);
+          }
+          finally
+          {
+            OnDisconnected(null);
+          }
         }
 
         _handler.Dispose();

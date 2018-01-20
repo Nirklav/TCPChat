@@ -46,6 +46,7 @@ namespace Engine.Network
     /// <param name="receivedCallback">Функция обратного вызова, для полученных данных.</param>
     [SecurityCritical]
     public ServerConnection(Socket handler, string apiName, Logger logger, EventHandler<PackageReceivedEventArgs> receivedCallback)
+      : base(logger)
     {
       if (receivedCallback == null)
         throw new ArgumentNullException();

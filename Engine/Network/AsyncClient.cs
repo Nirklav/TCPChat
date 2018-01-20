@@ -63,6 +63,7 @@ namespace Engine.Network
     /// </summary>
     [SecurityCritical]
     public AsyncClient(string id, IApi api, IClientNotifier notifier, Logger logger)
+      : base(logger)
     {
       Id = id;
 
