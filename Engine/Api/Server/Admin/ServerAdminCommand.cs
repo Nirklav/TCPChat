@@ -167,12 +167,6 @@ namespace Engine.Api.Server.Admin
     }
 
     [SecuritySafeCritical]
-    private static void RemoveMessage(AdminCommandArgs adminArgs, CommandArgs args)
-    {
-      throw new NotImplementedException();
-    }
-
-    [SecuritySafeCritical]
     private static void ClearRoom(string name, CommandArgs args)
     {
       using (var server = ServerModel.Get())
@@ -189,6 +183,43 @@ namespace Engine.Api.Server.Admin
           foreach (var nick in room.Users)
             ServerModel.Api.Perform(new ServerRemoveMessagesAction(nick, room.Name, messageIds));
         }
+      }
+    }
+
+    [SecuritySafeCritical]
+    private static void RemoveMessage(AdminCommandArgs adminArgs, CommandArgs args)
+    {
+      if (adminArgs.Parameters.Length < 2)
+      {
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+        return;
+      }
+
+      using (var server = ServerModel.Get())
+      {
+        var name = adminArgs.Parameters[0];
+        var messageIds = adminArgs.Parameters
+          .Skip(1)
+          .Select(idStr =>
+          {
+            if (!long.TryParse(idStr, out long messageId))
+              return -1;
+            return messageId;
+          })
+          .ToArray();
+
+        var room = server.Chat.TryGetRoom(name);
+        if (room == null)
+        {
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+          return;
+        }
+
+        foreach (var messageId in messageIds)
+          room.RemoveMessage(messageId);
+
+        foreach (var userId in room.Users)
+          ServerModel.Api.Perform(new ServerRemoveMessagesAction(userId, name, messageIds));
       }
     }
 

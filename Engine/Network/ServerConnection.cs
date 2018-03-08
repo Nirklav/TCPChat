@@ -48,16 +48,13 @@ namespace Engine.Network
     public ServerConnection(Socket handler, string apiName, Logger logger, EventHandler<PackageReceivedEventArgs> receivedCallback)
       : base(logger)
     {
-      if (receivedCallback == null)
-        throw new ArgumentNullException();
-
       Construct(handler);
 
       _serverApiName = apiName;
       _createTime = DateTime.UtcNow;
       _lastActivity = DateTime.UtcNow;
 
-      _receivedCallback = receivedCallback;
+      _receivedCallback = receivedCallback ?? throw new ArgumentNullException();
 
       _logger = logger;
     }
@@ -145,7 +142,7 @@ namespace Engine.Network
         return;
       }
 
-      var temp = Interlocked.CompareExchange(ref _receivedCallback, null, null);
+      var temp = Volatile.Read(ref _receivedCallback);
       if (temp != null)
         temp(this, args);
     }
