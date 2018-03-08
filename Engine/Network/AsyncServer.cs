@@ -22,7 +22,6 @@ namespace Engine.Network
 
     #region fields
     [SecurityCritical] private readonly Dictionary<string, ServerConnection> _connections;
-    [SecurityCritical] private readonly Dictionary<string, IPAddress> _bannedIps;
 
     [SecurityCritical] private readonly IApi _api;
     [SecurityCritical] private readonly RequestQueue _requestQueue;
