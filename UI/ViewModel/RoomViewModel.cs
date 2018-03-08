@@ -36,21 +36,21 @@ namespace UI.ViewModel
     #endregion
 
     #region fields
-    private MainViewModel mainViewModel;
+    private MainViewModel _mainViewModel;
 
-    private bool updated;
-    private bool enabled;
+    private bool _updated;
+    private bool _enabled;
 
-    private UserViewModel allInRoom;
-    private UserViewModel selectedReceiver;
-    private List<UserViewModel> recivers;
+    private UserViewModel _allInRoom;
+    private UserViewModel _selectedReceiver;
+    private List<UserViewModel> _recivers;
 
-    private bool messagesAutoScroll;
-    private string message;
-    private long? messageId;
-    private int messageCaretIndex;
-    private ObservableCollection<MessageViewModel> messages;
-    private HashSet<long> messageIds;
+    private bool _messagesAutoScroll;
+    private string _message;
+    private long? _messageId;
+    private int _messageCaretIndex;
+    private ObservableCollection<MessageViewModel> _messages;
+    private HashSet<long> _messageIds;
     #endregion
 
     #region commands
@@ -71,22 +71,22 @@ namespace UI.ViewModel
 
     public bool Updated
     {
-      get { return updated; }
-      set { SetValue(value, "Updated", v => updated = v); }
+      get { return _updated; }
+      set { SetValue(value, "Updated", v => _updated = v); }
     }
 
     public bool Enabled
     {
-      get { return enabled; }
-      set { SetValue(value, "Enabled", v => enabled = v); }
+      get { return _enabled; }
+      set { SetValue(value, "Enabled", v => _enabled = v); }
     }
 
     public bool MessagesAutoScroll
     {
-      get { return messagesAutoScroll; }
+      get { return _messagesAutoScroll; }
       set
       {
-        messagesAutoScroll = value;
+        _messagesAutoScroll = value;
         OnPropertyChanged("MessagesAutoScroll");
 
         if (value)
@@ -96,10 +96,10 @@ namespace UI.ViewModel
 
     public string Message
     {
-      get { return message; }
+      get { return _message; }
       set
       {
-        SetValue(value, "Message", v => message = v);
+        SetValue(value, "Message", v => _message = v);
         if (string.IsNullOrEmpty(value))
           SelectedMessageId = null;
       }
@@ -107,8 +107,8 @@ namespace UI.ViewModel
 
     private long? SelectedMessageId
     {
-      get { return messageId; }
-      set { SetValue(value, "IsMessageSelected", v => messageId = v); }
+      get { return _messageId; }
+      set { SetValue(value, "IsMessageSelected", v => _messageId = v); }
     }
 
     public bool IsMessageSelected
@@ -118,28 +118,28 @@ namespace UI.ViewModel
     
     public int MessageCaretIndex
     {
-      get { return messageCaretIndex; }
-      set { SetValue(value, "MessageCaretIndex", v => messageCaretIndex = v); }
+      get { return _messageCaretIndex; }
+      set { SetValue(value, "MessageCaretIndex", v => _messageCaretIndex = v); }
     }
 
     public ObservableCollection<MessageViewModel> Messages
     {
-      get { return messages; }
-      set { SetValue(value, "Messages", v => messages = v); }
+      get { return _messages; }
+      set { SetValue(value, "Messages", v => _messages = v); }
     }
 
     public UserViewModel SelectedReceiver
     {
-      get { return selectedReceiver; }
-      set { SetValue(value, "SelectedReceiver", v => selectedReceiver = v); }
+      get { return _selectedReceiver; }
+      set { SetValue(value, "SelectedReceiver", v => _selectedReceiver = v); }
     }
 
     public IEnumerable<UserViewModel> Receivers
     {
       get
       {
-        yield return allInRoom;
-        foreach (var user in recivers)
+        yield return _allInRoom;
+        foreach (var user in _recivers)
           yield return user;
       }
     }
@@ -176,11 +176,11 @@ namespace UI.ViewModel
 
     private void Init(MainViewModel main, IEnumerable<string> usersNicks)
     {
-      mainViewModel = main;
+      _mainViewModel = main;
       Messages = new ObservableCollection<MessageViewModel>();
-      SelectedReceiver = allInRoom = new UserViewModel(AllInRoomKey, null, this);
-      recivers = new List<UserViewModel>();
-      messageIds = new HashSet<long>();
+      SelectedReceiver = _allInRoom = new UserViewModel(AllInRoomKey, null, this);
+      _recivers = new List<UserViewModel>();
+      _messageIds = new HashSet<long>();
 
       var userViewModels = usersNicks == null
         ? Enumerable.Empty<UserViewModel>()
@@ -246,7 +246,7 @@ namespace UI.ViewModel
     {
       TryShrinkMessages();
 
-      if (message.MessageId == Room.SpecificMessageId || messageIds.Add(message.MessageId))
+      if (message.MessageId == Room.SpecificMessageId || _messageIds.Add(message.MessageId))
         Messages.Add(message);
       else
       {
@@ -268,7 +268,7 @@ namespace UI.ViewModel
       var leftMessages = Messages.Skip(ShrinkSize);
       var deletingMessages = Messages.Take(ShrinkSize);
 
-      messageIds.ExceptWith(deletingMessages.Select(m => m.MessageId));
+      _messageIds.ExceptWith(deletingMessages.Select(m => m.MessageId));
       Messages = new ObservableCollection<MessageViewModel>(leftMessages);
     }
     #endregion
@@ -420,10 +420,10 @@ namespace UI.ViewModel
           break;
       }
 
-      if (Name != mainViewModel.SelectedRoom.Name)
+      if (Name != _mainViewModel.SelectedRoom.Name)
         Updated = true;
 
-      mainViewModel.Alert();
+      _mainViewModel.Alert();
     }
 
     private void ClientRoomOpened(RoomOpenedEventArgs e)
@@ -495,11 +495,11 @@ namespace UI.ViewModel
 
     private void RefreshReceivers(ClientGuard client)
     {
-      recivers.Clear();
+      _recivers.Clear();
 
-      var selectedReceiverNick = selectedReceiver == allInRoom
+      var selectedReceiverNick = _selectedReceiver == _allInRoom
         ? null
-        : selectedReceiver.Nick;
+        : _selectedReceiver.Nick;
       var newReciver = (UserViewModel) null;
 
       foreach (var user in client.Chat.GetUsers())
@@ -508,15 +508,15 @@ namespace UI.ViewModel
           continue;
 
         var receiver = new UserViewModel(user.Nick, this);
-        recivers.Add(receiver);
+        _recivers.Add(receiver);
 
         if (user.Nick == selectedReceiverNick)
           newReciver = receiver;
       }
       OnPropertyChanged("Receivers");
 
-      selectedReceiver = newReciver == null
-        ? allInRoom
+      _selectedReceiver = newReciver == null
+        ? _allInRoom
         : newReciver;
       OnPropertyChanged("SelectedReceiver");
     }

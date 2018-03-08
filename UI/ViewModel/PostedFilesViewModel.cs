@@ -48,7 +48,7 @@ namespace UI.ViewModel
 
   public class PostedFileRoomViewModel : BaseViewModel
   {
-    private PostedFilesViewModel parent;
+    private PostedFilesViewModel _parent;
 
     public string RoomName { get; private set; }
     public ObservableCollection<PostedFileViewModel> PostedFiles { get; private set; }
@@ -56,7 +56,7 @@ namespace UI.ViewModel
     public PostedFileRoomViewModel(ClientGuard client, string roomName, PostedFilesViewModel parent)
       : base(parent, false)
     {
-      this.parent = parent;
+      this._parent = parent;
 
       RoomName = roomName;
       PostedFiles = new ObservableCollection<PostedFileViewModel>();
@@ -68,13 +68,13 @@ namespace UI.ViewModel
       item.Dispose();
 
       if (PostedFiles.Count == 0)
-        parent.RemoveRoom(this);
+        _parent.RemoveRoom(this);
     }
   }
 
   public class PostedFileViewModel : BaseViewModel
   {
-    private PostedFileRoomViewModel parent;
+    private PostedFileRoomViewModel _parent;
 
     public FileId FileId { get; private set; }
     public string FileName { get; private set; }
@@ -84,7 +84,7 @@ namespace UI.ViewModel
     public PostedFileViewModel(ClientGuard client, PostedFile postedFile, PostedFileRoomViewModel parent)
       : base(parent, false)
     {
-      this.parent = parent;
+      this._parent = parent;
 
       FileId = postedFile.File.Id;
       FileName = postedFile.File.Name;
@@ -94,9 +94,9 @@ namespace UI.ViewModel
 
     private void Remove(object o)
     {
-      parent.RemoveFile(this);
+      _parent.RemoveFile(this);
 
-      ClientModel.Api.Perform(new ClientRemoveFileAction(parent.RoomName, FileId));
+      ClientModel.Api.Perform(new ClientRemoveFileAction(_parent.RoomName, FileId));
     }
   }
 }

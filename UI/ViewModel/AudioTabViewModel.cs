@@ -16,57 +16,57 @@ namespace UI.ViewModel
     private const string PressTheKeyKey = "settingsTab-audio-pressTheKey";
 
     #region fields
-    private IList<string> outputDevices;
-    private IList<string> inputDevices;
-    private IList<AudioQuality> inputConfigs;
-    private int selectedInputIndex;
-    private int selectedOutputIndex;
-    private int selectedConfigIndex;
-    private string selectButtonName;
-    private volatile bool selectingKey;
+    private IList<string> _outputDevices;
+    private IList<string> _inputDevices;
+    private IList<AudioQuality> _inputConfigs;
+    private int _selectedInputIndex;
+    private int _selectedOutputIndex;
+    private int _selectedConfigIndex;
+    private string _selectButtonName;
+    private volatile bool _selectingKey;
     #endregion
 
     #region properties
     public IList<string> OutputDevices
     {
-      get { return outputDevices; }
-      set { SetValue(value, "OutputDevices", v => outputDevices = v); }
+      get { return _outputDevices; }
+      set { SetValue(value, "OutputDevices", v => _outputDevices = v); }
     }
 
     public IList<string> InputDevices
     {
-      get { return inputDevices; }
-      set { SetValue(value, "InputDevices", v => inputDevices = v); }
+      get { return _inputDevices; }
+      set { SetValue(value, "InputDevices", v => _inputDevices = v); }
     }
 
     public IList<AudioQuality> InputConfigs
     {
-      get { return inputConfigs; }
-      set { SetValue(value, "InputConfigs", v => inputConfigs = v); }
+      get { return _inputConfigs; }
+      set { SetValue(value, "InputConfigs", v => _inputConfigs = v); }
     }
 
     public int SelectedInputIndex
     {
-      get { return selectedInputIndex; }
-      set { SetValue(value, "SelectedInputIndex", v => selectedInputIndex = v); }
+      get { return _selectedInputIndex; }
+      set { SetValue(value, "SelectedInputIndex", v => _selectedInputIndex = v); }
     }
 
     public int SelectedConfigIndex
     {
-      get { return selectedConfigIndex; }
-      set { SetValue(value, "SelectedConfigIndex", v => selectedConfigIndex = v); }
+      get { return _selectedConfigIndex; }
+      set { SetValue(value, "SelectedConfigIndex", v => _selectedConfigIndex = v); }
     }
 
     public int SelectedOutputIndex
     {
-      get { return selectedOutputIndex; }
-      set { SetValue(value, "SelectedOutputIndex", v => selectedOutputIndex = v); }
+      get { return _selectedOutputIndex; }
+      set { SetValue(value, "SelectedOutputIndex", v => _selectedOutputIndex = v); }
     }
 
     public string SelectButtonName
     {
-      get { return selectButtonName; }
-      set { SetValue(value, "SelectButtonName", v => selectButtonName = v); }
+      get { return _selectButtonName; }
+      set { SetValue(value, "SelectButtonName", v => _selectButtonName = v); }
     }
     #endregion
 
@@ -109,23 +109,23 @@ namespace UI.ViewModel
 
     private void SelectKey(object obj)
     {
-      if (selectingKey == true)
+      if (_selectingKey == true)
         return;
 
-      selectingKey = true;
+      _selectingKey = true;
       SelectButtonName = Localizer.Instance.Localize(PressTheKeyKey);
       KeyBoard.KeyDown += KeyDown;
     }
 
     private void KeyDown(Keys key)
     {
-      if (!selectingKey)
+      if (!_selectingKey)
       {
         KeyBoard.KeyDown -= KeyDown;
         return;
       }
 
-      selectingKey = false;
+      _selectingKey = false;
       SelectButtonName = key.ToString();
     }
 
@@ -142,7 +142,7 @@ namespace UI.ViewModel
         Settings.Current.OutputAudioDevice = OutputDevices[SelectedOutputIndex];
 
       if (InputDevices.Count > 0 && SelectedInputIndex >= 0 && SelectedInputIndex < InputDevices.Count)
-        Settings.Current.InputAudioDevice = InputDevices[selectedInputIndex];
+        Settings.Current.InputAudioDevice = InputDevices[_selectedInputIndex];
 
       if (!string.Equals(Localizer.Instance.Localize(PressTheKeyKey), SelectButtonName))
         Settings.Current.RecorderKey = (Keys)Enum.Parse(typeof(Keys), SelectButtonName);

@@ -20,6 +20,7 @@ namespace Engine.Model.Server.Entities
     /// Returns all users from room as dtos.
     /// </summary>
     /// <param name="roomName">Room name.</param>
+    [SecuritySafeCritical]
     public UserDto[] GetRoomUserDtos(string roomName)
     {
       var room = GetRoom(roomName);

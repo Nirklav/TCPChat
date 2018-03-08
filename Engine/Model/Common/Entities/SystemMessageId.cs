@@ -29,6 +29,7 @@
     InvalidPassword = 60,                  // Invalid password.
     TextCommandNotFound = 61,              // Text command not found.
     TextCommandsList = 62,                 // Text commands list.
-    TextCommandInvalidParams = 63          // Text command params are invalid
+    TextCommandInvalidParams = 63,         // Text command params are invalid
+    TextCommandMessageId = 64              // Result of showMessageId command
   }
 }

@@ -10,19 +10,19 @@ namespace UI.ViewModel
 
   public class PluginInfoViewModel : BaseViewModel
   {
-    private string name;
-    private bool enabled;
+    private string _name;
+    private bool _enabled;
 
     public string Name
     {
-      get { return name; }
-      set { SetValue(value, "Name", v => name = v); }
+      get { return _name; }
+      set { SetValue(value, "Name", v => _name = v); }
     }
 
     public bool Enabled
     {
-      get { return enabled; }
-      set { SetValue(value, "Enabled", v => enabled = v); }
+      get { return _enabled; }
+      set { SetValue(value, "Enabled", v => _enabled = v); }
     }
 
     public PluginKindId Kind { get; private set; }

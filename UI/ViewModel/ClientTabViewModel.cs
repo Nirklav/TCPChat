@@ -9,22 +9,22 @@ namespace UI.ViewModel
     private const string NameKey = "settingsTabCategory-client";
 
     #region fields
-    private string locale;
+    private string _locale;
 
-    private string nick;
+    private string _nick;
 
-    private byte redValue;
-    private byte greenValue;
-    private byte blueValue;
+    private byte _redValue;
+    private byte _greenValue;
+    private byte _blueValue;
 
-    private string adminPassword;
+    private string _adminPassword;
     #endregion
 
     #region properties
     public string Locale
     {
-      get { return locale; }
-      set { SetValue(value, "Locale", v => locale = v); }
+      get { return _locale; }
+      set { SetValue(value, "Locale", v => _locale = v); }
     }
 
     public string[] Locales
@@ -34,8 +34,8 @@ namespace UI.ViewModel
 
     public string Nick
     {
-      get { return nick; }
-      set { SetValue(value, "Nick", v => nick = v); }
+      get { return _nick; }
+      set { SetValue(value, "Nick", v => _nick = v); }
     }
 
     public WPFColor NickColor
@@ -45,26 +45,26 @@ namespace UI.ViewModel
 
     public byte RedValue
     {
-      get { return redValue; }
-      set { SetValue(value, "NickColor", v => redValue = v); }
+      get { return _redValue; }
+      set { SetValue(value, "NickColor", v => _redValue = v); }
     }
 
     public byte GreenValue
     {
-      get { return greenValue; }
-      set { SetValue(value, "NickColor", v => greenValue = v); }
+      get { return _greenValue; }
+      set { SetValue(value, "NickColor", v => _greenValue = v); }
     }
 
     public byte BlueValue
     {
-      get { return blueValue; }
-      set { SetValue(value, "NickColor", v => blueValue = v); }
+      get { return _blueValue; }
+      set { SetValue(value, "NickColor", v => _blueValue = v); }
     }
 
     public string AdminPassword
     {
-      get { return adminPassword; }
-      set { SetValue(value, "AdminPassword", v => adminPassword = v); }
+      get { return _adminPassword; }
+      set { SetValue(value, "AdminPassword", v => _adminPassword = v); }
     }
 
     #endregion
@@ -85,12 +85,12 @@ namespace UI.ViewModel
 
     public override void SaveSettings()
     {
-      Localizer.Instance.Set(locale);
+      Localizer.Instance.Set(_locale);
 
       Settings.Current.Locale = Locale;
       Settings.Current.Nick = Nick;
       Settings.Current.NickColor = Color.FromArgb(RedValue, GreenValue, BlueValue);
-      Settings.Current.AdminPassword = adminPassword;
+      Settings.Current.AdminPassword = _adminPassword;
     }
   }
 }

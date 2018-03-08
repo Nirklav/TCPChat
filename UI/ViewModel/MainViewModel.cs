@@ -36,11 +36,11 @@ namespace UI.ViewModel
     #endregion
 
     #region fields
-    private MainWindow window;
-    private int selectedRoomIndex;
-    private RoomViewModel selectedRoom;
+    private MainWindow _window;
+    private int _selectedRoomIndex;
+    private RoomViewModel _selectedRoom;
 
-    private volatile bool keyPressed;
+    private volatile bool _keyPressed;
     #endregion
 
     #region properties
@@ -57,13 +57,13 @@ namespace UI.ViewModel
 
     public RoomViewModel SelectedRoom
     {
-      get { return selectedRoom; }
+      get { return _selectedRoom; }
       set
       {
-        selectedRoom = value;
+        _selectedRoom = value;
 
-        if (selectedRoom != null && selectedRoom.Updated)
-          selectedRoom.Updated = false;
+        if (_selectedRoom != null && _selectedRoom.Updated)
+          _selectedRoom.Updated = false;
 
         OnPropertyChanged("SelectedRoom");
       }
@@ -71,10 +71,10 @@ namespace UI.ViewModel
 
     public int SelectedRoomIndex
     {
-      get { return selectedRoomIndex; }
+      get { return _selectedRoomIndex; }
       set
       {
-        selectedRoomIndex = value;
+        _selectedRoomIndex = value;
         OnPropertyChanged("SelectedRoomIndex");
       }
     }
@@ -101,8 +101,8 @@ namespace UI.ViewModel
     public MainViewModel(MainWindow mainWindow)
       : base(null, true)
     {
-      window = mainWindow;
-      window.Closed += WindowClosed;
+      _window = mainWindow;
+      _window.Closed += WindowClosed;
       Rooms = new ObservableCollection<RoomViewModel>();
       Plugins = new ObservableCollection<PluginViewModel>();
       Dispatcher = mainWindow.Dispatcher;
@@ -123,7 +123,7 @@ namespace UI.ViewModel
       DisableServerCommand = new Command(DisableServer, _ => ServerModel.IsInited);
       ConnectCommand = new Command(Connect, _ => !ClientModel.IsInited);
       DisconnectCommand = new Command(Disconnect, _ => ClientModel.IsInited);
-      ExitCommand = new Command(_ => window.Close());
+      ExitCommand = new Command(_ => _window.Close());
       CreateRoomCommand = new Command(CreateRoom, _ => ClientModel.IsInited);
       DeleteRoomCommand = new Command(DeleteRoom, _ => ClientModel.IsInited);
       ExitFromRoomCommand = new Command(ExitFromRoom, _ => ClientModel.IsInited);
@@ -348,7 +348,7 @@ namespace UI.ViewModel
       roomViewModel.Updated = true;
       Rooms.Add(roomViewModel);
 
-      window.Alert();
+      _window.Alert();
     }
 
     private void ClientRoomClosed(RoomClosedEventArgs e)
@@ -360,7 +360,7 @@ namespace UI.ViewModel
       Rooms.Remove(roomViewModel);
       roomViewModel.Dispose();
 
-      window.Alert();
+      _window.Alert();
     }
 
     private void ClientAsyncError(AsyncErrorEventArgs e)
@@ -465,7 +465,7 @@ namespace UI.ViewModel
 
     public void Alert()
     {
-      window.Alert();
+      _window.Alert();
     }
 
     private void ClearTabs()
@@ -484,9 +484,9 @@ namespace UI.ViewModel
     {
       var recorderKey = Settings.Current.RecorderKey;
 
-      if ((keys & recorderKey) == recorderKey && !keyPressed)
+      if ((keys & recorderKey) == recorderKey && !_keyPressed)
       {
-        keyPressed = true;
+        _keyPressed = true;
         if (ClientModel.Recorder != null)
           ClientModel.Recorder.Start();
       }
@@ -496,9 +496,9 @@ namespace UI.ViewModel
     {
       var recorderKey = Settings.Current.RecorderKey;
 
-      if ((keys & recorderKey) == recorderKey && keyPressed)
+      if ((keys & recorderKey) == recorderKey && _keyPressed)
       {
-        keyPressed = false;
+        _keyPressed = false;
         if (ClientModel.Recorder != null)
           ClientModel.Recorder.Stop();
       }

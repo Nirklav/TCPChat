@@ -28,6 +28,7 @@
   <row key="systemMessage-TextCommandNotFound" value="Текстовая команда не найдена."/>
   <row key="systemMessage-TextCommandsList" value="Список серверных команд:{0}"/>
   <row key="systemMessage-TextCommandInvalidParams" value="В параметрах команды ошибка."/>
+  <row key="systemMessage-TextCommandMessageId" value="Message id = {0}."/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Редактировать"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>

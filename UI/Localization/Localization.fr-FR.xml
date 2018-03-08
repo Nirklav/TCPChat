@@ -28,6 +28,7 @@
   <row key="systemMessage-TextCommandNotFound" value="Commande introuvable."/>
   <row key="systemMessage-TextCommandsList" value="Liste des commandes du serveur :{0}"/>
   <row key="systemMessage-TextCommandInvalidParams" value="La commande comporte une erreur sur l'un des arguments."/>
+  <row key="systemMessage-TextCommandMessageId" value="Message id = {0}."/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Editer"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copier"/>

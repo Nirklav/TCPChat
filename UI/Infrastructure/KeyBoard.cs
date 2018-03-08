@@ -9,24 +9,24 @@ namespace UI.Infrastructure
     public static event Action<Keys> KeyUp;
     public static event Action<Keys> KeyDown;
 
-    private static IntPtr hookHandle;
-    private static IntPtr moduleHandle;
-    private static HookHandler hookCallback;
+    private static IntPtr _hookHandle;
+    private static IntPtr _moduleHandle;
+    private static HookHandler _hookCallback;
 
     public static void SetHook()
     {
-      moduleHandle = Marshal.GetHINSTANCE(AppDomain.CurrentDomain.GetAssemblies()[0].GetModules()[0]);
-      hookCallback = HookCallback;
+      _moduleHandle = Marshal.GetHINSTANCE(AppDomain.CurrentDomain.GetAssemblies()[0].GetModules()[0]);
+      _hookCallback = HookCallback;
 
-      hookHandle = SetWindowsHookEx(HookType.KerboardLowLevel, hookCallback, moduleHandle, 0);
+      _hookHandle = SetWindowsHookEx(HookType.KerboardLowLevel, _hookCallback, _moduleHandle, 0);
     }
 
     public static void UnsetHook()
     {
-      UnhookWindowsHookEx(hookHandle);
+      UnhookWindowsHookEx(_hookHandle);
 
-      hookHandle = IntPtr.Zero;
-      moduleHandle = IntPtr.Zero;
+      _hookHandle = IntPtr.Zero;
+      _moduleHandle = IntPtr.Zero;
     }
 
     private static IntPtr HookCallback(int code, IntPtr wParam, IntPtr lParam)
@@ -49,7 +49,7 @@ namespace UI.Infrastructure
         }
       }
 
-      return CallNextHookEx(hookHandle, code, wParam, lParam);
+      return CallNextHookEx(_hookHandle, code, wParam, lParam);
     }
 
     #region WinApi

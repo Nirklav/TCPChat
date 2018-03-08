@@ -113,7 +113,10 @@ namespace Engine.Api.Server.Admin
       { "/help", new AdminCommand(Help, "/help - shows list of commands") },
       { "/clearMainRoom", new AdminCommand(ClearMainRoom, "/clearMainRoom - clears main room from messages") },
       { "/clearRoom", new AdminCommand(ClearRoom, "/clearRoom {roomName} - clears room that received in params from messages") },
-      { "/kick",  new AdminCommand(Kick, "/kick {nick} - kicks user from chat") },
+      { "/removeMessage", new AdminCommand(RemoveMessage, "/removeMessage {roomName} {messageId} - removes message from room") },
+      { "/ban",  new AdminCommand(Ban, "/ban {nick} - ban user by ip") },
+      { "/unban",  new AdminCommand(Unban, "/unban {nick} - unban user") },
+      { "/showMessageId", new AdminCommand(ShowMessageId, "/showMessageId {roomName} {time} - UTC time in format \"dd.MM.YYYY hh:mm:ss\"") }
     };
 
     private readonly string _password;
@@ -139,9 +142,7 @@ namespace Engine.Api.Server.Admin
       }
 
       var adminArgs = new AdminCommandArgs(content.TextCommand);
-
-      AdminCommand command;
-      if (!TextCommands.TryGetValue(adminArgs.Command, out command))
+      if (!TextCommands.TryGetValue(adminArgs.Command, out AdminCommand command))
       {
         ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandNotFound));
         return;
@@ -163,6 +164,12 @@ namespace Engine.Api.Server.Admin
         ClearRoom(adminArgs.Parameters[0], args);
       else
         ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+    }
+
+    [SecuritySafeCritical]
+    private static void RemoveMessage(AdminCommandArgs adminArgs, CommandArgs args)
+    {
+      throw new NotImplementedException();
     }
 
     [SecuritySafeCritical]
@@ -197,7 +204,7 @@ namespace Engine.Api.Server.Admin
     }
 
     [SecuritySafeCritical]
-    private static void Kick(AdminCommandArgs adminArgs, CommandArgs args)
+    private static void Ban(AdminCommandArgs adminArgs, CommandArgs args)
     {
       if (adminArgs.Parameters.Length != 1)
       {
@@ -209,13 +216,78 @@ namespace Engine.Api.Server.Admin
       {
         var nick = adminArgs.Parameters[0];
         var user = server.Chat.TryGetUser(nick);
+
+        ServerModel.Server.Bans.Ban(nick);
         if (user != null)
           ServerModel.Api.Perform(new ServerRemoveUserAction(nick));  
         else
           ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
       }
     }
-    
+
+    [SecuritySafeCritical]
+    private static void Unban(AdminCommandArgs adminArgs, CommandArgs args)
+    {
+      if (adminArgs.Parameters.Length != 1)
+      {
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+        return;
+      }
+
+      using (var server = ServerModel.Get())
+      {
+        var nick = adminArgs.Parameters[0];
+        ServerModel.Server.Bans.Unban(nick);
+      }
+    }
+
+    [SecuritySafeCritical]
+    private static void ShowMessageId(AdminCommandArgs adminArgs, CommandArgs args)
+    {
+      if (adminArgs.Parameters.Length != 2)
+      {
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+        return;
+      }
+
+      using (var server = ServerModel.Get())
+      {
+        var roomName = adminArgs.Parameters[0];
+        var timeStr = adminArgs.Parameters[1];
+
+        var room = server.Chat.TryGetRoom(roomName);
+        if (room == null)
+        {
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+          return;
+        }
+
+        if (!DateTime.TryParse(timeStr, out DateTime time))
+        {
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+          return;
+        }
+
+        Message minMssage = null;
+        foreach (var message in room.Messages)
+        {
+          if (minMssage == null)
+          {
+            minMssage = message;
+            continue;
+          }
+
+          var diff = message.Time.Subtract(time);
+          var minDiff = minMssage.Time.Subtract(time);
+
+          if (Math.Abs(diff.TotalMilliseconds) < Math.Abs(minDiff.TotalMilliseconds))
+            minMssage = message;
+        }
+
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandMessageId, minMssage.Id.ToString()));
+      }
+    }
+
     [Serializable]
     [BinType("ServerAdmin")]
     public class MessageContent

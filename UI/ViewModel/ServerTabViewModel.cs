@@ -7,48 +7,48 @@ namespace UI.ViewModel
     private const string NameKey = "settingsTabCategory-server";
 
     #region fields
-    private int serverPort;
-    private int servicePort;
-    private bool defaultServicePort;
-    private bool enabledIPv6;
-    private bool enabledIPv4;
+    private int _serverPort;
+    private int _servicePort;
+    private bool _defaultServicePort;
+    private bool _enabledIPv6;
+    private bool _enabledIPv4;
     #endregion
 
     #region properties
     public int ServerPort
     {
-      get { return serverPort; }
-      set { SetValue(value, "ServerPort", v => serverPort = v); }
+      get { return _serverPort; }
+      set { SetValue(value, "ServerPort", v => _serverPort = v); }
     }
 
     public bool DefaultSevicePort
     {
-      get { return defaultServicePort; }
+      get { return _defaultServicePort; }
       set
       {
-        SetValue(value, "DefaultSevicePort", v => defaultServicePort = v);
+        SetValue(value, "DefaultSevicePort", v => _defaultServicePort = v);
 
         if (value == true)
-          SetValue(0, "ServicePort", v => servicePort = v);
+          SetValue(0, "ServicePort", v => _servicePort = v);
       }
     }
 
     public int ServicePort
     {
-      get { return servicePort; }
-      set { SetValue(value, "ServicePort", v => servicePort = v); }
+      get { return _servicePort; }
+      set { SetValue(value, "ServicePort", v => _servicePort = v); }
     }
 
     public bool IPv4Enabled
     {
-      get { return enabledIPv4; }
-      set { SetValue(value, "IPv4Enabled", v => enabledIPv4 = v); }
+      get { return _enabledIPv4; }
+      set { SetValue(value, "IPv4Enabled", v => _enabledIPv4 = v); }
     }
 
     public bool IPv6Enabled
     {
-      get { return enabledIPv6; }
-      set { SetValue(value, "IPv6Enabled", v => enabledIPv6 = v); }
+      get { return _enabledIPv6; }
+      set { SetValue(value, "IPv6Enabled", v => _enabledIPv6 = v); }
     }
     #endregion
 

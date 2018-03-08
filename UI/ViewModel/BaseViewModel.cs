@@ -11,7 +11,7 @@ namespace UI.ViewModel
     INotifyPropertyChanged,
     IDisposable
   {
-    private bool disposed;
+    private bool _disposed;
     protected Dispatcher Dispatcher;
     protected IClientEvents Events;
 
@@ -37,9 +37,9 @@ namespace UI.ViewModel
 
     public void Dispose()
     {
-      if (disposed)
+      if (_disposed)
         return;
-      disposed = true;
+      _disposed = true;
       DisposeManagedResources();
     }
 

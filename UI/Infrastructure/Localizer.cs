@@ -3,9 +3,7 @@ using Engine.Model.Client;
 using Engine.Model.Common.Entities;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
-using System.Windows;
 
 namespace UI.Infrastructure
 {
@@ -21,14 +19,14 @@ namespace UI.Infrastructure
 
     #endregion
 
-    private readonly Dictionary<string, LocalizerStorage> storages = new Dictionary<string, LocalizerStorage>(StringComparer.OrdinalIgnoreCase);
-    private string locale;
+    private readonly Dictionary<string, LocalizerStorage> _storages = new Dictionary<string, LocalizerStorage>(StringComparer.OrdinalIgnoreCase);
+    private string _locale;
 
     public event EventHandler<EventArgs> LocaleChanged;
 
     public void Set(string locale)
     {
-      this.locale = locale;
+      this._locale = locale;
 
       var e = Interlocked.CompareExchange(ref LocaleChanged, null, null);
       if (e != null)
@@ -39,10 +37,10 @@ namespace UI.Infrastructure
     {
       LocalizerStorage storage;
 
-      if (!storages.TryGetValue(locale, out storage))
-        storages.Add(locale, storage = new LocalizerStorage(locale));
+      if (!_storages.TryGetValue(_locale, out storage))
+        _storages.Add(_locale, storage = new LocalizerStorage(_locale));
 
-      var localized = storage.Get(locale, key);
+      var localized = storage.Get(_locale, key);
       if (localized == null)
         return key;
 

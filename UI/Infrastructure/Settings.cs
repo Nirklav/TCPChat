@@ -9,32 +9,32 @@ namespace UI.Infrastructure
 {
   public class Settings
   {
-    private static Settings current;
-    private static readonly object syncObj = new object();
+    private static Settings _current;
+    private static readonly object _syncObj = new object();
     private const string FileName = "Settings.xml";
 
     public static Settings Current
     {
       get
       {
-        if (current != null)
-          return current;
+        if (_current != null)
+          return _current;
 
-        lock (syncObj)
+        lock (_syncObj)
         {
-          if (current == null)
+          if (_current == null)
           {
             var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, FileName);
             if (!File.Exists(fileName))
-              return current = GetDefault();
+              return _current = GetDefault();
 
             var serializer = new XmlSerializer(typeof(Settings));
             using (var stream = File.Open(fileName, FileMode.Open))
-              current = (Settings)serializer.Deserialize(stream);
+              _current = (Settings)serializer.Deserialize(stream);
           }
         }
 
-        return current;
+        return _current;
       }
     }
 
@@ -63,14 +63,14 @@ namespace UI.Infrastructure
 
     public static void SaveSettings()
     {
-      if (current == null)
+      if (_current == null)
         return;
 
-      lock (syncObj)
+      lock (_syncObj)
       {
         var serializer = new XmlSerializer(typeof(Settings));
         using (var stream = File.Create(AppDomain.CurrentDomain.BaseDirectory + FileName))
-          serializer.Serialize(stream, current);
+          serializer.Serialize(stream, _current);
       }
     }
 

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Threading;
-using UI.Infrastructure;
+﻿using UI.Infrastructure;
 
 namespace UI.ViewModel
 {
@@ -18,28 +13,28 @@ namespace UI.ViewModel
   public abstract class SettingsTabViewModel : BaseViewModel
   {
     #region fields
-    private string nameKey;
-    private SettingsTabCategory category;
+    private string _nameKey;
+    private SettingsTabCategory _category;
     #endregion
 
     #region properties
     public SettingsTabCategory Category
     {
-      get { return category; }
-      set { SetValue(value, "Category", v => category = v); }
+      get { return _category; }
+      set { SetValue(value, "Category", v => _category = v); }
     }
 
     public string Name
     {
-      get { return Localizer.Instance.Localize(nameKey); }
+      get { return Localizer.Instance.Localize(_nameKey); }
     }
     #endregion
 
     public SettingsTabViewModel(string nameKey, SettingsTabCategory category)
       : base(null, false)
     {
-      this.nameKey = nameKey;
-      this.category = category;
+      _nameKey = nameKey;
+      _category = category;
     }
 
     public abstract void SaveSettings();  

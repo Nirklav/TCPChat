@@ -180,7 +180,7 @@ namespace Engine.Network
     {
       var clientInfo = info as ServerConnectionInfo;
       if (clientInfo == null)
-        throw new InvalidOperationException("info isn't ClientConnectionInfo");
+        throw new InvalidOperationException("info isn't ServerConnectionInfo");
 
       if (!string.Equals(clientInfo.ApiName, _api.Name, StringComparison.OrdinalIgnoreCase))
         throw new ModelException(ErrorCode.ApiNotSupported, clientInfo.ApiName);

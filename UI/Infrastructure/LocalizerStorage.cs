@@ -7,29 +7,29 @@ namespace UI.Infrastructure
 {
   public class LocalizerStorage
   {
-    private static readonly object langSyncObject = new object();
-    private static string[] languages;
+    private static readonly object _langSyncObject = new object();
+    private static string[] _languages;
 
-    private readonly string locale;
-    private readonly Dictionary<string, string> storage;
+    private readonly string _locale;
+    private readonly Dictionary<string, string> _storage;
 
     public LocalizerStorage(string storageLocale)
     {
       var fileName = GetFilePath(storageLocale);
 
-      locale = storageLocale;
-      storage = LoadXml(fileName);
+      _locale = storageLocale;
+      _storage = LoadXml(fileName);
     }
 
-    public string Locale { get { return locale; } }
+    public string Locale { get { return _locale; } }
 
     public string Get(string locale, string key)
     {
-      if (!string.Equals(this.locale, locale, StringComparison.OrdinalIgnoreCase))
+      if (!string.Equals(this._locale, locale, StringComparison.OrdinalIgnoreCase))
         throw new ArgumentException("Storage not support this locale");
 
       string result;
-      storage.TryGetValue(key, out result);
+      _storage.TryGetValue(key, out result);
       return result;
     }
 
@@ -37,13 +37,13 @@ namespace UI.Infrastructure
     {
       get
       {
-        if (languages != null)
-          return languages;
+        if (_languages != null)
+          return _languages;
 
-        lock (langSyncObject)
+        lock (_langSyncObject)
         {
-          if (languages != null)
-            return languages;
+          if (_languages != null)
+            return _languages;
 
           var result = new List<string>();
           var files = Directory.EnumerateFiles(GetDir(), "*.xml", SearchOption.TopDirectoryOnly);
@@ -59,7 +59,7 @@ namespace UI.Infrastructure
             result.Add(lang);
           }
 
-          return languages = result.ToArray();
+          return _languages = result.ToArray();
         }
       }
     }

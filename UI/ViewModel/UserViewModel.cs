@@ -1,6 +1,5 @@
 ﻿using Engine.Api.Client.Rooms;
 using Engine.Model.Client;
-using Engine.Model.Common.Entities;
 using System;
 using System.Net.Sockets;
 using System.Windows.Input;
@@ -12,10 +11,10 @@ namespace UI.ViewModel
   public class UserViewModel : BaseViewModel
   {
     #region fields
-    private string nick;
-    private string nickKey;
-    private RoomViewModel parent;
-    private bool isClient;
+    private string _nick;
+    private string _nickKey;
+    private RoomViewModel _parent;
+    private bool _isClient;
     #endregion
 
     #region constructors
@@ -28,9 +27,9 @@ namespace UI.ViewModel
     public UserViewModel(string nickLocKey, string userNick, RoomViewModel parentViewModel)
       : base(parentViewModel, false)
     {
-      nick = userNick;
-      parent = parentViewModel;
-      nickKey = nickLocKey;
+      _nick = userNick;
+      _parent = parentViewModel;
+      _nickKey = nickLocKey;
 
       SetRoomAdminCommand = new Command(SetRoomAdmin, _ => ClientModel.Api != null);
       UserClickCommand = new Command(UserClick);
@@ -56,12 +55,12 @@ namespace UI.ViewModel
     {
       get
       {
-        if (nick == null)
+        if (_nick == null)
           return WPFColor.FromRgb(0, 0, 0);
 
         using (var client = ClientModel.Get())
         {
-          var user = client.Chat.TryGetUser(nick);
+          var user = client.Chat.TryGetUser(_nick);
           if (user == null)
             return WPFColor.FromRgb(0, 0, 0);
           return WPFColor.FromRgb(user.NickColor.R, user.NickColor.G, user.NickColor.B);
@@ -73,9 +72,9 @@ namespace UI.ViewModel
     {
       get
       {
-        if (nickKey != null)
-          return Localizer.Instance.Localize(nickKey);
-        return nick;
+        if (_nickKey != null)
+          return Localizer.Instance.Localize(_nickKey);
+        return _nick;
       }
     }
 
@@ -86,32 +85,32 @@ namespace UI.ViewModel
 
     public bool IsClient
     {
-      get { return isClient; }
-      set { SetValue(value, "IsClient", v => isClient = v); }
+      get { return _isClient; }
+      set { SetValue(value, "IsClient", v => _isClient = v); }
     }
 
     public bool IsAllInRoom
     {
-      get { return nickKey != null; }
+      get { return _nickKey != null; }
     }
     #endregion
 
     #region command methods
     private void UserClick(object obj)
     {
-      parent.Message += Nick + ", ";
-      parent.MessageCaretIndex = parent.Message.Length;
+      _parent.Message += Nick + ", ";
+      _parent.MessageCaretIndex = _parent.Message.Length;
     }
 
     private void SetRoomAdmin(object obj)
     {
       try
       {
-        ClientModel.Api.Perform(new ClientSetRoomAdminAction(parent.Name, nick));
+        ClientModel.Api.Perform(new ClientSetRoomAdminAction(_parent.Name, _nick));
       }
       catch (SocketException se)
       {
-        parent.AddSystemMessage(se.Message);
+        _parent.AddSystemMessage(se.Message);
       }
     }
     #endregion
@@ -140,17 +139,17 @@ namespace UI.ViewModel
       if (ReferenceEquals(viewModel, this))
         return true;
 
-      if (viewModel.nick == null)
-        return nick == null;
+      if (viewModel._nick == null)
+        return _nick == null;
 
-      return viewModel.nick == nick;
+      return viewModel._nick == _nick;
     }
 
     public override int GetHashCode()
     {
-      if (nick == null)
+      if (_nick == null)
         return 0;
-      return nick.GetHashCode();
+      return _nick.GetHashCode();
     }
     #endregion
   }

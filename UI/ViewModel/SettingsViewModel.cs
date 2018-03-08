@@ -7,8 +7,8 @@ namespace UI.ViewModel
   public class SettingsViewModel : BaseViewModel
   {
     #region fields
-    private SettingsView window;
-    private SettingsTabViewModel selectedTab;
+    private SettingsView _window;
+    private SettingsTabViewModel _selectedTab;
     #endregion
 
     #region properties
@@ -16,8 +16,8 @@ namespace UI.ViewModel
 
     public SettingsTabViewModel SelectedTab
     {
-      get { return selectedTab; }
-      set { SetValue(value, "SelectedTab", v => selectedTab = v); }
+      get { return _selectedTab; }
+      set { SetValue(value, "SelectedTab", v => _selectedTab = v); }
     }
     #endregion
 
@@ -29,7 +29,7 @@ namespace UI.ViewModel
     public SettingsViewModel(SettingsView view)
       : base(null, false)
     {
-      window = view;
+      _window = view;
       CloseSettingsCommand = new Command(CloseSettings);
 
       Tabs = new SettingsTabViewModel[] 
@@ -53,7 +53,7 @@ namespace UI.ViewModel
         tab.Dispose();
       }
 
-      window.Close();
+      _window.Close();
     }
     #endregion
   }

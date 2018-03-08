@@ -28,6 +28,7 @@
   <row key="systemMessage-TextCommandNotFound" value="Text command not found."/>
   <row key="systemMessage-TextCommandsList" value="There is list of server commands:{0}"/>
   <row key="systemMessage-TextCommandInvalidParams" value="Command has error in args list."/>
+  <row key="systemMessage-TextCommandMessageId" value="Message id = {0}."/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Edit"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copy"/>

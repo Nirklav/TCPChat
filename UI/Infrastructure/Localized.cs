@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -12,23 +8,23 @@ namespace UI.Infrastructure
 {
   public class Localized : MarkupExtension
   {
-    private string key;
+    private string _key;
 
     public Localized(string key)
     {
-      this.key = key;
+      this._key = key;
     }
 
     [ConstructorArgument("key")]
     public string Key
     {
-      get { return key; }
-      set { key = value; }
+      get { return _key; }
+      set { _key = value; }
     }
 
     public override object ProvideValue(IServiceProvider serviceProvider)
     {
-      var binding = new Binding("Value") { Source = new LocalizedBindingSource(key) };
+      var binding = new Binding("Value") { Source = new LocalizedBindingSource(_key) };
       return binding.ProvideValue(serviceProvider);
     }
   }

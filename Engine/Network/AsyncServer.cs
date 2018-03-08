@@ -22,10 +22,12 @@ namespace Engine.Network
 
     #region fields
     [SecurityCritical] private readonly Dictionary<string, ServerConnection> _connections;
+    [SecurityCritical] private readonly Dictionary<string, IPAddress> _bannedIps;
 
     [SecurityCritical] private readonly IApi _api;
     [SecurityCritical] private readonly RequestQueue _requestQueue;
     [SecurityCritical] private readonly IServerNotifier _notifier;
+    [SecurityCritical] private readonly ServerBans _bans;
 
     [SecurityCritical] private P2PService _p2pService;
     [SecurityCritical] private Socket _listener;
@@ -75,6 +77,15 @@ namespace Engine.Network
       [SecurityCritical]
       get { return _listener.AddressFamily == AddressFamily.InterNetworkV6; }
     }
+
+    /// <summary>
+    /// Returns class that responses for bans.
+    /// </summary>
+    public ServerBans Bans
+    {
+      [SecuritySafeCritical]
+      get { return _bans; }
+    }
     #endregion
 
     #region constructors
@@ -87,6 +98,7 @@ namespace Engine.Network
       _requestQueue = new RequestQueue(api);
       _requestQueue.Error += OnRequestQueueError;
       _notifier = notifier;
+      _bans = new ServerBans(this);
 
       _isServerRunning = false;
       _logger = logger;
@@ -227,6 +239,20 @@ namespace Engine.Network
       lock (_connections)
         return _connections.ContainsKey(id);
     }
+    
+    /// <summary>
+    /// Gets ip address of connection.
+    /// </summary>
+    [SecuritySafeCritical]
+    public IPAddress GetIp(string connectionId)
+    {
+      lock (_connections)
+      {
+        if (!_connections.TryGetValue(connectionId, out ServerConnection connection))
+          throw new ArgumentException("connection not found");
+        return connection.RemotePoint.Address;
+      }
+    }
     #endregion
 
     #region private callback methods
@@ -241,17 +267,26 @@ namespace Engine.Network
         _listener.BeginAccept(OnAccept, null);
 
         var handler = _listener.EndAccept(result);
-        var connection = new ServerConnection(handler, _api.Name, _logger, OnPackageReceived);
+        var endPoint = (IPEndPoint)handler.RemoteEndPoint;
 
-        connection.SendInfo();
-
-        lock (_connections)
+        if (_bans.IsBanned(endPoint.Address))
         {
-          connection.Id = string.Format("{0}{1}", Connection.TempConnectionPrefix, _lastTempId++);
-          _connections.Add(connection.Id, connection);
+          handler.Disconnect(false);
+          handler.Dispose();
         }
+        else
+        {
+          var connection = new ServerConnection(handler, _api.Name, _logger, OnPackageReceived);
+          connection.SendInfo();
 
-        _notifier.ConnectionOpened(new ConnectionEventArgs(connection.Id));
+          lock (_connections)
+          {
+            connection.Id = string.Format("{0}{1}", Connection.TempConnectionPrefix, _lastTempId++);
+            _connections.Add(connection.Id, connection);
+          }
+
+          _notifier.ConnectionOpened(new ConnectionEventArgs(connection.Id));
+        }
       }
       catch (Exception e)
       {
@@ -388,8 +423,7 @@ namespace Engine.Network
       if (connectionId.Contains(Connection.TempConnectionPrefix) && !allowTempConnections)
         throw new InvalidOperationException("this connection don't registered");
 
-      ServerConnection connection;
-      if (!_connections.TryGetValue(connectionId, out connection))
+      if (!_connections.TryGetValue(connectionId, out ServerConnection connection))
       {
         _logger.WriteWarning("Connection {0} don't finded", connectionId);
         return null;

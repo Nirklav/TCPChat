@@ -189,6 +189,7 @@
     <Compile Include="Network\AsyncPeer.cs" />
     <Compile Include="Network\ConnectionInfo.cs" />
     <Compile Include="Network\Packer.cs" />
+    <Compile Include="Network\ServerBans.cs" />
     <Compile Include="Network\ServerConnection.cs" />
     <Compile Include="Model\Client\ClientModel.cs" />
     <Compile Include="Model\Common\Entities\DownloadingFile.cs" />
