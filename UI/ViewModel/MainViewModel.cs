@@ -5,6 +5,7 @@ using Engine.Exceptions;
 using Engine.Model.Client;
 using Engine.Model.Common.Entities;
 using Engine.Model.Server;
+using Engine.Network;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -165,9 +166,13 @@ namespace UI.ViewModel
         };
 
         ServerModel.Init(initializer);
-        ServerModel.Server.Start(Settings.Current.Port, Settings.Current.ServicePort, Settings.Current.StateOfIPv6Protocol);
+        ServerModel.Server.Start(Settings.Current.ServerPort, Settings.Current.ServerP2PPort, Settings.Current.ServerUseIpv6);
 
-        InitializeClient(true);
+        var addressStr = Settings.Current.ServerUseIpv6
+          ? IPAddress.IPv6Loopback
+          : IPAddress.Loopback;
+
+        InitializeClient(Connection.CreateTcpchatUri(addressStr, Settings.Current.ServerPort));
       }
       catch (ArgumentException)
       {
@@ -200,7 +205,7 @@ namespace UI.ViewModel
     {
       var dialog = new ConnectDialog();
       if (dialog.ShowDialog() == true)
-        InitializeClient(false);
+        InitializeClient(Settings.Current.Uri);
     }
 
     private void Disconnect(object obj)
@@ -396,7 +401,7 @@ namespace UI.ViewModel
     #endregion
 
     #region helpers methods
-    private void InitializeClient(bool loopback)
+    private void InitializeClient(string serverUri)
     {
       var excludedPlugins = Settings.Current.Plugins
         .Where(s => !s.Enabled)
@@ -433,11 +438,7 @@ namespace UI.ViewModel
         }      
       }
 
-      var address = loopback
-        ? Settings.Current.StateOfIPv6Protocol ? IPAddress.IPv6Loopback : IPAddress.Loopback
-        : IPAddress.Parse(Settings.Current.Address);
-
-      ClientModel.Client.Connect(new IPEndPoint(address, Settings.Current.Port));
+      ClientModel.Client.Connect(new Uri(serverUri));
     }
 
     private void WindowClosed(object sender, EventArgs e)

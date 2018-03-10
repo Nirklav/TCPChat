@@ -25,6 +25,7 @@ namespace Engine.Network
     private const int BufferSize = 4096;
     private const int MaxReceivedDataSize = 1024 * 1024;
     public const string TempConnectionPrefix = "tempId_";
+    public const string TcpChatScheme = "tcpchat";
     #endregion
 
     #region fields
@@ -409,7 +410,6 @@ namespace Engine.Network
     [SecuritySafeCritical]
     protected virtual void Clean()
     {
-
       if (_handler != null)
       {
         if (_handler.Connected)
@@ -470,12 +470,26 @@ namespace Engine.Network
     #endregion
 
     #region utils
-    // TODO: rus
     /// <summary>
-    /// Проверяет TCP порт на занятость.
+    /// Creates tcp chat uri.
     /// </summary>
-    /// <param name="port">Порт который необходимо проверить.</param>
-    /// <returns>Возвращает true если порт свободный.</returns>
+    /// <param name="address">Server address.</param>
+    /// <param name="port">Server port.</param>
+    /// <returns>Uri of TcpChat server.</returns>
+    public static string CreateTcpchatUri(IPAddress address, int port)
+    {
+      if (address.AddressFamily == AddressFamily.InterNetwork)
+        return string.Format("{0}://{1}:{2}/", TcpChatScheme, address, port);
+      if (address.AddressFamily == AddressFamily.InterNetworkV6)
+        return string.Format("{0}://[{1}]:{2}/", TcpChatScheme, address, port);
+      throw new ArgumentException("Not supported address");
+    }
+
+    /// <summary>
+    /// Checks port for use.
+    /// </summary>
+    /// <param name="port">Port to check.</param>
+    /// <returns>Returns true if port is free.</returns>
     [SecuritySafeCritical]
     public static bool TcpPortIsAvailable(int port)
     {
@@ -490,10 +504,10 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Возврашает IP адрес данного компьютера.
+    /// Returns ip of current machine.
     /// </summary>
-    /// <param name="type">Тип адреса.</param>
-    /// <returns>IP адрес данного компьютера.</returns>
+    /// <param name="type">Address type.</param>
+    /// <returns>IPAddress of current machine.</returns>
     [SecuritySafeCritical]
     public static IPAddress GetIpAddress(AddressFamily type)
     {

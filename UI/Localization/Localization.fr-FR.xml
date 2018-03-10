@@ -96,6 +96,7 @@
 
   <row key="connectDialog-title" value="Connexion"/>
   <row key="connectDialog-ipAddress" value="Adresse IP"/>
+  <row key="connectDialog-fieldsError" value="Vérifiez que tous les champs sont remplis correctement."/>
 
   <row key="createRoomDialog-title" value="Créer une salle"/>
   <row key="createRoomDialog-roomName" value="Nom"/>

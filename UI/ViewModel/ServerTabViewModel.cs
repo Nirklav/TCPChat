@@ -55,19 +55,19 @@ namespace UI.ViewModel
     public ServerTabViewModel() 
       : base(NameKey, SettingsTabCategory.Server)
     {
-      ServerPort = Settings.Current.Port;
-      ServicePort = Settings.Current.ServicePort;
-      DefaultSevicePort = Settings.Current.ServicePort == 0;
+      ServerPort = Settings.Current.ServerPort;
+      ServicePort = Settings.Current.ServerP2PPort;
+      DefaultSevicePort = Settings.Current.ServerP2PPort == 0;
 
-      IPv4Enabled = !Settings.Current.StateOfIPv6Protocol;
-      IPv6Enabled = Settings.Current.StateOfIPv6Protocol;
+      IPv4Enabled = !Settings.Current.ServerUseIpv6;
+      IPv6Enabled = Settings.Current.ServerUseIpv6;
     }
 
     public override void SaveSettings()
     {
-      Settings.Current.Port = ServerPort;
-      Settings.Current.ServicePort = DefaultSevicePort ? 0 : ServicePort;
-      Settings.Current.StateOfIPv6Protocol = IPv6Enabled;
+      Settings.Current.ServerPort = ServerPort;
+      Settings.Current.ServerP2PPort = DefaultSevicePort ? 0 : ServicePort;
+      Settings.Current.ServerUseIpv6 = IPv6Enabled;
     }
   }
 }

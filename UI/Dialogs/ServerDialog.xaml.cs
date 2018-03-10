@@ -18,10 +18,10 @@ namespace UI.Dialogs
       GreenColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.G;
       BlueColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.B;
 
-      PortField.Text = Settings.Current.Port.ToString();
+      PortField.Text = Settings.Current.ServerPort.ToString();
 
-      UsingIPv6RadBtn.IsChecked = Settings.Current.StateOfIPv6Protocol;
-      UsingIPv4RadBtn.IsChecked = !Settings.Current.StateOfIPv6Protocol;
+      UsingIPv6RadBtn.IsChecked = Settings.Current.ServerUseIpv6;
+      UsingIPv4RadBtn.IsChecked = !Settings.Current.ServerUseIpv6;
     }
 
     private void Accept_Click(object sender, RoutedEventArgs e)
@@ -34,7 +34,7 @@ namespace UI.Dialogs
 
       Settings.Current.Nick = NickField.Text;
       Settings.Current.NickColor = Color.FromArgb((int)RedColorSlider.Value, (int)GreenColorSlider.Value, (int)BlueColorSlider.Value);
-      Settings.Current.StateOfIPv6Protocol = UsingIPv6RadBtn.IsChecked == true;
+      Settings.Current.ServerUseIpv6 = UsingIPv6RadBtn.IsChecked == true;
       Settings.Current.RandomColor = false;
 
       try
@@ -44,7 +44,7 @@ namespace UI.Dialogs
         if (port > ushort.MaxValue)
           throw new FormatException();
 
-        Settings.Current.Port = port;
+        Settings.Current.ServerPort = port;
       }
       catch (FormatException)
       {

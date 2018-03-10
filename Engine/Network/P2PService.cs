@@ -10,7 +10,6 @@ using System.Threading;
 
 namespace Engine.Network
 {
-  // TODO: rus
   public sealed class P2PService : IDisposable
   {
     #region nested types
@@ -57,10 +56,10 @@ namespace Engine.Network
 
     #region constructors
     /// <summary>
-    /// Создает экземпляр сервиса для функционирования UDP hole punching.
+    /// Creates instance that responses for UDP hole punching.
     /// </summary>
-    /// <param name="port">UDP порт сервиса. Для входящих данных.</param>
-    /// <param name="usingIPv6">Использовать IPv6.</param>
+    /// <param name="port">UDP service port for input data.</param>
+    /// <param name="usingIPv6">Is ipv6 will be used.</param>
     [SecurityCritical]
     public P2PService(IApi api, Logger logger, int port, bool usingIPv6)
     {
@@ -93,7 +92,7 @@ namespace Engine.Network
 
     #region properties
     /// <summary>
-    /// Порт сервиса.
+    /// Port service.
     /// </summary>
     public int Port
     {
@@ -108,10 +107,10 @@ namespace Engine.Network
 
     #region public methods
     /// <summary>
-    /// Соединяет напрямую двух пользователей.
+    /// Connects two users directly.
     /// </summary>
-    /// <param name="senderId">Соединение которое прислало запрос.</param>
-    /// <param name="requestId">Соединение получащее ответ.</param>
+    /// <param name="senderId">Connection that sent request.</param>
+    /// <param name="requestId">Connection that will receive response.</param>
     [SecuritySafeCritical]
     public void Introduce(string senderId, string requestId)
     {

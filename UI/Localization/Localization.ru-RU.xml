@@ -96,6 +96,7 @@
 
   <row key="connectDialog-title" value="Соединение"/>
   <row key="connectDialog-ipAddress" value="IP - Адрес"/>
+  <row key="connectDialog-fieldsError" value="Проверьте правильность заполнения всех полей."/>
 
   <row key="createRoomDialog-title" value="Создание комнаты"/>
   <row key="createRoomDialog-roomName" value="Название комнаты"/>
@@ -104,7 +105,7 @@
   <row key="postedFilesDialog-title" value="Распространяемые файлы"/>
 
   <row key="mainViewModel-paramsError" value="Ошибка входных данных."/>
-  <row key="mainViewModel-clientNotCreated" value="Клинет не соединен ни с каким сервером. Установите соединение."/>
+  <row key="mainViewModel-clientNotCreated" value="Клиент не соединен ни с каким сервером. Установите соединение."/>
   <row key="mainViewModel-apiNotSupported" value="Приложение не поддерживает эту версию API ({0}). Соединение разорвано."/>
   <row key="mainViewModel-roomExitQuestion" value="Вы действительно хотите выйти из комнаты?"/>
   <row key="mainViewModel-roomCloseQuestion" value="Вы точно хотите закрыть комнату?"/>
@@ -130,7 +131,7 @@
   <row key="roomViewModel-allInRoom" value="Все в комнате"/>
   <row key="userViewModel-userNotExist" value="Пользователь не существует."/>
 
-  <row key="errorCode-APINotSupported" value="Данная версия апи не поддерживается клиентом. Вам вероятно нужно обноавить клиент или сервер."/>
+  <row key="errorCode-APINotSupported" value="Данная версия апи не поддерживается клиентом. Вам вероятно нужно обновить клиент или сервер."/>
   <row key="errorCode-FileAlreadyDownloading" value="Файл уже загружается."/>
   <row key="errorCode-FreePortDontFound" value="Свободный tcp/udp порт не найден."/>
   <row key="errorCode-LargeReceivedData" value="Входящие данные имеют слишком большой размер."/>

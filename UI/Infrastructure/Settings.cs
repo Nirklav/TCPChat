@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Engine.Network;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Net;
 using System.Xml.Serialization;
 using Keys = System.Windows.Forms.Keys;
 
@@ -50,10 +52,12 @@ namespace UI.Infrastructure
 
         FormSize = new Size(380, 470),
         Alerts = true,
-        Address = "127.0.0.1",
-        Port = 10021,
-        ServicePort = 10022,
-        StateOfIPv6Protocol = false,
+
+        Uri = Connection.CreateTcpchatUri(new IPAddress(new byte[] { 127, 0, 0, 1 }), 10021),
+
+        ServerPort = 10021,
+        ServerP2PPort = 10022,
+        ServerUseIpv6 = false,
 
         RecorderKey = Keys.E,
         Frequency = 44100,
@@ -85,10 +89,11 @@ namespace UI.Infrastructure
     public Size FormSize { get; set; }
     public bool Alerts { get; set; }
 
-    public string Address { get; set; }
-    public int Port { get; set; }
-    public int ServicePort { get; set; }
-    public bool StateOfIPv6Protocol { get; set; }
+    public string Uri { get; set; }
+
+    public int ServerPort { get; set; }
+    public int ServerP2PPort { get; set; }
+    public bool ServerUseIpv6 { get; set; }
     
     public Keys RecorderKey { get; set; }
     public string OutputAudioDevice { get; set; }

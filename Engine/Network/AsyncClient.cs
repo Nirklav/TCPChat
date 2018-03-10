@@ -49,7 +49,7 @@ namespace Engine.Network
     [SecurityCritical] private readonly Timer _timer;
     [SecurityCritical] private readonly Logger _logger;
 
-    [SecurityCritical] private IPEndPoint _hostAddress;
+    [SecurityCritical] private Uri _serverUri;
     [SecurityCritical] private bool _connecting;
     [SecurityCritical] private bool _reconnect;
     [SecurityCritical] private bool _reconnecting;
@@ -107,24 +107,72 @@ namespace Engine.Network
     /// <summary>
     /// Client connects to the server.
     /// </summary>
-    /// <param name="hostAddress">Host address.</param>
+    /// <param name="serverUri">Server uri.</param>
     [SecurityCritical]
-    public void Connect(IPEndPoint hostAddress)
+    public void Connect(Uri serverUri)
     {
       ThrowIfDisposed();
+
+      if (!serverUri.Scheme.Equals(TcpChatScheme, StringComparison.OrdinalIgnoreCase))
+        throw new ArgumentException("Invalid host scheme");
 
       if (IsConnected || _connecting)
         throw new InvalidOperationException("Client already connected");
 
-      _connecting = true;
-      _hostAddress = hostAddress;
-
-      Socket handler = new Socket(hostAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-      handler.BeginConnect(hostAddress, OnConnected, handler);
+      switch (serverUri.HostNameType)
+      {
+        case UriHostNameType.IPv4:
+        case UriHostNameType.IPv6:
+        case UriHostNameType.Dns:
+          _connecting = true;
+          _serverUri = serverUri;
+          Dns.BeginGetHostAddresses(serverUri.Host, OnGetHostAddresses, null);
+          break;
+        default:
+          throw new ArgumentException("Not supported uri address");
+      }
     }
     #endregion
 
     #region private/protected override methods
+    [SecurityCritical]
+    private void OnGetHostAddresses(IAsyncResult result)
+    {
+      if (IsClosed)
+        return;
+
+      try
+      {
+        var addresses = Dns.EndGetHostAddresses(result);
+        if (addresses.Length > 0)
+        {
+          var address = addresses[0];
+          var endPoint = new IPEndPoint(address, _serverUri.Port);
+          var handler = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+          handler.BeginConnect(endPoint, OnConnected, handler);
+        }
+        else
+        {
+          throw new InvalidOperationException("Addresses are empty");
+        }
+      }
+      catch (SocketException se)
+      {
+        if (ReconnectErrors.Contains(se.SocketErrorCode))
+          _reconnecting = true;
+        else
+        {
+          _notifier.Connected(new ConnectEventArgs(se));
+          _logger.Write(se);
+        }
+      }
+      catch (Exception e)
+      {
+        _notifier.Connected(new ConnectEventArgs(e));
+        _logger.Write(e);
+      }
+    }
+
     [SecurityCritical]
     private void OnConnected(IAsyncResult result)
     {
@@ -254,7 +302,7 @@ namespace Engine.Network
       _notifier.ReceiveMessage(args);
 
       Clean();
-      Connect(_hostAddress);
+      Connect(_serverUri);
 
       _reconnecting = false;
       _lastReconnect = DateTime.UtcNow;

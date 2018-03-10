@@ -206,7 +206,14 @@ namespace Engine.Api.Server.Admin
               return -1;
             return messageId;
           })
+          .Where(id => id > 0)
           .ToArray();
+
+        if (messageIds.Length == 0)
+        {
+          ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+          return;
+        }
 
         var room = server.Chat.TryGetRoom(name);
         if (room == null)
