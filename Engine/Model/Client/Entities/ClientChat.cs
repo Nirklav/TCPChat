@@ -31,7 +31,7 @@ namespace Engine.Model.Client.Entities
     /// <summary>
     /// Current user.
     /// </summary>
-    public User User
+    public ClientUser User
     {
       [SecuritySafeCritical]
       get { return _user; }

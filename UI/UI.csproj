@@ -110,6 +110,9 @@
     <Compile Include="Dialogs\CreateRoomDialog.xaml.cs">
       <DependentUpon>CreateRoomDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialogs\GenerateCertificateDialog.xaml.cs">
+      <DependentUpon>GenerateCertificateDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ViewModel\PostedFilesViewModel.cs" />
     <Compile Include="View\PostedFilesView.xaml.cs">
       <DependentUpon>PostedFilesView.xaml</DependentUpon>
@@ -152,6 +155,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\CreateRoomDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialogs\GenerateCertificateDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

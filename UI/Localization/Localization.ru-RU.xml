@@ -2,13 +2,19 @@
 <Localization>
   <row key="accept" value="Принять"/>
   <row key="cancel" value="Отмена"/>
+  <row key="create" value="Создать"/>
   <row key="ok" value="Ок"/>
   <row key="delete" value="Удалить"/>
   <row key="nick" value="Ник"/>
   <row key="nickColor" value="Настройка цвета"/>
   <row key="port" value="Порт"/>
+  <row key="serverAddress" value="Адрес сервера"/>
   <row key="protocol" value="Протокол"/>
-
+  <row key="fieldsError" value="Проверьте правильность заполнения всех полей."/>
+  <row key="certificatePath" value="Путь к сертификату"/>
+  <row key="generateCertificate" value="Сегенерировать сертификат"/>
+  <row key="password" value="Пароль"/>
+  
   <row key="systemMessage-ApiNotSupported" value="Данный API не поддерживается сервером."/>
   <row key="systemMessage-ConnectionRetryAttempt" value="Попытка соединения с сервером..."/>
   <row key="systemMessage-NotRegisteredBadName" value="Соединение не может быть зарегистрировано с таким ником. Выберите другой."/>
@@ -32,7 +38,9 @@
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Редактировать"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>
+  
   <row key="userTemplate-SetRoomAdmin" value="Назначить администратором"/>
+  
   <row key="menu-header-connect" value="Соединение"/>
   <row key="menu-connect" value="Подключиться"/>
   <row key="menu-disconnect" value="Разорвать соединение"/>
@@ -94,10 +102,13 @@
   <row key="aboutProgram-author" value="Автор"/>
   <row key="aboutProgram-feedback" value="Обратная связь"/>
 
-  <row key="connectDialog-title" value="Соединение"/>
-  <row key="connectDialog-ipAddress" value="IP - Адрес"/>
-  <row key="connectDialog-fieldsError" value="Проверьте правильность заполнения всех полей."/>
+  <row key="serverDialog-title" value="Сервер"/>
 
+  <row key="connectDialog-title" value="Соединение"/>
+  <row key="connectDialog-uri" value="Адрес сервера"/>
+
+  <row key="generateCertificateDialog-title" value="Сгенерировать сертификат"/>
+  
   <row key="createRoomDialog-title" value="Создание комнаты"/>
   <row key="createRoomDialog-roomName" value="Название комнаты"/>
   <row key="createRoomDialog-audioRoom" value="Голосовая"/>
@@ -129,6 +140,7 @@
   <row key="roomViewModel-kickFormRoomTitle" value="Удалить из комнаты"/>
   <row key="roomViewModel-nobodyToInvite" value="Некого пригласить. Все и так в комнате."/>
   <row key="roomViewModel-allInRoom" value="Все в комнате"/>
+  
   <row key="userViewModel-userNotExist" value="Пользователь не существует."/>
 
   <row key="errorCode-APINotSupported" value="Данная версия апи не поддерживается клиентом. Вам вероятно нужно обновить клиент или сервер."/>

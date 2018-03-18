@@ -42,7 +42,7 @@
                  Grid.Row="0"
                  Margin="2.5, 0, 0, 2.5"
                  Text="{Binding ElementName=MainWindow,
-                                Path=DataContext.SelectedTab.ServerPort,
+                                Path=DataContext.SelectedTab.ServerAddress,
                                 Mode=TwoWay,
                                 UpdateSourceTrigger=PropertyChanged}"/>
 

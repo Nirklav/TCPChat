@@ -58,10 +58,12 @@ namespace Engine.Network
     /// <summary>
     /// Creates instance that responses for UDP hole punching.
     /// </summary>
+    /// <param name="address">Address of p2p service.</param>
     /// <param name="port">UDP service port for input data.</param>
-    /// <param name="usingIPv6">Is ipv6 will be used.</param>
+    /// <param name="api">Server api.</param>
+    /// <param name="logger">Server logger.</param>
     [SecurityCritical]
-    public P2PService(IApi api, Logger logger, int port, bool usingIPv6)
+    public P2PService(IPAddress address, int port, IApi api, Logger logger)
     {
       _clientsEndPoints = new Dictionary<string, ClientDescription>();
       _connectingClients = new HashSet<string>();
@@ -70,11 +72,10 @@ namespace Engine.Network
       _api = api;
       _logger = logger;
       
-      NetPeerConfiguration config = new NetPeerConfiguration(AsyncPeer.NetConfigString);
+      var config = new NetPeerConfiguration(AsyncPeer.NetConfigString);
       config.MaximumConnections = 100;
+      config.LocalAddress = address;
       config.Port = port;
-      if (usingIPv6)
-        config.LocalAddress = IPAddress.IPv6Any;
 
       _server = new NetServer(config);
       _syncContext = new EngineSyncContext();

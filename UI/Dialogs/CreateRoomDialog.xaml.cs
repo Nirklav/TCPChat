@@ -1,5 +1,6 @@
 ﻿using Engine.Model.Common.Entities;
 using System.Windows;
+using UI.Infrastructure;
 
 namespace UI.Dialogs
 {
@@ -20,7 +21,7 @@ namespace UI.Dialogs
 
       if (string.IsNullOrEmpty(Name))
       {
-        MessageBox.Show(this, "Проверьте правильность заполнения всех полей.", "TCP Chat");
+        MessageBox.Show(this, Localizer.Instance.Localize("fieldsError"), "TCP Chat");
         return;
       }
 

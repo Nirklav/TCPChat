@@ -41,11 +41,9 @@ namespace Engine.Network
     [SecurityCritical]
     public void SetKey(byte[] key)
     {
-      if (key == null)
-        throw new ArgumentNullException("key");
       if (_key != null)
         throw new InvalidOperationException("Key already set");
-      _key = key;
+      _key = key ?? throw new ArgumentNullException("key");
     }
 
     [SecurityCritical]

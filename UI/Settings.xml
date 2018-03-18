@@ -14,10 +14,10 @@
     <Height>470</Height>
   </FormSize>
   <Alerts>true</Alerts>
-  <Uri>tcpchat://93.170.186.160:10021/</Uri>
-  <ServerPort>10021</ServerPort>
-  <ServerP2PPort>10022</ServerP2PPort>
-  <ServerUseIpv6>false</ServerUseIpv6>
+  <ServerAddress>93.170.186.160:10021</ServerAddress>
+  <ServerStartAddress>0.0.0.0:10021</ServerStartAddress>
+  <ServerStartP2PPort>10022</ServerStartP2PPort>
+  <ServerStartUseIpv6>false</ServerStartUseIpv6>
   <RecorderKey>E</RecorderKey>
   <Frequency>44100</Frequency>
   <Bits>16</Bits>

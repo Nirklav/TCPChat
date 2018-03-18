@@ -2,13 +2,13 @@
 using System;
 using System.Net.Sockets;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace Engine.Network
 {
-  // TODO: rus
   /// <summary>
-  /// Серверное соединение с клиентом.
+  /// Server connection to client.
   /// </summary>
   sealed class ServerConnection :
     Connection
@@ -38,17 +38,18 @@ namespace Engine.Network
     #region constructors
 
     /// <summary>
-    /// Создает серверное подключение.
+    /// Creates server connection.
     /// </summary>
-    /// <param name="handler">Подключенный к клиенту сокет.</param>
-    /// <param name="apiName">Текущая версия Api.</param>
+    /// <param name="handler">Connected to client socket.</param>
+    /// <param name="certificate">Server certificate.</param>
+    /// <param name="apiName">Current api version.</param>
     /// <param name="logger">Logger</param>
-    /// <param name="receivedCallback">Функция обратного вызова, для полученных данных.</param>
+    /// <param name="receivedCallback">Callback for received data.</param>
     [SecurityCritical]
-    public ServerConnection(Socket handler, string apiName, Logger logger, EventHandler<PackageReceivedEventArgs> receivedCallback)
-      : base(logger)
+    public ServerConnection(Socket handler, X509Certificate2 certificate, string apiName, Logger logger, EventHandler<PackageReceivedEventArgs> receivedCallback)
+      : base(certificate, logger)
     {
-      Construct(handler);
+      Construct(handler, ConnectionState.HandshakeRequestWait);
 
       _serverApiName = apiName;
       _createTime = DateTime.UtcNow;
@@ -62,7 +63,7 @@ namespace Engine.Network
 
     #region properties
     /// <summary>
-    /// Интервал нективности подключения.
+    /// Interval of time that connection not send any messages to server.
     /// </summary>
     public int SilenceInterval
     {
@@ -75,7 +76,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Интервал незарегистрированности соединения.
+    /// Interval of time that connection not registering on server.
     /// </summary>
     public int UnregisteredInterval
     {
@@ -88,7 +89,7 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Возвращает значение характеризующее зарегистрированно соединение или нет.
+    /// Returns that connection is registered or not.
     /// </summary>
     public bool IsRegistered
     {
@@ -103,9 +104,20 @@ namespace Engine.Network
 
     #region public methods
     /// <summary>
-    /// Регистрирует данное соединение.
+    /// Sends server info to client side. This method starts handshake protocol.
     /// </summary>
-    /// <param name="newId">Идентификатор соединения.</param>
+    [SecurityCritical]
+    public void SendServerInfo()
+    {
+      var info = new ServerInfo();
+      info.ApiName = _serverApiName;
+      SendMessage(ServerInfo, info);
+    }
+
+    /// <summary>
+    /// Registers connection with new id.
+    /// </summary>
+    /// <param name="newId">New connection identifier.</param>
     [SecurityCritical]
     public void Register(string newId)
     {
@@ -115,14 +127,6 @@ namespace Engine.Network
     #endregion
 
     #region override methods
-    [SecuritySafeCritical]
-    protected override ConnectionInfo CreateConnectionInfo()
-    {
-      var info = new ServerConnectionInfo();
-      info.ApiName = _serverApiName;
-      return info;
-    }
-
     [SecuritySafeCritical]
     protected override void OnPackagePartReceived()
     {

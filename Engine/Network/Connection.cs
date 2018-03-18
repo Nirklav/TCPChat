@@ -6,8 +6,9 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security;
-using System.Security.Cryptography;
 using Engine.Helpers;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
 
 namespace Engine.Network
 {
@@ -18,10 +19,24 @@ namespace Engine.Network
     MarshalByRefObject,
     IDisposable
   {
-    #region consts
-    private const long RemoteInfoId = 1;
+    #region nested types
+    protected enum ConnectionState
+    {
+      Disconnected,
+      ServerInfoWait,
+      HandshakeRequestWait,
+      HandshakeResponseWait,
+      HandshakeAcceptWait,
+      Connected
+    }
+    #endregion
 
-    private const int KeySize = 256;
+    #region consts
+    protected const long ServerInfo = 1;
+    protected const long HandshakeRequest = 2;
+    protected const long HandshakeResponse = 3;
+    protected const long HandshakeAccepted = 4;
+    
     private const int BufferSize = 4096;
     private const int MaxReceivedDataSize = 1024 * 1024;
     public const string TempConnectionPrefix = "tempId_";
@@ -29,16 +44,18 @@ namespace Engine.Network
     #endregion
 
     #region fields
+    [SecurityCritical] private X509Certificate2 _localCertiticate;
+    [SecurityCritical] private X509Certificate2 _remoteCertiticate;
+
     [SecurityCritical] private string _id;
     [SecurityCritical] private Socket _handler;
-
-    [SecurityCritical] private ConnectionInfo _remoteInfo;
-    [SecurityCritical] private bool _connectionInfoSent;
+    [SecurityCritical] private ConnectionState _state;
+    [SecurityCritical] private byte[] _generatedKey;
+    [SecurityCritical] private CertificateStatus _remoteCertificateStatus;
 
     [SecurityCritical] private MemoryStream _received;
     [SecurityCritical] private byte[] _buffer;
     [SecurityCritical] private Packer _packer;
-    [SecurityCritical] private ECDiffieHellmanCng _diffieHellman;
 
     [SecurityCritical] private Logger _logger;
 
@@ -47,28 +64,28 @@ namespace Engine.Network
 
     #region constructors
     [SecurityCritical]
-    public Connection(Logger logger)
+    protected Connection(X509Certificate2 certificate, Logger logger)
     {
+      _localCertiticate = certificate;
+      _state = ConnectionState.Disconnected;
       _logger = logger;
     }
 
     [SecurityCritical]
-    protected void Construct(Socket handler)
+    protected void Construct(Socket handler, ConnectionState state)
     {
       if (handler == null)
-        throw new ArgumentNullException("handler");
+        throw new ArgumentNullException(nameof(handler));
 
       if (!handler.Connected)
         throw new ArgumentException("Socket should be connected.");
 
       _handler = handler;
+      _state = state;
 
       _received = new MemoryStream();
       _buffer = new byte[BufferSize];
       _packer = new Packer();
-      _diffieHellman = new ECDiffieHellmanCng(KeySize);
-      _diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-      _diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
 
       _handler.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, OnReceive, null);
     }
@@ -87,6 +104,37 @@ namespace Engine.Network
       {
         ThrowIfDisposed();
         _id = value;
+      }
+    }
+
+    /// <summary>
+    /// Returns local certiticate.
+    /// </summary>
+    public X509Certificate2 LocalCertificate
+    {
+      [SecurityCritical]
+      get { return _localCertiticate; }
+    }
+
+    /// <summary>
+    /// Returns remote certiticare.
+    /// </summary>
+    public X509Certificate2 RemoteCertiticate
+    {
+      [SecurityCritical]
+      get { return _remoteCertiticate; }
+    }
+
+    /// <summary>
+    /// Returns remote certificate validation status. 
+    /// </summary>
+    public CertificateStatus RemoteCertificateStatus
+    {
+      [SecurityCritical]
+      get
+      {
+        ThrowIfDisposed();
+        return _remoteCertificateStatus;
       }
     }
 
@@ -187,22 +235,6 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Send connection info.
-    /// </summary>
-    [SecurityCritical]
-    public void SendInfo()
-    {
-      if (_connectionInfoSent)
-        throw new InvalidOperationException("Connection info already sent");
-
-      _connectionInfoSent = true;
-
-      var info = CreateConnectionInfo();
-      info.PublicKey = _diffieHellman.PublicKey.ToByteArray();
-      SendMessage(RemoteInfoId, info);
-    }
-
-    /// <summary>
     /// Starts disconnect from remote.
     /// </summary>
     [SecurityCritical]
@@ -258,11 +290,23 @@ namespace Engine.Network
 
             switch (unpacked.Package.Id)
             {
-              case RemoteInfoId:
-                if (!_connectionInfoSent)
-                  SendInfo();
-
-                SetRemoteInfo(unpacked.Package);
+              case ServerInfo:
+                var info = (IPackage<ServerInfo>)unpacked.Package;
+                OnServerInfo(info.Content);
+                unpacked.Dispose();
+                break;
+              case HandshakeRequest:
+                var request = (IPackage<HandshakeRequest>)unpacked.Package;
+                OnHandshakeRequest(request.Content);
+                unpacked.Dispose();
+                break;
+              case HandshakeResponse:
+                var response = (IPackage<HandshakeResponse>)unpacked.Package;
+                OnHandshakeResponse(response.Content);
+                unpacked.Dispose();
+                break;
+              case HandshakeAccepted:
+                OnHandshakeAccepted();
                 unpacked.Dispose();
                 break;
               default:
@@ -332,16 +376,149 @@ namespace Engine.Network
 
     #region protected virtual/abstract methods
     /// <summary>
-    /// Creates the object that contains info about connection.
+    /// Invokes when connection receive version info.
     /// </summary>
     [SecuritySafeCritical]
-    protected virtual ConnectionInfo CreateConnectionInfo() { return new ConnectionInfo(); }
+    protected virtual void OnServerInfo(ServerInfo info)
+    {
+      try
+      {
+        if (_state != ConnectionState.ServerInfoWait)
+          throw new InvalidOperationException("Connection must be in ServerInfoWait state");
+
+        _state = ConnectionState.HandshakeResponseWait;
+
+        var request = new HandshakeRequest();
+        request.RawX509Certificate = _localCertiticate.Export(X509ContentType.Cert);
+        SendMessage(HandshakeRequest, request);
+      }
+      catch (Exception e)
+      {
+        OnHandshakeException(e);
+      }
+    }
 
     /// <summary>
-    /// Invokes when connection receive info about remote connection.
+    /// Invokes when connection receive request handshake from remote connection.
     /// </summary>
     [SecuritySafeCritical]
-    protected virtual void OnInfoReceived(ConnectionInfo info) { }
+    protected virtual void OnHandshakeRequest(HandshakeRequest request)
+    {
+      try
+      {
+        if (_state != ConnectionState.HandshakeRequestWait)
+          throw new InvalidOperationException("Connection must be in HandshakeRequestWait state");
+
+        var remoteCertificate = new X509Certificate2(request.RawX509Certificate);
+        if (remoteCertificate.HasPrivateKey)
+          throw new InvalidOperationException("Remote certificate has private key");
+
+        ValidateCertificate(remoteCertificate);
+        _remoteCertiticate = remoteCertificate;
+
+        byte[] key;
+        using (var rng = new RNGCryptoServiceProvider())
+        {
+          _generatedKey = new byte[32];
+          rng.GetBytes(_generatedKey);
+
+          var alg = _remoteCertiticate.PublicKey.Key;
+          if (alg is RSACryptoServiceProvider rsa)
+            key = rsa.Encrypt(_generatedKey, false);
+          else
+            throw new InvalidOperationException("not supported key algorithm");
+        }
+
+        SendMessage(HandshakeResponse, new HandshakeResponse
+        {
+          AlgorithmId = AlgorithmId.Aes256CBC,
+          EncryptedKey = key,
+          RawX509Certificate = _localCertiticate.Export(X509ContentType.Cert)
+        });
+
+        _state = ConnectionState.HandshakeAcceptWait;
+      }
+      catch (Exception e)
+      {
+        _remoteCertiticate = null;
+
+        OnHandshakeException(e);
+      }
+    }
+
+    /// <summary>
+    /// Invokes when connection receive response handshake from remote connection.
+    /// </summary>
+    [SecuritySafeCritical]
+    protected virtual void OnHandshakeResponse(HandshakeResponse response)
+    {
+      try
+      {
+        if (_state != ConnectionState.HandshakeResponseWait)
+          throw new InvalidOperationException("Connection must be in HandshakeResponseWait state");
+
+        var remoteCertificate = new X509Certificate2(response.RawX509Certificate);
+        if (remoteCertificate.HasPrivateKey)
+          throw new InvalidOperationException("Remote certificate has private key");
+
+        if (!ValidateCertificate(remoteCertificate))
+          throw new InvalidOperationException("Remote certiticate not validated");
+
+        _remoteCertiticate = remoteCertificate;
+
+        byte[] clearKey;
+        var alg = _localCertiticate.PrivateKey;
+        if (alg is RSACryptoServiceProvider rsa)
+          clearKey = rsa.Decrypt(response.EncryptedKey, false);
+        else
+          throw new InvalidOperationException("not supported key algorithm");
+
+        SendMessage(HandshakeAccepted);
+
+        _packer.SetKey(clearKey);
+        _state = ConnectionState.Connected;
+      }
+      catch (Exception e)
+      {
+        _remoteCertiticate = null;
+
+        OnHandshakeException(e);
+      }
+    }
+
+    /// <summary>
+    /// Invokes when remote connection accepted handshake.
+    /// </summary>
+    [SecuritySafeCritical]
+    protected virtual void OnHandshakeAccepted()
+    {
+      try
+      {
+        if (_state != ConnectionState.HandshakeAcceptWait)
+          throw new InvalidOperationException("Connection must be in HandshakeAcceptWait state");
+
+        _packer.SetKey(_generatedKey);
+        _generatedKey = null;
+        _state = ConnectionState.Connected;
+      }
+      catch (Exception e)
+      {
+        OnHandshakeException(e);
+      }
+    }
+
+    /// <summary>
+    /// Validates certificate.
+    /// </summary>
+    /// <param name="remote">Remote certiticate that should be validated.</param>
+    /// <returns>Method returns true if certificate is valid otherwise false.</returns>
+    [SecuritySafeCritical]
+    protected virtual bool ValidateCertificate(X509Certificate2 remote)
+    {
+      _remoteCertificateStatus = GetCertificateValidationStatus(remote);
+      return _remoteCertificateStatus == CertificateStatus.SelfSigned
+        || _remoteCertificateStatus == CertificateStatus.Trusted;
+    }
 
     /// <summary>
     /// Invokes when connection receive package.
@@ -369,31 +546,22 @@ namespace Engine.Network
     [SecuritySafeCritical]
     protected virtual void OnDisconnected(Exception e) { }
 
-    // TODO: rus
     /// <summary>
-    /// Происходит при SocketException. Без переопределение возращает всегда false.
+    /// Invokes when in handshake protocol an exception was thrown.
     /// </summary>
-    /// <param name="se">Словленое исключение.</param>
-    /// <returns>Вовзращает значение говорящее о том, нужно ли дальше выкидывать исключение или оно обработано. true - обработано. false - не обработано.</returns>
+    [SecuritySafeCritical]
+    protected virtual void OnHandshakeException(Exception e)
+    {
+      _logger.Write(e);
+    }
+
+    /// <summary>
+    /// Provides an possibility to process SocketException. If exception was processed method should returns true. By default method returns false.
+    /// </summary>
+    /// <param name="se">Catched exceptions.</param>
+    /// <returns>If exception was processed method should returns true otherwise false.</returns>
     [SecuritySafeCritical]
     protected virtual bool OnSocketException(SocketException se) { return false; }
-    #endregion
-
-    #region private methods
-    [SecurityCritical]
-    private void SetRemoteInfo(IPackage package)
-    {
-      var remoteInfoPack = package as IPackage<ConnectionInfo>;
-      if (remoteInfoPack == null)
-        throw new ArgumentException("package isn't IPackage<ConnectionInfo>");
-
-      // Set key
-      _remoteInfo = remoteInfoPack.Content;
-      var publicKey = CngKey.Import(_remoteInfo.PublicKey, CngKeyBlobFormat.EccPublicBlob);
-      _packer.SetKey(_diffieHellman.DeriveKeyMaterial(publicKey));
-
-      OnInfoReceived(_remoteInfo);
-    }
     #endregion
 
     #region IDisposable
@@ -433,24 +601,15 @@ namespace Engine.Network
         _handler = null;
       }
 
-      if (_diffieHellman != null)
-      {
-        _diffieHellman.Dispose();
-        _diffieHellman = null;
-      }
-
       if (_received != null)
       {
         _received.Dispose();
         _received = null;
       }
-
-      _connectionInfoSent = false;
-      _remoteInfo = null;
     }
 
     /// <summary>
-    /// Cealn the connection. After call connection cannot be reused.
+    /// Clean the connection. After call connection cannot be reused.
     /// </summary>
     [SecuritySafeCritical]
     protected virtual void DisposeManagedResources()
@@ -470,18 +629,70 @@ namespace Engine.Network
     #endregion
 
     #region utils
+    public static CertificateStatus GetCertificateValidationStatus(X509Certificate2 certificate)
+    {
+      var chain = new X509Chain();
+      chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+      if (!chain.Build(certificate))
+        return CertificateStatus.Untrusted;
+      else
+      {
+        if (chain.ChainStatus.Any(s => s.Status == X509ChainStatusFlags.UntrustedRoot))
+        {
+          if (certificate.Issuer == certificate.Subject)
+            return CertificateStatus.SelfSigned;
+          else
+            return CertificateStatus.Untrusted;
+        }
+        return CertificateStatus.Trusted;
+      }
+    }
+
     /// <summary>
     /// Creates tcp chat uri.
     /// </summary>
     /// <param name="address">Server address.</param>
     /// <param name="port">Server port.</param>
     /// <returns>Uri of TcpChat server.</returns>
-    public static string CreateTcpchatUri(IPAddress address, int port)
+    public static Uri CreateTcpchatUri(IPAddress address, int port)
     {
       if (address.AddressFamily == AddressFamily.InterNetwork)
-        return string.Format("{0}://{1}:{2}/", TcpChatScheme, address, port);
+        return new Uri(string.Format("{0}://{1}:{2}/", TcpChatScheme, address, port));
       if (address.AddressFamily == AddressFamily.InterNetworkV6)
-        return string.Format("{0}://[{1}]:{2}/", TcpChatScheme, address, port);
+        return new Uri(string.Format("{0}://[{1}]:{2}/", TcpChatScheme, address, port));
+      throw new ArgumentException("Not supported address");
+    }
+
+    /// <summary>
+    /// Creates tcp chat uri.
+    /// </summary>
+    /// <param name="hostOrAddress">Host or address.</param>
+    /// <returns>Uri of TcpChat server.</returns>
+    public static Uri CreateTcpchatUri(string hostOrAddress)
+    {
+      string hostStr;
+      int port;
+
+      if (hostOrAddress.Contains(':'))
+      {
+        var parts = hostOrAddress.Split(':');
+        hostStr = parts[0];
+        var portStr = parts[1];
+
+        if (!int.TryParse(portStr, out port))
+          throw new ArgumentException("host");
+      }
+      else
+      {
+        hostStr = hostOrAddress;
+        port = 10021;
+      }
+      
+      if (IPAddress.TryParse(hostStr, out var address))
+        return CreateTcpchatUri(address, port);
+      else
+        return new Uri(string.Format("{0}://{1}:{2}/", TcpChatScheme, hostStr, port));
+
       throw new ArgumentException("Not supported address");
     }
 

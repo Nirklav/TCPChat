@@ -8,6 +8,7 @@ using Engine.Model.Common;
 using Engine.Network;
 using Engine.Plugins.Client;
 using System;
+using System.IO;
 using System.Security;
 using System.Threading;
 
@@ -132,13 +133,16 @@ namespace Engine.Model.Client
     [SecurityCritical]
     public static void Init(ClientInitializer initializer)
     {
-      var user = new ClientUser(initializer.Nick, initializer.NickColor);
+      if (!initializer.Certificate.HasPrivateKey)
+        throw new ArgumentException("Initializer should have certificate with private key.");
+
+      var user = new ClientUser(initializer.Nick, initializer.NickColor, initializer.Certificate);
 
       if (Interlocked.CompareExchange(ref _chat, new ClientChat(user), null) != null)
         throw new InvalidOperationException("model already inited");
 
       Api = new ClientApi();
-      Client = new AsyncClient(initializer.Nick, Api, _notifier, _logger);
+      Client = new AsyncClient(initializer.Nick, initializer.Certificate, Api, _notifier, _logger);
       Peer = new AsyncPeer(Api, _notifier, _logger);
 
       Plugins = new ClientPluginManager(initializer.PluginsPath);

@@ -2,12 +2,18 @@
 <Localization>
   <row key="accept" value="Accepter"/>
   <row key="cancel" value="Annuler"/>
+  <row key="create" value="Créer"/>
   <row key="ok" value="Ok"/>
   <row key="delete" value="Supprimer"/>
   <row key="nick" value="Pseudonyme"/>
   <row key="nickColor" value="Paramètres couleurs"/>
   <row key="port" value="Port"/>
+  <row key="serverAddress" value="Adresse du serveur"/>
   <row key="protocol" value="Protocol"/>
+  <row key="fieldsError" value="Vérifiez que tous les champs sont remplis correctement."/>
+  <row key="certificatePath" value="Certificate path"/>
+  <row key="generateCertificate" value="Generate certificate"/>
+  <row key="password" value="Mot de passe"/>
 
   <row key="systemMessage-ApiNotSupported" value="L'API n'est pas supporté par le serveur."/>
   <row key="systemMessage-ConnectionRetryAttempt" value="Tentative de connexion au serveur..."/>
@@ -32,7 +38,9 @@
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Editer"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copier"/>
+  
   <row key="userTemplate-SetRoomAdmin" value="Assigner en tant qu'administrateur."/>
+  
   <row key="menu-header-connect" value="Connexion"/>
   <row key="menu-connect" value="Connecter"/>
   <row key="menu-disconnect" value="Déconnecter"/>
@@ -94,9 +102,12 @@
   <row key="aboutProgram-author" value="Auteur"/>
   <row key="aboutProgram-feedback" value="Feedback"/>
 
+  <row key="serverDialog-title" value="Serveur"/>
+
+  <row key="generateCertificateDialog-title" value="Générer un certificat"/>
+
   <row key="connectDialog-title" value="Connexion"/>
-  <row key="connectDialog-ipAddress" value="Adresse IP"/>
-  <row key="connectDialog-fieldsError" value="Vérifiez que tous les champs sont remplis correctement."/>
+  <row key="connectDialog-uri" value="Serveur uri"/>
 
   <row key="createRoomDialog-title" value="Créer une salle"/>
   <row key="createRoomDialog-roomName" value="Nom"/>
@@ -129,6 +140,7 @@
   <row key="roomViewModel-kickFormRoomTitle" value="Exclure de la salle"/>
   <row key="roomViewModel-nobodyToInvite" value="Personne à inviter. Tout le monde est déjà dans cette salle."/>
   <row key="roomViewModel-allInRoom" value="Tous dans la salle"/>
+  
   <row key="userViewModel-userNotExist" value="Utilisation inexistant"/>
 
   <row key="errorCode-ApiNotSupported" value="L'API du Serveur n'est pas supporté par le client. Il sera probablement nécessaire d'effectuer une MAJ du client ou du serveur."/>

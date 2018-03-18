@@ -3,6 +3,7 @@ using Engine.Model.Common.Entities;
 using System;
 using System.Linq;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Engine.Model.Server.Entities
 {
@@ -25,8 +26,16 @@ namespace Engine.Model.Server.Entities
     {
       var room = GetRoom(roomName);
       return room.Users
-        .Select(n => new UserDto(GetUser(n)))
+        .Select(CreateDto)
         .ToArray();
+    }
+
+    [SecuritySafeCritical]
+    private UserDto CreateDto(string nick)
+    {
+      var user = GetUser(nick);
+      var certificate = ServerModel.Server.GetCertificate(nick);
+      return new UserDto(user, certificate.RawData);
     }
     #endregion
   }

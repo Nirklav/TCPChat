@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Drawing;
+using System.IO;
+using System.Security;
 using System.Windows;
 using UI.Infrastructure;
 
@@ -7,52 +10,65 @@ namespace UI.Dialogs
 {
   public partial class ServerDialog : Window
   {
+    public string ServerAddress { get; private set; }
+    public string CertificatePath { get; private set; }
+    public SecureString CertificatePassword { get; private set; }
+
     public ServerDialog()
     {
       InitializeComponent();
 
-      NickField.Text = Settings.Current.Nick;
+      ServerAddress = ServerAddressField.Text = Settings.Current.ServerStartAddress;
+      CertificatePath = CertificateField.Text = Settings.Current.ServerStartCertificatePath;
+    }
 
-      var colorRandom = new Random();
-      RedColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.R;
-      GreenColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.G;
-      BlueColorSlider.Value = Settings.Current.RandomColor ? colorRandom.Next(30, 170) : Settings.Current.NickColor.B;
-
-      PortField.Text = Settings.Current.ServerPort.ToString();
-
-      UsingIPv6RadBtn.IsChecked = Settings.Current.ServerUseIpv6;
-      UsingIPv4RadBtn.IsChecked = !Settings.Current.ServerUseIpv6;
+    public void SaveSettings()
+    {
+      Settings.Current.ServerStartAddress = ServerAddress;
+      Settings.Current.ServerStartCertificatePath = CertificatePath;
     }
 
     private void Accept_Click(object sender, RoutedEventArgs e)
     {
-      if (NickField.Text == String.Empty || PortField.Text == String.Empty)
-      {
-        MessageBox.Show(this, "Проверьте правильность заполнения всех полей.", "TCP Chat");
-        return;
-      }
-
-      Settings.Current.Nick = NickField.Text;
-      Settings.Current.NickColor = Color.FromArgb((int)RedColorSlider.Value, (int)GreenColorSlider.Value, (int)BlueColorSlider.Value);
-      Settings.Current.ServerUseIpv6 = UsingIPv6RadBtn.IsChecked == true;
-      Settings.Current.RandomColor = false;
-
       try
       {
-        int port = int.Parse(PortField.Text);
-
-        if (port > ushort.MaxValue)
+        if (string.IsNullOrEmpty(ServerAddressField.Text))
           throw new FormatException();
 
-        Settings.Current.ServerPort = port;
+        if (string.IsNullOrEmpty(CertificateField.Text))
+          throw new FormatException();
+
+        if (!File.Exists(CertificateField.Text))
+          throw new FormatException();
+
+        ServerAddress = ServerAddressField.Text;
+        CertificatePath = CertificateField.Text;
+        CertificatePassword = PasswordField.SecurePassword;
+
+        DialogResult = true;
       }
       catch (FormatException)
       {
-        MessageBox.Show(this, "Проверьте правильность заполнения всех полей.", "TCP Chat");
-        return;
+        MessageBox.Show(this, Localizer.Instance.Localize("fieldsError"), "TCP Chat");
       }
+    }
 
-      DialogResult = true;
+    private void SelectCertificatePath_Click(object sender, RoutedEventArgs e)
+    {
+      var fileDialog = new OpenFileDialog();
+      fileDialog.CheckFileExists = true;
+      fileDialog.CheckPathExists = true;
+      fileDialog.Multiselect = false;
+      fileDialog.Filter = "PFX|*.pfx|All files|*.*";
+      if (fileDialog.ShowDialog() == true)
+        CertificateField.Text = fileDialog.FileName;
+    }
+
+    private void GenerateCertificate_Click(object sender, RoutedEventArgs e)
+    {
+      var generateCertificate = new GenerateCertificateDialog(Localizer.Instance.Localize("serverAddress"), "{0}");
+      if (generateCertificate.ShowDialog() == true)
+        CertificateField.Text = generateCertificate.CertificatePath;
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)

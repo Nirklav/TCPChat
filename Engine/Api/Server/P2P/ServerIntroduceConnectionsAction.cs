@@ -37,13 +37,14 @@ namespace Engine.Api.Server.P2P
       using (var server = ServerModel.Get())
       {
         var senderUser = server.Chat.GetUser(_senderId);
+        var certiticate = ServerModel.Server.GetCertificate(_senderId);
         var content = new ClientWaitPeerConnectionCommand.MessageContent
         {
           RequestIpAddress = _requestPoint.Address.GetAddressBytes(),
           RequestPort = _requestPoint.Port,
           SenderIpAddress = _senderPoint.Address.GetAddressBytes(),
           SenderPort = _senderPoint.Port,
-          RemoteInfo = new UserDto(senderUser),
+          RemoteInfo = new UserDto(senderUser, certiticate.RawData),
         };
 
         ServerModel.Server.SendMessage(_requestId, ClientWaitPeerConnectionCommand.CommandId, content);

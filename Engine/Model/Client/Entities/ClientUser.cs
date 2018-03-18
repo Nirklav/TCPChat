@@ -3,6 +3,7 @@ using Engine.Model.Common.Entities;
 using System;
 using System.Drawing;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Engine.Model.Client.Entities
 {
@@ -10,17 +11,19 @@ namespace Engine.Model.Client.Entities
   public class ClientUser : User
   {
     private int _voiceCounter;
+    private X509Certificate2 _certificate;
 
     /// <summary>
     /// Creates new instance of user.
     /// </summary>
     /// <param name="nick">User nick.</param>
     /// <param name="nickColor">Nick color.</param>
+    /// <param name="certificate">User certificate.</param>
     [SecuritySafeCritical]
-    public ClientUser(string nick, Color color)
+    public ClientUser(string nick, Color color, X509Certificate2 certificate)
       : base(nick, color)
     {
-
+      _certificate = certificate;
     }
 
     /// <summary>
@@ -31,7 +34,16 @@ namespace Engine.Model.Client.Entities
     public ClientUser(UserDto dto)
       : base(dto)
     {
+      _certificate = new X509Certificate2(dto.Certificate);
+    }
 
+    /// <summary>
+    /// User certificate.
+    /// </summary>
+    public X509Certificate2 Certificate
+    {
+      [SecuritySafeCritical]
+      get { return _certificate; }
     }
 
     /// <summary>

@@ -20,6 +20,8 @@ namespace Engine.Model.Server
   [Notifier(typeof(IServerEvents), BaseNotifier = typeof(ServerNotifier))]
   public interface IServerNotifier : INotifier
   {
+    void StartError(AsyncErrorEventArgs args);
+
     void ConnectionOpened(ConnectionEventArgs args);
     void ConnectionClosing(ConnectionEventArgs args, Action<Exception> callback);
     void ConnectionClosed(ConnectionEventArgs args);
@@ -30,6 +32,8 @@ namespace Engine.Model.Server
 
   public interface IServerEvents
   {
+    event EventHandler<AsyncErrorEventArgs> StartError;
+
     event EventHandler<ConnectionEventArgs> ConnectionOpened;
     event EventHandler<ConnectionEventArgs> ConnectionClosing;
     event EventHandler<ConnectionEventArgs> ConnectionClosed;

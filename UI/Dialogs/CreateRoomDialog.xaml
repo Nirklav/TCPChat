@@ -10,53 +10,55 @@
         Icon="/TCPChat;component/Images/chat.ico"
         WindowStartupLocation="CenterScreen">
 
-  <Grid>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="Auto"/>
-    </Grid.RowDefinitions>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*"/>
-    </Grid.ColumnDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-    <Label Content="{Infrastructure:Localized createRoomDialog-roomName}"
-           Margin="10, 10, 10, 2"
-           Padding="0"
-           Grid.Row="0"
-			     Grid.Column="0"/>
+        <Label Content="{Infrastructure:Localized createRoomDialog-roomName}"
+               Margin="10, 10, 10, 2"
+               Padding="0"
+               Grid.Row="0"
+		       Grid.Column="0"/>
 
-    <TextBox x:Name="RoomNameTextBox"
-			       Grid.Row="1"
-			       Grid.Column="0"
-			       Margin="10, 2, 10, 5"
-             MaxLength="15"/>
+        <TextBox x:Name="RoomNameTextBox"
+			     Grid.Row="1"
+			     Grid.Column="0"
+                 VerticalAlignment="Stretch"
+                 VerticalContentAlignment="Center"
+			     Margin="10, 2, 10, 5"
+                 MaxLength="15"/>
 
-    <CheckBox x:Name="VoiceRoomCheckBox"
-              Grid.Row="2"
-              Grid.Column="0"
-              Content="{Infrastructure:Localized createRoomDialog-audioRoom}"
-              Margin="10, 5, 10, 5"/>
+        <CheckBox x:Name="VoiceRoomCheckBox"
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Content="{Infrastructure:Localized createRoomDialog-audioRoom}"
+                  Margin="10, 5, 10, 5"/>
 
-    <StackPanel Orientation="Horizontal"
-                HorizontalAlignment="Right"
-                Grid.Row="3"
-                Grid.Column="0">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Grid.Row="3"
+                    Grid.Column="0">
 
-      <Button x:Name="Accept"
-              Content="{Infrastructure:Localized accept}"
-              Margin="10, 5, 5, 10"
-              MinWidth="100"
-              MinHeight="25"
-              Click="Accept_Click"/>
+            <Button x:Name="Accept"
+                    Content="{Infrastructure:Localized accept}"
+                    Margin="10, 5, 5, 10"
+                    MinWidth="100"
+                    MinHeight="25"
+                    Click="Accept_Click"/>
 
-      <Button x:Name="Cancel"
-              Content="{Infrastructure:Localized cancel}"
-              Margin="5, 5, 10, 10"
-              MinWidth="100"
-              MinHeight="25"
-              Click="Cancel_Click"/>
-    </StackPanel>
-  </Grid>
+            <Button x:Name="Cancel"
+                    Content="{Infrastructure:Localized cancel}"
+                    Margin="5, 5, 10, 10"
+                    MinWidth="100"
+                    MinHeight="25"
+                    Click="Cancel_Click"/>
+        </StackPanel>
+    </Grid>
 </Window>

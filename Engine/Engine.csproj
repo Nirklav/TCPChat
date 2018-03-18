@@ -140,6 +140,7 @@
     <Compile Include="EventArgs\RoomOpenedEventArgs.cs" />
     <Compile Include="EventArgs\RoomUsersEventArgs.cs" />
     <Compile Include="EventArgs\ConnectionEventArgs.cs" />
+    <Compile Include="Helpers\CertificateGenerator.cs" />
     <Compile Include="Helpers\EventDispatcher.cs" />
     <Compile Include="Helpers\Serializer.cs" />
     <Compile Include="Audio\IPlayer.cs" />
@@ -183,6 +184,7 @@
     <Compile Include="Model\Server\ServerInitializer.cs" />
     <Compile Include="Network\AsyncClient.cs" />
     <Compile Include="Network\AsyncServer.cs" />
+    <Compile Include="Network\CertificateStatus.cs" />
     <Compile Include="Network\Packed.cs" />
     <Compile Include="Network\Pool.cs" />
     <Compile Include="Network\Connection.cs" />

@@ -3,17 +3,36 @@ using ThirtyNineEighty.BinarySerializer;
 
 namespace Engine.Network
 {
-  [Serializable]
-  [BinType("ConnectionInfo")]
-  public class ConnectionInfo
+  public enum AlgorithmId
   {
-    [BinField("p")]
-    public byte[] PublicKey;
+    Aes256CBC = 0
   }
 
   [Serializable]
-  [BinType("ServerConnectionInfo")]
-  public class ServerConnectionInfo : ConnectionInfo
+  [BinType("HandshakeRequest")]
+  public class HandshakeRequest
+  {
+    [BinField("c")]
+    public byte[] RawX509Certificate;
+  }
+
+  [Serializable]
+  [BinType("HandshakeResponse")]
+  public class HandshakeResponse
+  {
+    [BinField("c")]
+    public byte[] RawX509Certificate;
+
+    [BinField("a")]
+    public AlgorithmId AlgorithmId;
+
+    [BinField("k")]
+    public byte[] EncryptedKey;
+  }
+
+  [Serializable]
+  [BinType("ServerConnectionInfo", Version = 2)]
+  public class ServerInfo
   {
     [BinField("a")]
     public string ApiName;

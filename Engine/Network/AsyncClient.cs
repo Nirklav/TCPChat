@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace Engine.Network
@@ -46,8 +47,8 @@ namespace Engine.Network
     [SecurityCritical] private readonly IApi _api;
     [SecurityCritical] private readonly RequestQueue _requestQueue;
     [SecurityCritical] private readonly IClientNotifier _notifier;   
-    [SecurityCritical] private readonly Timer _timer;
     [SecurityCritical] private readonly Logger _logger;
+    [SecurityCritical] private Timer _timer;
 
     [SecurityCritical] private Uri _serverUri;
     [SecurityCritical] private bool _connecting;
@@ -62,8 +63,8 @@ namespace Engine.Network
     /// Creates client connection.
     /// </summary>
     [SecurityCritical]
-    public AsyncClient(string id, IApi api, IClientNotifier notifier, Logger logger)
-      : base(logger)
+    public AsyncClient(string id, X509Certificate2 certificate, IApi api, IClientNotifier notifier, Logger logger)
+      : base(certificate, logger)
     {
       Id = id;
 
@@ -72,7 +73,6 @@ namespace Engine.Network
       _requestQueue.Error += OnRequestQueueError;
       _notifier = notifier;
 
-      _timer = new Timer(OnTimer, null, SystemTimerInterval, -1);
       _reconnect = true;
       _reconnecting = false;
       _logger = logger;
@@ -123,10 +123,15 @@ namespace Engine.Network
       {
         case UriHostNameType.IPv4:
         case UriHostNameType.IPv6:
+          _connecting = true;
+          _serverUri = serverUri;
+          var address = IPAddress.Parse(serverUri.Host);
+          ConnectImpl(address);
+          break;
         case UriHostNameType.Dns:
           _connecting = true;
           _serverUri = serverUri;
-          Dns.BeginGetHostAddresses(serverUri.Host, OnGetHostAddresses, null);
+          Dns.BeginGetHostAddresses(serverUri.DnsSafeHost, OnGetHostAddresses, null);
           break;
         default:
           throw new ArgumentException("Not supported uri address");
@@ -147,9 +152,7 @@ namespace Engine.Network
         if (addresses.Length > 0)
         {
           var address = addresses[0];
-          var endPoint = new IPEndPoint(address, _serverUri.Port);
-          var handler = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-          handler.BeginConnect(endPoint, OnConnected, handler);
+          ConnectImpl(address);
         }
         else
         {
@@ -174,6 +177,14 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
+    private void ConnectImpl(IPAddress address)
+    {
+      var endPoint = new IPEndPoint(address, _serverUri.Port);
+      var handler = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+      handler.BeginConnect(endPoint, OnConnected, handler);
+    }
+
+    [SecurityCritical]
     private void OnConnected(IAsyncResult result)
     {
       if (IsClosed)
@@ -181,11 +192,13 @@ namespace Engine.Network
 
       try
       {
-        Socket handler = (Socket)result.AsyncState;
+        var handler = (Socket)result.AsyncState;
         handler.EndConnect(result);
-        _connecting = false;
+        
+        Construct(handler, ConnectionState.ServerInfoWait);
 
-        Construct(handler);
+        _connecting = false;
+        _timer = new Timer(OnTimer, null, SystemTimerInterval, -1);
       }
       catch (SocketException se)
       {
@@ -224,16 +237,67 @@ namespace Engine.Network
     }
 
     [SecuritySafeCritical]
-    protected override void OnInfoReceived(ConnectionInfo info)
+    protected override void OnServerInfo(ServerInfo info)
     {
-      var clientInfo = info as ServerConnectionInfo;
-      if (clientInfo == null)
-        throw new InvalidOperationException("info isn't ServerConnectionInfo");
+      if (!string.Equals(info.ApiName, _api.Name, StringComparison.OrdinalIgnoreCase))
+        throw new ModelException(ErrorCode.ApiNotSupported, info.ApiName);
 
-      if (!string.Equals(clientInfo.ApiName, _api.Name, StringComparison.OrdinalIgnoreCase))
-        throw new ModelException(ErrorCode.ApiNotSupported, clientInfo.ApiName);
+      base.OnServerInfo(info);
+    }
+
+    [SecuritySafeCritical]
+    protected override void OnHandshakeResponse(HandshakeResponse response)
+    {
+      base.OnHandshakeResponse(response);
 
       _notifier.Connected(new ConnectEventArgs());
+    }
+
+    [SecuritySafeCritical]
+    protected override void OnHandshakeException(Exception e)
+    {
+      base.OnHandshakeException(e);
+
+      _notifier.Connected(new ConnectEventArgs(e));
+    }
+
+    [SecuritySafeCritical]
+    protected override bool ValidateCertificate(X509Certificate2 remote)
+    {
+      if (base.ValidateCertificate(remote))
+      {
+        var connectionHost = _serverUri.DnsSafeHost;
+        var certificateHost = remote.GetNameInfo(X509NameType.DnsName, false);
+
+        var wildcard = "*.";
+        if (!certificateHost.StartsWith(wildcard))
+          return string.Equals(connectionHost, certificateHost, StringComparison.OrdinalIgnoreCase);
+        else
+        {
+          var connectionHostParts = connectionHost
+            .Split('.')
+            .Skip(1)
+            .ToArray();
+
+          var certificateHostParts = certificateHost
+            .Substring(wildcard.Length)
+            .Split('.');
+
+          if (connectionHostParts.Length != certificateHostParts.Length)
+            return false;
+
+          for (int i = 0; i < connectionHostParts.Length; i++)
+          {
+            var connectionPart = connectionHostParts[i];
+            var certiticatePart = certificateHostParts[i];
+
+            if (!string.Equals(connectionPart, certiticatePart, StringComparison.OrdinalIgnoreCase))
+              return false;
+          }
+          return true;
+        }
+      }
+      return false;
     }
 
     [SecuritySafeCritical]
@@ -242,7 +306,7 @@ namespace Engine.Network
       if (args.Exception != null)
         OnError(args.Exception);
     }
-
+    
     [SecuritySafeCritical]
     protected override bool OnSocketException(SocketException se)
     {

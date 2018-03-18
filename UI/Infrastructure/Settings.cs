@@ -53,11 +53,10 @@ namespace UI.Infrastructure
         FormSize = new Size(380, 470),
         Alerts = true,
 
-        Uri = Connection.CreateTcpchatUri(new IPAddress(new byte[] { 127, 0, 0, 1 }), 10021),
+        ServerAddress = "0.0.0.0:10021",
 
-        ServerPort = 10021,
-        ServerP2PPort = 10022,
-        ServerUseIpv6 = false,
+        ServerStartAddress = "127.0.0.1:10021",
+        ServerStartP2PPort = 10022,
 
         RecorderKey = Keys.E,
         Frequency = 44100,
@@ -89,11 +88,12 @@ namespace UI.Infrastructure
     public Size FormSize { get; set; }
     public bool Alerts { get; set; }
 
-    public string Uri { get; set; }
+    public string ServerAddress { get; set; }
+    public string CertificatePath { get; set; }
 
-    public int ServerPort { get; set; }
-    public int ServerP2PPort { get; set; }
-    public bool ServerUseIpv6 { get; set; }
+    public string ServerStartAddress { get; set; }
+    public int ServerStartP2PPort { get; set; }
+    public string ServerStartCertificatePath { get; set; }
     
     public Keys RecorderKey { get; set; }
     public string OutputAudioDevice { get; set; }

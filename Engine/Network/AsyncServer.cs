@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace Engine.Network
@@ -23,12 +24,15 @@ namespace Engine.Network
     #region fields
     [SecurityCritical] private readonly Dictionary<string, ServerConnection> _connections;
 
+    [SecurityCritical] private readonly X509Certificate2 _certificate;
     [SecurityCritical] private readonly IApi _api;
     [SecurityCritical] private readonly RequestQueue _requestQueue;
     [SecurityCritical] private readonly IServerNotifier _notifier;
     [SecurityCritical] private readonly ServerBans _bans;
 
     [SecurityCritical] private P2PService _p2pService;
+    [SecurityCritical] private int _port;
+    [SecurityCritical] private int _p2pServicePort;
     [SecurityCritical] private Socket _listener;
 
     [SecurityCritical] private bool _isServerRunning;
@@ -89,10 +93,11 @@ namespace Engine.Network
 
     #region constructors
     [SecurityCritical]
-    public AsyncServer(IApi api, IServerNotifier notifier, Logger logger)
+    public AsyncServer(X509Certificate2 certificate, IApi api, IServerNotifier notifier, Logger logger)
     {
       _connections = new Dictionary<string, ServerConnection>();
 
+      _certificate = certificate;
       _api = api;
       _requestQueue = new RequestQueue(api);
       _requestQueue.Error += OnRequestQueueError;
@@ -108,32 +113,90 @@ namespace Engine.Network
     /// <summary>
     /// Starts the server.
     /// </summary>
-    /// <param name="serverPort">TCP port that server be listening.</param>
+    /// <param name="serverUri">Server address.</param>
     /// <param name="p2pServicePort">UDP port that p2p service be listening.</param>
     /// <param name="usingIPv6">Use the ipv6.</param>
     [SecurityCritical]
-    public void Start(int serverPort, int p2pServicePort, bool usingIPv6)
+    public void Start(Uri serverUri, int p2pServicePort)
     {
       ThrowIfDisposed();
 
       if (_isServerRunning)
-        return;
+        throw new InvalidOperationException("Server already started");
 
-      if (!Connection.TcpPortIsAvailable(serverPort))
-        throw new ArgumentException("port not available", "serverPort");
+      if (!serverUri.Scheme.Equals(Connection.TcpChatScheme, StringComparison.OrdinalIgnoreCase))
+        throw new ArgumentException("Invalid host scheme");
 
-      _p2pService = new P2PService(_api, _logger, p2pServicePort, usingIPv6);
+      if (!Connection.TcpPortIsAvailable(serverUri.Port))
+        throw new ArgumentException("Port not available", nameof(serverUri));
+
+      try
+      {
+        switch (serverUri.HostNameType)
+        {
+          case UriHostNameType.IPv4:
+          case UriHostNameType.IPv6:
+            _isServerRunning = true;
+            _port = serverUri.Port;
+            _p2pServicePort = p2pServicePort;
+            var address = IPAddress.Parse(serverUri.Host);
+            StartImpl(address);
+            break;
+          case UriHostNameType.Dns:
+            _isServerRunning = true;
+            _port = serverUri.Port;
+            _p2pServicePort = p2pServicePort;
+            Dns.BeginGetHostAddresses(serverUri.DnsSafeHost, OnGetHostAddresses, null);
+            break;
+          default:
+            throw new ArgumentException("Not supported uri address");
+        }
+      }
+      catch (Exception)
+      {
+        _isServerRunning = false;
+        _port = 0;
+        _p2pServicePort = 0;
+
+        throw;
+      }
+    }
+
+    [SecurityCritical]
+    private void OnGetHostAddresses(IAsyncResult result)
+    {
+      try
+      {
+        var addresses = Dns.EndGetHostAddresses(result);
+        if (addresses.Length > 0)
+        {
+          var address = addresses[0];
+          StartImpl(address);
+        }
+        else
+        {
+          throw new InvalidOperationException("Addresses are empty");
+        }
+      }
+      catch (Exception e)
+      {
+        _isServerRunning = false;
+        _notifier.StartError(new AsyncErrorEventArgs(e));
+        _logger.Write(e);
+      }
+    }
+
+    [SecurityCritical]
+    private void StartImpl(IPAddress address)
+    {
       _systemTimer = new Timer(OnTimer, null, SystemTimerInterval, -1);
-
-      var address = usingIPv6 ? IPAddress.IPv6Any : IPAddress.Any;
+      _p2pService = new P2PService(address, _p2pServicePort, _api, _logger);
 
       _listener = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       _listener.LingerState = new LingerOption(false, 0);
-      _listener.Bind(new IPEndPoint(address, serverPort));
+      _listener.Bind(new IPEndPoint(address, _port));
       _listener.Listen(ListenConnections);
       _listener.BeginAccept(OnAccept, null);
-
-      _isServerRunning = true;
     }
 
     /// <summary>
@@ -247,9 +310,21 @@ namespace Engine.Network
     {
       lock (_connections)
       {
-        if (!_connections.TryGetValue(connectionId, out ServerConnection connection))
-          throw new ArgumentException("connection not found");
+        var connection = GetConnection(connectionId, true);
         return connection.RemotePoint.Address;
+      }
+    }
+
+    /// <summary>
+    /// Gets certificate of connection.
+    /// </summary>
+    [SecuritySafeCritical]
+    public X509Certificate2 GetCertificate(string connectionId)
+    {
+      lock (_connections)
+      {
+        var connection = GetConnection(connectionId, true);
+        return connection.RemoteCertiticate;
       }
     }
     #endregion
@@ -275,8 +350,8 @@ namespace Engine.Network
         }
         else
         {
-          var connection = new ServerConnection(handler, _api.Name, _logger, OnPackageReceived);
-          connection.SendInfo();
+          var connection = new ServerConnection(handler, _certificate, _api.Name, _logger, OnPackageReceived);
+          connection.SendServerInfo();
 
           lock (_connections)
           {
@@ -301,14 +376,12 @@ namespace Engine.Network
         if (e.Exception != null)
         {
           _logger.Write(e.Exception);
-          return;
         }
-
-        if (!_isServerRunning)
-          return;
-
-        var connectionId = ((ServerConnection)sender).Id;
-        _requestQueue.Add(connectionId, e.Unpacked);
+        else if (_isServerRunning)
+        {
+          var connectionId = ((ServerConnection)sender).Id;
+          _requestQueue.Add(connectionId, e.Unpacked);
+        }
       }
       catch (Exception exc)
       {

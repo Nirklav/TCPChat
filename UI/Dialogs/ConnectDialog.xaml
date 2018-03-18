@@ -8,129 +8,186 @@
         WindowStartupLocation="CenterScreen"
         Icon="/TCPChat;component/Images/chat.ico">
 
-  <Window.Resources>
-    <Infrastructure:RgbToColorConverter x:Key="RgbConverter" />
-  </Window.Resources>
+    <Window.Resources>
+        <Infrastructure:RgbToColorConverter x:Key="RgbConverter" />
+    </Window.Resources>
 
-  <Grid>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*"/>
-      <ColumnDefinition Width="*"/>
-    </Grid.ColumnDefinitions>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="Auto"/>
-    </Grid.RowDefinitions>
-
-    <Label Content="{Infrastructure:Localized nick}"
-           Grid.Column="0"
-           Grid.Row="0"
-           Margin="10, 10, 5, 5"
-           VerticalAlignment="Center"/>
-
-    <TextBox x:Name="NickField"
-             Margin="0, 10, 10, 5"
-             VerticalAlignment="Center"
-             Grid.Column="1"
-             Grid.Row="0"/>
-
-    <Label Content="{Infrastructure:Localized connectDialog-ipAddress}"
-           Grid.Column="0"
-           Grid.Row="1"
-           Margin="10, 5, 5, 5"
-           VerticalAlignment="Center"/>
-
-    <TextBox x:Name="UriField"
-             Margin="0, 5, 10, 5"         
-             VerticalAlignment="Center"
-             Grid.Column="1"
-             Grid.Row="1"/>
-
-    <Expander Header="{Infrastructure:Localized nickColor}"
-              Grid.Row="2"
-              Grid.Column="0"
-              Grid.ColumnSpan="2"
-              Margin="10, 5, 10, 5"
-              BorderBrush="#FF828790">
-      <Grid>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-          <RowDefinition Height="Auto"/>
-          <RowDefinition Height="Auto"/>
-          <RowDefinition Height="Auto"/>
-          <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Rectangle Grid.Row="0"
-                   Width="Auto"
-                   Height="20"
-                   Margin="5, 5, 5, 2.5"
-                   Stroke="Black">
+        <Label Content="{Infrastructure:Localized nick}"
+               Grid.Column="0"
+               Grid.Row="0"
+               Margin="10, 10, 5, 5"
+               VerticalAlignment="Center"/>
 
-          <Rectangle.Fill>
-            <SolidColorBrush>
-              <SolidColorBrush.Color>
-                <MultiBinding Converter="{StaticResource RgbConverter}">
-                  <Binding Path="Value" ElementName="RedColorSlider" />
-                  <Binding Path="Value" ElementName="GreenColorSlider" />
-                  <Binding Path="Value" ElementName="BlueColorSlider" />
-                </MultiBinding>
-              </SolidColorBrush.Color>
-            </SolidColorBrush>
-          </Rectangle.Fill>
+        <TextBox x:Name="NickField"
+                 Margin="0, 10, 10, 5"
+                 VerticalAlignment="Stretch"
+                 VerticalContentAlignment="Center"
+                 Grid.Column="1"
+                 Grid.ColumnSpan="2"
+                 Grid.Row="0"/>
 
-        </Rectangle>
+        <Label Content="{Infrastructure:Localized connectDialog-uri}"
+               Grid.Column="0"
+               Grid.Row="1"
+               Margin="10, 5, 5, 5"
+               VerticalAlignment="Center"/>
 
-        <Slider x:Name="RedColorSlider"
-                Grid.Row="1"
-                Minimum="50"
-                Maximum="200"
-                Margin="5, 2.5, 5, 2.5" 
-                SmallChange="1"
-                Value="170"/>
+        <TextBox x:Name="ServerAddressField"
+                 Margin="0, 5, 10, 5"         
+                 VerticalAlignment="Stretch"
+                 VerticalContentAlignment="Center"
+                 Grid.Column="1"
+                 Grid.ColumnSpan="2"
+                 Grid.Row="1"/>
 
-        <Slider x:Name="GreenColorSlider"
+        <Label Content="{Infrastructure:Localized certificatePath}"
+               Grid.Column="0"
+               Grid.Row="2"
+               Margin="10, 5, 5, 5"
+               VerticalAlignment="Center"/>
+
+        <TextBox x:Name="CertificateField"
+                 Margin="0, 5, 5, 5"       
+                 VerticalAlignment="Stretch"
+                 VerticalContentAlignment="Center"
+                 Grid.Column="1"
+                 Grid.Row="2"/>
+
+        <Button x:Name="SelectCertificatePath"
+                Content="..."
+                Margin="0, 5, 10, 5"
+                Padding="5, 0, 5, 0"
+                MinWidth="20"
+                MinHeight="15"
                 Grid.Row="2"
-                Minimum="50"
-                Maximum="200"
-                SmallChange="1"
-                Margin="5, 2.5, 5, 2.5"/>
+                Grid.Column="2"
+                Click="SelectCertificatePath_Click"/>
 
-        <Slider x:Name="BlueColorSlider"
-                Grid.Row="3"
-                Minimum="50"
-                Maximum="200"
-                SmallChange="1"
-                Margin="5, 2.5, 5, 5"/>
-      </Grid>
-    </Expander>
+        <Label Content="{Infrastructure:Localized password}"
+               Grid.Column="0"
+               Grid.Row="3"
+               Margin="10, 5, 5, 5"
+               VerticalAlignment="Center"/>
 
-    <StackPanel Orientation="Horizontal"
+        <PasswordBox x:Name="PasswordField"
+                     Margin="0, 5, 10, 5"       
+                     VerticalAlignment="Stretch"
+                     VerticalContentAlignment="Center"
+                     Grid.Column="1"
+                     Grid.ColumnSpan="2"
+                     Grid.Row="3"/>
+
+        <Button x:Name="GenerateCertificate"
+                Content="{Infrastructure:Localized generateCertificate}"
+                Margin="0, 5, 10, 5"
+                Padding="5, 0, 5, 0"
+                MinWidth="100"
+                MinHeight="25"
                 HorizontalAlignment="Right"
                 Grid.Row="4"
-                Grid.Column="0"
-                Grid.ColumnSpan="2">
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                Click="GenerateCertificate_Click"/>
 
-      <Button x:Name="Accept"
-              Content="{Infrastructure:Localized accept}"
-              Margin="10, 5, 5, 10"
-              MinWidth="100"
-              MinHeight="25"
-              Grid.Column="0"
-              Grid.ColumnSpan="2"
-              Grid.Row="3"
-              Click="Accept_Click"/>
+        <Expander Header="{Infrastructure:Localized nickColor}"
+                  Grid.Row="5"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="3"
+                  Margin="10, 5, 10, 5"
+                  BorderBrush="#FF828790">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-      <Button x:Name="Cancel"
-              Content="{Infrastructure:Localized cancel}"
-              Margin="5, 5, 10, 10"
-              MinWidth="100"
-              MinHeight="25"
-              Grid.Column="0"
-              Grid.ColumnSpan="2"
-              Grid.Row="3"
-              Click="Cancel_Click"/>
-    </StackPanel>
-  </Grid>
+                <Rectangle Grid.Row="0"
+                           Width="Auto"
+                           Height="20"
+                           Margin="5, 5, 5, 2.5"
+                           Stroke="Black">
+
+                    <Rectangle.Fill>
+                        <SolidColorBrush>
+                            <SolidColorBrush.Color>
+                                <MultiBinding Converter="{StaticResource RgbConverter}">
+                                    <Binding Path="Value" ElementName="RedColorSlider" />
+                                    <Binding Path="Value" ElementName="GreenColorSlider" />
+                                    <Binding Path="Value" ElementName="BlueColorSlider" />
+                                </MultiBinding>
+                            </SolidColorBrush.Color>
+                        </SolidColorBrush>
+                    </Rectangle.Fill>
+
+                </Rectangle>
+
+                <Slider x:Name="RedColorSlider"
+                        Grid.Row="1"
+                        Minimum="50"
+                        Maximum="200"
+                        Margin="5, 2.5, 5, 2.5" 
+                        SmallChange="1"
+                        Value="170"/>
+
+                <Slider x:Name="GreenColorSlider"
+                        Grid.Row="2"
+                        Minimum="50"
+                        Maximum="200"
+                        SmallChange="1"
+                        Margin="5, 2.5, 5, 2.5"/>
+
+                <Slider x:Name="BlueColorSlider"
+                        Grid.Row="3"
+                        Minimum="50"
+                        Maximum="200"
+                        SmallChange="1"
+                        Margin="5, 2.5, 5, 5"/>
+            </Grid>
+        </Expander>
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Grid.Row="6"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3">
+
+            <Button x:Name="Accept"
+                    Content="{Infrastructure:Localized accept}"
+                    Margin="10, 5, 5, 10"
+                    MinWidth="100"
+                    MinHeight="25"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Grid.Row="3"
+                    Click="Accept_Click"/>
+
+            <Button x:Name="Cancel"
+                    Content="{Infrastructure:Localized cancel}"
+                    Margin="5, 5, 10, 10"
+                    MinWidth="100"
+                    MinHeight="25"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Grid.Row="3"
+                    Click="Cancel_Click"/>
+        </StackPanel>
+    </Grid>
 </Window>

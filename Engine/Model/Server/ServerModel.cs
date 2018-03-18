@@ -96,11 +96,14 @@ namespace Engine.Model.Server
     [SecurityCritical]
     public static void Init(ServerInitializer initializer)
     {
+      if (!initializer.Certificate.HasPrivateKey)
+        throw new ArgumentException("Initializer should have certificate with private key.");
+
       if (Interlocked.CompareExchange(ref _chat, new ServerChat(), null) != null)
         throw new InvalidOperationException("model already inited");
 
       Api = new ServerApi(initializer.AdminPassword);
-      Server = new AsyncServer(Api, _notifier, Logger);
+      Server = new AsyncServer(initializer.Certificate, Api, _notifier, Logger);
 
       Plugins = new ServerPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);

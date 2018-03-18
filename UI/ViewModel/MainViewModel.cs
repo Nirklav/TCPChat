@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 using System.Windows.Input;
 using UI.Dialogs;
@@ -148,41 +149,42 @@ namespace UI.ViewModel
     private void EnableServer(object obj)
     {
       var dialog = new ServerDialog();
-      if (dialog.ShowDialog() != true)
-        return;
-
-      try
+      if (dialog.ShowDialog() == true)
       {
-        var excludedPlugins = Settings.Current.Plugins
-          .Where(s => !s.Enabled)
-          .Select(s => s.Name)
-          .ToArray();
-
-        var initializer = new ServerInitializer
+        try
         {
-          AdminPassword = Settings.Current.AdminPassword,
-          PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
-          ExcludedPlugins = excludedPlugins
-        };
+          var adminPassword = Settings.Current.AdminPassword;
+          var p2pPort = Settings.Current.ServerStartP2PPort;
+          var excludedPlugins = Settings.Current.Plugins
+            .Where(s => !s.Enabled)
+            .Select(s => s.Name)
+            .ToArray();
 
-        ServerModel.Init(initializer);
-        ServerModel.Server.Start(Settings.Current.ServerPort, Settings.Current.ServerP2PPort, Settings.Current.ServerUseIpv6);
+          var initializer = new ServerInitializer
+          {
+            AdminPassword = adminPassword,
+            PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
+            ExcludedPlugins = excludedPlugins,
+            Certificate = new X509Certificate2(dialog.CertificatePath, dialog.CertificatePassword),
+          };
 
-        var addressStr = Settings.Current.ServerUseIpv6
-          ? IPAddress.IPv6Loopback
-          : IPAddress.Loopback;
+          ServerModel.Init(initializer);
 
-        InitializeClient(Connection.CreateTcpchatUri(addressStr, Settings.Current.ServerPort));
-      }
-      catch (ArgumentException)
-      {
-        SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
+          var serverStartUri = Connection.CreateTcpchatUri(dialog.ServerAddress);
+          ServerModel.Server.Start(serverStartUri, p2pPort);
 
-        if (ClientModel.IsInited)
-          ClientModel.Reset();
+          dialog.SaveSettings();
+        }
+        catch (Exception)
+        {
+          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
 
-        if (ServerModel.IsInited)
-          ServerModel.Reset();
+          if (ClientModel.IsInited)
+            ClientModel.Reset();
+
+          if (ServerModel.IsInited)
+            ServerModel.Reset();
+        }
       }
     }
 
@@ -205,7 +207,52 @@ namespace UI.ViewModel
     {
       var dialog = new ConnectDialog();
       if (dialog.ShowDialog() == true)
-        InitializeClient(Settings.Current.Uri);
+      {
+        var outputAudioDevice = Settings.Current.OutputAudioDevice;
+        var inputAudioDevice = Settings.Current.InputAudioDevice;
+        var bits = Settings.Current.Bits;
+        var frequency = Settings.Current.Frequency;
+        var excludedPlugins = Settings.Current.Plugins
+          .Where(s => !s.Enabled)
+          .Select(s => s.Name)
+          .ToArray();
+
+        var initializer = new ClientInitializer
+        {
+          Nick = dialog.Nick,
+          NickColor = dialog.NickColor,
+          Certificate = new X509Certificate2(dialog.CertificatePath, dialog.CertificatePassword),
+
+          PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
+          ExcludedPlugins = excludedPlugins
+        };
+
+        ClientModel.Init(initializer);
+
+        try
+        {
+          ClientModel.Player.SetOptions(outputAudioDevice);
+          ClientModel.Recorder.SetOptions(inputAudioDevice, new AudioQuality(1, bits, frequency));
+        }
+        catch (ModelException me)
+        {
+          ClientModel.Player.Dispose();
+          ClientModel.Recorder.Dispose();
+
+          if (me.Code != ErrorCode.AudioNotEnabled)
+            throw;
+          else
+          {
+            var msg = Localizer.Instance.Localize(AudioInitializationFailedKey);
+            MessageBox.Show(msg, ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
+          }
+        }
+
+        var serverUri = Connection.CreateTcpchatUri(dialog.Address);
+        ClientModel.Client.Connect(serverUri);
+
+        dialog.SaveSettings();
+      }
     }
 
     private void Disconnect(object obj)
@@ -401,46 +448,6 @@ namespace UI.ViewModel
     #endregion
 
     #region helpers methods
-    private void InitializeClient(string serverUri)
-    {
-      var excludedPlugins = Settings.Current.Plugins
-        .Where(s => !s.Enabled)
-        .Select(s => s.Name)
-        .ToArray();
-
-      var initializer = new ClientInitializer
-      {
-        Nick = Settings.Current.Nick,
-        NickColor = Settings.Current.NickColor,
-
-        PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
-        ExcludedPlugins = excludedPlugins
-      };
-
-      ClientModel.Init(initializer);
-
-      try
-      {
-        ClientModel.Player.SetOptions(Settings.Current.OutputAudioDevice);
-        ClientModel.Recorder.SetOptions(Settings.Current.InputAudioDevice, new AudioQuality(1, Settings.Current.Bits, Settings.Current.Frequency));
-      }
-      catch (ModelException me)
-      {
-        ClientModel.Player.Dispose();
-        ClientModel.Recorder.Dispose();
-
-        if (me.Code != ErrorCode.AudioNotEnabled)
-          throw;
-        else
-        {
-          var msg = Localizer.Instance.Localize(AudioInitializationFailedKey);
-          MessageBox.Show(msg, ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
-        }      
-      }
-
-      ClientModel.Client.Connect(new Uri(serverUri));
-    }
-
     private void WindowClosed(object sender, EventArgs e)
     {
       if (ClientModel.IsInited)
