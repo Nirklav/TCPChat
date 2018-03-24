@@ -9,6 +9,7 @@ using System.Security;
 using Engine.Helpers;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
+using Engine.Model.Common;
 
 namespace Engine.Network
 {
@@ -44,7 +45,8 @@ namespace Engine.Network
     #endregion
 
     #region fields
-    [SecurityCritical] private X509Certificate2 _localCertiticate;
+    [SecurityCritical] private readonly CertificatesStorage _trustedCertificates;
+    [SecurityCritical] private readonly X509Certificate2 _localCertiticate;
     [SecurityCritical] private X509Certificate2 _remoteCertiticate;
 
     [SecurityCritical] private string _id;
@@ -57,15 +59,16 @@ namespace Engine.Network
     [SecurityCritical] private byte[] _buffer;
     [SecurityCritical] private Packer _packer;
 
-    [SecurityCritical] private Logger _logger;
+    [SecurityCritical] private readonly Logger _logger;
 
     [SecurityCritical] private volatile bool _disposed;
     #endregion
 
     #region constructors
     [SecurityCritical]
-    protected Connection(X509Certificate2 certificate, Logger logger)
+    protected Connection(CertificatesStorage trustedCertificates, X509Certificate2 certificate, Logger logger)
     {
+      _trustedCertificates = trustedCertificates;
       _localCertiticate = certificate;
       _state = ConnectionState.Disconnected;
       _logger = logger;
@@ -275,7 +278,6 @@ namespace Engine.Network
               throw new ModelException(ErrorCode.LargeReceivedData);
 
             var unpacked = _packer.Unpack<IPackage>(_received);
-
             var length = (int) _received.Length;
 
             _received.Position = 0;
@@ -515,7 +517,7 @@ namespace Engine.Network
     [SecuritySafeCritical]
     protected virtual bool ValidateCertificate(X509Certificate2 remote)
     {
-      _remoteCertificateStatus = GetCertificateValidationStatus(remote);
+      _remoteCertificateStatus = GetCertificateValidationStatus(remote, _trustedCertificates);
       return _remoteCertificateStatus == CertificateStatus.SelfSigned
         || _remoteCertificateStatus == CertificateStatus.Trusted;
     }
@@ -629,17 +631,20 @@ namespace Engine.Network
     #endregion
 
     #region utils
-    public static CertificateStatus GetCertificateValidationStatus(X509Certificate2 certificate)
+    public static CertificateStatus GetCertificateValidationStatus(X509Certificate2 certificate, CertificatesStorage trustedCertificates)
     {
       var chain = new X509Chain();
       chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
       if (!chain.Build(certificate))
         return CertificateStatus.Untrusted;
       else
       {
         if (chain.ChainStatus.Any(s => s.Status == X509ChainStatusFlags.UntrustedRoot))
         {
-          if (certificate.Issuer == certificate.Subject)
+          if (trustedCertificates != null && trustedCertificates.Exist(certificate))
+            return CertificateStatus.Trusted;
+          else if (certificate.Issuer == certificate.Subject)
             return CertificateStatus.SelfSigned;
           else
             return CertificateStatus.Untrusted;

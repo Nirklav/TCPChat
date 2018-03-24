@@ -3,9 +3,6 @@ using System.Windows.Controls;
 
 namespace UI.Dialogs
 {
-  /// <summary>
-  /// Логика взаимодействия для FilesWindow.xaml
-  /// </summary>
   public partial class PostedFilesView : Window
   {
     public PostedFilesView()

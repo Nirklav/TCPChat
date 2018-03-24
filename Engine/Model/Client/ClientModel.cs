@@ -8,7 +8,6 @@ using Engine.Model.Common;
 using Engine.Network;
 using Engine.Plugins.Client;
 using System;
-using System.IO;
 using System.Security;
 using System.Threading;
 
@@ -104,6 +103,17 @@ namespace Engine.Model.Client
     }
 
     /// <summary>
+    /// Trusted certificates storage.
+    /// </summary>
+    public static CertificatesStorage TrustedCertificates
+    {
+      [SecurityCritical]
+      get;
+      [SecurityCritical]
+      private set;
+    }
+
+    /// <summary>
     /// Creates and returns guard that lock chat data.
     /// </summary>
     /// <example>using (var client = ClientModel.Get()) { ... }</example>
@@ -141,8 +151,10 @@ namespace Engine.Model.Client
       if (Interlocked.CompareExchange(ref _chat, new ClientChat(user), null) != null)
         throw new InvalidOperationException("model already inited");
 
+      TrustedCertificates = new ClientCertificatesStorage(initializer.TrustedCertificatesPath, _notifier, _logger);
+
       Api = new ClientApi();
-      Client = new AsyncClient(initializer.Nick, initializer.Certificate, Api, _notifier, _logger);
+      Client = new AsyncClient(initializer.Nick, TrustedCertificates, initializer.Certificate, Api, _notifier, _logger);
       Peer = new AsyncPeer(Api, _notifier, _logger);
 
       Plugins = new ClientPluginManager(initializer.PluginsPath);

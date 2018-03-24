@@ -47,7 +47,7 @@ namespace Engine.Network
     /// <param name="receivedCallback">Callback for received data.</param>
     [SecurityCritical]
     public ServerConnection(Socket handler, X509Certificate2 certificate, string apiName, Logger logger, EventHandler<PackageReceivedEventArgs> receivedCallback)
-      : base(certificate, logger)
+      : base(null, certificate, logger)
     {
       Construct(handler, ConnectionState.HandshakeRequestWait);
 

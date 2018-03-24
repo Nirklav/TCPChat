@@ -53,9 +53,10 @@ namespace UI.Infrastructure
         FormSize = new Size(380, 470),
         Alerts = true,
 
-        ServerAddress = "0.0.0.0:10021",
+        ServerAddress = "93.170.186.160:10021",
+        TrustedCertificatesPath = "TrustedCertificates",
 
-        ServerStartAddress = "127.0.0.1:10021",
+        ServerStartAddress = "0.0.0.0:10021",
         ServerStartP2PPort = 10022,
 
         RecorderKey = Keys.E,
@@ -90,6 +91,7 @@ namespace UI.Infrastructure
 
     public string ServerAddress { get; set; }
     public string CertificatePath { get; set; }
+    public string TrustedCertificatesPath { get; set; }
 
     public string ServerStartAddress { get; set; }
     public int ServerStartP2PPort { get; set; }

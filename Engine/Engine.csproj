@@ -140,6 +140,7 @@
     <Compile Include="EventArgs\RoomOpenedEventArgs.cs" />
     <Compile Include="EventArgs\RoomUsersEventArgs.cs" />
     <Compile Include="EventArgs\ConnectionEventArgs.cs" />
+    <Compile Include="EventArgs\TrustedCertificatesEventArgs.cs" />
     <Compile Include="Helpers\CertificateGenerator.cs" />
     <Compile Include="Helpers\EventDispatcher.cs" />
     <Compile Include="Helpers\Serializer.cs" />
@@ -150,12 +151,14 @@
     <Compile Include="EventArgs\PluginEventArgs.cs" />
     <Compile Include="Helpers\EngineSyncContext.cs" />
     <Compile Include="Helpers\TryLock.cs" />
+    <Compile Include="Model\Client\ClientCertificatesStorage.cs" />
     <Compile Include="Model\Client\ClientNotifier.cs" />
     <Compile Include="Model\Client\ClientInitializer.cs" />
     <Compile Include="Model\Client\Entities\ClientChat.cs" />
     <Compile Include="Model\Client\Entities\ClientRoom.cs" />
     <Compile Include="Model\Client\Entities\ClientUser.cs" />
     <Compile Include="Model\Client\Entities\ClientVoiceRoom.cs" />
+    <Compile Include="Model\Common\CertificatesStorage.cs" />
     <Compile Include="Model\Common\Dto\BinNullable.cs" />
     <Compile Include="Model\Common\Dto\ColorDto.cs" />
     <Compile Include="Model\Common\Dto\FileDescriptionDto.cs" />

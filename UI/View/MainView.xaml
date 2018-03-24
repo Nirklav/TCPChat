@@ -13,571 +13,577 @@
         Width="380"
         Icon="/TCPChat;component/Images/chat.ico">
 
-  <Window.Resources>
+    <Window.Resources>
 
-    <DataTemplate x:Key="CommonMessageTemplate">
-      <StackPanel Orientation="Vertical">
-        <StackPanel Orientation="Horizontal">
-          <TextBlock Text="{Binding Path=Title}"
-                     FontWeight="Bold"
-                     TextWrapping="Wrap"
-                     Foreground="#FFAA0000"
-                     Margin="6, 2.5, 0, 2.5"/>
+        <DataTemplate x:Key="CommonMessageTemplate">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Path=Title}"
+                               FontWeight="Bold"
+                               TextWrapping="Wrap"
+                               Foreground="#FFAA0000"
+                               Margin="6, 2.5, 0, 2.5"/>
 
-          <TextBlock Text="{Binding Path=Sender.Nick}"
-                     FontWeight="Bold"
-                     Margin="0, 2.5, 5, 2.5"
-                     TextWrapping="Wrap">
+                    <TextBlock Text="{Binding Path=Sender.Nick}"
+                               FontWeight="Bold"
+                               Margin="0, 2.5, 5, 2.5"
+                               TextWrapping="Wrap">
 
-            <TextBlock.Foreground>
-              <SolidColorBrush x:Name="commonColorBrush" Color="{Binding Path=Sender.NickColor}"/>
-            </TextBlock.Foreground>
+                        <TextBlock.Foreground>
+                            <SolidColorBrush x:Name="commonColorBrush" Color="{Binding Path=Sender.NickColor}"/>
+                        </TextBlock.Foreground>
 
-          </TextBlock>
-        </StackPanel>
+                    </TextBlock>
+                </StackPanel>
 
-        <TextBox IsReadOnly="True"
-                 BorderThickness="0"
-                 Text="{Binding Path=Text}"
-                 TextWrapping="Wrap"
-                 Margin="5, 2.5, 5, 2.5"
-                 Padding="0"
-                 Background="Transparent">
-          <TextBox.ContextMenu>
-            <ContextMenu>
-              <MenuItem Header="{Infrastructure:Localized commonMessageTemplate-contextMenu-copy}"
-                        Command="Copy"/>
-              <MenuItem Header="{Infrastructure:Localized commonMessageTemplate-contextMenu-edit}"
-                        Command="{Binding Path=EditMessageCommand}"/>
-            </ContextMenu>
-          </TextBox.ContextMenu>
-        </TextBox>
-      </StackPanel>
-    </DataTemplate>
+                <TextBox IsReadOnly="True"
+                         BorderThickness="0"
+                         Text="{Binding Path=Text}"
+                         TextWrapping="Wrap"
+                         Margin="5, 2.5, 5, 2.5"
+                         Padding="0"
+                         Background="Transparent">
+                    <TextBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="{Infrastructure:Localized commonMessageTemplate-contextMenu-copy}"
+                                      Command="Copy"/>
+                            <MenuItem Header="{Infrastructure:Localized commonMessageTemplate-contextMenu-edit}"
+                                      Command="{Binding Path=EditMessageCommand}"/>
+                        </ContextMenu>
+                    </TextBox.ContextMenu>
+                </TextBox>
+            </StackPanel>
+        </DataTemplate>
 
-    <DataTemplate x:Key="SystemMessageTemplate">
-      <StackPanel Orientation="Vertical">
-        <TextBox IsReadOnly="True"
-                 BorderThickness="0"
-                 Text="{Binding Path=Text}"
-                 TextWrapping="Wrap"
-                 Margin="5, 2.5, 5, 2.5"
-                 Padding="0"
-                 Background="Transparent"/>
-      </StackPanel>
-    </DataTemplate>
+        <DataTemplate x:Key="SystemMessageTemplate">
+            <StackPanel Orientation="Vertical">
+                <TextBox IsReadOnly="True"
+                         BorderThickness="0"
+                         Text="{Binding Path=Text}"
+                         TextWrapping="Wrap"
+                         Margin="5, 2.5, 5, 2.5"
+                         Padding="0"
+                         Background="Transparent"/>
+            </StackPanel>
+        </DataTemplate>
 
-    <DataTemplate x:Key="PrivateMessageTemplate">
-      <StackPanel Orientation="Vertical">
-        <StackPanel Orientation="Horizontal">
-          <TextBlock Text="{Binding Path=Title}"
-                     FontWeight="Bold"                           
-                     TextWrapping="Wrap"
-                     Foreground="#FF00AA00"
-                     Margin="6, 2.5, 0, 2.5"/>
+        <DataTemplate x:Key="PrivateMessageTemplate">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Path=Title}"
+                               FontWeight="Bold"                           
+                               TextWrapping="Wrap"
+                               Foreground="#FF00AA00"
+                               Margin="6, 2.5, 0, 2.5"/>
 
-          <TextBlock Text="{Binding Path=Sender.Nick}"
-                     FontWeight="Bold"                           
-                     TextWrapping="Wrap"
-                     Margin="0, 2.5, 0, 2.5">
+                    <TextBlock Text="{Binding Path=Sender.Nick}"
+                               FontWeight="Bold"                           
+                               TextWrapping="Wrap"
+                               Margin="0, 2.5, 0, 2.5">
 
-            <TextBlock.Foreground>
-              <SolidColorBrush x:Name="privateSenderColorBrush" Color="{Binding Path=Sender.NickColor}"/>
-            </TextBlock.Foreground>
-          </TextBlock>
+                        <TextBlock.Foreground>
+                            <SolidColorBrush x:Name="privateSenderColorBrush" Color="{Binding Path=Sender.NickColor}"/>
+                        </TextBlock.Foreground>
+                    </TextBlock>
 
-          <TextBlock Text=" : "
-                     FontWeight="Bold"                           
-                     TextWrapping="Wrap"
-                     Foreground="#FF00AA00"
-                     Margin="0, 2.5, 0, 2.5"/>
+                    <TextBlock Text=" : "
+                               FontWeight="Bold"                           
+                               TextWrapping="Wrap"
+                               Foreground="#FF00AA00"
+                               Margin="0, 2.5, 0, 2.5"/>
 
-          <TextBlock Text="{Binding Path=Receiver.Nick}"
-                     FontWeight="Bold"                           
-                     TextWrapping="Wrap"
-                     Margin="0, 2.5, 5, 2.5">
+                    <TextBlock Text="{Binding Path=Receiver.Nick}"
+                               FontWeight="Bold"                           
+                               TextWrapping="Wrap"
+                               Margin="0, 2.5, 5, 2.5">
 
-            <TextBlock.Foreground>
-              <SolidColorBrush x:Name="privateReceiverColorBrush" Color="{Binding Path=Receiver.NickColor}"/>
-            </TextBlock.Foreground>
+                        <TextBlock.Foreground>
+                            <SolidColorBrush x:Name="privateReceiverColorBrush" Color="{Binding Path=Receiver.NickColor}"/>
+                        </TextBlock.Foreground>
 
-          </TextBlock>
-        </StackPanel>
+                    </TextBlock>
+                </StackPanel>
 
-        <TextBox IsReadOnly="True"
-                 BorderThickness="0"
-                 Text="{Binding Path=Text}"
-                 TextWrapping="Wrap"
-                 Margin="5, 2.5, 5, 2.5"
-                 Padding="0"
-                 Background="Transparent"/>
-      </StackPanel>
-    </DataTemplate>
+                <TextBox IsReadOnly="True"
+                         BorderThickness="0"
+                         Text="{Binding Path=Text}"
+                         TextWrapping="Wrap"
+                         Margin="5, 2.5, 5, 2.5"
+                         Padding="0"
+                         Background="Transparent"/>
+            </StackPanel>
+        </DataTemplate>
 
-    <DataTemplate x:Key="FileMessageTemplate">
-      <StackPanel Orientation="Vertical">
-        <StackPanel Orientation="Horizontal">
-          <TextBlock Text="{Binding Path=Title}"
-                      FontWeight="Bold"
-                      TextWrapping="Wrap"
-                      Foreground="#FFAA0000"
-                      Margin="6, 2.5, 0, 2.5"/>
+        <DataTemplate x:Key="FileMessageTemplate">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Path=Title}"
+                               FontWeight="Bold"
+                               TextWrapping="Wrap"
+                               Foreground="#FFAA0000"
+                               Margin="6, 2.5, 0, 2.5"/>
 
-          <TextBlock Text="{Binding Path=Sender.Nick}"
-                     FontWeight="Bold"
-                     Margin="0, 2.5, 5, 2.5"
-                     TextWrapping="Wrap">
+                    <TextBlock Text="{Binding Path=Sender.Nick}"
+                               FontWeight="Bold"
+                               Margin="0, 2.5, 5, 2.5"
+                               TextWrapping="Wrap">
 
-            <TextBlock.Foreground>
-              <SolidColorBrush x:Name="FileColorBrush" Color="{Binding Path=Sender.NickColor}"/>
-            </TextBlock.Foreground>
+                        <TextBlock.Foreground>
+                            <SolidColorBrush x:Name="FileColorBrush" Color="{Binding Path=Sender.NickColor}"/>
+                        </TextBlock.Foreground>
 
-          </TextBlock>
-        </StackPanel>
+                    </TextBlock>
+                </StackPanel>
 
-        <TextBlock Text="{Binding Path=Text}"
-                   TextWrapping="Wrap"
-                   Margin="5, 2.5, 5, 2.5"
-                   Padding="0"
-                   Background="Transparent"
-                   Foreground="Blue"
-                   Cursor="Hand"
-                   TextDecorations="Underline">
+                <TextBlock Text="{Binding Path=Text}"
+                           TextWrapping="Wrap"
+                           Margin="5, 2.5, 5, 2.5"
+                           Padding="0"
+                           Background="Transparent"
+                           Foreground="Blue"
+                           Cursor="Hand"
+                           TextDecorations="Underline">
 
-          <TextBlock.Resources>
-            <Infrastructure:CommandReference x:Key="DownloadFileCommand" 
-                                             Command="{Binding Path=DownloadFileCommand}"/>
-          </TextBlock.Resources>
+                    <TextBlock.InputBindings>
+                        <MouseBinding MouseAction="LeftClick"
+                                      Command="{Binding DownloadFileCommand}"/>
+                    </TextBlock.InputBindings>
+                </TextBlock>
 
-          <TextBlock.InputBindings>
-            <MouseBinding MouseAction="LeftClick"
-                          Command="{StaticResource ResourceKey=DownloadFileCommand}"/>
-          </TextBlock.InputBindings>
-        </TextBlock>
+                <ProgressBar Height="10"
+                             Margin="5, 2.5, 5, 2.5"
+                             SmallChange="1"
+                             Value="{Binding Path=Progress}">
+                    <ProgressBar.Style>
+                        <Style>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=Progress}" Value="0">
+                                    <Setter Property="ProgressBar.Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ProgressBar.Style>
+                </ProgressBar>
+            </StackPanel>
+        </DataTemplate>
 
-        <ProgressBar Height="10"
-                     Margin="5, 2.5, 5, 2.5"
-                     SmallChange="1"
-                     Value="{Binding Path=Progress}">
-          <ProgressBar.Style>
-            <Style>
-              <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=Progress}"
-                             Value="0">
-                  <Setter Property="ProgressBar.Visibility" Value="Collapsed"/>
+        <Style x:Key="MessagesStyle">
+            <Style.Triggers>
+
+                <DataTrigger Binding="{Binding Path=Type}" Value="Common">
+                    <Setter Property="ContentPresenter.ContentTemplate" 
+                            Value="{StaticResource ResourceKey=CommonMessageTemplate}"/>
                 </DataTrigger>
-              </Style.Triggers>
-            </Style>
-          </ProgressBar.Style>
-        </ProgressBar>
-      </StackPanel>
-    </DataTemplate>
 
-    <Style x:Key="MessagesStyle">
-      <Style.Triggers>
+                <DataTrigger Binding="{Binding Path=Type}" Value="System">
+                    <Setter Property="ContentPresenter.ContentTemplate" 
+                            Value="{StaticResource ResourceKey=SystemMessageTemplate}"/>
+                </DataTrigger>
 
-        <DataTrigger Binding="{Binding Path=Type}" 
-                     Value="Common">
-          <Setter Property="ContentPresenter.ContentTemplate" 
-                  Value="{StaticResource ResourceKey=CommonMessageTemplate}"/>
-        </DataTrigger>
+                <DataTrigger Binding="{Binding Path=Type}" Value="Private">
+                    <Setter Property="ContentPresenter.ContentTemplate" 
+                            Value="{StaticResource ResourceKey=PrivateMessageTemplate}"/>
+                </DataTrigger>
 
-        <DataTrigger Binding="{Binding Path=Type}" 
-                     Value="System">
-          <Setter Property="ContentPresenter.ContentTemplate" 
-                  Value="{StaticResource ResourceKey=SystemMessageTemplate}"/>
-        </DataTrigger>
+                <DataTrigger Binding="{Binding Path=Type}" Value="File">
+                    <Setter Property="ContentPresenter.ContentTemplate" 
+                            Value="{StaticResource ResourceKey=FileMessageTemplate}"/>
+                </DataTrigger>
 
-        <DataTrigger Binding="{Binding Path=Type}" 
-                     Value="Private">
-          <Setter Property="ContentPresenter.ContentTemplate" 
-                  Value="{StaticResource ResourceKey=PrivateMessageTemplate}"/>
-        </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
-        <DataTrigger Binding="{Binding Path=Type}" 
-                     Value="File">
-          <Setter Property="ContentPresenter.ContentTemplate" 
-                  Value="{StaticResource ResourceKey=FileMessageTemplate}"/>
-        </DataTrigger>
+        <DataTemplate x:Key="UserTemplate">
+            <StackPanel Orientation="Horizontal">
 
-      </Style.Triggers>
-    </Style>
+                <TextBlock Text="{Binding Path=Nick}"
+                           Margin="5,2.5,5,2.5"
+                           FontWeight="Bold"
+                           Cursor="Hand">
 
-    <DataTemplate x:Key="UserTemplate">
-      <TextBlock Text="{Binding Path=Nick}"
-                 Margin="5,2.5,5,2.5"
-                 FontWeight="Bold"
-                 Cursor="Hand">
+                    <TextBlock.Foreground>
+                        <SolidColorBrush x:Name="ForegroundBrush"
+                                         Color="{Binding Path=NickColor}"/>
+                    </TextBlock.Foreground>
+                </TextBlock>
 
-        <TextBlock.Resources>
-          <Infrastructure:CommandReference x:Key="UserClickCommand"
-                                           Command="{Binding Path=UserClickCommand}"/>
+                <Image Width="15"
+                       Height="15">
+                    <Image.Style>
+                        <Style>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=CheckStatus}" Value="Checked">
+                                    <Setter Property="Image.Source" Value="/TCPChat;component/Images/checked.png"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=CheckStatus}" Value="CheckedNotMatch">
+                                    <Setter Property="Image.Source" Value="/TCPChat;component/Images/checkedNotMatch.png"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=CheckStatus}" Value="NotChecked">
+                                    <Setter Property="Image.Source" Value="/TCPChat;component/Images/notChecked.png"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
 
-          <Infrastructure:CommandReference x:Key="SetRoomAdminCommand"
-                                           Command="{Binding Path=SetRoomAdminCommand}"/>
-        </TextBlock.Resources>
+                <StackPanel.InputBindings>
+                    <MouseBinding MouseAction="LeftClick"
+                                  Command="{Binding UserClickCommand}"/>
+                </StackPanel.InputBindings>
 
-        <TextBlock.InputBindings>
-          <MouseBinding MouseAction="LeftClick"
-                        Command="{StaticResource ResourceKey=UserClickCommand}"/>
-        </TextBlock.InputBindings>
+                <StackPanel.ContextMenu>
+                    <ContextMenu>
+                        <ContextMenu.Resources>
+                            <Style x:Key="TriggerMenuStyle">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsClient}" 
+                                                 Value="True">
+                                        <Setter Property="Control.IsEnabled"
+                                                Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContextMenu.Resources>
 
-        <TextBlock.Foreground>
-          <SolidColorBrush x:Name="ForegroundBrush"
-                           Color="{Binding Path=NickColor}"/>
-        </TextBlock.Foreground>
+                        <MenuItem Header="{Infrastructure:Localized userTemplate-SetRoomAdmin}"
+                                  Style="{StaticResource ResourceKey=TriggerMenuStyle}"
+                                  Command="{Binding SetRoomAdminCommand}"/>
 
-        <TextBlock.ContextMenu>
-          <ContextMenu>
-            <ContextMenu.Resources>
-              <Style x:Key="TriggerMenuStyle">
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding Path=IsClient}" 
-                               Value="True">
-                    <Setter Property="Control.IsEnabled"
-                            Value="False"/>
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </ContextMenu.Resources>
+                        <Separator/>
 
-            <MenuItem Header="{Infrastructure:Localized userTemplate-SetRoomAdmin}"
-                      Style="{StaticResource ResourceKey=TriggerMenuStyle}"
-                      Command="{StaticResource ResourceKey=SetRoomAdminCommand}"/>
-          </ContextMenu>
-        </TextBlock.ContextMenu>
+                        <MenuItem Header="{Infrastructure:Localized userTemplate-OpenCertificate}"
+                                  Command="{Binding OpenCertificateCommand}"/>
 
-        <TextBlock.Triggers>
-          <EventTrigger RoutedEvent="TextBlock.ContextMenuOpening">
-            <BeginStoryboard>
-              <Storyboard>
-                <ColorAnimation Storyboard.TargetName="ForegroundBrush"
-										            Storyboard.TargetProperty="Color" 
-                                Duration="0:0:0.2" 
-                                To="Black" />
-              </Storyboard>
-            </BeginStoryboard>
-          </EventTrigger>
+                        <MenuItem Header="{Infrastructure:Localized userTemplate-SaveCertificate}"
+                                  Style="{StaticResource ResourceKey=TriggerMenuStyle}"
+                                  Command="{Binding SaveCertificateCommand}"/>
 
-          <EventTrigger RoutedEvent="TextBlock.ContextMenuClosing">
-            <BeginStoryboard>
-              <Storyboard>
-                <ColorAnimation Storyboard.TargetName="ForegroundBrush"
-										            Storyboard.TargetProperty="Color" 
-                                Duration="0:0:0.2" 
-                                To="{Binding Path=NickColor}"/>
-              </Storyboard>
-            </BeginStoryboard>
-          </EventTrigger>
-        </TextBlock.Triggers>
-      </TextBlock>
-    </DataTemplate>
+                        <MenuItem Header="{Infrastructure:Localized userTemplate-RemoveCertificate}"
+                                  Style="{StaticResource ResourceKey=TriggerMenuStyle}"
+                                  Command="{Binding RemoveCertificateCommand}"/>
+                    </ContextMenu>
+                </StackPanel.ContextMenu>
 
-    <DataTemplate x:Key="RoomTabTemplate">
-      <Grid>
+                <StackPanel.Triggers>
+                    <EventTrigger RoutedEvent="TextBlock.ContextMenuOpening">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetName="ForegroundBrush"
+										        Storyboard.TargetProperty="Color" 
+                                                Duration="0:0:0.2" 
+                                                To="Black" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+
+                    <EventTrigger RoutedEvent="TextBlock.ContextMenuClosing">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetName="ForegroundBrush"
+										        Storyboard.TargetProperty="Color" 
+                                                Duration="0:0:0.2" 
+                                                To="{Binding Path=NickColor}"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </StackPanel.Triggers>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="RoomTabTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" MinWidth="200"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*" MinWidth="100"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="3*" MinHeight="200"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="1*" MinHeight="80"/>
+                </Grid.RowDefinitions>
+
+                <Border Margin="5, 5, 0, 0"
+                        Grid.Column="0"
+                        BorderThickness="1" 
+                        BorderBrush="#FF828790" 
+                        Background="White"
+                        Grid.Row="0">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Infrastructure:AttachedHelper.AutoScroll="{Binding Path=MessagesAutoScroll}">
+                        <ItemsControl VerticalAlignment="Top"
+                                      ItemContainerStyle="{StaticResource ResourceKey=MessagesStyle}"                              
+                                      ItemsSource="{Binding Path=Messages}"/>
+                    </ScrollViewer>
+                </Border>
+
+                <Border Margin="0, 5, 5, 0"
+                        Grid.Column="2"
+                        BorderThickness="1" 
+                        BorderBrush="#FF828790" 
+                        Background="White">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemTemplate="{StaticResource ResourceKey=UserTemplate}"
+                                      ItemsSource="{Binding Path=Users}"/>
+                    </ScrollViewer>
+                </Border>
+
+                <GridSplitter Grid.Column="1" 
+                              Grid.Row="0"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Width="5" 
+                              Background="Transparent"/>
+
+                <GridSplitter Grid.Column="0"
+                              Grid.ColumnSpan="3"
+                              Grid.Row="1"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Height="Auto"
+                              Background="Transparent"/>
+
+                <StackPanel Grid.Column="0"
+                            Grid.Row="1"
+                            Orientation="Horizontal">
+
+                    <Label Content="{Infrastructure:Localized main-reciver}"
+                           Margin="5"
+                           Padding="0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"/>
+
+                    <ComboBox Margin="5"
+                              MinWidth="100"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Center"
+                              SelectedItem="{Binding Path=SelectedReceiver, Mode=TwoWay}"                              
+                              ItemsSource="{Binding Path=Receivers}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=Nick}"
+                                           FontWeight="Bold">
+                                    <TextBlock.Foreground>
+                                        <SolidColorBrush Color="{Binding Path=NickColor}"/>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <Border Margin="5, 0, 5, 5"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="3"
+                        Grid.Row="2"
+                        BorderThickness="1" 
+                        BorderBrush="#FF828790" 
+                        Background="White">
+
+                    <TextBox BorderThickness="0"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             Text="{Binding Path=Message, 
+                                            Mode=TwoWay, 
+                                            UpdateSourceTrigger=PropertyChanged}"
+                             AllowDrop="True"
+                             Infrastructure:AttachedHelper.MessageCaret="{Binding Path=MessageCaretIndex}">
+
+                        <TextBox.Style>
+                            <Style>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsMessageSelected}"
+                                                Value="true">
+
+                                        <Setter Property="TextBox.Background">
+                                            <Setter.Value>
+                                                <SolidColorBrush Color="#FFFDF6B5"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter"
+                                        Command="{Binding SendMessageCommand}"/>
+                            <KeyBinding Key="Enter"
+                                        Modifiers="Control"
+                                        Command="{Binding PastReturnCommand}"/>
+                            <KeyBinding Key="Escape"
+                                        Command="{Binding ClearSelectedMessageCommand}"/>
+                        </TextBox.InputBindings>
+
+                    </TextBox>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+    </Window.Resources>
+
+    <Grid>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="2*" MinWidth="200"/>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="1*" MinWidth="100"/>
+            <ColumnDefinition Width="2*" MinWidth="150"/>
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
-          <RowDefinition Height="3*" MinHeight="200"/>
-          <RowDefinition Height="Auto"/>
-          <RowDefinition Height="1*" MinHeight="80"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Margin="5, 5, 0, 0"
-                Grid.Column="0"
-                BorderThickness="1" 
-                BorderBrush="#FF828790" 
-                Background="White"
-                Grid.Row="0">
-
-          <ScrollViewer VerticalScrollBarVisibility="Auto"
-                        Infrastructure:AttachedHelper.AutoScroll="{Binding Path=MessagesAutoScroll}">
-            <ItemsControl VerticalAlignment="Top"
-                          ItemContainerStyle="{StaticResource ResourceKey=MessagesStyle}"                              
-                          ItemsSource="{Binding Path=Messages}"/>
-          </ScrollViewer>
-        </Border>
-
-        <Border Margin="0, 5, 5, 0"
-                Grid.Column="2"
-                BorderThickness="1" 
-                BorderBrush="#FF828790" 
-                Background="White">
-
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemTemplate="{StaticResource ResourceKey=UserTemplate}"
-                          ItemsSource="{Binding Path=Users}"/>
-          </ScrollViewer>
-        </Border>
-
-        <GridSplitter Grid.Column="1" 
-                      Grid.Row="0"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch"
-                      Width="5" 
-                      Background="Transparent"/>
-
-        <GridSplitter Grid.Column="0"
-                      Grid.ColumnSpan="3"
-                      Grid.Row="1"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch"
-                      Height="Auto"
-                      Background="Transparent"/>
-
-        <StackPanel Grid.Column="0"
-                    Grid.Row="1"
-                    Orientation="Horizontal">
-
-          <Label Content="{Infrastructure:Localized main-reciver}"
-                 Margin="5"
-                 Padding="0"
-                 HorizontalAlignment="Left"
-                 VerticalAlignment="Center"/>
-
-          <ComboBox Margin="5"
-                    MinWidth="100"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Center"
-                    SelectedItem="{Binding Path=SelectedReceiver, Mode=TwoWay}"                              
-                    ItemsSource="{Binding Path=Receivers}">
-            <ComboBox.ItemTemplate>
-              <DataTemplate>
-                <TextBlock Text="{Binding Path=Nick}"
-                           FontWeight="Bold">
-                  <TextBlock.Foreground>
-                    <SolidColorBrush Color="{Binding Path=NickColor}"/>
-                  </TextBlock.Foreground>
-                </TextBlock>
-              </DataTemplate>
-            </ComboBox.ItemTemplate>
-          </ComboBox>
-        </StackPanel>
-
-        <Border Margin="5, 0, 5, 5"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
-                Grid.Row="2"
-                BorderThickness="1" 
-                BorderBrush="#FF828790" 
-                Background="White">
-
-          <TextBox BorderThickness="0"
-                   AcceptsReturn="True"
-                   TextWrapping="Wrap"
-                   Text="{Binding Path=Message, 
-                                  Mode=TwoWay, 
-                                  UpdateSourceTrigger=PropertyChanged}"
-                   AllowDrop="True"
-                   Infrastructure:AttachedHelper.MessageCaret="{Binding Path=MessageCaretIndex}">
-
-            <TextBox.Style>
-              <Style>
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding Path=IsMessageSelected}"
-                               Value="true">
-
-                    <Setter Property="TextBox.Background">
-                      <Setter.Value>
-                        <SolidColorBrush Color="#FFFDF6B5"/>
-                      </Setter.Value>
-                    </Setter>
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </TextBox.Style>
-
-            <TextBox.Resources>
-              <Infrastructure:CommandReference x:Key="SendMessageCommand"
-                                               Command="{Binding Path=SendMessageCommand}"/>
-
-              <Infrastructure:CommandReference x:Key="PastReturnCommand"
-                                               Command="{Binding Path=PastReturnCommand}"/>
-
-              <Infrastructure:CommandReference x:Key="ClearSelectedMessageCommand"
-                                               Command="{Binding Path=ClearSelectedMessageCommand}"/>
-            </TextBox.Resources>
-
-            <TextBox.InputBindings>
-              <KeyBinding Key="Enter"
-                          Command="{StaticResource ResourceKey=SendMessageCommand}"/>
-              <KeyBinding Key="Enter"
-                          Modifiers="Control"
-                          Command="{StaticResource ResourceKey=PastReturnCommand}"/>
-              <KeyBinding Key="Escape"
-                          Command="{StaticResource ResourceKey=ClearSelectedMessageCommand}"/>
-            </TextBox.InputBindings>
-
-          </TextBox>
-        </Border>
-      </Grid>
-    </DataTemplate>
-
-  </Window.Resources>
-
-  <Grid>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="2*" MinWidth="150"/>
-    </Grid.ColumnDefinitions>
-
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="*"/>
-    </Grid.RowDefinitions>
-
-    <Menu Grid.Column="0"
+        <Menu Grid.Column="0"
               Grid.ColumnSpan="3"
               Grid.Row="0">
 
-      <MenuItem Header="{Infrastructure:Localized menu-header-connect}">
-        <MenuItem Header="{Infrastructure:Localized menu-connect}"
-                  Command="{Binding Path=ConnectCommand}"/>
-        <MenuItem Header="{Infrastructure:Localized menu-disconnect}"
-                  Command="{Binding Path=DisconnectCommand}"/>
-        <Separator/>
-        <MenuItem Header="{Infrastructure:Localized menu-enableServer}"
-                  Command="{Binding Path=EnableServerCommand}"/>
-        <MenuItem Header="{Infrastructure:Localized menu-disableServer}"
-                  Command="{Binding Path=DisableServerCommand}"/>
-        <Separator/>
-        <MenuItem Header="{Infrastructure:Localized menu-exit}"
-                  Command="{Binding Path=ExitCommand}"/>
-      </MenuItem>
+            <MenuItem Header="{Infrastructure:Localized menu-header-connect}">
+                <MenuItem Header="{Infrastructure:Localized menu-connect}"
+                          Command="{Binding Path=ConnectCommand}"/>
+                <MenuItem Header="{Infrastructure:Localized menu-disconnect}"
+                          Command="{Binding Path=DisconnectCommand}"/>
+                <Separator/>
+                <MenuItem Header="{Infrastructure:Localized menu-enableServer}"
+                          Command="{Binding Path=EnableServerCommand}"/>
+                <MenuItem Header="{Infrastructure:Localized menu-disableServer}"
+                          Command="{Binding Path=DisableServerCommand}"/>
+                <Separator/>
+                <MenuItem Header="{Infrastructure:Localized menu-exit}"
+                          Command="{Binding Path=ExitCommand}"/>
+            </MenuItem>
 
-      <MenuItem Header="{Infrastructure:Localized menu-header-rooms}">
-        <MenuItem Header="{Infrastructure:Localized menu-createRoom}"
-                  Command="{Binding Path=CreateRoomCommand}"/>
-        <MenuItem Header="{Infrastructure:Localized menu-closeRoom}"
-                  Command="{Binding Path=DeleteRoomCommand}"/>
-        <Separator/>
-        <MenuItem Header="{Infrastructure:Localized menu-inviteInRoom}"
-                  Command="{Binding Path=SelectedRoom.InviteInRoomCommand}"/>
-        <MenuItem Header="{Infrastructure:Localized menu-kickFromRoom}"
-                  Command="{Binding Path=SelectedRoom.KickFromRoomCommand}"/>
-        <Separator/>
-        <MenuItem Header="{Infrastructure:Localized menu-enableVoiceInRoom}"
-                  Command="{Binding Path=SelectedRoom.EnableVoiceCommand}"/>
-        <MenuItem Header="{Infrastructure:Localized menu-disableVoiceInRoom}"
-                  Command="{Binding Path=SelectedRoom.DisableVoiceCommand}"/>
-        <Separator/>
-        <MenuItem Header="{Infrastructure:Localized menu-exitFromRoom}"
-                  Command="{Binding Path=ExitFromRoomCommand}"/>
-      </MenuItem>
+            <MenuItem Header="{Infrastructure:Localized menu-header-rooms}">
+                <MenuItem Header="{Infrastructure:Localized menu-createRoom}"
+                          Command="{Binding Path=CreateRoomCommand}"/>
+                <MenuItem Header="{Infrastructure:Localized menu-closeRoom}"
+                          Command="{Binding Path=DeleteRoomCommand}"/>
+                <Separator/>
+                <MenuItem Header="{Infrastructure:Localized menu-inviteInRoom}"
+                          Command="{Binding Path=SelectedRoom.InviteInRoomCommand}"/>
+                <MenuItem Header="{Infrastructure:Localized menu-kickFromRoom}"
+                          Command="{Binding Path=SelectedRoom.KickFromRoomCommand}"/>
+                <Separator/>
+                <MenuItem Header="{Infrastructure:Localized menu-enableVoiceInRoom}"
+                          Command="{Binding Path=SelectedRoom.EnableVoiceCommand}"/>
+                <MenuItem Header="{Infrastructure:Localized menu-disableVoiceInRoom}"
+                          Command="{Binding Path=SelectedRoom.DisableVoiceCommand}"/>
+                <Separator/>
+                <MenuItem Header="{Infrastructure:Localized menu-exitFromRoom}"
+                          Command="{Binding Path=ExitFromRoomCommand}"/>
+            </MenuItem>
 
-      <MenuItem Header="{Infrastructure:Localized menu-header-File}">
-        <MenuItem Header="{Infrastructure:Localized menu-distributedFiles}"
-                  Command="{Binding Path=OpenFilesDialogCommand}"/>
-        <Separator/>
-        <MenuItem Header="{Infrastructure:Localized menu-addFileToRoom}"
-                  Command="{Binding Path=SelectedRoom.AddFileCommand}"/>
-      </MenuItem>
+            <MenuItem Header="{Infrastructure:Localized menu-header-File}">
+                <MenuItem Header="{Infrastructure:Localized menu-distributedFiles}"
+                          Command="{Binding Path=OpenFilesDialogCommand}"/>
+                <Separator/>
+                <MenuItem Header="{Infrastructure:Localized menu-addFileToRoom}"
+                          Command="{Binding Path=SelectedRoom.AddFileCommand}"/>
+            </MenuItem>
 
-      <MenuItem Header="{Infrastructure:Localized menu-header-plugins}"
-                ItemsSource="{Binding Path=Plugins}">
-        <MenuItem.ItemContainerStyle>
-          <Style TargetType="MenuItem">
-            <Setter Property="Header" Value="{Binding Path=Header}"/>
-            <Setter Property="Command" Value="{Binding Path=InvokeCommand}"/>
-          </Style>
-        </MenuItem.ItemContainerStyle>
-      </MenuItem>
+            <MenuItem Header="{Infrastructure:Localized menu-header-plugins}"
+                      ItemsSource="{Binding Path=Plugins}">
+                <MenuItem.ItemContainerStyle>
+                    <Style TargetType="MenuItem">
+                        <Setter Property="Header" Value="{Binding Path=Header}"/>
+                        <Setter Property="Command" Value="{Binding Path=InvokeCommand}"/>
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+            </MenuItem>
 
-      <MenuItem Header="{Infrastructure:Localized menu-header-other}">
-        <MenuItem Header="{Infrastructure:Localized menu-notifications}"
-                  IsCheckable="True"
-                  IsChecked="{Binding Path=Alerts, Mode=TwoWay}"/>
-        <MenuItem Header="{Infrastructure:Localized menu-settings}"
-                  Command="{Binding Path=OpenSettingsCommand}"/>
-        <MenuItem Header="{Infrastructure:Localized menu-about}"
-                  Command="{Binding Path=OpenAboutProgramCommand}"/>
-      </MenuItem>
-    </Menu>
+            <MenuItem Header="{Infrastructure:Localized menu-header-other}">
+                <MenuItem Header="{Infrastructure:Localized menu-notifications}"
+                          IsCheckable="True"
+                          IsChecked="{Binding Path=Alerts, Mode=TwoWay}"/>
+                <MenuItem Header="{Infrastructure:Localized menu-settings}"
+                          Command="{Binding Path=OpenSettingsCommand}"/>
+                <MenuItem Header="{Infrastructure:Localized menu-about}"
+                          Command="{Binding Path=OpenAboutProgramCommand}"/>
+            </MenuItem>
+        </Menu>
 
-    <ToolBar x:Name="ChatToolBar"
-             Grid.Column="0"
-             Grid.ColumnSpan="3"
-             Grid.Row="1">
-      <Button x:Name="EnableServer"
-              Content="{Infrastructure:Localized menu-enableServer}"
-              Margin="2"
-              Command="{Binding Path=EnableServerCommand}"/>
+        <ToolBar x:Name="ChatToolBar"
+                 Grid.Column="0"
+                 Grid.ColumnSpan="3"
+                 Grid.Row="1">
+            <Button x:Name="EnableServer"
+                    Content="{Infrastructure:Localized menu-enableServer}"
+                    Margin="2"
+                    Command="{Binding Path=EnableServerCommand}"/>
 
-      <Button x:Name="Connect"
-              Content="{Infrastructure:Localized menu-connect}"
-              Margin="2"
-              Command="{Binding Path=ConnectCommand}"/>
-    </ToolBar>
+            <Button x:Name="Connect"
+                    Content="{Infrastructure:Localized menu-connect}"
+                    Margin="2"
+                    Command="{Binding Path=ConnectCommand}"/>
+        </ToolBar>
 
-    <TabControl x:Name="ChatRooms"
-                BorderThickness="1"
-                Grid.Column="0"
-                Grid.Row="2" 
-                Padding="0"
-                ItemsSource="{Binding Path=Rooms}"
-                ContentTemplate="{StaticResource ResourceKey=RoomTabTemplate}"
-                SelectedIndex="{Binding Path=SelectedRoomIndex,
-                                        Mode=TwoWay}"
-                SelectedItem="{Binding Path=SelectedRoom,
-                                       Mode=OneWayToSource}">
+        <TabControl x:Name="ChatRooms"
+                    BorderThickness="1"
+                    Grid.Column="0"
+                    Grid.Row="2" 
+                    Padding="0"
+                    ItemsSource="{Binding Path=Rooms}"
+                    ContentTemplate="{StaticResource ResourceKey=RoomTabTemplate}"
+                    SelectedIndex="{Binding Path=SelectedRoomIndex,
+                                            Mode=TwoWay}"
+                    SelectedItem="{Binding Path=SelectedRoom,
+                                           Mode=OneWayToSource}">
 
-      <TabControl.ItemTemplate>
-        <DataTemplate>
-          <StackPanel Orientation="Horizontal">
-            <Image Width="20"
-                   Height="20"
-                   Margin="0, 0, 2.5, 0">
-              <Image.Style>
-                <Style>
-                  <Style.Triggers>
-                    <MultiDataTrigger>
-                      <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding Path=Type}" Value="Voice"/>
-                        <Condition Binding="{Binding Path=Enabled}" Value="true"/>
-                      </MultiDataTrigger.Conditions>
-                      <Setter Property="Image.Source" Value="/TCPChat;component/Images/voiceOn.png"/>
-                    </MultiDataTrigger>
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20"
+                               Height="20"
+                               Margin="0, 0, 2.5, 0">
+                            <Image.Style>
+                                <Style>
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Path=Type}" Value="Voice"/>
+                                                <Condition Binding="{Binding Path=Enabled}" Value="true"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Image.Source" Value="/TCPChat;component/Images/voiceOn.png"/>
+                                        </MultiDataTrigger>
 
-                    <MultiDataTrigger>
-                      <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding Path=Type}" Value="Voice"/>
-                        <Condition Binding="{Binding Path=Enabled}" Value="false"/>
-                      </MultiDataTrigger.Conditions>
-                      <Setter Property="Image.Source" Value="/TCPChat;component/Images/voiceOff.png"/>
-                    </MultiDataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Path=Type}" Value="Voice"/>
+                                                <Condition Binding="{Binding Path=Enabled}" Value="false"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Image.Source" Value="/TCPChat;component/Images/voiceOff.png"/>
+                                        </MultiDataTrigger>
 
-                    <MultiDataTrigger>
-                      <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding Path=Type}" Value="Chat"/>
-                        <Condition Binding="{Binding Path=Enabled}" Value="true"/>
-                      </MultiDataTrigger.Conditions>
-                      <Setter Property="Image.Source" Value="/TCPChat;component/Images/chat.png"/>
-                    </MultiDataTrigger>
-                    
-                  </Style.Triggers>
-                </Style>
-              </Image.Style>
-            </Image>
-            <TextBlock Text="{Binding Path=Name}"
-                       VerticalAlignment="Center"
-                       Margin="2.5, 0, 0, 0">
-              <TextBlock.Style>
-                <Style>
-                  <Style.Triggers>
-                    <DataTrigger Binding="{Binding Path=Updated}" Value="True">
-                      <Setter Property="TextBlock.Foreground" Value="Red"/>
-                    </DataTrigger>
-                  </Style.Triggers>
-                </Style>
-              </TextBlock.Style>
-            </TextBlock>
-          </StackPanel>
-        </DataTemplate>
-      </TabControl.ItemTemplate>
-    </TabControl>
-  </Grid>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Path=Type}" Value="Chat"/>
+                                                <Condition Binding="{Binding Path=Enabled}" Value="true"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Image.Source" Value="/TCPChat;component/Images/chat.png"/>
+                                        </MultiDataTrigger>
+
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="{Binding Path=Name}"
+                                   VerticalAlignment="Center"
+                                   Margin="2.5, 0, 0, 0">
+                            <TextBlock.Style>
+                                <Style>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=Updated}" Value="True">
+                                            <Setter Property="TextBlock.Foreground" Value="Red"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+        </TabControl>
+    </Grid>
 </Window>

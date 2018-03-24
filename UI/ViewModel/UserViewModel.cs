@@ -1,8 +1,12 @@
-﻿using Engine.Api.Client.Rooms;
+﻿using Engine;
+using Engine.Api.Client.Rooms;
 using Engine.Model.Client;
+using Engine.Network;
 using System;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Windows.Input;
+using UI.Dialogs;
 using UI.Infrastructure;
 using WPFColor = System.Windows.Media.Color;
 
@@ -12,6 +16,7 @@ namespace UI.ViewModel
   {
     #region fields
     private string _nick;
+    private UserCheckStatus _checkStatus;
     private string _nickKey;
     private RoomViewModel _parent;
     private bool _isClient;
@@ -25,14 +30,33 @@ namespace UI.ViewModel
     }
 
     public UserViewModel(string nickLocKey, string userNick, RoomViewModel parentViewModel)
-      : base(parentViewModel, false)
+      : base(parentViewModel, true)
     {
       _nick = userNick;
       _parent = parentViewModel;
       _nickKey = nickLocKey;
 
-      SetRoomAdminCommand = new Command(SetRoomAdmin, _ => ClientModel.Api != null);
+      if (string.IsNullOrEmpty(_nick))
+      {
+        _checkStatus = UserCheckStatus.NotChecked;
+        _isClient = false;
+      }
+      else
+      {
+        using (var client = ClientModel.Get())
+        {
+          _checkStatus = GetCheckStatus(client);
+          _isClient = GetClientStatus(client);
+        }
+      }
+
       UserClickCommand = new Command(UserClick);
+      SetRoomAdminCommand = new Command(SetRoomAdmin, _ => ClientModel.Api != null);
+      OpenCertificateCommand = new Command(OpenCertificate, _ => ClientModel.Api != null);
+      SaveCertificateCommand = new Command(SaveCertificate, _ => ClientModel.Api != null);
+      RemoveCertificateCommand = new Command(RemoveCertificate, _ => ClientModel.Api != null);
+
+      Events.TrustedCertificatesChanged += CreateSubscriber<TrustedCertificatesEventArgs>(TrustedCertificatesChanged);
 
       Localizer.Instance.LocaleChanged += RefreshNick;
     }
@@ -46,8 +70,11 @@ namespace UI.ViewModel
     #endregion
 
     #region commands
-    public ICommand SetRoomAdminCommand { get; private set; }
     public ICommand UserClickCommand { get; private set; }
+    public ICommand SetRoomAdminCommand { get; private set; }
+    public ICommand OpenCertificateCommand { get; private set; }
+    public ICommand SaveCertificateCommand { get; private set; }
+    public ICommand RemoveCertificateCommand { get; private set; }
     #endregion
 
     #region properties
@@ -78,20 +105,21 @@ namespace UI.ViewModel
       }
     }
 
-    private void RefreshNick(object sender, EventArgs args)
-    {
-      OnPropertyChanged("Nick");
-    }
-
     public bool IsClient
     {
       get { return _isClient; }
-      set { SetValue(value, "IsClient", v => _isClient = v); }
+      set { SetValue(value, nameof(IsClient), v => _isClient = v); }
     }
 
     public bool IsAllInRoom
     {
       get { return _nickKey != null; }
+    }
+
+    public UserCheckStatus CheckStatus
+    {
+      get { return _checkStatus; }
+      set { SetValue(value, nameof(CheckStatus), v => _checkStatus = v); }
     }
     #endregion
 
@@ -113,9 +141,92 @@ namespace UI.ViewModel
         _parent.AddSystemMessage(se.Message);
       }
     }
+
+    private void SaveCertificate(object obj)
+    {
+      using (var client = ClientModel.Get())
+      {
+        var user = client.Chat.GetUser(_nick);
+        ClientModel.TrustedCertificates.Add(user.Certificate);
+      }
+    }
+
+    private void RemoveCertificate(object obj)
+    {
+      using (var client = ClientModel.Get())
+      {
+        var user = client.Chat.GetUser(_nick);
+        ClientModel.TrustedCertificates.Remove(user.Certificate);
+      }
+    }
+
+    private void OpenCertificate(object obj)
+    {
+      using (var client = ClientModel.Get())
+      {
+        var user = client.Chat.GetUser(_nick);
+        X509Certificate2UI.DisplayCertificate(user.Certificate);
+      }
+    }
+    #endregion
+
+    #region events
+    private void RefreshNick(object sender, EventArgs args)
+    {
+      OnPropertyChanged(nameof(Nick));
+    }
+    
+    private void TrustedCertificatesChanged(TrustedCertificatesEventArgs obj)
+    {
+      if (!string.IsNullOrEmpty(_nick))
+      {
+        using (var client = ClientModel.Get())
+        {
+          var user = client.Chat.GetUser(_nick);
+          if (user.Certificate.Equals(obj.Certificate))
+            CheckStatus = GetCheckStatus(client);
+        }
+      }
+    }
     #endregion
 
     #region methods
+    private bool GetClientStatus(ClientGuard client)
+    {
+      return client.Chat.User.Nick == _nick;
+    }
+
+    private UserCheckStatus GetCheckStatus(ClientGuard client)
+    {
+      if (_nick == client.Chat.User.Nick)
+        return UserCheckStatus.Checked;
+
+      var user = client.Chat.GetUser(_nick);
+      var certificateStatus = Connection.GetCertificateValidationStatus(user.Certificate, ClientModel.TrustedCertificates);
+
+      switch (certificateStatus)
+      {
+        case CertificateStatus.Trusted:
+          var commonName = user.Certificate.GetNameInfo(X509NameType.SimpleName, false);
+          var prefix = GenerateCertificateDialog.TcpChatNickPrefix;
+
+          var certificateNick = commonName.StartsWith(prefix)
+            ? commonName.Substring(prefix.Length)
+            : commonName;
+
+          return certificateNick.Equals(_nick)
+            ? UserCheckStatus.Checked
+            : UserCheckStatus.CheckedNotMatch;
+
+        case CertificateStatus.SelfSigned:
+        case CertificateStatus.Untrusted:
+        case CertificateStatus.Unknown:
+          return UserCheckStatus.NotChecked;
+      }
+
+      return UserCheckStatus.NotChecked;
+    }
+
     public override bool Equals(object obj)
     {
       if (obj == null)

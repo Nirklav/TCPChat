@@ -66,7 +66,7 @@ namespace UI.Dialogs
 
     private void GenerateCertificate_Click(object sender, RoutedEventArgs e)
     {
-      var generateCertificate = new GenerateCertificateDialog(Localizer.Instance.Localize("serverAddress"), "{0}");
+      var generateCertificate = GenerateCertificateDialog.ForServerAddress();
       if (generateCertificate.ShowDialog() == true)
         CertificateField.Text = generateCertificate.CertificatePath;
     }

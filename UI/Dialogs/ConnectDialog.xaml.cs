@@ -93,7 +93,7 @@ namespace UI.Dialogs
 
     private void GenerateCertificate_Click(object sender, RoutedEventArgs e)
     {
-      var generateCertificate = new GenerateCertificateDialog(Localizer.Instance.Localize("nick"), "TcpChat:nick:{0}");
+      var generateCertificate = GenerateCertificateDialog.ForNick();
       if (generateCertificate.ShowDialog() == true)
         CertificateField.Text = generateCertificate.CertificatePath;
     }

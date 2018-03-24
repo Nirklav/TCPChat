@@ -14,6 +14,7 @@
   <row key="certificatePath" value="Путь к сертификату"/>
   <row key="generateCertificate" value="Сегенерировать сертификат"/>
   <row key="password" value="Пароль"/>
+  <row key="check-password" value="Повторите пароль"/>
   
   <row key="systemMessage-ApiNotSupported" value="Данный API не поддерживается сервером."/>
   <row key="systemMessage-ConnectionRetryAttempt" value="Попытка соединения с сервером..."/>
@@ -40,6 +41,9 @@
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>
   
   <row key="userTemplate-SetRoomAdmin" value="Назначить администратором"/>
+  <row key="userTemplate-OpenCertificate" value="Показать сертификат."/>
+  <row key="userTemplate-SaveCertificate" value="Сохранить сертификат."/>
+  <row key="userTemplate-RemoveCertificate" value="Удалить сертификат."/>
   
   <row key="menu-header-connect" value="Соединение"/>
   <row key="menu-connect" value="Подключиться"/>

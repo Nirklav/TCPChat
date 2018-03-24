@@ -179,9 +179,6 @@ namespace UI.ViewModel
         {
           SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
 
-          if (ClientModel.IsInited)
-            ClientModel.Reset();
-
           if (ServerModel.IsInited)
             ServerModel.Reset();
         }
@@ -208,50 +205,62 @@ namespace UI.ViewModel
       var dialog = new ConnectDialog();
       if (dialog.ShowDialog() == true)
       {
-        var outputAudioDevice = Settings.Current.OutputAudioDevice;
-        var inputAudioDevice = Settings.Current.InputAudioDevice;
-        var bits = Settings.Current.Bits;
-        var frequency = Settings.Current.Frequency;
-        var excludedPlugins = Settings.Current.Plugins
-          .Where(s => !s.Enabled)
-          .Select(s => s.Name)
-          .ToArray();
-
-        var initializer = new ClientInitializer
-        {
-          Nick = dialog.Nick,
-          NickColor = dialog.NickColor,
-          Certificate = new X509Certificate2(dialog.CertificatePath, dialog.CertificatePassword),
-
-          PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
-          ExcludedPlugins = excludedPlugins
-        };
-
-        ClientModel.Init(initializer);
-
         try
         {
-          ClientModel.Player.SetOptions(outputAudioDevice);
-          ClientModel.Recorder.SetOptions(inputAudioDevice, new AudioQuality(1, bits, frequency));
-        }
-        catch (ModelException me)
-        {
-          ClientModel.Player.Dispose();
-          ClientModel.Recorder.Dispose();
+          var trustedCertitifcatesPath = Settings.Current.TrustedCertificatesPath;
+          var outputAudioDevice = Settings.Current.OutputAudioDevice;
+          var inputAudioDevice = Settings.Current.InputAudioDevice;
+          var bits = Settings.Current.Bits;
+          var frequency = Settings.Current.Frequency;
+          var excludedPlugins = Settings.Current.Plugins
+            .Where(s => !s.Enabled)
+            .Select(s => s.Name)
+            .ToArray();
 
-          if (me.Code != ErrorCode.AudioNotEnabled)
-            throw;
-          else
+          var initializer = new ClientInitializer
           {
-            var msg = Localizer.Instance.Localize(AudioInitializationFailedKey);
-            MessageBox.Show(msg, ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
+            Nick = dialog.Nick,
+            NickColor = dialog.NickColor,
+            Certificate = new X509Certificate2(dialog.CertificatePath, dialog.CertificatePassword),
+            TrustedCertificatesPath = trustedCertitifcatesPath,
+
+            PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
+            ExcludedPlugins = excludedPlugins
+          };
+
+          ClientModel.Init(initializer);
+
+          try
+          {
+            ClientModel.Player.SetOptions(outputAudioDevice);
+            ClientModel.Recorder.SetOptions(inputAudioDevice, new AudioQuality(1, bits, frequency));
           }
+          catch (ModelException me)
+          {
+            ClientModel.Player.Dispose();
+            ClientModel.Recorder.Dispose();
+
+            if (me.Code != ErrorCode.AudioNotEnabled)
+              throw;
+            else
+            {
+              var msg = Localizer.Instance.Localize(AudioInitializationFailedKey);
+              MessageBox.Show(msg, ProgramName, MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+          }
+
+          var serverUri = Connection.CreateTcpchatUri(dialog.Address);
+          ClientModel.Client.Connect(serverUri);
+
+          dialog.SaveSettings();
         }
+        catch (Exception e)
+        {
+          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
 
-        var serverUri = Connection.CreateTcpchatUri(dialog.Address);
-        ClientModel.Client.Connect(serverUri);
-
-        dialog.SaveSettings();
+          if (ClientModel.IsInited)
+            ClientModel.Reset();
+        }
       }
     }
 

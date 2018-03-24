@@ -14,6 +14,7 @@
   <row key="certificatePath" value="Certificate path"/>
   <row key="generateCertificate" value="Generate certificate"/>
   <row key="password" value="Mot de passe"/>
+  <row key="check-password" value="Répéter le mot de passe"/>
 
   <row key="systemMessage-ApiNotSupported" value="L'API n'est pas supporté par le serveur."/>
   <row key="systemMessage-ConnectionRetryAttempt" value="Tentative de connexion au serveur..."/>
@@ -38,8 +39,11 @@
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Editer"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copier"/>
-  
+
   <row key="userTemplate-SetRoomAdmin" value="Assigner en tant qu'administrateur."/>
+  <row key="userTemplate-OpenCertificate" value="Afficher le certificat."/>
+  <row key="userTemplate-SaveCertificate" value="Enregistrer le certificat d'utilisateur."/>
+  <row key="userTemplate-RemoveCertificate" value="Supprimer le certificat d'utilisateur."/>
   
   <row key="menu-header-connect" value="Connexion"/>
   <row key="menu-connect" value="Connecter"/>

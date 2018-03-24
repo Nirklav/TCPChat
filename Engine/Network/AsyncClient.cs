@@ -3,6 +3,7 @@ using Engine.Api.Server.Others;
 using Engine.Exceptions;
 using Engine.Helpers;
 using Engine.Model.Client;
+using Engine.Model.Common;
 using Engine.Model.Common.Entities;
 using System;
 using System.Linq;
@@ -63,8 +64,8 @@ namespace Engine.Network
     /// Creates client connection.
     /// </summary>
     [SecurityCritical]
-    public AsyncClient(string id, X509Certificate2 certificate, IApi api, IClientNotifier notifier, Logger logger)
-      : base(certificate, logger)
+    public AsyncClient(string id, CertificatesStorage trustedCertificates, X509Certificate2 certificate, IApi api, IClientNotifier notifier, Logger logger)
+      : base(trustedCertificates, certificate, logger)
     {
       Id = id;
 

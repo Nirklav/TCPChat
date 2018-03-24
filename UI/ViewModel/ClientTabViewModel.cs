@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿using Microsoft.Win32;
+using System.Drawing;
+using System.Windows.Input;
+using UI.Dialogs;
 using UI.Infrastructure;
 using WPFColor = System.Windows.Media.Color;
 
@@ -10,8 +13,8 @@ namespace UI.ViewModel
 
     #region fields
     private string _locale;
-
     private string _nick;
+    private string _certificatePath;
 
     private byte _redValue;
     private byte _greenValue;
@@ -36,6 +39,12 @@ namespace UI.ViewModel
     {
       get { return _nick; }
       set { SetValue(value, "Nick", v => _nick = v); }
+    }
+
+    public string CertificatePath
+    {
+      get { return _certificatePath; }
+      set { SetValue(value, nameof(CertificatePath), v => _certificatePath = v); }
     }
 
     public WPFColor NickColor
@@ -66,15 +75,22 @@ namespace UI.ViewModel
       get { return _adminPassword; }
       set { SetValue(value, "AdminPassword", v => _adminPassword = v); }
     }
+    #endregion
 
+    #region commands
+    public ICommand SelectCertificateCommand { get; private set; }
+    public ICommand GenerateCertificateCommand { get; private set; }
     #endregion
 
     public ClientTabViewModel() 
       : base(NameKey, SettingsTabCategory.Client)
     {
-      Locale = Settings.Current.Locale;
+      SelectCertificateCommand = new Command(SelectCertificate);
+      GenerateCertificateCommand = new Command(GenerateCertificate);
 
+      Locale = Settings.Current.Locale;
       Nick = Settings.Current.Nick;
+      CertificatePath = Settings.Current.CertificatePath;
 
       RedValue = Settings.Current.NickColor.R;
       GreenValue = Settings.Current.NickColor.G;
@@ -89,8 +105,28 @@ namespace UI.ViewModel
 
       Settings.Current.Locale = Locale;
       Settings.Current.Nick = Nick;
+      Settings.Current.CertificatePath = CertificatePath;
       Settings.Current.NickColor = Color.FromArgb(RedValue, GreenValue, BlueValue);
       Settings.Current.AdminPassword = _adminPassword;
+    }
+
+    private void SelectCertificate(object obj)
+    {
+      var fileDialog = new OpenFileDialog();
+      fileDialog.CheckFileExists = true;
+      fileDialog.CheckPathExists = true;
+      fileDialog.Multiselect = false;
+      fileDialog.Filter = "PFX|*.pfx|All files|*.*";
+
+      if (fileDialog.ShowDialog() == true)
+        CertificatePath = fileDialog.FileName;
+    }
+
+    private void GenerateCertificate(object obj)
+    {
+      var generateCertificate = GenerateCertificateDialog.ForNick();
+      if (generateCertificate.ShowDialog() == true)
+        CertificatePath = generateCertificate.CertificatePath;
     }
   }
 }

@@ -15,6 +15,7 @@
   </FormSize>
   <Alerts>true</Alerts>
   <ServerAddress>93.170.186.160:10021</ServerAddress>
+  <TrustedCertificatesPath>TrustedCertificates</TrustedCertificatesPath>
   <ServerStartAddress>0.0.0.0:10021</ServerStartAddress>
   <ServerStartP2PPort>10022</ServerStartP2PPort>
   <ServerStartUseIpv6>false</ServerStartUseIpv6>

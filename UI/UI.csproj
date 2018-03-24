@@ -87,6 +87,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xaml" />
@@ -113,6 +114,7 @@
     <Compile Include="Dialogs\GenerateCertificateDialog.xaml.cs">
       <DependentUpon>GenerateCertificateDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewModel\UiCertificateStatus.cs" />
     <Compile Include="ViewModel\PostedFilesViewModel.cs" />
     <Compile Include="View\PostedFilesView.xaml.cs">
       <DependentUpon>PostedFilesView.xaml</DependentUpon>
@@ -122,7 +124,6 @@
     </Compile>
     <Compile Include="Infrastructure\BoolToVisibilityConverter.cs" />
     <Compile Include="Infrastructure\Command.cs" />
-    <Compile Include="Infrastructure\CommandReference.cs" />
     <Compile Include="Infrastructure\AttachedHelper.cs" />
     <Compile Include="Infrastructure\KeyBoard.cs" />
     <Compile Include="Infrastructure\Localized.cs" />
@@ -269,6 +270,13 @@
     <None Include="Localization\Localization.fr-FR.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\checked.png" />
+    <Resource Include="Images\notChecked.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\checkedNotMatch.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

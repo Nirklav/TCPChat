@@ -133,11 +133,15 @@ namespace Engine.Helpers
         writer.Write(_algorithm.IV);
 
         var dataBuffer = new byte[BufferSize];
-        while (inputStream.Position < inputStream.Length)
+        while (true)
         {
           var readed = inputStream.Read(dataBuffer, 0, BufferSize);
+          if (readed == 0)
+            break;
+
           encrypter.Write(dataBuffer, 0, readed);
         }
+        encrypter.FlushFinalBlock();
       }
     }
 
@@ -167,9 +171,12 @@ namespace Engine.Helpers
         using (var decryptor = new CryptoStream(inputWrapper, transform, CryptoStreamMode.Read))
         {
           var dataBuffer = new byte[BufferSize];
-          while (inputWrapper.Position < inputWrapper.Length)
+          while (true)
           {
             var readed = decryptor.Read(dataBuffer, 0, BufferSize);
+            if (readed == 0)
+              break;
+
             outputStream.Write(dataBuffer, 0, readed);
           }
         }

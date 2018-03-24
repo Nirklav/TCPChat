@@ -9,11 +9,12 @@
         Icon="/TCPChat;component/Images/chat.ico">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -23,13 +24,13 @@
         <Label x:Name="SubjectLabel"
                Grid.Column="0"            
                Grid.Row="0"
-               Margin="10, 5, 5, 5"
+               Padding="0"
+               Margin="10, 10, 2.5, 2.5"
                VerticalAlignment="Center"/>
 
         <TextBox x:Name="SubjectField"
-                 Margin="0, 5, 10, 5"       
-                 VerticalAlignment="Stretch"
-                 VerticalContentAlignment="Center"
+                 Margin="0, 10, 10, 2.5"
+                 VerticalAlignment="Center"
                  Grid.Column="1"
                  Grid.ColumnSpan="2"
                  Grid.Row="0"/>
@@ -37,54 +38,69 @@
         <Label Content="{Infrastructure:Localized password}"
                Grid.Column="0"
                Grid.Row="1"
-               Margin="10, 5, 5, 5"
+               Padding="0"
+               Margin="10, 2.5, 2.5, 2.5"
                VerticalAlignment="Center"/>
 
         <PasswordBox x:Name="PasswordField"
-                     Margin="0, 5, 10, 5"       
-                     VerticalAlignment="Stretch"
-                     VerticalContentAlignment="Center"
+                     Margin="0, 2.5, 10, 2.5"
+                     VerticalAlignment="Center"
                      Grid.Column="1"
                      Grid.ColumnSpan="2"
                      Grid.Row="1"/>
 
-        <Label Content="{Infrastructure:Localized certificatePath}"
+        <Label Content="{Infrastructure:Localized check-password}"
                Grid.Column="0"
                Grid.Row="2"
-               Margin="10, 5, 5, 5"
+               Padding="0"
+               Margin="10, 2.5, 2.5, 2.5"
+               VerticalAlignment="Center"/>
+
+        <PasswordBox x:Name="CheckPasswordField"
+                     Margin="0, 2.5, 10, 2.5"
+                     VerticalAlignment="Center"
+                     Grid.Column="1"
+                     Grid.ColumnSpan="2"
+                     Grid.Row="2"/>
+
+        <Label Content="{Infrastructure:Localized certificatePath}"
+               Grid.Column="0"
+               Grid.Row="3"
+               Padding="0"
+               Margin="10, 2.5, 2.5, 2.5"
                VerticalAlignment="Center"/>
 
         <TextBox x:Name="CertificateField"
-                 Margin="0, 5, 5, 5"       
-                 VerticalAlignment="Stretch"
-                 VerticalContentAlignment="Center"
+                 Margin="0, 2.5, 2.5, 2.5"
+                 VerticalAlignment="Center"
                  Grid.Column="1"
-                 Grid.Row="2"/>
+                 Grid.Row="3"/>
 
         <Button Content="..."
-                Margin="0, 5, 10, 5"
+                Margin="0, 2.5, 10, 2.5"
+                VerticalAlignment="Center"
                 Padding="5, 0, 5, 0"
                 MinWidth="20"
                 MinHeight="15"
-                Grid.Row="2"
+                Grid.Row="3"
                 Grid.Column="2"
                 Click="SelectCertificatePath_Click"/>
 
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Right"
-                    Grid.Row="3"
+                    Grid.Row="4"
                     Grid.Column="0"
                     Grid.ColumnSpan="3">
 
             <Button Content="{Infrastructure:Localized create}"
-                    Margin="10, 5, 5, 10"
+                    Margin="10, 10, 2.5, 10"
                     Padding="5, 0, 5, 0"
                     MinWidth="100"
                     MinHeight="25"
                     Click="Create_Click"/>
 
             <Button Content="{Infrastructure:Localized cancel}"
-                    Margin="5, 5, 10, 10"
+                    Margin="2.5, 10, 10, 10"
                     Padding="5, 0, 5, 0"
                     MinWidth="100"
                     MinHeight="25"

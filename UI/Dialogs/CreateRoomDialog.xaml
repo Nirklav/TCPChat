@@ -46,15 +46,13 @@
                     Grid.Row="3"
                     Grid.Column="0">
 
-            <Button x:Name="Accept"
-                    Content="{Infrastructure:Localized accept}"
+            <Button Content="{Infrastructure:Localized accept}"
                     Margin="10, 5, 5, 10"
                     MinWidth="100"
                     MinHeight="25"
                     Click="Accept_Click"/>
 
-            <Button x:Name="Cancel"
-                    Content="{Infrastructure:Localized cancel}"
+            <Button Content="{Infrastructure:Localized cancel}"
                     Margin="5, 5, 10, 10"
                     MinWidth="100"
                     MinHeight="25"

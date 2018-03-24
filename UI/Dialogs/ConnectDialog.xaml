@@ -14,8 +14,8 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
@@ -31,13 +31,13 @@
         <Label Content="{Infrastructure:Localized nick}"
                Grid.Column="0"
                Grid.Row="0"
-               Margin="10, 10, 5, 5"
+               Padding="0"
+               Margin="10, 10, 2.5, 2.5"
                VerticalAlignment="Center"/>
 
         <TextBox x:Name="NickField"
-                 Margin="0, 10, 10, 5"
-                 VerticalAlignment="Stretch"
-                 VerticalContentAlignment="Center"
+                 Margin="0, 10, 10, 2.5"
+                 VerticalAlignment="Center"
                  Grid.Column="1"
                  Grid.ColumnSpan="2"
                  Grid.Row="0"/>
@@ -45,13 +45,13 @@
         <Label Content="{Infrastructure:Localized connectDialog-uri}"
                Grid.Column="0"
                Grid.Row="1"
-               Margin="10, 5, 5, 5"
+               Padding="0"
+               Margin="10, 2.5, 2.5, 2.5"
                VerticalAlignment="Center"/>
 
         <TextBox x:Name="ServerAddressField"
-                 Margin="0, 5, 10, 5"         
-                 VerticalAlignment="Stretch"
-                 VerticalContentAlignment="Center"
+                 Margin="0, 2.5, 10, 2.5"
+                 VerticalAlignment="Center"
                  Grid.Column="1"
                  Grid.ColumnSpan="2"
                  Grid.Row="1"/>
@@ -59,19 +59,19 @@
         <Label Content="{Infrastructure:Localized certificatePath}"
                Grid.Column="0"
                Grid.Row="2"
-               Margin="10, 5, 5, 5"
+               Padding="0"
+               Margin="10, 2.5, 2.5, 2.5"
                VerticalAlignment="Center"/>
 
         <TextBox x:Name="CertificateField"
-                 Margin="0, 5, 5, 5"       
-                 VerticalAlignment="Stretch"
-                 VerticalContentAlignment="Center"
+                 Margin="0, 2.5, 2.5, 2.5"
+                 VerticalAlignment="Center"
                  Grid.Column="1"
                  Grid.Row="2"/>
 
-        <Button x:Name="SelectCertificatePath"
-                Content="..."
-                Margin="0, 5, 10, 5"
+        <Button Content="..."
+                Margin="0, 2.5, 10, 2.5"
+                VerticalAlignment="Center"
                 Padding="5, 0, 5, 0"
                 MinWidth="20"
                 MinHeight="15"
@@ -82,20 +82,19 @@
         <Label Content="{Infrastructure:Localized password}"
                Grid.Column="0"
                Grid.Row="3"
-               Margin="10, 5, 5, 5"
+               Padding="0"
+               Margin="10, 2.5, 2.5, 2.5"
                VerticalAlignment="Center"/>
 
         <PasswordBox x:Name="PasswordField"
-                     Margin="0, 5, 10, 5"       
-                     VerticalAlignment="Stretch"
-                     VerticalContentAlignment="Center"
+                     VerticalAlignment="Center"
+                     Margin="0, 2.5, 10, 2.5"
                      Grid.Column="1"
                      Grid.ColumnSpan="2"
                      Grid.Row="3"/>
 
-        <Button x:Name="GenerateCertificate"
-                Content="{Infrastructure:Localized generateCertificate}"
-                Margin="0, 5, 10, 5"
+        <Button Content="{Infrastructure:Localized generateCertificate}"
+                Margin="0, 2.5, 10, 2.5"
                 Padding="5, 0, 5, 0"
                 MinWidth="100"
                 MinHeight="25"
@@ -109,7 +108,7 @@
                   Grid.Row="5"
                   Grid.Column="0"
                   Grid.ColumnSpan="3"
-                  Margin="10, 5, 10, 5"
+                  Margin="10, 2.5, 10, 2.5"
                   BorderBrush="#FF828790">
             <Grid>
                 <Grid.RowDefinitions>
@@ -169,9 +168,8 @@
                     Grid.Column="0"
                     Grid.ColumnSpan="3">
 
-            <Button x:Name="Accept"
-                    Content="{Infrastructure:Localized accept}"
-                    Margin="10, 5, 5, 10"
+            <Button Content="{Infrastructure:Localized accept}"
+                    Margin="10, 10, 2.5, 10"
                     MinWidth="100"
                     MinHeight="25"
                     Grid.Column="0"
@@ -179,9 +177,8 @@
                     Grid.Row="3"
                     Click="Accept_Click"/>
 
-            <Button x:Name="Cancel"
-                    Content="{Infrastructure:Localized cancel}"
-                    Margin="5, 5, 10, 10"
+            <Button Content="{Infrastructure:Localized cancel}"
+                    Margin="2.5, 10, 10, 10"
                     MinWidth="100"
                     MinHeight="25"
                     Grid.Column="0"

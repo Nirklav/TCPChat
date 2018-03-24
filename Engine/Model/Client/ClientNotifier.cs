@@ -36,6 +36,8 @@ namespace Engine.Model.Client
 
     void PluginLoaded(PluginEventArgs args);
     void PluginUnloading(PluginEventArgs args);
+
+    void TrustedCertificatesChanged(TrustedCertificatesEventArgs args);
   }
 
   // TODO: rus
@@ -95,5 +97,10 @@ namespace Engine.Model.Client
     /// Происходит перед выгрузкой плагина.
     /// </summary>
     event EventHandler<PluginEventArgs> PluginUnloading;
+
+    /// <summary>
+    /// Calls when trusted certitifcates storages was changed.
+    /// </summary>
+    event EventHandler<TrustedCertificatesEventArgs> TrustedCertificatesChanged;
   }
 }
