@@ -30,43 +30,43 @@ namespace UI.ViewModel
     public IList<string> OutputDevices
     {
       get { return _outputDevices; }
-      set { SetValue(value, "OutputDevices", v => _outputDevices = v); }
+      set { SetValue(value, nameof(OutputDevices), v => _outputDevices = v); }
     }
 
     public IList<string> InputDevices
     {
       get { return _inputDevices; }
-      set { SetValue(value, "InputDevices", v => _inputDevices = v); }
+      set { SetValue(value, nameof(InputDevices), v => _inputDevices = v); }
     }
 
     public IList<AudioQuality> InputConfigs
     {
       get { return _inputConfigs; }
-      set { SetValue(value, "InputConfigs", v => _inputConfigs = v); }
+      set { SetValue(value, nameof(InputConfigs), v => _inputConfigs = v); }
     }
 
     public int SelectedInputIndex
     {
       get { return _selectedInputIndex; }
-      set { SetValue(value, "SelectedInputIndex", v => _selectedInputIndex = v); }
+      set { SetValue(value, nameof(SelectedInputIndex), v => _selectedInputIndex = v); }
     }
 
     public int SelectedConfigIndex
     {
       get { return _selectedConfigIndex; }
-      set { SetValue(value, "SelectedConfigIndex", v => _selectedConfigIndex = v); }
+      set { SetValue(value, nameof(SelectedConfigIndex), v => _selectedConfigIndex = v); }
     }
 
     public int SelectedOutputIndex
     {
       get { return _selectedOutputIndex; }
-      set { SetValue(value, "SelectedOutputIndex", v => _selectedOutputIndex = v); }
+      set { SetValue(value, nameof(SelectedOutputIndex), v => _selectedOutputIndex = v); }
     }
 
     public string SelectButtonName
     {
       get { return _selectButtonName; }
-      set { SetValue(value, "SelectButtonName", v => _selectButtonName = v); }
+      set { SetValue(value, nameof(SelectButtonName), v => _selectButtonName = v); }
     }
     #endregion
 

@@ -50,13 +50,13 @@ namespace UI.ViewModel
     public string Text 
     {
       get { return _text; }
-      set { SetValue(value, "Text", v => _text = v); }
+      set { SetValue(value, nameof(Text), v => _text = v); }
     }
 
     public int Progress
     {
       get { return _progress; }
-      set { SetValue(value, "Progress", v => _progress = v); }
+      set { SetValue(value, nameof(Progress), v => _progress = v); }
     }
     #endregion
 

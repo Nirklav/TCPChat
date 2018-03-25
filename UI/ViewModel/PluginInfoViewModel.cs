@@ -16,13 +16,13 @@ namespace UI.ViewModel
     public string Name
     {
       get { return _name; }
-      set { SetValue(value, "Name", v => _name = v); }
+      set { SetValue(value, nameof(Name), v => _name = v); }
     }
 
     public bool Enabled
     {
       get { return _enabled; }
-      set { SetValue(value, "Enabled", v => _enabled = v); }
+      set { SetValue(value, nameof(Enabled), v => _enabled = v); }
     }
 
     public PluginKindId Kind { get; private set; }

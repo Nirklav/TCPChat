@@ -27,7 +27,7 @@ namespace UI.ViewModel
     public string Locale
     {
       get { return _locale; }
-      set { SetValue(value, "Locale", v => _locale = v); }
+      set { SetValue(value, nameof(Locale), v => _locale = v); }
     }
 
     public string[] Locales
@@ -38,7 +38,7 @@ namespace UI.ViewModel
     public string Nick
     {
       get { return _nick; }
-      set { SetValue(value, "Nick", v => _nick = v); }
+      set { SetValue(value, nameof(Nick), v => _nick = v); }
     }
 
     public string CertificatePath
@@ -55,25 +55,25 @@ namespace UI.ViewModel
     public byte RedValue
     {
       get { return _redValue; }
-      set { SetValue(value, "NickColor", v => _redValue = v); }
+      set { SetValue(value, nameof(NickColor), v => _redValue = v); }
     }
 
     public byte GreenValue
     {
       get { return _greenValue; }
-      set { SetValue(value, "NickColor", v => _greenValue = v); }
+      set { SetValue(value, nameof(NickColor), v => _greenValue = v); }
     }
 
     public byte BlueValue
     {
       get { return _blueValue; }
-      set { SetValue(value, "NickColor", v => _blueValue = v); }
+      set { SetValue(value, nameof(NickColor), v => _blueValue = v); }
     }
 
     public string AdminPassword
     {
       get { return _adminPassword; }
-      set { SetValue(value, "AdminPassword", v => _adminPassword = v); }
+      set { SetValue(value, nameof(AdminPassword), v => _adminPassword = v); }
     }
     #endregion
 

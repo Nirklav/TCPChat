@@ -17,7 +17,7 @@ namespace UI.ViewModel
     public SettingsTabViewModel SelectedTab
     {
       get { return _selectedTab; }
-      set { SetValue(value, "SelectedTab", v => _selectedTab = v); }
+      set { SetValue(value, nameof(SelectedTab), v => _selectedTab = v); }
     }
     #endregion
 

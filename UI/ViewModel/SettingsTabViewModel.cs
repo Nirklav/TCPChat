@@ -21,7 +21,7 @@ namespace UI.ViewModel
     public SettingsTabCategory Category
     {
       get { return _category; }
-      set { SetValue(value, "Category", v => _category = v); }
+      set { SetValue(value, nameof(Category), v => _category = v); }
     }
 
     public string Name

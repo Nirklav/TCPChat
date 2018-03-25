@@ -29,7 +29,7 @@ namespace UI.ViewModel
     private const string NoBodyToInviteKey = "roomViewModel-nobodyToInvite";
     private const string AllInRoomKey = "roomViewModel-allInRoom";
 
-    private const string FileDialogFilter = "Все файлы|*.*";
+    private const string FileDialogFilter = "All files|*.*";
 
     private const int MessagesLimit = 200;
     private const int ShrinkSize = 100;
@@ -72,13 +72,13 @@ namespace UI.ViewModel
     public bool Updated
     {
       get { return _updated; }
-      set { SetValue(value, "Updated", v => _updated = v); }
+      set { SetValue(value, nameof(Updated), v => _updated = v); }
     }
 
     public bool Enabled
     {
       get { return _enabled; }
-      set { SetValue(value, "Enabled", v => _enabled = v); }
+      set { SetValue(value, nameof(Enabled), v => _enabled = v); }
     }
 
     public bool MessagesAutoScroll
@@ -87,7 +87,7 @@ namespace UI.ViewModel
       set
       {
         _messagesAutoScroll = value;
-        OnPropertyChanged("MessagesAutoScroll");
+        OnPropertyChanged(nameof(MessagesAutoScroll));
 
         if (value)
           MessagesAutoScroll = false;
@@ -99,7 +99,7 @@ namespace UI.ViewModel
       get { return _message; }
       set
       {
-        SetValue(value, "Message", v => _message = v);
+        SetValue(value, nameof(Message), v => _message = v);
         if (string.IsNullOrEmpty(value))
           SelectedMessageId = null;
       }
@@ -108,7 +108,7 @@ namespace UI.ViewModel
     private long? SelectedMessageId
     {
       get { return _messageId; }
-      set { SetValue(value, "IsMessageSelected", v => _messageId = v); }
+      set { SetValue(value, nameof(IsMessageSelected), v => _messageId = v); }
     }
 
     public bool IsMessageSelected
@@ -119,19 +119,19 @@ namespace UI.ViewModel
     public int MessageCaretIndex
     {
       get { return _messageCaretIndex; }
-      set { SetValue(value, "MessageCaretIndex", v => _messageCaretIndex = v); }
+      set { SetValue(value, nameof(MessageCaretIndex), v => _messageCaretIndex = v); }
     }
 
     public ObservableCollection<MessageViewModel> Messages
     {
       get { return _messages; }
-      set { SetValue(value, "Messages", v => _messages = v); }
+      set { SetValue(value, nameof(Messages), v => _messages = v); }
     }
 
     public UserViewModel SelectedReceiver
     {
       get { return _selectedReceiver; }
-      set { SetValue(value, "SelectedReceiver", v => _selectedReceiver = v); }
+      set { SetValue(value, nameof(SelectedReceiver), v => _selectedReceiver = v); }
     }
 
     public IEnumerable<UserViewModel> Receivers
@@ -463,9 +463,8 @@ namespace UI.ViewModel
       foreach (var user in room.Users)
         Users.Add(new UserViewModel(user, this));
 
-      OnPropertyChanged("Name");
-      OnPropertyChanged("Admin");
-      OnPropertyChanged("Users");
+      OnPropertyChanged(nameof(Name));
+      OnPropertyChanged(nameof(Users));
     }
 
     private void RefreshMessages(ClientGuard client, RoomRefreshedEventArgs e)
@@ -513,12 +512,12 @@ namespace UI.ViewModel
         if (user.Nick == selectedReceiverNick)
           newReciver = receiver;
       }
-      OnPropertyChanged("Receivers");
+      OnPropertyChanged(nameof(Receivers));
 
       _selectedReceiver = newReciver == null
         ? _allInRoom
         : newReciver;
-      OnPropertyChanged("SelectedReceiver");
+      OnPropertyChanged(nameof(SelectedReceiver));
     }
 
     private void FillMessages(ClientGuard client)

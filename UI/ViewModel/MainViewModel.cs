@@ -35,6 +35,7 @@ namespace UI.ViewModel
     public const string AudioInitializationFailedKey = "mainViewModel-audioInitializationFailed";
 
     private const int ClientMaxMessageLength = 100 * 1024;
+    private const string PluginsDirectoryName = "plugins";
     #endregion
 
     #region fields
@@ -53,7 +54,7 @@ namespace UI.ViewModel
       {
         Settings.Current.Alerts = value;
 
-        OnPropertyChanged("Alerts");
+        OnPropertyChanged(nameof(Alerts));
       }
     }
 
@@ -67,7 +68,7 @@ namespace UI.ViewModel
         if (_selectedRoom != null && _selectedRoom.Updated)
           _selectedRoom.Updated = false;
 
-        OnPropertyChanged("SelectedRoom");
+        OnPropertyChanged(nameof(SelectedRoom));
       }
     }
 
@@ -77,7 +78,7 @@ namespace UI.ViewModel
       set
       {
         _selectedRoomIndex = value;
-        OnPropertyChanged("SelectedRoomIndex");
+        OnPropertyChanged(nameof(SelectedRoomIndex));
       }
     }
 
@@ -163,7 +164,7 @@ namespace UI.ViewModel
           var initializer = new ServerInitializer
           {
             AdminPassword = adminPassword,
-            PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
+            PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, PluginsDirectoryName),
             ExcludedPlugins = excludedPlugins,
             Certificate = new X509Certificate2(dialog.CertificatePath, dialog.CertificatePassword),
           };
@@ -224,7 +225,7 @@ namespace UI.ViewModel
             Certificate = new X509Certificate2(dialog.CertificatePath, dialog.CertificatePassword),
             TrustedCertificatesPath = trustedCertitifcatesPath,
 
-            PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins"),
+            PluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, PluginsDirectoryName),
             ExcludedPlugins = excludedPlugins
           };
 
