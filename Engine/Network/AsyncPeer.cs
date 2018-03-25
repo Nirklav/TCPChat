@@ -20,8 +20,7 @@ namespace Engine.Network
     ConnectedToService = 1,
     ConnectedToPeers = 2,
   }
-
-  // TODO: rus
+  
   public class AsyncPeer :
     MarshalByRefObject,
     IDisposable
@@ -95,9 +94,9 @@ namespace Engine.Network
 
     #region public methods
     /// <summary>
-    /// Подключение к P2P сервису. Для создания UDP окна.
+    /// Connects to P2P service, for create UDP window.
     /// </summary>
-    /// <param name="remotePoint">Адрес сервиса.</param>
+    /// <param name="remotePoint">Service address.</param>
     [SecurityCritical]
     internal void ConnectToService(IPEndPoint remotePoint)
     {
@@ -143,10 +142,10 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Ожидать подключение другого клиента.
-    /// <remarks>Возможно вызвать только после подключения к сервису.</remarks>
+    /// Starts waiting for connection from other client.
+    /// <remarks>Can be called only after service connection.</remarks>
     /// </summary>
-    /// <param name="waitingPoint">Конечная точка, от которой следует ждать подключение.</param>
+    /// <param name="waitingPoint">End point where from other client will be connecting.</param>
     [SecurityCritical]
     internal void WaitConnection(IPEndPoint waitingPoint)
     {
@@ -156,8 +155,8 @@ namespace Engine.Network
       if (oldState == (int)PeerState.NotConnected)
         throw new InvalidOperationException("Peer has not right state.");
 
-      // Создания и отправка сообщения для пробивания NAT,
-      // и возможности принять входящее соединение
+      // Creating and sending message that be pierce NAT 
+      // and creates possibility accept incoming message
       var holePunchMessage = _handler.CreateMessage();
       holePunchMessage.Write((byte)0);
       _handler.SendUnconnectedMessage(holePunchMessage, waitingPoint);
@@ -168,11 +167,11 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Подключение к другому клиенту.
-    /// <remarks>Возможно вызвать только после подключения к сервису.</remarks>
+    /// Connects to other peer.
+    /// <remarks>Can be called only after service connection.</remarks>
     /// </summary>
-    /// <param name="peerId">Id пира к которому подключаемся.</param>
-    /// <param name="remotePoint">Адрес клиента</param>
+    /// <param name="peerId">Peer id.</param>
+    /// <param name="remotePoint">Peer address.</param>
     [SecurityCritical]
     internal void ConnectToPeer(string peerId, IPEndPoint remotePoint)
     {
@@ -193,9 +192,9 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Имеется ли соедиенение к данному пиру.
+    /// Returns true if peer already connected.
     /// </summary>
-    /// <param name="peerId">Id соединения.</param>
+    /// <param name="peerId">Peer id.</param>
     [SecuritySafeCritical]
     public bool IsConnected(string peerId)
     {
@@ -209,13 +208,12 @@ namespace Engine.Network
 
     #region Send message
     /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
+    /// Sends command. <b>If connection not exist, then it will be created.</b>
     /// </summary>
-    /// <typeparam name="T">Тип параметра пакета.</typeparam>
-    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="id">Индетификатор команды.</param>
-    /// <param name="content">Параметр пакета.</param>
-    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    /// <param name="peerId">Peer id that will be receive message.</param>
+    /// <param name="id">Command id.</param>
+    /// <param name="content">Command content.</param>
+    /// <param name="unreliable">Send unreliable message. (fastest)</param>
     [SecuritySafeCritical]
     public void SendMessage<T>(string peerId, long id, T content, bool unreliable = false)
     {
@@ -223,14 +221,13 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
+    /// Sends command. <b>If connection not exist, then it will be created.</b>
     /// </summary>
-    /// <typeparam name="T">Тип параметра пакета.</typeparam>
-    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="id">Индетификатор команды.</param>
-    /// <param name="content">Параметр пакета.</param>
-    /// <param name="rawData">Данные не требующие сериализации.</param>
-    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    /// <param name="peerId">Peer id that will be receive message.</param>
+    /// <param name="id">Command id.</param>
+    /// <param name="content">Command content.</param>
+    /// <param name="rawData">Data that not be serialized.</param>
+    /// <param name="unreliable">Send unreliable message. (fastest)</param>
     [SecuritySafeCritical]
     public void SendMessage<T>(string peerId, long id, T content, byte[] rawData, bool unreliable = false)
     {
@@ -238,11 +235,11 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
+    /// Sends command. <b>If connection not exist, then it will be created.</b>
     /// </summary>
-    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="id">Индетификатор команды.</param>
-    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    /// <param name="peerId">Peer id that will be receive message.</param>
+    /// <param name="id">Command id.</param>
+    /// <param name="unreliable">Send unreliable message. (fastest)</param>
     [SecuritySafeCritical]
     public void SendMessage(string peerId, long id, bool unreliable = false)
     {
@@ -250,12 +247,12 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то вначале установит его.</b>
+    /// Sends command. <b>If connection not exist, then it will be created.</b>
     /// </summary>
-    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="package">Индетификатор пакета.</param>
-    /// <param name="rawData">Данные не требующие серализации.</param>
-    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
+    /// <param name="peerId">Peer id that will be receive message.</param>
+    /// <param name="package">Package to send.</param>
+    /// <param name="rawData">Data that not be serialized.</param>
+    /// <param name="unreliable">Send unreliable message. (fastest)</param>
     [SecuritySafeCritical]
     public void SendMessage(string peerId, IPackage package, byte[] rawData, bool unreliable = false)
     {
@@ -282,14 +279,13 @@ namespace Engine.Network
 
     #region Send message if connected
     /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
+    /// Sends command. <b>If connection not exist, then message will be skipped.</b>
     /// </summary>
-    /// <typeparam name="T">Тип параметра пакета.</typeparam>
-    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
-    /// <param name="id">Индетификатор команды.</param>
-    /// <param name="content">Параметр команды.</param>
-    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
-    /// <returns>Отправлено ли сообщение.</returns>
+    /// <param name="peerId">Peer id that will be receive message.</param>
+    /// <param name="id">Command id.</param>
+    /// <param name="content">Command content.</param>
+    /// <param name="unreliable">Send unreliable message. (fastest)</param>
+    /// <returns>Returns true if command was sent.</returns>
     [SecuritySafeCritical]
     public bool SendMessageIfConnected<T>(string peerId, long id, T content, bool unreliable = false)
     {
@@ -297,13 +293,13 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Отправляет команду. <b>Если соединения нет, то команда отправлена не будет.</b>
+    /// Sends command. <b>If connection not exist, then message will be skipped.</b>
     /// </summary>
-    /// <param name="peerId">Идентификатор соединения, которому отправляется команда.</param>
+    /// <param name="peerId">Peer id that will be receive message.</param>
     /// <param name="package">Индетификатор пакета.</param>
     /// <param name="rawData">Данные не требующие сериализации.</param>
-    /// <param name="unreliable">Отправить ненадежное сообщение. (быстрее)</param>
-    /// <returns>Отправлено ли сообщение.</returns>
+    /// <param name="unreliable">Send unreliable message. (fastest)</param>
+    /// <returns>Returns true if command was sent.</returns>
     [SecuritySafeCritical]
     public bool SendMessageIfConnected(string peerId, IPackage package, byte[] rawData, bool unreliable = false)
     {
