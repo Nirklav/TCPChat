@@ -115,7 +115,6 @@ namespace Engine.Network
     /// </summary>
     /// <param name="serverUri">Server address.</param>
     /// <param name="p2pServicePort">UDP port that p2p service be listening.</param>
-    /// <param name="usingIPv6">Use the ipv6.</param>
     [SecurityCritical]
     public void Start(Uri serverUri, int p2pServicePort)
     {

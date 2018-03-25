@@ -25,7 +25,7 @@ namespace Engine.Model.Common
     private void Load()
     {
       var info = Directory.CreateDirectory(_path);
-      foreach (var file in info.EnumerateFiles("*.pfx"))
+      foreach (var file in info.EnumerateFiles("*.cer"))
       {
         try
         {
@@ -84,8 +84,8 @@ namespace Engine.Model.Common
         builderCommonName.Replace(ch, '_');
       
       return string.IsNullOrEmpty(certificate.FriendlyName)
-        ? string.Format("{0}_{1}.pfx", builderCommonName, time)
-        : string.Format("{0}_{1}.pfx", certificate.FriendlyName, time);
+        ? string.Format("{0}_{1}.cer", builderCommonName, time)
+        : string.Format("{0}_{1}.cer", certificate.FriendlyName, time);
     }
 
     public X509Certificate2Collection CreateCollection()
