@@ -40,10 +40,10 @@
   <row key="commonMessageTemplate-contextMenu-edit" value="Edit"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copy"/>
   
-  <row key="userTemplate-SetRoomAdmin" value="Assign as administrator."/>
-  <row key="userTemplate-OpenCertificate" value="Show certificate."/>
-  <row key="userTemplate-SaveCertificate" value="Save user certificate."/>
-  <row key="userTemplate-RemoveCertificate" value="Remove user certificate."/>
+  <row key="userTemplate-SetRoomAdmin" value="Assign as administrator"/>
+  <row key="userTemplate-OpenCertificate" value="Show certificate"/>
+  <row key="userTemplate-SaveCertificate" value="Save user certificate"/>
+  <row key="userTemplate-RemoveCertificate" value="Remove user certificate"/>
 
   <row key="menu-header-connect" value="Connection"/>S
   <row key="menu-connect" value="Connect"/>
@@ -101,6 +101,11 @@
 
   <row key="settingsTab-audio-pressTheKey" value="Click on the button"/>
   <row key="settingsTab-client-adminPassword" value="Admin password"/>
+
+  <row key="serverCertificateConfirm-title" value="Comfirm server certificate"/>
+  <row key="serverCertificateConfirm-question" value="Server certificate is self signed. Please watch it and accept or decline connection."/>
+  <row key="serverCertificateConfirm-show" value="Show certificate"/>
+  <row key="serverCertificateConfirm-save" value="Trust this certificate"/>
 
   <row key="aboutProgram-title" value="About program"/>
   <row key="aboutProgram-author" value="Author"/>

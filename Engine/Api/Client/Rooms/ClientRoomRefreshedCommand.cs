@@ -40,10 +40,7 @@ namespace Engine.Api.Client.Rooms
         var removedUsers = UpdateRoomUsers(room, content.Room);
 
         if (room.Name == ServerChat.MainRoomName)
-        {
-          foreach (var nick in removedUsers)
-            chat.RemoveUser(nick);
-        }
+          RemoveUsers(chat, removedUsers);
       }
 
       var roomArgs = new RoomRefreshedEventArgs(content.Room.Name, messagesResult.Added, messagesResult.Removed);

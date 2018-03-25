@@ -359,7 +359,31 @@ namespace UI.ViewModel
     private void ClientConnect(ConnectEventArgs args)
     {
       if (args.Error == null)
-        ClientModel.Api.Perform(new ClientRegisterAction());
+      {
+        switch (ClientModel.Client.RemoteCertificateStatus)
+        {
+          case CertificateStatus.Trusted:
+            ClientModel.Api.Perform(new ClientRegisterAction());
+            break;
+
+          case CertificateStatus.SelfSigned:
+            var certificate = ClientModel.Client.RemoteCertiticate;
+            var dialog = new ServerCertificateConfirmDialog(certificate);
+            if (dialog.ShowDialog() == true)
+            {
+              ClientModel.Api.Perform(new ClientRegisterAction());
+            }
+            else
+            {
+              ClientModel.Reset();
+            }
+            break;
+
+          default:
+            ClientModel.Reset();
+            break;
+        }
+      }
       else
       {
         SelectedRoom.AddSystemMessage(args.Error.Message);

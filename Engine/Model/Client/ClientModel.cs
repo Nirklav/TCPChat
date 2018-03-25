@@ -155,7 +155,7 @@ namespace Engine.Model.Client
 
       Api = new ClientApi();
       Client = new AsyncClient(initializer.Nick, TrustedCertificates, initializer.Certificate, Api, _notifier, _logger);
-      Peer = new AsyncPeer(Api, _notifier, _logger);
+      Peer = new AsyncPeer(initializer.Nick, initializer.Certificate, Api, _notifier, _logger);
 
       Plugins = new ClientPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);

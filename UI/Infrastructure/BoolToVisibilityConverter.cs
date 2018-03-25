@@ -9,20 +9,15 @@ namespace UI.Infrastructure
   {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-      if ((bool)value)
-        return Visibility.Collapsed;
-
-      return Visibility.Visible;
+      return (bool)value
+        ? Visibility.Collapsed
+        : Visibility.Visible;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-      Visibility visibility = (Visibility)value;
-
-      if (visibility == Visibility.Collapsed || visibility == Visibility.Hidden)
-        return true;
-
-      return false;
+      var visibility = (Visibility)value;
+      return visibility == Visibility.Collapsed || visibility == Visibility.Hidden;
     }
   }
 }

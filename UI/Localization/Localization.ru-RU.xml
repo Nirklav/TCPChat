@@ -41,9 +41,9 @@
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>
   
   <row key="userTemplate-SetRoomAdmin" value="Назначить администратором"/>
-  <row key="userTemplate-OpenCertificate" value="Показать сертификат."/>
-  <row key="userTemplate-SaveCertificate" value="Сохранить сертификат."/>
-  <row key="userTemplate-RemoveCertificate" value="Удалить сертификат."/>
+  <row key="userTemplate-OpenCertificate" value="Показать сертификат"/>
+  <row key="userTemplate-SaveCertificate" value="Сохранить сертификат"/>
+  <row key="userTemplate-RemoveCertificate" value="Удалить сертификат"/>
   
   <row key="menu-header-connect" value="Соединение"/>
   <row key="menu-connect" value="Подключиться"/>
@@ -101,6 +101,11 @@
 
   <row key="settingsTab-audio-pressTheKey" value="Нажмите на клавишу"/>
   <row key="settingsTab-client-adminPassword" value="Пароль администратора"/>
+
+  <row key="serverCertificateConfirm-title" value="Подтверждение серверного сертификата"/>
+  <row key="serverCertificateConfirm-question" value="Сертификат сервера самоподписанный. Посмотрите сертификат и подтведите либо отмените подключение."/>
+  <row key="serverCertificateConfirm-show" value="Show certificate"/>
+  <row key="serverCertificateConfirm-save" value="Trust this certificate"/>
 
   <row key="aboutProgram-title" value="О программе"/>
   <row key="aboutProgram-author" value="Автор"/>

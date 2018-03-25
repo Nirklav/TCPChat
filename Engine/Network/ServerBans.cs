@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
 using System.Security;
 
 namespace Engine.Network
 {
-  [Serializable]
   public class ServerBans
   {
     private readonly AsyncServer _server;

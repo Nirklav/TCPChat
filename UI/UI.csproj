@@ -114,6 +114,7 @@
     <Compile Include="Dialogs\GenerateCertificateDialog.xaml.cs">
       <DependentUpon>GenerateCertificateDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Infrastructure\IconToImageSourceConverter.cs" />
     <Compile Include="ViewModel\UiCertificateStatus.cs" />
     <Compile Include="ViewModel\PostedFilesViewModel.cs" />
     <Compile Include="View\PostedFilesView.xaml.cs">
@@ -144,6 +145,9 @@
     <Compile Include="ViewModel\PluginViewModel.cs" />
     <Compile Include="ViewModel\SettingsTabViewModel.cs" />
     <Compile Include="ViewModel\SettingsViewModel.cs" />
+    <Compile Include="Dialogs\ServerCertificateConfirmDialog.xaml.cs">
+      <DependentUpon>ServerCertificateConfirmDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\SettingsView.xaml.cs">
       <DependentUpon>SettingsView.xaml</DependentUpon>
     </Compile>
@@ -188,6 +192,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Dialogs\ServerDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialogs\ServerCertificateConfirmDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

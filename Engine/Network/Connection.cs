@@ -46,8 +46,8 @@ namespace Engine.Network
 
     #region fields
     [SecurityCritical] private readonly CertificatesStorage _trustedCertificates;
-    [SecurityCritical] private readonly X509Certificate2 _localCertiticate;
-    [SecurityCritical] private X509Certificate2 _remoteCertiticate;
+    [SecurityCritical] private readonly X509Certificate2 _localCertificate;
+    [SecurityCritical] private X509Certificate2 _remoteCertificate;
 
     [SecurityCritical] private string _id;
     [SecurityCritical] private Socket _handler;
@@ -69,7 +69,7 @@ namespace Engine.Network
     protected Connection(CertificatesStorage trustedCertificates, X509Certificate2 certificate, Logger logger)
     {
       _trustedCertificates = trustedCertificates;
-      _localCertiticate = certificate;
+      _localCertificate = certificate;
       _state = ConnectionState.Disconnected;
       _logger = logger;
     }
@@ -116,7 +116,7 @@ namespace Engine.Network
     public X509Certificate2 LocalCertificate
     {
       [SecurityCritical]
-      get { return _localCertiticate; }
+      get { return _localCertificate; }
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ namespace Engine.Network
     public X509Certificate2 RemoteCertiticate
     {
       [SecurityCritical]
-      get { return _remoteCertiticate; }
+      get { return _remoteCertificate; }
     }
 
     /// <summary>
@@ -391,7 +391,7 @@ namespace Engine.Network
         _state = ConnectionState.HandshakeResponseWait;
 
         var request = new HandshakeRequest();
-        request.RawX509Certificate = _localCertiticate.Export(X509ContentType.Cert);
+        request.RawX509Certificate = _localCertificate.Export(X509ContentType.Cert);
         SendMessage(HandshakeRequest, request);
       }
       catch (Exception e)
@@ -416,7 +416,7 @@ namespace Engine.Network
           throw new InvalidOperationException("Remote certificate has private key");
 
         ValidateCertificate(remoteCertificate);
-        _remoteCertiticate = remoteCertificate;
+        _remoteCertificate = remoteCertificate;
 
         byte[] key;
         using (var rng = new RNGCryptoServiceProvider())
@@ -424,7 +424,7 @@ namespace Engine.Network
           _generatedKey = new byte[32];
           rng.GetBytes(_generatedKey);
 
-          var alg = _remoteCertiticate.PublicKey.Key;
+          var alg = _remoteCertificate.PublicKey.Key;
           if (alg is RSACryptoServiceProvider rsa)
             key = rsa.Encrypt(_generatedKey, false);
           else
@@ -435,14 +435,14 @@ namespace Engine.Network
         {
           AlgorithmId = AlgorithmId.Aes256CBC,
           EncryptedKey = key,
-          RawX509Certificate = _localCertiticate.Export(X509ContentType.Cert)
+          RawX509Certificate = _localCertificate.Export(X509ContentType.Cert)
         });
 
         _state = ConnectionState.HandshakeAcceptWait;
       }
       catch (Exception e)
       {
-        _remoteCertiticate = null;
+        _remoteCertificate = null;
 
         OnHandshakeException(e);
       }
@@ -466,10 +466,10 @@ namespace Engine.Network
         if (!ValidateCertificate(remoteCertificate))
           throw new InvalidOperationException("Remote certiticate not validated");
 
-        _remoteCertiticate = remoteCertificate;
+        _remoteCertificate = remoteCertificate;
 
         byte[] clearKey;
-        var alg = _localCertiticate.PrivateKey;
+        var alg = _localCertificate.PrivateKey;
         if (alg is RSACryptoServiceProvider rsa)
           clearKey = rsa.Decrypt(response.EncryptedKey, false);
         else
@@ -482,7 +482,7 @@ namespace Engine.Network
       }
       catch (Exception e)
       {
-        _remoteCertiticate = null;
+        _remoteCertificate = null;
 
         OnHandshakeException(e);
       }

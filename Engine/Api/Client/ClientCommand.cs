@@ -1,4 +1,5 @@
 ﻿using Engine.Exceptions;
+using Engine.Model.Client;
 using Engine.Model.Client.Entities;
 using Engine.Model.Common.Dto;
 using Engine.Network;
@@ -62,7 +63,7 @@ namespace Engine.Api.Client
 
     #region Helpers
     /// <summary>
-    /// Add not existing users to chat.
+    /// Adds not existing users to chat.
     /// </summary>
     /// <param name="chat">Chat.</param>
     /// <param name="users">User dtos.</param>
@@ -72,7 +73,26 @@ namespace Engine.Api.Client
       foreach (var userDto in users)
       {
         if (!chat.IsUserExist(userDto.Nick))
-          chat.AddUser(new ClientUser(userDto));
+        {
+          var clientUser = new ClientUser(userDto);
+          chat.AddUser(clientUser);
+          ClientModel.Peer.RegisterPeer(clientUser.Nick, clientUser.Certificate);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Removes not existing users from chat.
+    /// </summary>
+    /// <param name="chat">Chat.</param>
+    /// <param name="users">Users that be removed.</param>
+    [SecuritySafeCritical]
+    protected void RemoveUsers(ClientChat chat, IEnumerable<string> users)
+    {
+      foreach (var nick in users)
+      {
+        chat.RemoveUser(nick);
+        ClientModel.Peer.UnregisterPeer(nick);
       }
     }
     #endregion

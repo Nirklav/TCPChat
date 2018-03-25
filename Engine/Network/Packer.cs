@@ -43,7 +43,13 @@ namespace Engine.Network
     {
       if (_key != null)
         throw new InvalidOperationException("Key already set");
-      _key = key ?? throw new ArgumentNullException("key");
+      _key = key ?? throw new ArgumentNullException(nameof(key));
+    }
+
+    [SecurityCritical]
+    public void ResetKey()
+    {
+      _key = null;
     }
 
     [SecurityCritical]

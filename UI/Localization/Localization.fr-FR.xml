@@ -40,10 +40,10 @@
   <row key="commonMessageTemplate-contextMenu-edit" value="Editer"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copier"/>
 
-  <row key="userTemplate-SetRoomAdmin" value="Assigner en tant qu'administrateur."/>
-  <row key="userTemplate-OpenCertificate" value="Afficher le certificat."/>
-  <row key="userTemplate-SaveCertificate" value="Enregistrer le certificat d'utilisateur."/>
-  <row key="userTemplate-RemoveCertificate" value="Supprimer le certificat d'utilisateur."/>
+  <row key="userTemplate-SetRoomAdmin" value="Assigner en tant qu'administrateur"/>
+  <row key="userTemplate-OpenCertificate" value="Afficher le certificat"/>
+  <row key="userTemplate-SaveCertificate" value="Enregistrer le certificat d'utilisateur"/>
+  <row key="userTemplate-RemoveCertificate" value="Supprimer le certificat d'utilisateur"/>
   
   <row key="menu-header-connect" value="Connexion"/>
   <row key="menu-connect" value="Connecter"/>
@@ -101,6 +101,11 @@
 
   <row key="settingsTab-audio-pressTheKey" value="Cliquer sur le bouton"/>
   <row key="settingsTab-client-adminPassword" value="Mot de passe administrateur"/>
+
+  <row key="serverCertificateConfirm-title" value="Certificat de serveur comfirm"/>
+  <row key="serverCertificateConfirm-question" value="Le certificat du serveur est auto-signé. Veuillez le regarder et accepter ou refuser la connexion."/>
+  <row key="serverCertificateConfirm-show" value="Afficher le certificat"/>
+  <row key="serverCertificateConfirm-save" value="Faire confiance à ce certificat"/>
 
   <row key="aboutProgram-title" value="A propos..."/>
   <row key="aboutProgram-author" value="Auteur"/>

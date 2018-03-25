@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace Engine.Network
@@ -20,17 +21,40 @@ namespace Engine.Network
     ConnectedToService = 1,
     ConnectedToPeers = 2,
   }
-  
-  public class AsyncPeer :
+
+  public sealed class AsyncPeer :
     MarshalByRefObject,
     IDisposable
   {
     #region nested types
-    private class WaitingCommandContainer
+    private enum HailMessageType
     {
-      public IPackage Package { get; private set; }
-      public byte[] RawData { get; private set; }
-      public bool Unreliable { get; private set; }
+      Connect = 0,
+      Approve = 1
+    }
+
+    private sealed class RemotePeer
+    {
+      public readonly string Id;
+      public readonly X509Certificate2 Certificate;
+      public readonly Packer Packer;
+      public readonly List<WaitingCommandContainer> WaitingCommands;
+
+      [SecurityCritical]
+      public RemotePeer(string id, X509Certificate2 certificate)
+      {
+        Id = id;
+        Certificate = certificate;
+        Packer = new Packer();
+        WaitingCommands = new List<WaitingCommandContainer>();
+      }
+    }
+
+    private sealed class WaitingCommandContainer
+    {
+      public readonly IPackage Package;
+      public readonly byte[] RawData;
+      public readonly bool Unreliable;
 
       public WaitingCommandContainer(IPackage package, byte[] rawData, bool unreliable)
       {
@@ -43,17 +67,17 @@ namespace Engine.Network
 
     #region consts
     public const string NetConfigString = "Peer TCPChat";
-    private const int KeySize = 256;
     #endregion
 
     #region private fields
     [SecurityCritical] private readonly object _syncObject = new object();
-    [SecurityCritical] private readonly Dictionary<string, List<WaitingCommandContainer>> _waitingCommands;
-    [SecurityCritical] private readonly Dictionary<string, Packer> _packers;
+
+    [SecurityCritical] private readonly string _id;
+    [SecurityCritical] private readonly X509Certificate2 _localCertificate;
+    [SecurityCritical] private readonly Dictionary<string, RemotePeer> _peers;
     [SecurityCritical] private readonly SynchronizationContext _syncContext;
     [SecurityCritical] private readonly RequestQueue _requestQueue;
     [SecurityCritical] private readonly IApi _api;
-    [SecurityCritical] private readonly ECDiffieHellmanCng _diffieHellman;
     [SecurityCritical] private readonly IClientNotifier _notifier;
     [SecurityCritical] private readonly Logger _logger;
 
@@ -66,7 +90,7 @@ namespace Engine.Network
 
     #region events and properties
     /// <summary>
-    /// Состояние пира.
+    /// Peer state.
     /// </summary>
     public PeerState State
     {
@@ -77,22 +101,49 @@ namespace Engine.Network
 
     #region constructor
     [SecurityCritical]
-    internal AsyncPeer(IApi api, IClientNotifier notifier, Logger logger)
+    internal AsyncPeer(string id, X509Certificate2 certificate, IApi api, IClientNotifier notifier, Logger logger)
     {
-      _waitingCommands = new Dictionary<string, List<WaitingCommandContainer>>();
-      _packers = new Dictionary<string, Packer>();
+      _id = id;
+      _localCertificate = certificate;
+      _peers = new Dictionary<string, RemotePeer>();
       _syncContext = new EngineSyncContext();
       _requestQueue = new RequestQueue(api);
       _api = api;
-      _diffieHellman = new ECDiffieHellmanCng(KeySize);
-      _diffieHellman.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-      _diffieHellman.HashAlgorithm = CngAlgorithm.Sha256;
       _notifier = notifier;
       _logger = logger;
     }
     #endregion
 
     #region public methods
+    /// <summary>
+    /// Registers peer.
+    /// </summary>
+    /// <param name="peerId">Peer id.</param>
+    /// <param name="certificate">Peer certificate.</param>
+    [SecurityCritical]
+    internal void RegisterPeer(string peerId, X509Certificate2 certificate)
+    {
+      if (_id != peerId)
+      {
+        lock (_syncObject)
+        {
+          var peer = new RemotePeer(peerId, certificate);
+          _peers.Add(peer.Id, peer);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Unregisters peer.
+    /// </summary>
+    /// <param name="peerId">Peer id.</param>
+    [SecurityCritical]
+    internal void UnregisterPeer(string peerId)
+    {
+      lock (_syncObject)
+        _peers.Remove(peerId);
+    }
+
     /// <summary>
     /// Connects to P2P service, for create UDP window.
     /// </summary>
@@ -121,13 +172,9 @@ namespace Engine.Network
       _handler.Start();
 
       var hail = _handler.CreateMessage();
-      using (var client = ClientModel.Get())
-      {
-        var localPoint = new IPEndPoint(Connection.GetIpAddress(remotePoint.AddressFamily), _handler.Port);
-
-        hail.Write(client.Chat.User.Nick);
-        hail.Write(localPoint);
-      }
+      var localPoint = new IPEndPoint(Connection.GetIpAddress(remotePoint.AddressFamily), _handler.Port);
+      hail.Write(_id);
+      hail.Write(localPoint);
 
       _serviceConnection = _handler.Connect(remotePoint, hail);
 
@@ -184,7 +231,7 @@ namespace Engine.Network
       if (_handler == null)
         throw new InvalidOperationException("Handler not created.");
 
-      _handler.Connect(remotePoint, CreateHailMessage());
+      _handler.Connect(remotePoint, CreateConnectHailMessage(peerId));
       
       DisconnectFromService();
 
@@ -321,24 +368,26 @@ namespace Engine.Network
     #endregion
 
     #region private methods
+    // Must be called under lock
     [SecurityCritical]
-    private Packer GetPacker(string peerId)
+    private RemotePeer GetPeer(string peerId)
     {
-      Packer packer;
-      lock (_syncObject)
-        _packers.TryGetValue(peerId, out packer);
-
-      if (packer == null)
+      _peers.TryGetValue(peerId, out RemotePeer peer);
+      if (peer == null)
         throw new InvalidOperationException(string.Format("Packer not set, for connection {0}", peerId));
 
-      return packer;
+      return peer;
     }
 
     [SecurityCritical]
     private NetOutgoingMessage CreateMessage(string peerId, IPackage package, byte[] rawData)
     {
-      var packer = GetPacker(peerId);
-      var packed = packer.Pack(package, rawData);
+      Packed packed;
+      lock (_syncObject)
+      {
+        var peer = GetPeer(peerId);
+        packed = peer.Packer.Pack(package, rawData);
+      }
       
       var message = _handler.CreateMessage(packed.Length);
       message.Write(packed.Data, 0, packed.Length);
@@ -346,21 +395,42 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private NetOutgoingMessage CreateHailMessage()
+    private NetOutgoingMessage CreateConnectHailMessage(string peerId)
     {
-      string nick;
-      using (var client = ClientModel.Get())
-        nick = client.Chat.User.Nick;
+      byte[] key;
+      lock (_syncObject)
+      {
+        var peer = GetPeer(peerId);
+        using (var rng = new RNGCryptoServiceProvider())
+        {
+          var clearKey = new byte[32];
+          rng.GetBytes(clearKey);
 
-      var publicKeyBlob = _diffieHellman.PublicKey.ToByteArray();
-      if (publicKeyBlob == null)
-        throw new InvalidOperationException("public key is null");
+          var alg = peer.Certificate.PublicKey.Key;
+          if (alg is RSACryptoServiceProvider rsa)
+            key = rsa.Encrypt(clearKey, false);
+          else
+            throw new InvalidOperationException("not supported key algorithm");
+
+          peer.Packer.SetKey(clearKey);
+        }
+      }
 
       var hailMessage = _handler.CreateMessage();
-      hailMessage.Write(nick);
-      hailMessage.Write(publicKeyBlob.Length);
-      hailMessage.Write(publicKeyBlob);
+      hailMessage.Write(_id);
+      hailMessage.Write((int)HailMessageType.Connect);
+      hailMessage.Write(key.Length);
+      hailMessage.Write(key);
 
+      return hailMessage;
+    }
+
+    [SecurityCritical]
+    private NetOutgoingMessage CreateApproveHailMessage()
+    {
+      var hailMessage = _handler.CreateMessage();
+      hailMessage.Write(_id);
+      hailMessage.Write((int)HailMessageType.Approve);
       return hailMessage;
     }
 
@@ -369,15 +439,8 @@ namespace Engine.Network
     {
       lock (_syncObject)
       {
-        List<WaitingCommandContainer> commands;
-
-        if (!_waitingCommands.TryGetValue(peerId, out commands))
-        {
-          commands = new List<WaitingCommandContainer>();
-          _waitingCommands.Add(peerId, commands);
-        }
-
-        commands.Add(new WaitingCommandContainer(package, rawData, unreliable));
+        var peer = GetPeer(peerId);
+        peer.WaitingCommands.Add(new WaitingCommandContainer(package, rawData, unreliable));
       }
 
       _api.Perform(new ClientConnectToPeerAction(peerId));
@@ -464,7 +527,7 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnApprove(NetIncomingMessage message)
     {
-      message.SenderConnection.Approve(CreateHailMessage());
+      message.SenderConnection.Approve(CreateApproveHailMessage());
       _logger.WriteDebug("AsyncPeer.Approve()");
     }
 
@@ -481,47 +544,56 @@ namespace Engine.Network
       if (hailMessage == null)
       {
         message.SenderConnection.Deny();
-        _logger.WriteWarning("ConnectionId is null [Message: {0}, SenderEndPoint: {1}]", message.ToString(), message.SenderEndPoint);
+        _logger.WriteWarning("Hail message is null [Message: {0}, SenderEndPoint: {1}]", message.ToString(), message.SenderEndPoint);
         return;
       }
 
-      var connectionId = hailMessage.ReadString();
-      var publicKeySize = hailMessage.ReadInt32();
-      var publicKeyBlob = hailMessage.ReadBytes(publicKeySize);
-      var publicKey = CngKey.Import(publicKeyBlob, CngKeyBlobFormat.EccPublicBlob);
-      var key = _diffieHellman.DeriveKeyMaterial(publicKey);
+      var peerId = hailMessage.ReadString();
+      var hailMessageType = (HailMessageType)hailMessage.ReadInt32();
 
-      message.SenderConnection.Tag = connectionId;
+      message.SenderConnection.Tag = peerId;
 
       lock (_syncObject)
       {
-        // Add connection packer
-        var packer = new Packer();
-        packer.SetKey(key);
-        _packers.Add(connectionId, packer);
+        var peer = GetPeer(peerId);
 
-        // Invoke waiting commands
-        List<WaitingCommandContainer> commands;
-        if (_waitingCommands.TryGetValue(connectionId, out commands))
+        if (hailMessageType == HailMessageType.Connect)
         {
-          foreach (var command in commands)
-            SendMessage(connectionId, command.Package, command.RawData, command.Unreliable);
+          var keySize = hailMessage.ReadInt32();
+          var keyBlob = hailMessage.ReadBytes(keySize);
 
-          _waitingCommands.Remove(connectionId);
+          byte[] clearKey;
+          var alg = _localCertificate.PrivateKey;
+          if (alg is RSACryptoServiceProvider rsa)
+            clearKey = rsa.Decrypt(keyBlob, false);
+          else
+            throw new InvalidOperationException("not supported key algorithm");
+
+          peer.Packer.SetKey(clearKey);
         }
+
+        foreach (var command in peer.WaitingCommands)
+          SendMessage(peerId, command.Package, command.RawData, command.Unreliable);
       }
 
-      _logger.WriteDebug("AsyncPeer.PeerConnected({0})", connectionId);
+      _logger.WriteDebug("AsyncPeer.PeerConnected({0})", peerId);
     }
 
     [SecurityCritical]
     private void OnDisconnected(NetIncomingMessage message)
     {
-      var connectionId = (string) message.SenderConnection.Tag;
+      var peerId = (string) message.SenderConnection.Tag;
       message.SenderConnection.Tag = null;
 
-      if (connectionId != null)
-        _packers.Remove(connectionId);
+      if (peerId != null)
+      {
+        lock (_syncObject)
+        {
+          var peer = GetPeer(peerId);
+          peer.Packer.ResetKey();
+          peer.WaitingCommands.Clear();
+        }
+      }
     }
 
     [SecurityCritical]
@@ -529,11 +601,14 @@ namespace Engine.Network
     {
       try
       {
-        var peerId = (string)message.SenderConnection.Tag;
-        var packer = GetPacker(peerId);
-        var unpacked = packer.Unpack<IPackage>(message.Data);
+        lock (_syncObject)
+        {
+          var peerId = (string)message.SenderConnection.Tag;
+          var peer = GetPeer(peerId);
+          var unpacked = peer.Packer.Unpack<IPackage>(message.Data);
 
-        _requestQueue.Add(peerId, unpacked);
+          _requestQueue.Add(peerId, unpacked);
+        }
       }
       catch (Exception exc)
       {
@@ -565,13 +640,9 @@ namespace Engine.Network
       if (_handler != null)
         _handler.Shutdown(string.Empty);
 
-      if (_diffieHellman != null)
-        _diffieHellman.Dispose();
-
       lock (_syncObject)
       {
-        _waitingCommands.Clear();
-        _packers.Clear();
+        _peers.Clear();
       }
     }
     #endregion

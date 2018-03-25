@@ -15,14 +15,14 @@ namespace Engine.Network
   {
     #region consts
     /// <summary>
-    /// Время неактивности соединения, после прошествия которого соединение будет закрыто.
+    /// Waiting time for activity. After the given time is over, the connection will be closed.
     /// </summary>
-    public const int SilenceTimeout = 7 * 1000;
+    public static readonly TimeSpan SilenceTimeout = TimeSpan.FromSeconds(10);
 
     /// <summary>
-    /// Время ожидания регистрации. После того как данное время закончится соединение будет закрыто.
+    /// Waiting time for registration. After the given time is over, the connection will be closed.
     /// </summary>
-    public const int UnregisteredTimeout = 60 * 1000;
+    public static readonly TimeSpan UnregisteredTimeout = TimeSpan.FromMinutes(10);
     #endregion
 
     #region private field
@@ -65,26 +65,26 @@ namespace Engine.Network
     /// <summary>
     /// Interval of time that connection not send any messages to server.
     /// </summary>
-    public int SilenceInterval
+    public TimeSpan SilenceInterval
     {
       [SecurityCritical]
       get
       {
         ThrowIfDisposed();
-        return (int)(DateTime.UtcNow - _lastActivity).TotalMilliseconds;
+        return DateTime.UtcNow - _lastActivity;
       }
     }
 
     /// <summary>
     /// Interval of time that connection not registering on server.
     /// </summary>
-    public int UnregisteredInterval
+    public TimeSpan UnregisteredInterval
     {
       [SecurityCritical]
       get
       {
         ThrowIfDisposed();
-        return (IsRegistered) ? 0 : (int)(DateTime.UtcNow - _createTime).TotalMilliseconds;
+        return (IsRegistered) ? TimeSpan.MinValue : (DateTime.UtcNow - _createTime);
       }
     }
 
