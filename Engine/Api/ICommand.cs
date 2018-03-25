@@ -11,7 +11,7 @@ namespace Engine.Api
   }
 
   [Serializable]
-  public class CommandArgs : IDisposable
+  public sealed class CommandArgs : IDisposable
   {
     public string ConnectionId { get; private set; }
     public Unpacked<IPackage> Unpacked { get; private set; }

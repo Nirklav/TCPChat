@@ -370,10 +370,10 @@ namespace Engine.Network
     #region private methods
     // Must be called under lock
     [SecurityCritical]
-    private RemotePeer GetPeer(string peerId)
+    private RemotePeer GetPeer(string peerId, bool tryGet = false)
     {
       _peers.TryGetValue(peerId, out RemotePeer peer);
-      if (peer == null)
+      if (!tryGet && peer == null)
         throw new InvalidOperationException(string.Format("Packer not set, for connection {0}", peerId));
 
       return peer;
@@ -579,22 +579,6 @@ namespace Engine.Network
       _logger.WriteDebug("AsyncPeer.PeerConnected({0})", peerId);
     }
 
-    [SecurityCritical]
-    private void OnDisconnected(NetIncomingMessage message)
-    {
-      var peerId = (string) message.SenderConnection.Tag;
-      message.SenderConnection.Tag = null;
-
-      if (peerId != null)
-      {
-        lock (_syncObject)
-        {
-          var peer = GetPeer(peerId);
-          peer.Packer.ResetKey();
-          peer.WaitingCommands.Clear();
-        }
-      }
-    }
 
     [SecurityCritical]
     private void OnPackageReceived(NetIncomingMessage message)
@@ -614,6 +598,26 @@ namespace Engine.Network
       {
         _notifier.AsyncError(new AsyncErrorEventArgs(exc));
         _logger.Write(exc);
+      }
+    }
+
+    [SecurityCritical]
+    private void OnDisconnected(NetIncomingMessage message)
+    {
+      var peerId = (string) message.SenderConnection.Tag;
+      message.SenderConnection.Tag = null;
+
+      if (peerId != null)
+      {
+        lock (_syncObject)
+        {
+          var peer = GetPeer(peerId, true);
+          if (peer != null)
+          {
+            peer.Packer.ResetKey();
+            peer.WaitingCommands.Clear();
+          }
+        }
       }
     }
     #endregion

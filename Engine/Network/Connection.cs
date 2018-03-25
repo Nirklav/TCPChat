@@ -415,7 +415,9 @@ namespace Engine.Network
         if (remoteCertificate.HasPrivateKey)
           throw new InvalidOperationException("Remote certificate has private key");
 
-        ValidateCertificate(remoteCertificate);
+        if (!ValidateCertificate(remoteCertificate))
+          throw new InvalidOperationException("Remote certiticate not validated");
+
         _remoteCertificate = remoteCertificate;
 
         byte[] key;

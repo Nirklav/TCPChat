@@ -9,7 +9,7 @@ using System.Threading;
 namespace Engine.Network
 {
   [SecurityCritical]
-  class RequestQueue :
+  sealed class RequestQueue :
     MarshalByRefObject,
     IDisposable
   {
