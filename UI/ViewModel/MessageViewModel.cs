@@ -43,8 +43,8 @@ namespace UI.ViewModel
     #region properties
     public long MessageId { get; private set; }
     public string Title { get; private set; }
-    public UserViewModel Sender { get; private set; }
-    public UserViewModel Receiver { get; private set; }
+    public LightUserViewModel Sender { get; private set; }
+    public LightUserViewModel Receiver { get; private set; }
     public MessageType Type { get; private set; }
 
     public string Text 
@@ -78,7 +78,7 @@ namespace UI.ViewModel
     {
       this._fileId = fileId;
 
-      Sender = new UserViewModel(senderId, _parentRoom);
+      Sender = new LightUserViewModel(senderId, _parentRoom);
       Progress = 0;     
       Title = Localizer.Instance.Localize(FromKey, GetTimeStr(messageTime));
 
@@ -122,8 +122,8 @@ namespace UI.ViewModel
     {
       Text = message;
       Title = Localizer.Instance.Localize(isPrivate ? PMFormKey : FromKey, GetTimeStr(messageTime));
-      Sender = new UserViewModel(senderId, room);
-      Receiver = new UserViewModel(receiverId, room);
+      Sender = new LightUserViewModel(senderId, room);
+      Receiver = new LightUserViewModel(receiverId, room);
       Type = isPrivate ? MessageType.Private : MessageType.Common;
 
       EditMessageCommand = new Command(EditMessage, _ => ClientModel.Client != null);

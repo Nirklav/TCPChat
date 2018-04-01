@@ -41,9 +41,9 @@ namespace UI.ViewModel
     private bool _updated;
     private bool _enabled;
 
-    private UserViewModel _allInRoom;
-    private UserViewModel _selectedReceiver;
-    private List<UserViewModel> _recivers;
+    private LightUserViewModel _allInRoomReceiver;
+    private LightUserViewModel _selectedReceiver;
+    private List<LightUserViewModel> _recivers;
 
     private bool _messagesAutoScroll;
     private string _message;
@@ -128,17 +128,17 @@ namespace UI.ViewModel
       set { SetValue(value, nameof(Messages), v => _messages = v); }
     }
 
-    public UserViewModel SelectedReceiver
+    public LightUserViewModel SelectedReceiver
     {
       get { return _selectedReceiver; }
       set { SetValue(value, nameof(SelectedReceiver), v => _selectedReceiver = v); }
     }
 
-    public IEnumerable<UserViewModel> Receivers
+    public IEnumerable<LightUserViewModel> Receivers
     {
       get
       {
-        yield return _allInRoom;
+        yield return _allInRoomReceiver;
         foreach (var user in _recivers)
           yield return user;
       }
@@ -178,8 +178,8 @@ namespace UI.ViewModel
     {
       _mainViewModel = main;
       Messages = new ObservableCollection<MessageViewModel>();
-      SelectedReceiver = _allInRoom = new UserViewModel(AllInRoomKey, UserId.Empty, this);
-      _recivers = new List<UserViewModel>();
+      SelectedReceiver = _allInRoomReceiver = new LightUserViewModel(AllInRoomKey, this);
+      _recivers = new List<LightUserViewModel>();
       _messageIds = new HashSet<long>();
 
       var userViewModels = userIds == null
@@ -286,7 +286,7 @@ namespace UI.ViewModel
           ClientModel.Api.Perform(new ClientSendAdminAction(Settings.Current.AdminPassword, Message));
           AddSystemMessage(Message);
         }
-        else if (SelectedReceiver.IsAllInRoom)
+        else if (SelectedReceiver == _allInRoomReceiver)
         {
           var action = SelectedMessageId == null
             ? new ClientSendMessageAction(Name, Message)
@@ -496,28 +496,30 @@ namespace UI.ViewModel
     {
       _recivers.Clear();
 
-      var selectedReceiverId = _selectedReceiver == _allInRoom
+      LightUserViewModel newReciver = null;
+      var selectedReceiverId = _selectedReceiver == _allInRoomReceiver
         ? UserId.Empty
         : _selectedReceiver.UserId;
-      var newReciver = (UserViewModel) null;
 
       foreach (var user in client.Chat.GetUsers())
       {
         if (user.Id == client.Chat.User.Id)
           continue;
 
-        var receiver = new UserViewModel(user.Id, this);
+        var receiver = new LightUserViewModel(user.Id, this);
         _recivers.Add(receiver);
 
         if (user.Id == selectedReceiverId)
+        {
           newReciver = receiver;
+        }
       }
-      OnPropertyChanged(nameof(Receivers));
 
-      _selectedReceiver = newReciver == null
-        ? _allInRoom
+      SelectedReceiver = newReciver == null
+        ? _allInRoomReceiver
         : newReciver;
-      OnPropertyChanged(nameof(SelectedReceiver));
+
+      OnPropertyChanged(nameof(Receivers));
     }
 
     private void FillMessages(ClientGuard client)

@@ -20,6 +20,7 @@
   <row key="systemMessage-ConnectionRetryAttempt" value="Tentative de connexion au serveur..."/>
   <row key="systemMessage-NotRegisteredBadName" value="La connexion ne peut aboutir avec ce pseudonyme."/>
   <row key="systemMessage-NotRegisteredNameAlreadyExist" value="La connexion ne peut aboutir avec ce pseudonyme (Déjà utilisé)."/>
+  <row key="systemMessage-NotRegisteredBadThumbprint" value="La connexion ne peut pas être enregistrée. L'empreinte de l'ID utilisateur ne correspond pas au certificat."/>
   <row key="systemMessage-RoomAdminChanged" value="Vous êtes maintenant administrateur de la salle {0}."/>
   <row key="systemMessage-RoomAccessDenied" value="Accès refusé pour cette action."/>
   <row key="systemMessage-RoomAlreadyExist" value="Une salle porte déjà ce nom. Choisissez-en un autre."/>
@@ -36,6 +37,7 @@
   <row key="systemMessage-TextCommandsList" value="Liste des commandes du serveur :{0}"/>
   <row key="systemMessage-TextCommandInvalidParams" value="La commande comporte une erreur sur l'un des arguments."/>
   <row key="systemMessage-TextCommandMessageId" value="Message id = {0}."/>
+  <row key="systemMessage-TextCommandUsersList" value="Liste des utilisateurs:{0}"/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Editer"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Copier"/>

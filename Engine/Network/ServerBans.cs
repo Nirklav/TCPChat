@@ -66,5 +66,20 @@ namespace Engine.Network
         return connectionId;
       }
     }
+
+    [SecuritySafeCritical]
+    public List<UserId> FindAll(string nick)
+    {
+      lock (_syncObject)
+      {
+        var result = new List<UserId>();
+        foreach (var userId in _connectionIdToAddress.Keys)
+        {
+          if (string.Equals(userId.Nick, nick, System.StringComparison.Ordinal))
+            result.Add(userId);
+        }
+        return result;
+      }
+    }
   }
 }

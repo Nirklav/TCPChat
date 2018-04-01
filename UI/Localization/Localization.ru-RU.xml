@@ -20,6 +20,7 @@
   <row key="systemMessage-ConnectionRetryAttempt" value="Попытка соединения с сервером..."/>
   <row key="systemMessage-NotRegisteredBadName" value="Соединение не может быть зарегистрировано с таким ником. Выберите другой."/>
   <row key="systemMessage-NotRegisteredNameAlreadyExist" value="Соединение не может быть зарегистрировано с таким ником. Он занят."/>
+  <row key="systemMessage-NotRegisteredBadThumbprint" value="Соединение не может быть зарегистрировано. Подпись сертификата и идентификатора не совпадают."/>
   <row key="systemMessage-RoomAdminChanged" value="Вы назначены администратором {0} комнаты."/>
   <row key="systemMessage-RoomAccessDenied" value="Не хватает прав для соверешения этого действия в этой комнате."/>
   <row key="systemMessage-RoomAlreadyExist" value="Комната с таким именем уже создана, выберите другое имя."/>
@@ -36,6 +37,7 @@
   <row key="systemMessage-TextCommandsList" value="Список серверных команд:{0}"/>
   <row key="systemMessage-TextCommandInvalidParams" value="В параметрах команды ошибка."/>
   <row key="systemMessage-TextCommandMessageId" value="Message id = {0}."/>
+  <row key="systemMessage-TextCommandUsersList" value="Список пользователей:{0}"/>
 
   <row key="commonMessageTemplate-contextMenu-edit" value="Редактировать"/>
   <row key="commonMessageTemplate-contextMenu-copy" value="Копировать"/>

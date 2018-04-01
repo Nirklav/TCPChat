@@ -17,8 +17,8 @@ namespace UI.ViewModel
   {
     #region fields
     private UserId _userId;
+    private WPFColor _nickColor;
     private UserCheckStatus _checkStatus;
-    private string _nickLocalizationKey;
     private RoomViewModel _parent;
     private bool _isClient;
     #endregion
@@ -35,20 +35,12 @@ namespace UI.ViewModel
     {
       _userId = userId;
       _parent = parentViewModel;
-      _nickLocalizationKey = nickLKey;
 
-      if (_userId == UserId.Empty)
+      using (var client = ClientModel.Get())
       {
-        _checkStatus = UserCheckStatus.NotChecked;
-        _isClient = false;
-      }
-      else
-      {
-        using (var client = ClientModel.Get())
-        {
-          _checkStatus = GetCheckStatus(client);
-          _isClient = GetClientStatus(client);
-        }
+        _checkStatus = GetCheckStatus(client);
+        _isClient = GetClientStatus(client);
+        _nickColor = GetColor(client);
       }
 
       UserClickCommand = new Command(UserClick);
@@ -79,23 +71,6 @@ namespace UI.ViewModel
     #endregion
 
     #region properties
-    public WPFColor NickColor
-    {
-      get
-      {
-        if (_userId == UserId.Empty)
-          return WPFColor.FromRgb(0, 0, 0);
-
-        using (var client = ClientModel.Get())
-        {
-          var user = client.Chat.TryGetUser(_userId);
-          if (user == null)
-            return WPFColor.FromRgb(0, 0, 0);
-          return WPFColor.FromRgb(user.NickColor.R, user.NickColor.G, user.NickColor.B);
-        }
-      }
-    }
-
     public UserId UserId
     {
       get { return _userId; }
@@ -103,23 +78,18 @@ namespace UI.ViewModel
 
     public string Nick
     {
-      get
-      {
-        if (_nickLocalizationKey != null)
-          return Localizer.Instance.Localize(_nickLocalizationKey);
-        return _userId.Nick;
-      }
+      get { return _userId.Nick; }
+    }
+
+    public WPFColor NickColor
+    {
+      get { return _nickColor; }
     }
 
     public bool IsClient
     {
       get { return _isClient; }
       set { SetValue(value, nameof(IsClient), v => _isClient = v); }
-    }
-
-    public bool IsAllInRoom
-    {
-      get { return _nickLocalizationKey != null; }
     }
 
     public UserCheckStatus CheckStatus
@@ -231,6 +201,12 @@ namespace UI.ViewModel
       }
 
       return UserCheckStatus.NotChecked;
+    }
+    
+    private WPFColor GetColor(ClientGuard client)
+    {
+      var user = client.Chat.GetUser(_userId);
+      return WPFColor.FromRgb(user.NickColor.R, user.NickColor.G, user.NickColor.B);
     }
 
     public override bool Equals(object obj)

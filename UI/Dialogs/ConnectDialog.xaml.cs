@@ -23,7 +23,7 @@ namespace UI.Dialogs
 
       Nick = NickField.Text = Settings.Current.Nick;
       Address = ServerAddressField.Text = Settings.Current.ServerAddress;
-      CertificatePath = Settings.Current.CertificatePath;
+      CertificatePath = CertificateField.Text = Settings.Current.CertificatePath;
 
       if (Settings.Current.RandomColor)
         NickColor = GetRandomColor();

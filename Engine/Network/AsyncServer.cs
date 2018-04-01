@@ -355,7 +355,7 @@ namespace Engine.Network
 
           lock (_connections)
           {
-            connection.Id = new UserId(_lastTempId++);
+            connection.Id = new UserId(_lastTempId++, "<not_registered>");
             _connections.Add(connection.Id, connection);
           }
 

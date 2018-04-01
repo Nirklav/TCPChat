@@ -27,6 +27,19 @@ namespace Engine.Model.Common.Entities
 
     #region users
     /// <summary>
+    /// Returns true if nick exist, otherwise false.
+    /// </summary>
+    /// <param name="userId">User id.</param>
+    [SecuritySafeCritical]
+    public bool IsNickExist(string nick)
+    {
+      foreach (var userId in _users.Keys)
+        if (string.Equals(userId.Nick, nick, StringComparison.Ordinal))
+          return true;
+      return false;
+    }
+
+    /// <summary>
     /// Returns true if user exist, otherwise false.
     /// </summary>
     /// <param name="userId">User id.</param>
@@ -64,13 +77,31 @@ namespace Engine.Model.Common.Entities
     /// Try get user from room.
     /// </summary>
     /// <param name="userId">User id of user who be returns.></param>
-    /// <returns>Returns user if he exist, otherwise false.</returns>
+    /// <returns>Returns user if he exist, otherwise null.</returns>
     [SecuritySafeCritical]
     public TUser TryGetUser(UserId userId)
     {
       TUser result;
       _users.TryGetValue(userId, out result);
       return result;
+    }
+
+    /// <summary>
+    /// Seeks user in chat.
+    /// </summary>
+    /// <param name="nick">User nick of user who be searched.></param>
+    /// <returns>Returns user if he exist, otherwise null.</returns>
+    [SecuritySafeCritical]
+    public TUser FindUser(string nick)
+    {
+      foreach (var kvp in _users)
+      {
+        var userId = kvp.Key;
+        var user = kvp.Value;
+        if (string.Equals(userId.Nick, nick, StringComparison.Ordinal))
+          return user;
+      }
+      return null;
     }
 
     /// <summary>

@@ -116,6 +116,7 @@ namespace Engine.Api.Server.Admin
       { "/removeMessage", new AdminCommand(RemoveMessage, "/removeMessage {roomName} {messageId} - removes message from room") },
       { "/ban",  new AdminCommand(Ban, "/ban {nick} - ban user by ip") },
       { "/unban",  new AdminCommand(Unban, "/unban {nick} - unban user") },
+      { "/showBanned", new AdminCommand(ShowBanned, "/showBanned {nick} - shows all banned users with this nick") },
       { "/showMessageId", new AdminCommand(ShowMessageId, "/showMessageId {roomName} {time} - UTC time in format \"dd.MM.YYYY hh:mm:ss\"") }
     };
 
@@ -252,21 +253,24 @@ namespace Engine.Api.Server.Admin
 
       using (var server = ServerModel.Get())
       {
-        var userId = new UserId(adminArgs.Parameters[0]);
-        var user = server.Chat.TryGetUser(userId);
-
-        ServerModel.Server.Bans.Ban(userId);
+        var nick = adminArgs.Parameters[0];
+        var user = server.Chat.FindUser(adminArgs.Parameters[0]);
         if (user != null)
-          ServerModel.Api.Perform(new ServerRemoveUserAction(userId));  
+        {
+          ServerModel.Server.Bans.Ban(user.Id);
+          ServerModel.Api.Perform(new ServerRemoveUserAction(user.Id));
+        }
         else
+        {
           ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+        }
       }
     }
 
     [SecuritySafeCritical]
     private static void Unban(AdminCommandArgs adminArgs, CommandArgs args)
     {
-      if (adminArgs.Parameters.Length != 1)
+      if (adminArgs.Parameters.Length != 2)
       {
         ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
         return;
@@ -274,9 +278,29 @@ namespace Engine.Api.Server.Admin
 
       using (var server = ServerModel.Get())
       {
-        var userId = new UserId(adminArgs.Parameters[0]);
+        var nick = adminArgs.Parameters[0];
+        var thumbprint = adminArgs.Parameters[1];
+        var userId = new UserId(nick, thumbprint);
         ServerModel.Server.Bans.Unban(userId);
       }
+    }
+
+    [SecuritySafeCritical]
+    private static void ShowBanned(AdminCommandArgs adminArgs, CommandArgs args)
+    {
+      if (adminArgs.Parameters.Length != 1)
+      {
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
+        return;
+      }
+
+      var nick = adminArgs.Parameters[0];
+
+      var commandsBuilder = new StringBuilder();
+      commandsBuilder.AppendLine();
+      foreach (var userId in ServerModel.Server.Bans.FindAll(nick))
+          commandsBuilder.AppendLine(userId.ToString());
+      ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandUsersList, commandsBuilder.ToString()));
     }
 
     [SecuritySafeCritical]

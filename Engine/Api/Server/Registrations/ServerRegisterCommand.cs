@@ -29,42 +29,48 @@ namespace Engine.Api.Server.Registrations
       if (content.UserDto == null)
         throw new ArgumentNullException(nameof(content.UserDto));
 
-      if (content.UserDto.Id == UserId.Empty)
-        throw new ArgumentException(nameof(content.UserDto.Id));
+      var userId = content.UserDto.Id;
+      if (userId == UserId.Empty)
+        throw new ArgumentException(nameof(userId));
 
-      if (content.UserDto.Id.IsTemporary)
+      if (userId.IsTemporary)
       {
         SendFail(args.ConnectionId, SystemMessageId.NotRegisteredBadName);
+        return;
+      }
+
+      var userCertificate = ServerModel.Server.GetCertificate(args.ConnectionId);
+      if (!string.Equals(userId.Thumbprint, userCertificate.Thumbprint, StringComparison.OrdinalIgnoreCase))
+      {
+        SendFail(args.ConnectionId, SystemMessageId.NotRegisteredBadThumbprint);
         return;
       }
       
       using (var server = ServerModel.Get())
       {
         var chat = server.Chat;
-        if (chat.IsUserExist(content.UserDto.Id))
+        if (chat.IsNickExist(userId.Nick))
         {
           SendFail(args.ConnectionId, SystemMessageId.NotRegisteredNameAlreadyExist);
           return;
         }
-        else
-        {
-          ServerModel.Logger.WriteInfo("User login: {0}", content.UserDto.Id);
 
-          chat.AddUser(new User(content.UserDto));
+        ServerModel.Logger.WriteInfo("User login: {0}", userId);
 
-          var mainRoom = chat.GetRoom(ServerChat.MainRoomName);
-          mainRoom.AddUser(content.UserDto.Id);
+        chat.AddUser(new User(content.UserDto));
 
-          Register(content.UserDto.Id, args.ConnectionId);
+        var mainRoom = chat.GetRoom(ServerChat.MainRoomName);
+        mainRoom.AddUser(userId);
 
-          var userDtos = chat.GetRoomUserDtos(mainRoom.Name);
+        Register(userId, args.ConnectionId);
 
-          SendRefresh(content.UserDto.Id, mainRoom, userDtos);
-          SendOpened(content.UserDto.Id, mainRoom, userDtos);
+        var userDtos = chat.GetRoomUserDtos(mainRoom.Name);
 
-          // Notify
-          ServerModel.Notifier.ConnectionRegistered(new ConnectionEventArgs(content.UserDto.Id));
-        }
+        SendRefresh(userId, mainRoom, userDtos);
+        SendOpened(userId, mainRoom, userDtos);
+
+        // Notify
+        ServerModel.Notifier.ConnectionRegistered(new ConnectionEventArgs(userId));
       }
     }
 

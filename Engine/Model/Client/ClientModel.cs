@@ -147,7 +147,7 @@ namespace Engine.Model.Client
       if (!initializer.Certificate.HasPrivateKey)
         throw new ArgumentException("Initializer should have certificate with private key.");
 
-      var userId = new UserId(initializer.Nick);
+      var userId = new UserId(initializer.Nick, initializer.Certificate.Thumbprint);
       var user = new ClientUser(userId, initializer.NickColor, initializer.Certificate);
 
       if (Interlocked.CompareExchange(ref _chat, new ClientChat(user), null) != null)

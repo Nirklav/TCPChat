@@ -21,8 +21,7 @@ namespace Engine.Network
   public sealed class AsyncClient : Connection
   {
     #region consts
-    public static readonly UserId ClientId = new UserId("Client");
-
+    public static readonly UserId ClientId = new UserId("ClientId", "ClientId");
     public const long DefaultFilePartSize = 1024 * 1024;
     private const int SystemTimerInterval = 1000;
     private const int ReconnectInterval = 10 * 1000;

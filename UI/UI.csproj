@@ -115,6 +115,7 @@
       <DependentUpon>GenerateCertificateDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Infrastructure\IconToImageSourceConverter.cs" />
+    <Compile Include="ViewModel\LightUserViewModel.cs" />
     <Compile Include="ViewModel\UiCertificateStatus.cs" />
     <Compile Include="ViewModel\PostedFilesViewModel.cs" />
     <Compile Include="View\PostedFilesView.xaml.cs">
