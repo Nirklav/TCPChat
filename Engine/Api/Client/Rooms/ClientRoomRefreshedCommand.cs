@@ -48,10 +48,10 @@ namespace Engine.Api.Client.Rooms
     }
 
     [SecurityCritical]
-    private static HashSet<string> UpdateRoomUsers(Room room, RoomDto dto)
+    private static HashSet<UserId> UpdateRoomUsers(Room room, RoomDto dto)
     {
-      var removed = new HashSet<string>(room.Users);
-      var added = new HashSet<string>(dto.Users);
+      var removed = new HashSet<UserId>(room.Users);
+      var added = new HashSet<UserId>(dto.Users);
 
       foreach (var nick in room.Users)
         added.Remove(nick);

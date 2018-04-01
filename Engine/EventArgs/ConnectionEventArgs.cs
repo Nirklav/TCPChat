@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Engine.Model.Common.Entities;
+using System;
 
 namespace Engine
 {
   [Serializable]
   public class ConnectionEventArgs : EventArgs
   {
-    public string Id { get; private set; }
+    public UserId Id { get; private set; }
 
-    public ConnectionEventArgs(string id)
+    public ConnectionEventArgs(UserId id)
     {
       Id = id;
     }

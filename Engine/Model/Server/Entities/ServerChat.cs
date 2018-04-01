@@ -3,7 +3,6 @@ using Engine.Model.Common.Entities;
 using System;
 using System.Linq;
 using System.Security;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Engine.Model.Server.Entities
 {
@@ -13,7 +12,7 @@ namespace Engine.Model.Server.Entities
     [SecurityCritical]
     public ServerChat()
     {
-      AddRoom(new ServerRoom(null, MainRoomName));
+      AddRoom(new ServerRoom(UserId.Empty, MainRoomName));
     }
 
     #region users
@@ -31,10 +30,10 @@ namespace Engine.Model.Server.Entities
     }
 
     [SecuritySafeCritical]
-    private UserDto CreateDto(string nick)
+    private UserDto CreateDto(UserId userId)
     {
-      var user = GetUser(nick);
-      var certificate = ServerModel.Server.GetCertificate(nick);
+      var user = GetUser(userId);
+      var certificate = ServerModel.Server.GetCertificate(userId);
       return new UserDto(user, certificate.RawData);
     }
     #endregion

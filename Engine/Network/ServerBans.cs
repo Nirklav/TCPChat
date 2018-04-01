@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Engine.Model.Common.Entities;
+using System.Collections.Generic;
 using System.Net;
 using System.Security;
 
@@ -9,8 +10,8 @@ namespace Engine.Network
     private readonly AsyncServer _server;
 
     private readonly object _syncObject = new object();
-    private readonly Dictionary<string, IPAddress> _connectionIdToAddress = new Dictionary<string, IPAddress>();
-    private readonly Dictionary<IPAddress, string> _addressToConnectionId = new Dictionary<IPAddress, string>();
+    private readonly Dictionary<UserId, IPAddress> _connectionIdToAddress = new Dictionary<UserId, IPAddress>();
+    private readonly Dictionary<IPAddress, UserId> _addressToConnectionId = new Dictionary<IPAddress, UserId>();
 
     [SecuritySafeCritical]
     public ServerBans(AsyncServer server)
@@ -19,7 +20,7 @@ namespace Engine.Network
     }
 
     [SecuritySafeCritical]
-    public void Ban(string connectionId)
+    public void Ban(UserId connectionId)
     {
       var ipAddress = _server.GetIp(connectionId);
       lock (_syncObject)
@@ -30,7 +31,7 @@ namespace Engine.Network
     }
 
     [SecuritySafeCritical]
-    public void Unban(string connectionId)
+    public void Unban(UserId connectionId)
     {
       lock (_syncObject)
       {
@@ -43,7 +44,7 @@ namespace Engine.Network
     }
 
     [SecuritySafeCritical]
-    public bool IsBanned(string connectionId)
+    public bool IsBanned(UserId connectionId)
     {
       lock (_syncObject)
         return _connectionIdToAddress.ContainsKey(connectionId);
@@ -57,11 +58,11 @@ namespace Engine.Network
     }
 
     [SecuritySafeCritical]
-    public string Who(IPAddress address)
+    public UserId Who(IPAddress address)
     {
       lock (_syncObject)
       {
-        _addressToConnectionId.TryGetValue(address, out string connectionId);
+        _addressToConnectionId.TryGetValue(address, out UserId connectionId);
         return connectionId;
       }
     }

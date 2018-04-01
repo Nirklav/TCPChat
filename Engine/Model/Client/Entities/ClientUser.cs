@@ -16,12 +16,12 @@ namespace Engine.Model.Client.Entities
     /// <summary>
     /// Creates new instance of user.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="id">User id.</param>
     /// <param name="nickColor">Nick color.</param>
     /// <param name="certificate">User certificate.</param>
     [SecuritySafeCritical]
-    public ClientUser(string nick, Color color, X509Certificate2 certificate)
-      : base(nick, color)
+    public ClientUser(UserId id, Color color, X509Certificate2 certificate)
+      : base(id, color)
     {
       _certificate = certificate;
     }

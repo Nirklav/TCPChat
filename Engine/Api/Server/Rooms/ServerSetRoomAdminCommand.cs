@@ -26,9 +26,6 @@ namespace Engine.Api.Server.Rooms
       if (string.IsNullOrEmpty(content.RoomName))
         throw new ArgumentException("content.RoomName");
 
-      if (string.IsNullOrEmpty(content.NewAdmin))
-        throw new ArgumentNullException("content.NewAdmin");
-
       if (content.RoomName == ServerChat.MainRoomName)
       {
         ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAccessDenied));
@@ -66,7 +63,7 @@ namespace Engine.Api.Server.Rooms
       public string RoomName;
 
       [BinField("a")]
-      public string NewAdmin;
+      public UserId NewAdmin;
     }
   }
 }

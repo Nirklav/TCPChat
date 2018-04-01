@@ -23,10 +23,10 @@ namespace Engine.Api.Client.Files
     protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (content.File == null)
-        throw new ArgumentNullException("content.File");
+        throw new ArgumentNullException(nameof(content.File));
 
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("content.RoomName");
+        throw new ArgumentException(nameof(content.RoomName));
 
       using (var client = ClientModel.Get())
       {

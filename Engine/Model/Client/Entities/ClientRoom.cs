@@ -52,7 +52,7 @@ namespace Engine.Model.Client.Entities
       var chat = ClientGuard.CurrentChat;
       foreach (var file in Files)
       {
-        if (file.Id.Owner == chat.User.Nick)
+        if (file.Id.Owner == chat.User.Id)
           chat.RemovePostedFile(Name, file.Id);
       }
     }

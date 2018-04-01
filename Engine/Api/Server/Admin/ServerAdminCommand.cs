@@ -180,8 +180,8 @@ namespace Engine.Api.Server.Admin
 
           room.RemoveMessages(messageIds);
 
-          foreach (var nick in room.Users)
-            ServerModel.Api.Perform(new ServerRemoveMessagesAction(nick, room.Name, messageIds));
+          foreach (var userId in room.Users)
+            ServerModel.Api.Perform(new ServerRemoveMessagesAction(userId, room.Name, messageIds));
         }
       }
     }
@@ -252,12 +252,12 @@ namespace Engine.Api.Server.Admin
 
       using (var server = ServerModel.Get())
       {
-        var nick = adminArgs.Parameters[0];
-        var user = server.Chat.TryGetUser(nick);
+        var userId = new UserId(adminArgs.Parameters[0]);
+        var user = server.Chat.TryGetUser(userId);
 
-        ServerModel.Server.Bans.Ban(nick);
+        ServerModel.Server.Bans.Ban(userId);
         if (user != null)
-          ServerModel.Api.Perform(new ServerRemoveUserAction(nick));  
+          ServerModel.Api.Perform(new ServerRemoveUserAction(userId));  
         else
           ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.TextCommandInvalidParams));
       }
@@ -274,8 +274,8 @@ namespace Engine.Api.Server.Admin
 
       using (var server = ServerModel.Get())
       {
-        var nick = adminArgs.Parameters[0];
-        ServerModel.Server.Bans.Unban(nick);
+        var userId = new UserId(adminArgs.Parameters[0]);
+        ServerModel.Server.Bans.Unban(userId);
       }
     }
 

@@ -33,14 +33,20 @@ namespace Engine.Api.Client.P2P
       {
         PeerPort = content.RequestPort,
         PeerIPAddress = content.RequestIpAddress,
-        ReceiverNick = content.RemoteInfo.Nick
+        ReceiverId = content.RemoteInfo.Id
       };
 
       using (var client = ClientModel.Get())
         sendingContent.RemoteInfo = new UserDto(client.Chat.User);
 
       ClientModel.Client.SendMessage(ServerP2PReadyAcceptCommand.CommandId, sendingContent);
-      ClientModel.Logger.WriteDebug("ClientWaitPeerConnectionCommand: {0}|{1}|{2}|{3}", sendingContent.PeerIPAddress, sendingContent.PeerPort, sendingContent.ReceiverNick, sendingContent.RemoteInfo.Nick);
+
+      ClientModel.Logger.WriteDebug("ClientWaitPeerConnectionCommand: {0}|{1}|{2}|{3}"
+        , new IPAddress(sendingContent.PeerIPAddress)
+        , sendingContent.PeerPort
+        , sendingContent.ReceiverId
+        , sendingContent.RemoteInfo.Id
+      );
     }
 
     [Serializable]

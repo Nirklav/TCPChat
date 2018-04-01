@@ -13,17 +13,17 @@ namespace Engine.Api.Server.Registrations
   [Serializable]
   public class ServerRemoveUserAction : IAction
   {
-    private readonly string _nick;
+    private readonly UserId _userId;
     private readonly bool _removeConnection;
 
     /// <summary>
     /// Removes user form chat and close all him resources.
     /// </summary>
-    /// <param name="nick">User nick who be removed.</param>
+    /// <param name="userId">User nick who be removed.</param>
     /// <param name="removeConnection">Can be server connection removed or not.</param>
-    public ServerRemoveUserAction(string nick, bool removeConnection = true)
+    public ServerRemoveUserAction(UserId userId, bool removeConnection = true)
     {
-      _nick = nick;
+      _userId = userId;
       _removeConnection = removeConnection;
     }
 
@@ -35,10 +35,10 @@ namespace Engine.Api.Server.Registrations
         var emptyRooms = new List<string>();
         foreach (var room in server.Chat.GetRooms())
         {
-          if (!room.Users.Contains(_nick))
+          if (!room.Users.Contains(_userId))
             continue;
 
-          room.RemoveUser(_nick);
+          room.RemoveUser(_userId);
 
           if (room.Name != ServerChat.MainRoomName)
           {
@@ -46,10 +46,10 @@ namespace Engine.Api.Server.Registrations
               emptyRooms.Add(room.Name);
             else
             {
-              if (room.Admin == _nick)
+              if (room.Admin == _userId)
               {
                 room.Admin = room.Users.FirstOrDefault();
-                if (room.Admin != null)
+                if (room.Admin != UserId.Empty)
                   ServerModel.Api.Perform(new ServerSendSystemMessageAction(room.Admin, SystemMessageId.RoomAdminChanged, room.Name));
               }
             }
@@ -71,14 +71,14 @@ namespace Engine.Api.Server.Registrations
           server.Chat.RemoveRoom(emptyRoomName);
 
         // Removing user from chat after all rooms processing
-        server.Chat.RemoveUser(_nick);
+        server.Chat.RemoveUser(_userId);
       }
 
-      ServerModel.Notifier.ConnectionUnregistered(new ConnectionEventArgs(_nick));
+      ServerModel.Notifier.ConnectionUnregistered(new ConnectionEventArgs(_userId));
 
       // Closing the connection after model clearing
       if (_removeConnection)
-        ServerModel.Server.CloseConnection(_nick);
+        ServerModel.Server.CloseConnection(_userId);
     }
   }
 }

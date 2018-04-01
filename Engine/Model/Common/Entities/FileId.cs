@@ -12,15 +12,15 @@ namespace Engine.Model.Common.Entities
     private int _id;
 
     [BinField("o")]
-    private string _owner;
+    private UserId _owner;
 
     /// <summary>
     /// Create file identification.
     /// </summary>
     /// <param name="id">File identificator.</param>
-    /// <param name="owner">File owner nick.</param>
+    /// <param name="owner">File owner user id.</param>
     [SecuritySafeCritical]
-    public FileId(int id, string owner)
+    public FileId(int id, UserId owner)
     {
       _id = id;
       _owner = owner;
@@ -32,9 +32,9 @@ namespace Engine.Model.Common.Entities
     public int Id { get { return _id; } }
 
     /// <summary>
-    /// File owner nick.
+    /// File owner user id.
     /// </summary>
-    public string Owner {  get { return _owner; } }
+    public UserId Owner {  get { return _owner; } }
 
     [SecuritySafeCritical]
     public static bool operator == (FileId first, FileId second)

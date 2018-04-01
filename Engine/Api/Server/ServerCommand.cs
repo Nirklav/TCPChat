@@ -55,18 +55,18 @@ namespace Engine.Api.Server
     /// </summary>
     /// <param name="chat">Server chat instance.</param>
     /// <param name="roomName">Room name.</param>
-    /// <param name="connectionId">Connection id.</param>
+    /// <param name="userId">User id.</param>
     /// <param name="room">Result room.</param>
     /// <returns>Returns true if room found, otherwise false.</returns>
     [SecurityCritical]
-    protected static bool TryGetRoom(ServerChat chat, string roomName, string connectionId, out Room room)
+    protected static bool TryGetRoom(ServerChat chat, string roomName, UserId userId, out Room room)
     {
       room = chat.TryGetRoom(roomName);
       if (room == null)
       {
         var closeRoomContent = new ClientRoomClosedCommand.MessageContent { RoomName = roomName };
-        ServerModel.Server.SendMessage(connectionId, ClientRoomClosedCommand.CommandId, closeRoomContent);
-        ServerModel.Api.Perform(new ServerSendSystemMessageAction(connectionId, SystemMessageId.RoomNotExist));
+        ServerModel.Server.SendMessage(userId, ClientRoomClosedCommand.CommandId, closeRoomContent);
+        ServerModel.Api.Perform(new ServerSendSystemMessageAction(userId, SystemMessageId.RoomNotExist));
       }
       return room != null;
     }

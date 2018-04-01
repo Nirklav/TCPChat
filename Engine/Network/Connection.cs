@@ -10,6 +10,7 @@ using Engine.Helpers;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using Engine.Model.Common;
+using Engine.Model.Common.Entities;
 
 namespace Engine.Network
 {
@@ -40,7 +41,6 @@ namespace Engine.Network
     
     private const int BufferSize = 4096;
     private const int MaxReceivedDataSize = 1024 * 1024;
-    public const string TempConnectionPrefix = "tempId_";
     public const string TcpChatScheme = "tcpchat";
     #endregion
 
@@ -49,7 +49,7 @@ namespace Engine.Network
     [SecurityCritical] private readonly X509Certificate2 _localCertificate;
     [SecurityCritical] private X509Certificate2 _remoteCertificate;
 
-    [SecurityCritical] private string _id;
+    [SecurityCritical] private UserId _id;
     [SecurityCritical] private Socket _handler;
     [SecurityCritical] private ConnectionState _state;
     [SecurityCritical] private byte[] _generatedKey;
@@ -98,7 +98,7 @@ namespace Engine.Network
     /// <summary>
     /// Connection id.
     /// </summary>
-    public string Id
+    public UserId Id
     {
       [SecurityCritical]
       get { return _id; }

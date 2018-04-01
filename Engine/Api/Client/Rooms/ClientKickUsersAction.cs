@@ -1,5 +1,6 @@
 ﻿using Engine.Api.Server.Rooms;
 using Engine.Model.Client;
+using Engine.Model.Common.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace Engine.Api.Client.Rooms
   public class ClientKickUsersAction : IAction
   {
     private readonly string _roomName;
-    private readonly string[] _users;
+    private readonly UserId[] _users;
 
     /// <summary>
     /// Remove users from room.
@@ -19,7 +20,7 @@ namespace Engine.Api.Client.Rooms
     /// <param name="roomName">Room name.</param>
     /// <param name="users">Users to be removed.</param>
     [SecuritySafeCritical]
-    public ClientKickUsersAction(string roomName, IEnumerable<string> users)
+    public ClientKickUsersAction(string roomName, IEnumerable<UserId> users)
     {
       if (string.IsNullOrEmpty(roomName))
         throw new ArgumentException("roomName");
@@ -28,7 +29,7 @@ namespace Engine.Api.Client.Rooms
         throw new ArgumentNullException("users");
 
       _roomName = roomName;
-      _users = users as string[] ?? users.ToArray();
+      _users = users as UserId[] ?? users.ToArray();
     }
 
     [SecuritySafeCritical]

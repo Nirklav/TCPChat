@@ -26,10 +26,10 @@ namespace Engine.Api.Server.Rooms
     protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("content.RoomName");
+        throw new ArgumentException(nameof(content.RoomName));
 
       if (content.Users == null)
-        throw new ArgumentNullException("content.Users");
+        throw new ArgumentNullException(nameof(content.Users));
 
       if (content.RoomName == ServerChat.MainRoomName)
       {
@@ -39,8 +39,7 @@ namespace Engine.Api.Server.Rooms
 
       using (var server = ServerModel.Get())
       {
-        Room room;
-        if (!TryGetRoom(server.Chat, content.RoomName, args.ConnectionId, out room))
+        if (!TryGetRoom(server.Chat, content.RoomName, args.ConnectionId, out Room room))
           return;
 
         if (!room.Admin.Equals(args.ConnectionId))
@@ -49,23 +48,22 @@ namespace Engine.Api.Server.Rooms
           return;
         }
 
-        var invitedUsers = new HashSet<string>();
-        foreach (var userNick in content.Users)
+        var invitedUsers = new HashSet<UserId>();
+        foreach (var userId in content.Users)
         {
-          if (room.IsUserExist(userNick))
+          if (room.IsUserExist(userId))
             continue;
 
-          room.AddUser(userNick);
-          invitedUsers.Add(userNick);
+          room.AddUser(userId);
+          invitedUsers.Add(userId);
         }
 
         var users = server.Chat.GetRoomUserDtos(room.Name);
-
-        foreach (var userNick in room.Users)
+        foreach (var userId in room.Users)
         {
-          var roomDto = room.ToDto(userNick);
+          var roomDto = room.ToDto(userId);
 
-          if (invitedUsers.Contains(userNick))
+          if (invitedUsers.Contains(userId))
           {
             var roomOpenContent = new ClientRoomOpenedCommand.MessageContent
             {
@@ -73,7 +71,7 @@ namespace Engine.Api.Server.Rooms
               Users = users
             };
 
-            ServerModel.Server.SendMessage(userNick, ClientRoomOpenedCommand.CommandId, roomOpenContent);
+            ServerModel.Server.SendMessage(userId, ClientRoomOpenedCommand.CommandId, roomOpenContent);
           }
           else
           {
@@ -83,7 +81,7 @@ namespace Engine.Api.Server.Rooms
               Users = users
             };
 
-            ServerModel.Server.SendMessage(userNick, ClientRoomRefreshedCommand.CommandId, roomRefreshContent);
+            ServerModel.Server.SendMessage(userId, ClientRoomRefreshedCommand.CommandId, roomRefreshContent);
           }
         }
       }
@@ -97,7 +95,7 @@ namespace Engine.Api.Server.Rooms
       public string RoomName;
 
       [BinField("u")]
-      public string[] Users;
+      public UserId[] Users;
     }
   }
 }

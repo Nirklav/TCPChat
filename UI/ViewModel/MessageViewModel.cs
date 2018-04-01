@@ -73,12 +73,12 @@ namespace UI.ViewModel
       Type = MessageType.System;
     }
 
-    public MessageViewModel(DateTime messageTime, string senderNick, FileId fileId, RoomViewModel roomVm)
+    public MessageViewModel(DateTime messageTime, UserId senderId, FileId fileId, RoomViewModel roomVm)
       : this(Room.SpecificMessageId, roomVm, true)
     {
       this._fileId = fileId;
 
-      Sender = new UserViewModel(senderNick, _parentRoom);
+      Sender = new UserViewModel(senderId, _parentRoom);
       Progress = 0;     
       Title = Localizer.Instance.Localize(FromKey, GetTimeStr(messageTime));
 
@@ -117,13 +117,13 @@ namespace UI.ViewModel
       Events.PostedFileDeleted += CreateSubscriber<FileDownloadEventArgs>(ClientPostedFileDeleted);
     }
 
-    public MessageViewModel(long messageId, DateTime messageTime, string senderNick, string receiverNick, string message, bool isPrivate, RoomViewModel room)
+    public MessageViewModel(long messageId, DateTime messageTime, UserId senderId, UserId receiverId, string message, bool isPrivate, RoomViewModel room)
       : this(messageId, room, false)
     {
       Text = message;
       Title = Localizer.Instance.Localize(isPrivate ? PMFormKey : FromKey, GetTimeStr(messageTime));
-      Sender = new UserViewModel(senderNick, room);
-      Receiver = new UserViewModel(receiverNick, room);
+      Sender = new UserViewModel(senderId, room);
+      Receiver = new UserViewModel(receiverId, room);
       Type = isPrivate ? MessageType.Private : MessageType.Common;
 
       EditMessageCommand = new Command(EditMessage, _ => ClientModel.Client != null);

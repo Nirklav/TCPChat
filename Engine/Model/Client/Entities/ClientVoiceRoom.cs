@@ -26,27 +26,27 @@ namespace Engine.Model.Client.Entities
     /// <summary>
     /// Add user to room.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="userId">User id.</param>
     [SecuritySafeCritical]
-    public override void AddUser(string nick)
+    public override void AddUser(UserId userId)
     {
-      base.AddUser(nick);
+      base.AddUser(userId);
 
       if (Enabled)
-        IncVoiceCoutner(nick);
+        IncVoiceCoutner(userId);
     }
 
     /// <summary>
     /// Remove user from room, including all his files.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="userId">User id.</param>
     [SecuritySafeCritical]
-    public override void RemoveUser(string nick)
+    public override void RemoveUser(UserId userId)
     {
-      base.RemoveUser(nick);
+      base.RemoveUser(userId);
 
       if (Enabled)
-        DecVoiceCoutner(nick);
+        DecVoiceCoutner(userId);
     }
     #endregion
 
@@ -59,8 +59,8 @@ namespace Engine.Model.Client.Entities
     {
       if (!Enabled)
       {
-        foreach (var nick in _users)
-          IncVoiceCoutner(nick);
+        foreach (var userId in _users)
+          IncVoiceCoutner(userId);
       }
 
       base.Enable();
@@ -74,31 +74,31 @@ namespace Engine.Model.Client.Entities
     {
       if (Enabled)
       {
-        foreach (var nick in _users)
-          DecVoiceCoutner(nick);
+        foreach (var userId in _users)
+          DecVoiceCoutner(userId);
       }
 
       base.Disable();
     }
 
     [SecuritySafeCritical]
-    private void IncVoiceCoutner(string nick)
+    private void IncVoiceCoutner(UserId userId)
     {
       // User can be already removed from chat.
       // e.g.
       //  1) We receive RoomRefreshed on MainRoom and remove user form chat.
       //  2) We receive RoomRefresged on other audio room.
 
-      var user = ClientGuard.CurrentChat.TryGetUser(nick);
+      var user = ClientGuard.CurrentChat.TryGetUser(userId);
       if (user != null)
         user.IncVoiceCounter();
     }
 
     [SecuritySafeCritical]
-    private void DecVoiceCoutner(string nick)
+    private void DecVoiceCoutner(UserId userId)
     {
       // See comment above.
-      var user = ClientGuard.CurrentChat.TryGetUser(nick);
+      var user = ClientGuard.CurrentChat.TryGetUser(userId);
       if (user != null)
         user.DecVoiceCounter();
     }
@@ -113,7 +113,7 @@ namespace Engine.Model.Client.Entities
       var chat = ClientGuard.CurrentChat;
       foreach (var file in Files)
       {
-        if (file.Id.Owner == chat.User.Nick)
+        if (file.Id.Owner == chat.User.Id)
           chat.RemovePostedFile(Name, file.Id);
       }
     }

@@ -15,7 +15,7 @@ namespace Engine.Model.Common.Dto
   public class UserDto
   {
     [BinField("n")]
-    public string Nick;
+    public UserId Id;
 
     [BinField("c")]
     public ColorDto NickColor;
@@ -24,7 +24,7 @@ namespace Engine.Model.Common.Dto
     public byte[] Certificate;
 
     public UserDto(User user, byte[] certificate)
-      : this(user.Nick, user.NickColor, certificate)
+      : this(user.Id, user.NickColor, certificate)
     {
     }
 
@@ -34,9 +34,9 @@ namespace Engine.Model.Common.Dto
 
     }
 
-    public UserDto(string nick, Color color, byte[] certificate)
+    public UserDto(UserId id, Color color, byte[] certificate)
     {
-      Nick = nick;
+      Id = id;
       NickColor = new ColorDto(color);
       Certificate = certificate;
     }

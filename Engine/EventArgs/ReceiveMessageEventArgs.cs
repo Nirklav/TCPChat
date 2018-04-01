@@ -10,7 +10,7 @@ namespace Engine
     public MessageType Type { get; set; }
     public DateTime Time { get; set; }
 
-    public string Sender { get; set; }
+    public UserId Sender { get; set; }
     public string RoomName { get; set; }
 
     public string Message { get; set; }

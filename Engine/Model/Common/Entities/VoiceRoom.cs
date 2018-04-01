@@ -13,7 +13,7 @@ namespace Engine.Model.Common.Entities
     /// <param name="admin">Admin nick.</param>
     /// <param name="name">Room name.</param>
     [SecuritySafeCritical]
-    public VoiceRoom(string admin, string name)
+    public VoiceRoom(UserId admin, string name)
       : base(admin, name) 
     {
 
@@ -26,7 +26,7 @@ namespace Engine.Model.Common.Entities
     /// <param name="name">Room name.</param>
     /// <param name="initialUsers">Initial room users list.</param>
     [SecuritySafeCritical]
-    public VoiceRoom(string admin, string name, IEnumerable<User> initialUsers)
+    public VoiceRoom(UserId admin, string name, IEnumerable<User> initialUsers)
       : base(admin, name, initialUsers) 
     {
 

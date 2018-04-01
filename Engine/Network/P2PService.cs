@@ -1,6 +1,7 @@
 ﻿using Engine.Api;
 using Engine.Api.Server.P2P;
 using Engine.Helpers;
+using Engine.Model.Common.Entities;
 using Lidgren.Network;
 using System;
 using System.Collections.Generic;
@@ -27,10 +28,10 @@ namespace Engine.Network
 
     private class RequestPair
     {
-      public string RequestId { get; private set; }
-      public string SenderId { get; private set; }
+      public UserId RequestId { get; private set; }
+      public UserId SenderId { get; private set; }
 
-      public RequestPair(string requestId, string senderId)
+      public RequestPair(UserId requestId, UserId senderId)
       {
         RequestId = requestId;
         SenderId = senderId;
@@ -41,8 +42,8 @@ namespace Engine.Network
     #region fields
     [SecurityCritical] private readonly object _syncObject = new object();
 
-    [SecurityCritical] private readonly Dictionary<string, ClientDescription> _clientsEndPoints;
-    [SecurityCritical] private readonly HashSet<string> _connectingClients;
+    [SecurityCritical] private readonly Dictionary<UserId, ClientDescription> _clientsEndPoints;
+    [SecurityCritical] private readonly HashSet<UserId> _connectingClients;
     [SecurityCritical] private readonly List<RequestPair> _requests;
     
     [SecurityCritical] private readonly IApi _api;
@@ -65,8 +66,8 @@ namespace Engine.Network
     [SecurityCritical]
     public P2PService(IPAddress address, int port, IApi api, Logger logger)
     {
-      _clientsEndPoints = new Dictionary<string, ClientDescription>();
-      _connectingClients = new HashSet<string>();
+      _clientsEndPoints = new Dictionary<UserId, ClientDescription>();
+      _connectingClients = new HashSet<UserId>();
       _requests = new List<RequestPair>();
 
       _api = api;
@@ -113,14 +114,14 @@ namespace Engine.Network
     /// <param name="senderId">Connection that sent request.</param>
     /// <param name="requestId">Connection that will receive response.</param>
     [SecuritySafeCritical]
-    public void Introduce(string senderId, string requestId)
+    public void Introduce(UserId senderId, UserId requestId)
     {
       ThrowIfDisposed();
 
-      if (requestId == null)
+      if (requestId == UserId.Empty)
         throw new ArgumentNullException("requestId");
 
-      if (senderId == null)
+      if (senderId == UserId.Empty)
         throw new ArgumentNullException("senderId");
 
       if (TryDoneRequest(senderId, requestId))
@@ -136,7 +137,7 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private void TrySendConnectRequest(string connectionId)
+    private void TrySendConnectRequest(UserId connectionId)
     {
       bool needSend;
       lock (_syncObject)
@@ -154,7 +155,7 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    internal void RemoveEndPoint(string id)
+    internal void RemoveEndPoint(UserId id)
     {
       lock (_syncObject)
       {
@@ -191,7 +192,7 @@ namespace Engine.Network
               if (hailMessage == null)
                 continue;
 
-              var id = hailMessage.ReadString();
+              var id = AsyncPeer.ReadUserId(hailMessage);
               var localPoint = hailMessage.ReadIPEndPoint();
               var publicPoint = message.SenderEndPoint;
 
@@ -212,9 +213,9 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private bool TryGetRequest(string senderId, string requestId, out IPEndPoint senderPoint, out IPEndPoint requestPoint)
+    private bool TryGetRequest(UserId senderId, UserId requestId, out IPEndPoint senderPoint, out IPEndPoint requestPoint)
     {
-      bool received = true;
+      var received = true;
 
       ClientDescription senderDescription;
       ClientDescription requestDescription;
@@ -251,7 +252,7 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private bool TryDoneRequest(string senderId, string requestId)
+    private bool TryDoneRequest(UserId senderId, UserId requestId)
     {
       IPEndPoint senderEndPoint;
       IPEndPoint requestEndPoint;
@@ -259,7 +260,7 @@ namespace Engine.Network
       {
         lock (_syncObject)
         {
-          _requests.RemoveAll(p => string.Equals(p.SenderId, senderId) && string.Equals(p.RequestId, requestId));
+          _requests.RemoveAll(p => p.SenderId == senderId && p.RequestId == requestId);
 
           _connectingClients.Remove(senderId);
           _connectingClients.Remove(requestId);
@@ -277,7 +278,7 @@ namespace Engine.Network
     {
       lock (_syncObject)
       {
-        List<string> removedIds = null;
+        List<UserId> removedIds = null;
 
         for (int i = _requests.Count - 1; i >= 0; i--)
         {
@@ -288,8 +289,8 @@ namespace Engine.Network
 
           if (TryGetRequest(request.SenderId, request.RequestId, out senderEndPoint, out requestEndPoint))
           {
-            (removedIds ?? (removedIds = new List<string>())).Add(request.SenderId);
-            (removedIds ?? (removedIds = new List<string>())).Add(request.RequestId);
+            (removedIds ?? (removedIds = new List<UserId>())).Add(request.SenderId);
+            (removedIds ?? (removedIds = new List<UserId>())).Add(request.RequestId);
 
             _api.Perform(new ServerIntroduceConnectionsAction(request.SenderId, senderEndPoint, request.RequestId, requestEndPoint));
             _requests.RemoveAt(i);

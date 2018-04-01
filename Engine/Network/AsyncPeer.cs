@@ -2,6 +2,7 @@
 using Engine.Api.Client.P2P;
 using Engine.Helpers;
 using Engine.Model.Client;
+using Engine.Model.Common.Entities;
 using Lidgren.Network;
 using System;
 using System.Collections.Generic;
@@ -35,13 +36,13 @@ namespace Engine.Network
 
     private sealed class RemotePeer
     {
-      public readonly string Id;
+      public readonly UserId Id;
       public readonly X509Certificate2 Certificate;
       public readonly Packer Packer;
       public readonly List<WaitingCommandContainer> WaitingCommands;
 
       [SecurityCritical]
-      public RemotePeer(string id, X509Certificate2 certificate)
+      public RemotePeer(UserId id, X509Certificate2 certificate)
       {
         Id = id;
         Certificate = certificate;
@@ -72,9 +73,9 @@ namespace Engine.Network
     #region private fields
     [SecurityCritical] private readonly object _syncObject = new object();
 
-    [SecurityCritical] private readonly string _id;
+    [SecurityCritical] private readonly UserId _id;
     [SecurityCritical] private readonly X509Certificate2 _localCertificate;
-    [SecurityCritical] private readonly Dictionary<string, RemotePeer> _peers;
+    [SecurityCritical] private readonly Dictionary<UserId, RemotePeer> _peers;
     [SecurityCritical] private readonly SynchronizationContext _syncContext;
     [SecurityCritical] private readonly RequestQueue _requestQueue;
     [SecurityCritical] private readonly IApi _api;
@@ -101,11 +102,11 @@ namespace Engine.Network
 
     #region constructor
     [SecurityCritical]
-    internal AsyncPeer(string id, X509Certificate2 certificate, IApi api, IClientNotifier notifier, Logger logger)
+    internal AsyncPeer(UserId id, X509Certificate2 certificate, IApi api, IClientNotifier notifier, Logger logger)
     {
       _id = id;
       _localCertificate = certificate;
-      _peers = new Dictionary<string, RemotePeer>();
+      _peers = new Dictionary<UserId, RemotePeer>();
       _syncContext = new EngineSyncContext();
       _requestQueue = new RequestQueue(api);
       _api = api;
@@ -121,7 +122,7 @@ namespace Engine.Network
     /// <param name="peerId">Peer id.</param>
     /// <param name="certificate">Peer certificate.</param>
     [SecurityCritical]
-    internal void RegisterPeer(string peerId, X509Certificate2 certificate)
+    internal void RegisterPeer(UserId peerId, X509Certificate2 certificate)
     {
       if (_id != peerId)
       {
@@ -138,7 +139,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="peerId">Peer id.</param>
     [SecurityCritical]
-    internal void UnregisterPeer(string peerId)
+    internal void UnregisterPeer(UserId peerId)
     {
       lock (_syncObject)
         _peers.Remove(peerId);
@@ -171,11 +172,8 @@ namespace Engine.Network
       _syncContext.Send(RegisterReceived, _handler);
       _handler.Start();
 
-      var hail = _handler.CreateMessage();
       var localPoint = new IPEndPoint(Connection.GetIpAddress(remotePoint.AddressFamily), _handler.Port);
-      hail.Write(_id);
-      hail.Write(localPoint);
-
+      var hail = CreateServiceHailMessage(localPoint);
       _serviceConnection = _handler.Connect(remotePoint, hail);
 
       _logger.WriteDebug("AsyncPeer.ConnectToService({0})", remotePoint);
@@ -220,7 +218,7 @@ namespace Engine.Network
     /// <param name="peerId">Peer id.</param>
     /// <param name="remotePoint">Peer address.</param>
     [SecurityCritical]
-    internal void ConnectToPeer(string peerId, IPEndPoint remotePoint)
+    internal void ConnectToPeer(UserId peerId, IPEndPoint remotePoint)
     {
       ThrowIfDisposed();
 
@@ -243,7 +241,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="peerId">Peer id.</param>
     [SecuritySafeCritical]
-    public bool IsConnected(string peerId)
+    public bool IsConnected(UserId peerId)
     {
       ThrowIfDisposed();
 
@@ -262,7 +260,7 @@ namespace Engine.Network
     /// <param name="content">Command content.</param>
     /// <param name="unreliable">Send unreliable message. (fastest)</param>
     [SecuritySafeCritical]
-    public void SendMessage<T>(string peerId, long id, T content, bool unreliable = false)
+    public void SendMessage<T>(UserId peerId, long id, T content, bool unreliable = false)
     {
       SendMessage(peerId, new Package<T>(id, content), null, unreliable);
     }
@@ -276,7 +274,7 @@ namespace Engine.Network
     /// <param name="rawData">Data that not be serialized.</param>
     /// <param name="unreliable">Send unreliable message. (fastest)</param>
     [SecuritySafeCritical]
-    public void SendMessage<T>(string peerId, long id, T content, byte[] rawData, bool unreliable = false)
+    public void SendMessage<T>(UserId peerId, long id, T content, byte[] rawData, bool unreliable = false)
     {
       SendMessage(peerId, new Package<T>(id, content), rawData, unreliable);
     }
@@ -288,7 +286,7 @@ namespace Engine.Network
     /// <param name="id">Command id.</param>
     /// <param name="unreliable">Send unreliable message. (fastest)</param>
     [SecuritySafeCritical]
-    public void SendMessage(string peerId, long id, bool unreliable = false)
+    public void SendMessage(UserId peerId, long id, bool unreliable = false)
     {
       SendMessage(peerId, new Package(id), null, unreliable);
     }
@@ -301,7 +299,7 @@ namespace Engine.Network
     /// <param name="rawData">Data that not be serialized.</param>
     /// <param name="unreliable">Send unreliable message. (fastest)</param>
     [SecuritySafeCritical]
-    public void SendMessage(string peerId, IPackage package, byte[] rawData, bool unreliable = false)
+    public void SendMessage(UserId peerId, IPackage package, byte[] rawData, bool unreliable = false)
     {
       ThrowIfDisposed();
 
@@ -334,7 +332,7 @@ namespace Engine.Network
     /// <param name="unreliable">Send unreliable message. (fastest)</param>
     /// <returns>Returns true if command was sent.</returns>
     [SecuritySafeCritical]
-    public bool SendMessageIfConnected<T>(string peerId, long id, T content, bool unreliable = false)
+    public bool SendMessageIfConnected<T>(UserId peerId, long id, T content, bool unreliable = false)
     {
       return SendMessageIfConnected(peerId, new Package<T>(id, content), null, unreliable);
     }
@@ -348,7 +346,7 @@ namespace Engine.Network
     /// <param name="unreliable">Send unreliable message. (fastest)</param>
     /// <returns>Returns true if command was sent.</returns>
     [SecuritySafeCritical]
-    public bool SendMessageIfConnected(string peerId, IPackage package, byte[] rawData, bool unreliable = false)
+    public bool SendMessageIfConnected(UserId peerId, IPackage package, byte[] rawData, bool unreliable = false)
     {
       ThrowIfDisposed();
 
@@ -370,7 +368,7 @@ namespace Engine.Network
     #region private methods
     // Must be called under lock
     [SecurityCritical]
-    private RemotePeer GetPeer(string peerId, bool tryGet = false)
+    private RemotePeer GetPeer(UserId peerId, bool tryGet = false)
     {
       _peers.TryGetValue(peerId, out RemotePeer peer);
       if (!tryGet && peer == null)
@@ -378,9 +376,9 @@ namespace Engine.Network
 
       return peer;
     }
-
+    
     [SecurityCritical]
-    private NetOutgoingMessage CreateMessage(string peerId, IPackage package, byte[] rawData)
+    private NetOutgoingMessage CreateMessage(UserId peerId, IPackage package, byte[] rawData)
     {
       Packed packed;
       lock (_syncObject)
@@ -395,7 +393,16 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private NetOutgoingMessage CreateConnectHailMessage(string peerId)
+    private NetOutgoingMessage CreateServiceHailMessage(IPEndPoint localPoint)
+    {
+      var hailMessage = _handler.CreateMessage();
+      WriteUserId(hailMessage, _id);
+      hailMessage.Write(localPoint);
+      return hailMessage;
+    }
+
+    [SecurityCritical]
+    private NetOutgoingMessage CreateConnectHailMessage(UserId peerId)
     {
       byte[] key;
       lock (_syncObject)
@@ -417,7 +424,7 @@ namespace Engine.Network
       }
 
       var hailMessage = _handler.CreateMessage();
-      hailMessage.Write(_id);
+      WriteUserId(hailMessage, _id);
       hailMessage.Write((int)HailMessageType.Connect);
       hailMessage.Write(key.Length);
       hailMessage.Write(key);
@@ -429,13 +436,29 @@ namespace Engine.Network
     private NetOutgoingMessage CreateApproveHailMessage()
     {
       var hailMessage = _handler.CreateMessage();
-      hailMessage.Write(_id);
+      WriteUserId(hailMessage, _id);
       hailMessage.Write((int)HailMessageType.Approve);
       return hailMessage;
     }
 
     [SecurityCritical]
-    private void SaveCommandAndConnect(string peerId, IPackage package, byte[] rawData, bool unreliable)
+    internal static void WriteUserId(NetOutgoingMessage message, UserId userId)
+    {
+      var userIdBlob = Serializer.Serialize(userId);
+      message.Write(userIdBlob.Length);
+      message.Write(userIdBlob);
+    }
+
+    [SecurityCritical]
+    internal static UserId ReadUserId(NetIncomingMessage message)
+    {
+      var size = message.ReadInt32();
+      var userIdBlob = message.ReadBytes(size);
+      return Serializer.Deserialize<UserId>(userIdBlob);
+    }
+
+    [SecurityCritical]
+    private void SaveCommandAndConnect(UserId peerId, IPackage package, byte[] rawData, bool unreliable)
     {
       lock (_syncObject)
       {
@@ -457,16 +480,16 @@ namespace Engine.Network
     }
 
     [SecurityCritical]
-    private NetConnection FindConnection(string id)
+    private NetConnection FindConnection(UserId id)
     {
       return _handler.Connections.SingleOrDefault(new Finder(id).Equals);
     }
 
     private class Finder
     {
-      private readonly string _id;
+      private readonly UserId _id;
 
-      public Finder(string id)
+      public Finder(UserId id)
       {
         _id = id;
       }
@@ -474,7 +497,8 @@ namespace Engine.Network
       [SecurityCritical]
       public bool Equals(NetConnection connection)
       {
-        return string.Equals((string)connection.Tag, _id);
+        var connectionId = (UserId)connection.Tag;
+        return connectionId == _id;
       }
     }
     #endregion
@@ -548,7 +572,7 @@ namespace Engine.Network
         return;
       }
 
-      var peerId = hailMessage.ReadString();
+      var peerId = ReadUserId(hailMessage);
       var hailMessageType = (HailMessageType)hailMessage.ReadInt32();
 
       message.SenderConnection.Tag = peerId;
@@ -587,7 +611,7 @@ namespace Engine.Network
       {
         lock (_syncObject)
         {
-          var peerId = (string)message.SenderConnection.Tag;
+          var peerId = (UserId)message.SenderConnection.Tag;
           var peer = GetPeer(peerId);
           var unpacked = peer.Packer.Unpack<IPackage>(message.Data);
 
@@ -604,11 +628,12 @@ namespace Engine.Network
     [SecurityCritical]
     private void OnDisconnected(NetIncomingMessage message)
     {
-      var peerId = (string) message.SenderConnection.Tag;
+      var peerIdObj = message.SenderConnection.Tag;
       message.SenderConnection.Tag = null;
 
-      if (peerId != null)
+      if (peerIdObj != null)
       {
+        var peerId = (UserId) peerIdObj;
         lock (_syncObject)
         {
           var peer = GetPeer(peerId, true);

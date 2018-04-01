@@ -2,6 +2,7 @@
 using Engine.Model.Client;
 using Engine.Model.Client.Entities;
 using Engine.Model.Common.Dto;
+using Engine.Model.Common.Entities;
 using Engine.Network;
 using Engine.Plugins;
 using System.Collections.Generic;
@@ -72,11 +73,11 @@ namespace Engine.Api.Client
     {
       foreach (var userDto in users)
       {
-        if (!chat.IsUserExist(userDto.Nick))
+        if (!chat.IsUserExist(userDto.Id))
         {
           var clientUser = new ClientUser(userDto);
           chat.AddUser(clientUser);
-          ClientModel.Peer.RegisterPeer(clientUser.Nick, clientUser.Certificate);
+          ClientModel.Peer.RegisterPeer(clientUser.Id, clientUser.Certificate);
         }
       }
     }
@@ -87,7 +88,7 @@ namespace Engine.Api.Client
     /// <param name="chat">Chat.</param>
     /// <param name="users">Users that be removed.</param>
     [SecuritySafeCritical]
-    protected void RemoveUsers(ClientChat chat, IEnumerable<string> users)
+    protected void RemoveUsers(ClientChat chat, IEnumerable<UserId> users)
     {
       foreach (var nick in users)
       {

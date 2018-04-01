@@ -18,7 +18,7 @@ namespace Engine.Audio.OpenAL
     private bool _disposed;
 
     private AudioContext _context;
-    private Dictionary<string, SourceDescription> _sources;
+    private Dictionary<UserId, SourceDescription> _sources;
     #endregion
 
     #region nested types
@@ -93,7 +93,7 @@ namespace Engine.Audio.OpenAL
       {
         lock (_syncObject)
         {
-          _sources = new Dictionary<string, SourceDescription>();
+          _sources = new Dictionary<UserId, SourceDescription>();
 
           if (string.IsNullOrEmpty(deviceName))
             deviceName = AudioContext.DefaultDevice;
@@ -129,11 +129,8 @@ namespace Engine.Audio.OpenAL
     }
 
     [SecuritySafeCritical]
-    public void Enqueue(string id, long packNumber, SoundPack pack)
+    public void Enqueue(UserId id, long packNumber, SoundPack pack)
     {
-      if (string.IsNullOrEmpty(id))
-        throw new ArgumentException("id");
-
       if (!IsInited)
         return;
 
@@ -164,7 +161,7 @@ namespace Engine.Audio.OpenAL
     }
 
     [SecuritySafeCritical]
-    public void Stop(string id)
+    public void Stop(UserId id)
     {
       if (!IsInited)
         return;
@@ -206,7 +203,7 @@ namespace Engine.Audio.OpenAL
     }
 
     [SecurityCritical]
-    private void ClearBuffers(string id, int input)
+    private void ClearBuffers(UserId id, int input)
     {
       SourceDescription source;
       if (!_sources.TryGetValue(id, out source))

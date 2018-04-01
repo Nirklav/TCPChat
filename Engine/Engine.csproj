@@ -165,6 +165,7 @@
     <Compile Include="Model\Common\Dto\MessageDto.cs" />
     <Compile Include="Model\Common\Dto\RoomDto.cs" />
     <Compile Include="Model\Common\Dto\UserDto.cs" />
+    <Compile Include="Model\Common\Entities\UserId.cs" />
     <Compile Include="Model\Common\Notifier.cs" />
     <Compile Include="Model\Common\NotifierGenerator.cs" />
     <Compile Include="Model\Common\Entities\AudioQuality.cs" />

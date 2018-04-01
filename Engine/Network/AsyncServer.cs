@@ -1,5 +1,6 @@
 ﻿using Engine.Api;
 using Engine.Helpers;
+using Engine.Model.Common.Entities;
 using Engine.Model.Server;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ namespace Engine.Network
     #endregion
 
     #region fields
-    [SecurityCritical] private readonly Dictionary<string, ServerConnection> _connections;
+    [SecurityCritical] private readonly Dictionary<UserId, ServerConnection> _connections;
 
     [SecurityCritical] private readonly X509Certificate2 _certificate;
     [SecurityCritical] private readonly IApi _api;
@@ -95,7 +96,7 @@ namespace Engine.Network
     [SecurityCritical]
     public AsyncServer(X509Certificate2 certificate, IApi api, IServerNotifier notifier, Logger logger)
     {
-      _connections = new Dictionary<string, ServerConnection>();
+      _connections = new Dictionary<UserId, ServerConnection>();
 
       _certificate = certificate;
       _api = api;
@@ -204,7 +205,7 @@ namespace Engine.Network
     /// <param name="tempId">Previous connection id.</param>
     /// <param name="id">New connection id.</param>
     [SecurityCritical]
-    public void RegisterConnection(string tempId, string id)
+    public void RegisterConnection(UserId tempId, UserId id)
     {
       lock (_connections)
       {
@@ -223,7 +224,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="id">Connection id.</param>
     [SecuritySafeCritical]
-    public void CloseConnection(string id)
+    public void CloseConnection(UserId id)
     {
       P2PService.RemoveEndPoint(id);
       lock (_connections)
@@ -244,7 +245,7 @@ namespace Engine.Network
     /// <param name="id">Package id. (Command.Id)</param>
     /// <param name="allowTempConnections">Allow not registered connection.</param>
     [SecuritySafeCritical]
-    public void SendMessage(string connectionId, long id, bool allowTempConnections = false)
+    public void SendMessage(UserId connectionId, long id, bool allowTempConnections = false)
     {
       SendMessage(connectionId, new Package(id), allowTempConnections);
     }
@@ -257,7 +258,7 @@ namespace Engine.Network
     /// <param name="content">Command content.</param>
     /// <param name="allowTempConnections">Allow not registered connection.</param>
     [SecuritySafeCritical]
-    public void SendMessage<T>(string connectionId, long id, T content, bool allowTempConnections = false)
+    public void SendMessage<T>(UserId connectionId, long id, T content, bool allowTempConnections = false)
     {
       SendMessage(connectionId, new Package<T>(id, content), allowTempConnections);
     }
@@ -269,7 +270,7 @@ namespace Engine.Network
     /// <param name="package">Sending package.</param>
     /// <param name="allowTempConnections">Allow not registered connection.</param>
     [SecuritySafeCritical]
-    public void SendMessage(string connectionId, IPackage package, bool allowTempConnections = false)
+    public void SendMessage(UserId connectionId, IPackage package, bool allowTempConnections = false)
     {
       lock (_connections)
       {
@@ -283,29 +284,29 @@ namespace Engine.Network
     /// Retuns list of registered ids.
     /// </summary>
     [SecuritySafeCritical]
-    public string[] GetConnetionsIds()
+    public UserId[] GetConnetionsIds()
     {
       lock (_connections)
-        return _connections.Keys.Where(id => !id.Contains(Connection.TempConnectionPrefix)).ToArray();
+        return _connections.Keys.Where(id => !id.IsTemporary).ToArray();
     }
 
     /// <summary>
     /// Checks whether a connection exists.
     /// </summary>
-    /// <param name="id">Connection id.</param>
+    /// <param name="connectionId">Connection id.</param>
     /// <returns>If connections exist true will be returned, otherwise false.</returns>
     [SecuritySafeCritical]
-    public bool ContainsConnection(string id)
+    public bool ContainsConnection(UserId connectionId)
     {
       lock (_connections)
-        return _connections.ContainsKey(id);
+        return _connections.ContainsKey(connectionId);
     }
     
     /// <summary>
     /// Gets ip address of connection.
     /// </summary>
     [SecuritySafeCritical]
-    public IPAddress GetIp(string connectionId)
+    public IPAddress GetIp(UserId connectionId)
     {
       lock (_connections)
       {
@@ -318,7 +319,7 @@ namespace Engine.Network
     /// Gets certificate of connection.
     /// </summary>
     [SecuritySafeCritical]
-    public X509Certificate2 GetCertificate(string connectionId)
+    public X509Certificate2 GetCertificate(UserId connectionId)
     {
       lock (_connections)
       {
@@ -354,7 +355,7 @@ namespace Engine.Network
 
           lock (_connections)
           {
-            connection.Id = string.Format("{0}{1}", Connection.TempConnectionPrefix, _lastTempId++);
+            connection.Id = new UserId(_lastTempId++);
             _connections.Add(connection.Id, connection);
           }
 
@@ -415,7 +416,7 @@ namespace Engine.Network
     [SecurityCritical]
     private void RefreshConnections()
     {
-      HashSet<string> removing = null; // Prevent deadlock
+      HashSet<UserId> removing = null; // Prevent deadlock
 
       lock (_connections)
       {
@@ -435,7 +436,7 @@ namespace Engine.Network
             if (connection.SilenceInterval >= ServerConnection.SilenceTimeout)
             {
               if (removing == null)
-                removing = new HashSet<string>();
+                removing = new HashSet<UserId>();
               removing.Add(id);
             }
           }
@@ -459,9 +460,9 @@ namespace Engine.Network
     private class ConnectionClosingClosure
     {
       private readonly AsyncServer _server;
-      private readonly string _id;
+      private readonly UserId _id;
 
-      public ConnectionClosingClosure(AsyncServer server, string id)
+      public ConnectionClosingClosure(AsyncServer server, UserId id)
       {
         _id = id;
         _server = server;
@@ -489,14 +490,14 @@ namespace Engine.Network
 
     #region private methods
     [SecurityCritical]
-    private ServerConnection GetConnection(string connectionId, bool allowTempConnections = false)
+    private ServerConnection GetConnection(UserId connectionId, bool allowTempConnections = false)
     {
-      if (connectionId.Contains(Connection.TempConnectionPrefix) && !allowTempConnections)
+      if (connectionId.IsTemporary && !allowTempConnections)
         throw new InvalidOperationException("this connection don't registered");
 
       if (!_connections.TryGetValue(connectionId, out ServerConnection connection))
       {
-        _logger.WriteWarning("Connection {0} don't finded", connectionId);
+        _logger.WriteWarning("Connection {0} not found", connectionId);
         return null;
       }
 

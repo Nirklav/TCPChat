@@ -57,7 +57,7 @@ namespace Engine.Api.Server.Rooms
           if (room.Admin == args.ConnectionId)
           {
             room.Admin = room.Users.FirstOrDefault();
-            if (room.Admin != null)
+            if (room.Admin != UserId.Empty)
               ServerModel.Api.Perform(new ServerSendSystemMessageAction(room.Admin, SystemMessageId.RoomAdminChanged, room.Name));
           }
 

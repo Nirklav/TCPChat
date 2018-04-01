@@ -13,14 +13,14 @@ namespace Engine.Model.Common.Entities
   {
     public const string MainRoomName = "Main room";
 
-    protected Dictionary<string, TUser> _users;
+    protected Dictionary<UserId, TUser> _users;
     protected Dictionary<string, TRoom> _rooms;
     protected Dictionary<string, TVoiceRoom> _voiceRooms;
 
     [SecurityCritical]
     public Chat()
     {
-      _users = new Dictionary<string, TUser>();
+      _users = new Dictionary<UserId, TUser>();
       _rooms = new Dictionary<string, TRoom>();
       _voiceRooms = new Dictionary<string, TVoiceRoom>();
     }
@@ -29,11 +29,11 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Returns true if user exist, otherwise false.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="userId">User id.</param>
     [SecuritySafeCritical]
-    public bool IsUserExist(string nick)
+    public bool IsUserExist(UserId userId)
     {
-      return _users.ContainsKey(nick);
+      return _users.ContainsKey(userId);
     }
 
     /// <summary>
@@ -43,18 +43,18 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public void AddUser(TUser user)
     {
-      _users.Add(user.Nick, user);
+      _users.Add(user.Id, user);
     }
 
     /// <summary>
     /// Get user from room.
     /// </summary>
-    /// <param name="nick">Nick of user who be returns.</param>
+    /// <param name="userId">User id of user who be returns.</param>
     /// <returns>User.</returns>
     [SecuritySafeCritical]
-    public TUser GetUser(string nick)
+    public TUser GetUser(UserId userId)
     {
-      var user = TryGetUser(nick);
+      var user = TryGetUser(userId);
       if (user == null)
         throw new ArgumentException("User does not exist");
       return user;
@@ -63,13 +63,13 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Try get user from room.
     /// </summary>
-    /// <param name="nick">Nick of user who be returns.></param>
+    /// <param name="userId">User id of user who be returns.></param>
     /// <returns>Returns user if he exist, otherwise false.</returns>
     [SecuritySafeCritical]
-    public TUser TryGetUser(string nick)
+    public TUser TryGetUser(UserId userId)
     {
       TUser result;
-      _users.TryGetValue(nick, out result);
+      _users.TryGetValue(userId, out result);
       return result;
     }
 
@@ -85,14 +85,14 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Remove user from room.
     /// </summary>
-    /// <param name="nick">Nick of user that be removed.</param>
+    /// <param name="userId">User id of user that be removed.</param>
     /// <returns>Removed user.</returns>
     [SecuritySafeCritical]
-    public TUser RemoveUser(string nick)
+    public TUser RemoveUser(UserId userId)
     {
       TUser user;
-      _users.TryGetValue(nick, out user);
-      _users.Remove(nick);
+      _users.TryGetValue(userId, out user);
+      _users.Remove(userId);
       return user;
     }
     #endregion

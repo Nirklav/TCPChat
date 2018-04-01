@@ -25,10 +25,10 @@ namespace Engine.Api.Server.Rooms
     protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("content.RoomName");
+        throw new ArgumentException(nameof(content.RoomName));
 
       if (content.Users == null)
-        throw new ArgumentNullException("content.Users");
+        throw new ArgumentNullException(nameof(content.Users));
 
       if (content.RoomName == ServerChat.MainRoomName)
       {
@@ -38,8 +38,7 @@ namespace Engine.Api.Server.Rooms
 
       using (var server = ServerModel.Get())
       {
-        Room room;
-        if (!TryGetRoom(server.Chat, content.RoomName, args.ConnectionId, out room))
+        if (!TryGetRoom(server.Chat, content.RoomName, args.ConnectionId, out Room room))
           return;
 
         if (room.Admin != args.ConnectionId)
@@ -50,19 +49,19 @@ namespace Engine.Api.Server.Rooms
 
         var sendingContent = new ClientRoomClosedCommand.MessageContent { RoomName = room.Name };
 
-        foreach (var userNick in content.Users)
+        foreach (var userId in content.Users)
         {
-          if (!room.IsUserExist(userNick))
+          if (!room.IsUserExist(userId))
             continue;
 
-          if (userNick == room.Admin)
+          if (userId == room.Admin)
           {
             ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.RoomAccessDenied));
             continue;
           }
 
-          room.RemoveUser(userNick);
-          ServerModel.Server.SendMessage(userNick, ClientRoomClosedCommand.CommandId, sendingContent);
+          room.RemoveUser(userId);
+          ServerModel.Server.SendMessage(userId, ClientRoomClosedCommand.CommandId, sendingContent);
         }
 
         RefreshRoom(server.Chat, room);
@@ -77,7 +76,7 @@ namespace Engine.Api.Server.Rooms
       public string RoomName;
 
       [BinField("u")]
-      public string[] Users;
+      public UserId[] Users;
     }
   }
 }

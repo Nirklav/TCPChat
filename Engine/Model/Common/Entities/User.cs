@@ -8,21 +8,20 @@ namespace Engine.Model.Common.Entities
   // TODO: add dispose
   [Serializable]
   public class User : 
-    IEquatable<User>,
-    IEquatable<string>
+    IEquatable<User>
   {
-    private readonly string _nick;
+    private readonly UserId _id;
     private readonly Color _nickColor;
 
     /// <summary>
     /// Creates new instance of user.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="id">User id.</param>
     /// <param name="nickColor">Nick color.</param>
     [SecuritySafeCritical]
-    public User(string nick, Color nickColor)
+    public User(UserId id, Color nickColor)
     {
-      _nick = nick;
+      _id = id;
       _nickColor = nickColor;
     }
 
@@ -33,17 +32,17 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public User(UserDto dto)
     {
-      _nick = dto.Nick;
+      _id = dto.Id;
       _nickColor = dto.NickColor.ToColor();
     }
 
     /// <summary>
-    /// User nick.
+    /// User id.
     /// </summary>
-    public string Nick
+    public UserId Id
     {
       [SecuritySafeCritical]
-      get { return _nick; }
+      get { return _id; }
     }
 
     /// <summary>
@@ -74,13 +73,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public override int GetHashCode()
     {
-      return _nick.GetHashCode();
-    }
-
-    [SecuritySafeCritical]
-    public bool Equals(string nick)
-    {
-      return string.Equals(_nick, nick, StringComparison.OrdinalIgnoreCase);
+      return _id.GetHashCode();
     }
 
     [SecuritySafeCritical]
@@ -92,7 +85,7 @@ namespace Engine.Model.Common.Entities
       if (ReferenceEquals(user, this))
         return true;
 
-      return Equals(_nick, user.Nick);
+      return Equals(_id, user.Id);
     }
   }
 }

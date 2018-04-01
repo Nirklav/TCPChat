@@ -27,7 +27,7 @@ namespace Engine.Api.Client.Messages
     protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (content.Text == null)
-        throw new ArgumentNullException("content.Text");
+        throw new ArgumentNullException(nameof(content.Text));
 
       var receiveMessageArgs = new ReceiveMessageEventArgs
       {

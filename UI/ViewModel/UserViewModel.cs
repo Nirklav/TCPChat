@@ -1,6 +1,7 @@
 ﻿using Engine;
 using Engine.Api.Client.Rooms;
 using Engine.Model.Client;
+using Engine.Model.Common.Entities;
 using Engine.Network;
 using System;
 using System.Net.Sockets;
@@ -15,28 +16,28 @@ namespace UI.ViewModel
   public class UserViewModel : BaseViewModel
   {
     #region fields
-    private string _nick;
+    private UserId _userId;
     private UserCheckStatus _checkStatus;
-    private string _nickKey;
+    private string _nickLocalizationKey;
     private RoomViewModel _parent;
     private bool _isClient;
     #endregion
 
     #region constructors
-    public UserViewModel(string userNick, RoomViewModel parentViewModel)
-      : this(null, userNick, parentViewModel)
+    public UserViewModel(UserId userId, RoomViewModel parentViewModel)
+      : this(null, userId, parentViewModel)
     {
 
     }
 
-    public UserViewModel(string nickLocKey, string userNick, RoomViewModel parentViewModel)
+    public UserViewModel(string nickLKey, UserId userId, RoomViewModel parentViewModel)
       : base(parentViewModel, true)
     {
-      _nick = userNick;
+      _userId = userId;
       _parent = parentViewModel;
-      _nickKey = nickLocKey;
+      _nickLocalizationKey = nickLKey;
 
-      if (string.IsNullOrEmpty(_nick))
+      if (_userId == UserId.Empty)
       {
         _checkStatus = UserCheckStatus.NotChecked;
         _isClient = false;
@@ -82,12 +83,12 @@ namespace UI.ViewModel
     {
       get
       {
-        if (_nick == null)
+        if (_userId == UserId.Empty)
           return WPFColor.FromRgb(0, 0, 0);
 
         using (var client = ClientModel.Get())
         {
-          var user = client.Chat.TryGetUser(_nick);
+          var user = client.Chat.TryGetUser(_userId);
           if (user == null)
             return WPFColor.FromRgb(0, 0, 0);
           return WPFColor.FromRgb(user.NickColor.R, user.NickColor.G, user.NickColor.B);
@@ -95,13 +96,18 @@ namespace UI.ViewModel
       }
     }
 
+    public UserId UserId
+    {
+      get { return _userId; }
+    }
+
     public string Nick
     {
       get
       {
-        if (_nickKey != null)
-          return Localizer.Instance.Localize(_nickKey);
-        return _nick;
+        if (_nickLocalizationKey != null)
+          return Localizer.Instance.Localize(_nickLocalizationKey);
+        return _userId.Nick;
       }
     }
 
@@ -113,7 +119,7 @@ namespace UI.ViewModel
 
     public bool IsAllInRoom
     {
-      get { return _nickKey != null; }
+      get { return _nickLocalizationKey != null; }
     }
 
     public UserCheckStatus CheckStatus
@@ -126,7 +132,7 @@ namespace UI.ViewModel
     #region command methods
     private void UserClick(object obj)
     {
-      _parent.Message += Nick + ", ";
+      _parent.Message += UserId + ", ";
       _parent.MessageCaretIndex = _parent.Message.Length;
     }
 
@@ -134,7 +140,7 @@ namespace UI.ViewModel
     {
       try
       {
-        ClientModel.Api.Perform(new ClientSetRoomAdminAction(_parent.Name, _nick));
+        ClientModel.Api.Perform(new ClientSetRoomAdminAction(_parent.Name, _userId));
       }
       catch (SocketException se)
       {
@@ -146,7 +152,7 @@ namespace UI.ViewModel
     {
       using (var client = ClientModel.Get())
       {
-        var user = client.Chat.GetUser(_nick);
+        var user = client.Chat.GetUser(_userId);
         ClientModel.TrustedCertificates.Add(user.Certificate);
       }
     }
@@ -155,7 +161,7 @@ namespace UI.ViewModel
     {
       using (var client = ClientModel.Get())
       {
-        var user = client.Chat.GetUser(_nick);
+        var user = client.Chat.GetUser(_userId);
         ClientModel.TrustedCertificates.Remove(user.Certificate);
       }
     }
@@ -164,7 +170,7 @@ namespace UI.ViewModel
     {
       using (var client = ClientModel.Get())
       {
-        var user = client.Chat.GetUser(_nick);
+        var user = client.Chat.GetUser(_userId);
         X509Certificate2UI.DisplayCertificate(user.Certificate);
       }
     }
@@ -173,16 +179,16 @@ namespace UI.ViewModel
     #region events
     private void RefreshNick(object sender, EventArgs args)
     {
-      OnPropertyChanged(nameof(Nick));
+      OnPropertyChanged(nameof(UserId));
     }
     
     private void TrustedCertificatesChanged(TrustedCertificatesEventArgs obj)
     {
-      if (!string.IsNullOrEmpty(_nick))
+      if (_userId != UserId.Empty)
       {
         using (var client = ClientModel.Get())
         {
-          var user = client.Chat.GetUser(_nick);
+          var user = client.Chat.GetUser(_userId);
           if (user.Certificate.Equals(obj.Certificate))
             CheckStatus = GetCheckStatus(client);
         }
@@ -193,15 +199,15 @@ namespace UI.ViewModel
     #region methods
     private bool GetClientStatus(ClientGuard client)
     {
-      return client.Chat.User.Nick == _nick;
+      return client.Chat.User.Id == _userId;
     }
 
     private UserCheckStatus GetCheckStatus(ClientGuard client)
     {
-      if (_nick == client.Chat.User.Nick)
+      if (_userId == client.Chat.User.Id)
         return UserCheckStatus.Checked;
 
-      var user = client.Chat.GetUser(_nick);
+      var user = client.Chat.GetUser(_userId);
       var certificateStatus = Connection.GetCertificateValidationStatus(user.Certificate, ClientModel.TrustedCertificates);
 
       switch (certificateStatus)
@@ -214,7 +220,7 @@ namespace UI.ViewModel
             ? commonName.Substring(prefix.Length)
             : commonName;
 
-          return certificateNick.Equals(_nick)
+          return certificateNick.Equals(_userId.Nick)
             ? UserCheckStatus.Checked
             : UserCheckStatus.CheckedNotMatch;
 
@@ -250,17 +256,15 @@ namespace UI.ViewModel
       if (ReferenceEquals(viewModel, this))
         return true;
 
-      if (viewModel._nick == null)
-        return _nick == null;
+      if (viewModel._userId == UserId.Empty)
+        return _userId == UserId.Empty;
 
-      return viewModel._nick == _nick;
+      return viewModel._userId == _userId;
     }
 
     public override int GetHashCode()
     {
-      if (_nick == null)
-        return 0;
-      return _nick.GetHashCode();
+      return _userId.GetHashCode();
     }
     #endregion
   }

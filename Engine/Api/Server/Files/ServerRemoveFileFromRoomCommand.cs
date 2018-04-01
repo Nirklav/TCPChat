@@ -24,7 +24,7 @@ namespace Engine.Api.Server.Files
     protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (string.IsNullOrEmpty(content.RoomName))
-        throw new ArgumentException("content.RoomName");
+        throw new ArgumentException(nameof(content.RoomName));
 
       using (var server = ServerModel.Get())
       {
@@ -57,8 +57,8 @@ namespace Engine.Api.Server.Files
           FileId = file.Id
         };
 
-        foreach (string user in room.Users)
-          ServerModel.Server.SendMessage(user, ClientFileRemovedCommand.CommandId, postedFileDeletedContent);
+        foreach (var userId in room.Users)
+          ServerModel.Server.SendMessage(userId, ClientFileRemovedCommand.CommandId, postedFileDeletedContent);
       }
     }
 

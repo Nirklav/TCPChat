@@ -174,17 +174,17 @@ namespace UI.ViewModel
       }
     }
 
-    private void Init(MainViewModel main, IEnumerable<string> usersNicks)
+    private void Init(MainViewModel main, IEnumerable<UserId> userIds)
     {
       _mainViewModel = main;
       Messages = new ObservableCollection<MessageViewModel>();
-      SelectedReceiver = _allInRoom = new UserViewModel(AllInRoomKey, null, this);
+      SelectedReceiver = _allInRoom = new UserViewModel(AllInRoomKey, UserId.Empty, this);
       _recivers = new List<UserViewModel>();
       _messageIds = new HashSet<long>();
 
-      var userViewModels = usersNicks == null
+      var userViewModels = userIds == null
         ? Enumerable.Empty<UserViewModel>()
-        : usersNicks.Select(user => new UserViewModel(user, this));
+        : userIds.Select(id => new UserViewModel(id, this));
       Users = new ObservableCollection<UserViewModel>(userViewModels);
 
       SendMessageCommand = new Command(SendMessage, _ => ClientModel.Api != null && ClientModel.Client.IsConnected);
@@ -227,19 +227,19 @@ namespace UI.ViewModel
       AddMessage(new MessageViewModel(message, this));
     }
 
-    public void AddMessage(long messageId, DateTime messageTime, string sender, string message)
+    public void AddMessage(long messageId, DateTime messageTime, UserId sender, string message)
     {
-      AddMessage(new MessageViewModel(messageId, messageTime, sender, null, message, false, this));
+      AddMessage(new MessageViewModel(messageId, messageTime, sender, UserId.Empty, message, false, this));
     }
 
-    public void AddPrivateMessage(string senderNick, string receiverNick, string message)
+    public void AddPrivateMessage(UserId senderId, UserId receiverId, string message)
     {
-      AddMessage(new MessageViewModel(Room.SpecificMessageId, DateTime.UtcNow, senderNick, receiverNick, message, true, this));
+      AddMessage(new MessageViewModel(Room.SpecificMessageId, DateTime.UtcNow, senderId, receiverId, message, true, this));
     }
 
-    public void AddFileMessage(DateTime messageTime, string senderNick, FileId fileId)
+    public void AddFileMessage(DateTime messageTime, UserId senderId, FileId fileId)
     {
-      AddMessage(new MessageViewModel(messageTime, senderNick, fileId, this));
+      AddMessage(new MessageViewModel(messageTime, senderId, fileId, this));
     }
 
     private void AddMessage(MessageViewModel message)
@@ -296,8 +296,8 @@ namespace UI.ViewModel
         }
         else
         {
-          ClientModel.Api.Perform(new ClientSendPrivateMessageAction(SelectedReceiver.Nick, Message));
-          AddPrivateMessage(ClientModel.Client.Id, SelectedReceiver.Nick, Message);
+          ClientModel.Api.Perform(new ClientSendPrivateMessageAction(SelectedReceiver.UserId, Message));
+          AddPrivateMessage(ClientModel.Client.Id, SelectedReceiver.UserId, Message);
         }
       }
       catch (SocketException se)
@@ -341,7 +341,7 @@ namespace UI.ViewModel
         using (var client = ClientModel.Get())
         {
           var allUsers = client.Chat.GetUsers();
-          var availableUsers = allUsers.Select(u => u.Nick).Except(Users.Select(u => u.Nick));
+          var availableUsers = allUsers.Select(u => u.Id).Except(Users.Select(u => u.UserId));
           if (!availableUsers.Any())
           {
             AddSystemMessage(Localizer.Instance.Localize(NoBodyToInviteKey));
@@ -363,7 +363,7 @@ namespace UI.ViewModel
     {
       try
       {
-        var dialog = new UsersOperationDialog(KickFormRoomTitleKey, Users.Select(u => u.Nick));
+        var dialog = new UsersOperationDialog(KickFormRoomTitleKey, Users.Select(u => u.UserId));
         if (dialog.ShowDialog() == true)
           ClientModel.Api.Perform(new ClientKickUsersAction(Name, dialog.Users));
       }
@@ -496,20 +496,20 @@ namespace UI.ViewModel
     {
       _recivers.Clear();
 
-      var selectedReceiverNick = _selectedReceiver == _allInRoom
-        ? null
-        : _selectedReceiver.Nick;
+      var selectedReceiverId = _selectedReceiver == _allInRoom
+        ? UserId.Empty
+        : _selectedReceiver.UserId;
       var newReciver = (UserViewModel) null;
 
       foreach (var user in client.Chat.GetUsers())
       {
-        if (user.Nick == client.Chat.User.Nick)
+        if (user.Id == client.Chat.User.Id)
           continue;
 
-        var receiver = new UserViewModel(user.Nick, this);
+        var receiver = new UserViewModel(user.Id, this);
         _recivers.Add(receiver);
 
-        if (user.Nick == selectedReceiverNick)
+        if (user.Id == selectedReceiverId)
           newReciver = receiver;
       }
       OnPropertyChanged(nameof(Receivers));

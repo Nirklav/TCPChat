@@ -1,4 +1,5 @@
 ﻿using Engine.Helpers;
+using Engine.Model.Common.Entities;
 using System;
 using System.Net.Sockets;
 using System.Security;
@@ -97,7 +98,7 @@ namespace Engine.Network
       get
       {
         ThrowIfDisposed();
-        return Id != null && !Id.Contains(TempConnectionPrefix);
+        return !Id.IsTemporary;
       }
     }
     #endregion
@@ -119,7 +120,7 @@ namespace Engine.Network
     /// </summary>
     /// <param name="newId">New connection identifier.</param>
     [SecurityCritical]
-    public void Register(string newId)
+    public void Register(UserId newId)
     {
       ThrowIfDisposed();
       Id = newId;

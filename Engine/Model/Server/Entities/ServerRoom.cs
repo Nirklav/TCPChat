@@ -12,10 +12,10 @@ namespace Engine.Model.Server.Entities
     /// <summary>
     /// Create the room.
     /// </summary>
-    /// <param name="admin">User nick which be administrator of the room.</param>
+    /// <param name="admin">User id which be administrator of the room.</param>
     /// <param name="name">Room name.</param>
     [SecuritySafeCritical]
-    public ServerRoom(string admin, string name)
+    public ServerRoom(UserId admin, string name)
       : base(admin, name)
     {
 
@@ -24,11 +24,11 @@ namespace Engine.Model.Server.Entities
     /// <summary>
     /// Create the room.
     /// </summary>
-    /// <param name="admin">User nick which be administrator of the room.</param>
+    /// <param name="admin">User id which be administrator of the room.</param>
     /// <param name="name">Room name.</param>
     /// <param name="initialUsers">Initial room users list.</param>
     [SecuritySafeCritical]
-    public ServerRoom(string admin, string name, IEnumerable<User> initialUsers)
+    public ServerRoom(UserId admin, string name, IEnumerable<User> initialUsers)
       : base(admin, name, initialUsers)
     {
 

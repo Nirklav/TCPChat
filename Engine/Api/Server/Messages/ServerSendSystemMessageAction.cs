@@ -9,20 +9,20 @@ namespace Engine.Api.Server.Messages
   [Serializable]
   public class ServerSendSystemMessageAction : IAction
   {
-    private readonly string _nick;
+    private readonly UserId _userId;
     private readonly SystemMessageId _message;
     private readonly string[] _formatParams;
 
     /// <summary>
     /// Send system message to user.
     /// </summary>
-    /// <param name="nick">Reciver of system message.</param>
+    /// <param name="userId">Reciver of system message.</param>
     /// <param name="message">System message id.</param>
     /// <param name="formatParams">Format params for message.</param>
     [SecuritySafeCritical]
-    public ServerSendSystemMessageAction(string nick, SystemMessageId message, params string[] formatParams)
+    public ServerSendSystemMessageAction(UserId userId, SystemMessageId message, params string[] formatParams)
     {
-      _nick = nick;
+      _userId = userId;
       _message = message;
       _formatParams = formatParams;
     }
@@ -31,7 +31,7 @@ namespace Engine.Api.Server.Messages
     public void Perform()
     {
       var sendingContent = new ClientOutSystemMessageCommand.MessageContent { Message = _message, FormatParams = _formatParams };
-      ServerModel.Server.SendMessage(_nick, ClientOutSystemMessageCommand.CommandId, sendingContent);
+      ServerModel.Server.SendMessage(_userId, ClientOutSystemMessageCommand.CommandId, sendingContent);
     }
   }
 }

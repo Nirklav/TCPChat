@@ -1,5 +1,6 @@
 ﻿using Engine.Api;
 using Engine.Helpers;
+using Engine.Model.Common.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -106,7 +107,7 @@ namespace Engine.Network
     #endregion
 
     [SecurityCritical] private readonly object _syncObject;
-    [SecurityCritical] private readonly Dictionary<string, QueueContainer> _requests;
+    [SecurityCritical] private readonly Dictionary<UserId, QueueContainer> _requests;
     [SecurityCritical] private readonly IApi _api;
     [SecurityCritical] private volatile bool _disposed;
 
@@ -117,11 +118,11 @@ namespace Engine.Network
     {
       _api = api;
       _syncObject = new object();
-      _requests = new Dictionary<string, QueueContainer>();
+      _requests = new Dictionary<UserId, QueueContainer>();
     }
 
     [SecurityCritical]
-    internal void Add(string connectionId, Unpacked<IPackage> unpacked)
+    internal void Add(UserId connectionId, Unpacked<IPackage> unpacked)
     {
       ThrowIfDisposed();
 

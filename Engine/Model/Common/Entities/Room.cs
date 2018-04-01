@@ -15,11 +15,11 @@ namespace Engine.Model.Common.Entities
     public const long SpecificMessageId = -1;
 
     protected readonly string _name;
-    protected readonly HashSet<string> _users;
+    protected readonly HashSet<UserId> _users;
     protected readonly Dictionary<long, Message> _messages;
     protected readonly Dictionary<FileId, FileDescription> _files;
 
-    protected string _admin;
+    protected UserId _admin;
 
     private long _lastMessageId;
     private bool _enabled;
@@ -27,32 +27,32 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Create the room.
     /// </summary>
-    /// <param name="admin">User nick which be administrator of the room.</param>
+    /// <param name="admin">User id which be administrator of the room.</param>
     /// <param name="name">Room name.</param>
     [SecuritySafeCritical]
-    public Room(string admin, string name)
+    public Room(UserId admin, string name)
     {
       _admin = admin;
       _name = name;
-      _users = new HashSet<string>();
+      _users = new HashSet<UserId>();
       _messages = new Dictionary<long, Message>();
       _files = new Dictionary<FileId, FileDescription>();
 
-      if (admin != null)
+      if (admin != UserId.Empty)
         _users.Add(admin);
     }
 
     /// <summary>
     /// Create the room.
     /// </summary>
-    /// <param name="admin">User nick which be administrator of the room.</param>
+    /// <param name="admin">User id which be administrator of the room.</param>
     /// <param name="name">Room name.</param>
     /// <param name="initialUsers">Initial room users list.</param>
     [SecuritySafeCritical]
-    public Room(string admin, string name, IEnumerable<User> initialUsers)
+    public Room(UserId admin, string name, IEnumerable<User> initialUsers)
       : this(admin, name)
     {
-      foreach (var nick in initialUsers.Select(u => u.Nick))
+      foreach (var nick in initialUsers.Select(u => u.Id))
         _users.Add(nick);
     }
 
@@ -66,9 +66,9 @@ namespace Engine.Model.Common.Entities
     }
 
     /// <summary>
-    /// Administrator user nick.
+    /// Administrator user id.
     /// </summary>
-    public string Admin
+    public UserId Admin
     {
       [SecuritySafeCritical]
       get { return _admin; }
@@ -118,7 +118,7 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Users collection, including administrator.
     /// </summary>
-    public IEnumerable<string> Users
+    public IEnumerable<UserId> Users
     {
       [SecuritySafeCritical]
       get { return _users; }
@@ -127,48 +127,40 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Returns true if user with this nick exist in room, otherwise false.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="userId">User id.</param>
     [SecuritySafeCritical]
-    public bool IsUserExist(string nick)
+    public bool IsUserExist(UserId userId)
     {
-      if (string.IsNullOrEmpty(nick))
-        throw new ArgumentException("Nick is null or empty");
-
-      return _users.Contains(nick);
+      return _users.Contains(userId);
     }
 
     /// <summary>
     /// Add user to room.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="userId">User id.</param>
     [SecuritySafeCritical]
-    public virtual void AddUser(string nick)
+    public virtual void AddUser(UserId userId)
     {
-      if (string.IsNullOrEmpty(nick))
-        throw new ArgumentException("Nick is null or empty");
-      if (_users.Contains(nick))
+      if (_users.Contains(userId))
         throw new ArgumentException("User already exist.");
 
-      _users.Add(nick);
+      _users.Add(userId);
     }
 
     /// <summary>
     /// Remove user from room, including all his files.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="userId">User id.</param>
     [SecuritySafeCritical]
-    public virtual void RemoveUser(string nick)
+    public virtual void RemoveUser(UserId userId)
     {
-      if (string.IsNullOrEmpty(nick))
-        throw new ArgumentException("Nick is null or empty");
-
-      _users.Remove(nick);
+      _users.Remove(userId);
 
       // Remove all files
       var removingFiles = new HashSet<FileId>();
       foreach (var fileId in _files.Keys)
       {
-        if (fileId.Owner == nick)
+        if (fileId.Owner == userId)
           removingFiles.Add(fileId);
       }
 
@@ -200,13 +192,13 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Add message to room.
     /// </summary>
-    /// <param name="ownerNick">User nick which is message owner.</param>
+    /// <param name="ownerId">User id which is message owner.</param>
     /// <param name="text">Message text.</param>
     /// <returns>Added message.</returns>
     [SecuritySafeCritical]
-    public Message AddMessage(string ownerNick, string text)
+    public Message AddMessage(UserId ownerId, string text)
     {
-      var message = AddMessage(_lastMessageId, ownerNick, text);
+      var message = AddMessage(_lastMessageId, ownerId, text);
       if (message.Id == _lastMessageId)
         _lastMessageId++;
 
@@ -217,13 +209,13 @@ namespace Engine.Model.Common.Entities
     /// Add message to room.
     /// </summary>
     /// <param name="messageId">Message id. If message with this id already exist then added text be contacted to him.</param>
-    /// <param name="ownerNick">User nick which is message owner.</param>
+    /// <param name="ownerId">User id which is message owner.</param>
     /// <param name="text">Message text.</param>
     /// <returns>Added message.</returns>
     [SecuritySafeCritical]
-    public Message AddMessage(long messageId, string ownerNick, string text)
+    public Message AddMessage(long messageId, UserId ownerId, string text)
     {
-      var message = new Message(messageId, ownerNick, text);
+      var message = new Message(messageId, ownerId, text);
       var lastMessage = GetMessage(_lastMessageId - 1);
 
       if (lastMessage != null && lastMessage.TryConcat(message))
@@ -259,16 +251,16 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Returns true if message belong to user, otherwise false.
     /// </summary>
-    /// <param name="nick">User nick.</param>
+    /// <param name="userId">User id.</param>
     /// <param name="messageId">Message that be checked.</param>
     [SecuritySafeCritical]
-    public bool IsMessageBelongToUser(string nick, long messageId)
+    public bool IsMessageBelongToUser(UserId userId, long messageId)
     {
       var message = GetMessage(messageId);
       if (message == null)
         return false;
 
-      return string.Equals(nick, message.Owner);
+      return userId == message.Owner;
     }
 
     /// <summary>
@@ -356,7 +348,7 @@ namespace Engine.Model.Common.Entities
 
     #region toDto
     [SecuritySafeCritical]
-    public virtual RoomDto ToDto(string dtoReciver)
+    public virtual RoomDto ToDto(UserId dtoReciver)
     {
       return new RoomDto(_name, _admin, _users, _files.Values, _messages.Values, RoomType.Chat, null);
     }

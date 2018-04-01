@@ -142,7 +142,7 @@ namespace Engine.Model.Client.Entities
         FileId id;
         while (true)
         {
-          id = new FileId(_idCreator.Next(int.MinValue, int.MaxValue), _user.Nick);
+          id = new FileId(_idCreator.Next(int.MinValue, int.MaxValue), _user.Id);
           if (!_postedFiles.ContainsKey(id))
             break;
         }

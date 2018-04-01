@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace Engine.Audio
 {
+  // TODO: rus
   public interface IPlayer : IDisposable
   {
     /// <summary>
@@ -21,13 +22,13 @@ namespace Engine.Audio
     /// Если меньше чем текущий воспроизведенный, пакет воспроизведен не будет.
     /// </param>
     /// <param name="pack">Пакет с данными о записи.</param>
-    void Enqueue(string id, long packNumber, SoundPack pack);
+    void Enqueue(UserId id, long packNumber, SoundPack pack);
 
     /// <summary>
     /// Оставноить воспроизведение для пользователя.
     /// </summary>
     /// <param name="id">Id Пользователя.</param>
-    void Stop(string id);
+    void Stop(UserId id);
 
     /// <summary>
     /// Остановить воспроизведение.

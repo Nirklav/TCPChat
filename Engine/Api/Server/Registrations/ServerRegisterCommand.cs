@@ -27,12 +27,12 @@ namespace Engine.Api.Server.Registrations
     protected override void OnRun(MessageContent content, CommandArgs args)
     {
       if (content.UserDto == null)
-        throw new ArgumentNullException("content.UserDto");
+        throw new ArgumentNullException(nameof(content.UserDto));
 
-      if (content.UserDto.Nick == null)
-        throw new ArgumentNullException("content.UserDto.Nick");
+      if (content.UserDto.Id == UserId.Empty)
+        throw new ArgumentException(nameof(content.UserDto.Id));
 
-      if (content.UserDto.Nick.Contains(Connection.TempConnectionPrefix))
+      if (content.UserDto.Id.IsTemporary)
       {
         SendFail(args.ConnectionId, SystemMessageId.NotRegisteredBadName);
         return;
@@ -41,74 +41,74 @@ namespace Engine.Api.Server.Registrations
       using (var server = ServerModel.Get())
       {
         var chat = server.Chat;
-        if (chat.IsUserExist(content.UserDto.Nick))
+        if (chat.IsUserExist(content.UserDto.Id))
         {
           SendFail(args.ConnectionId, SystemMessageId.NotRegisteredNameAlreadyExist);
           return;
         }
         else
         {
-          ServerModel.Logger.WriteInfo("User login: {0}", content.UserDto.Nick);
+          ServerModel.Logger.WriteInfo("User login: {0}", content.UserDto.Id);
 
           chat.AddUser(new User(content.UserDto));
 
           var mainRoom = chat.GetRoom(ServerChat.MainRoomName);
-          mainRoom.AddUser(content.UserDto.Nick);
+          mainRoom.AddUser(content.UserDto.Id);
 
-          Register(content.UserDto.Nick, args.ConnectionId);
+          Register(content.UserDto.Id, args.ConnectionId);
 
           var userDtos = chat.GetRoomUserDtos(mainRoom.Name);
 
-          SendRefresh(content.UserDto.Nick, mainRoom, userDtos);
-          SendOpened(content.UserDto.Nick, mainRoom, userDtos);
+          SendRefresh(content.UserDto.Id, mainRoom, userDtos);
+          SendOpened(content.UserDto.Id, mainRoom, userDtos);
 
           // Notify
-          ServerModel.Notifier.ConnectionRegistered(new ConnectionEventArgs(content.UserDto.Nick));
+          ServerModel.Notifier.ConnectionRegistered(new ConnectionEventArgs(content.UserDto.Id));
         }
       }
     }
 
-    private void Register(string userNick, string tempId)
+    private void Register(UserId userId, UserId tempUserId)
     {
       var messageContent = new ClientRegistrationResponseCommand.MessageContent { Registered = true };
 
-      ServerModel.Server.RegisterConnection(tempId, userNick);
-      ServerModel.Server.SendMessage(userNick, ClientRegistrationResponseCommand.CommandId, messageContent);
+      ServerModel.Server.RegisterConnection(tempUserId, userId);
+      ServerModel.Server.SendMessage(userId, ClientRegistrationResponseCommand.CommandId, messageContent);
     }
 
-    private void SendRefresh(string userNick, Room room, UserDto[] users)
+    private void SendRefresh(UserId userId, Room room, UserDto[] users)
     {
-      foreach (var nick in room.Users)
+      foreach (var currentId in room.Users)
       {
-        if (nick == userNick)
+        if (currentId == userId)
           continue;
 
         var messageContent = new ClientRoomRefreshedCommand.MessageContent
         {
-          Room = room.ToDto(nick),
+          Room = room.ToDto(currentId),
           Users = users
         };
 
-        ServerModel.Server.SendMessage(nick, ClientRoomRefreshedCommand.CommandId, messageContent);
+        ServerModel.Server.SendMessage(currentId, ClientRoomRefreshedCommand.CommandId, messageContent);
       }
     }
 
-    private void SendOpened(string userNick, Room room, UserDto[] users)
+    private void SendOpened(UserId userId, Room room, UserDto[] users)
     {
       var messageContent = new ClientRoomOpenedCommand.MessageContent
       {
-        Room = room.ToDto(userNick),
+        Room = room.ToDto(userId),
         Users = users
       };
 
-      ServerModel.Server.SendMessage(userNick, ClientRoomOpenedCommand.CommandId, messageContent);
+      ServerModel.Server.SendMessage(userId, ClientRoomOpenedCommand.CommandId, messageContent);
     }
 
-    private void SendFail(string connectionId, SystemMessageId message)
+    private void SendFail(UserId userId, SystemMessageId message)
     {
       var regResponseContent = new ClientRegistrationResponseCommand.MessageContent { Registered = false, Message = message };
-      ServerModel.Server.SendMessage(connectionId, ClientRegistrationResponseCommand.CommandId, regResponseContent, true);
-      ServerModel.Api.Perform(new ServerRemoveUserAction(connectionId));
+      ServerModel.Server.SendMessage(userId, ClientRegistrationResponseCommand.CommandId, regResponseContent, true);
+      ServerModel.Api.Perform(new ServerRemoveUserAction(userId));
     }
 
     [Serializable]

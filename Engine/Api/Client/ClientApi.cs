@@ -86,17 +86,17 @@ namespace Engine.Api.Client
 
       using (var client = ClientModel.Get())
       {
-        var userNick = client.Chat.User.Nick;
+        var userId = client.Chat.User.Id;
 
         foreach (var user in client.Chat.GetUsers())
         {
           if (!user.IsVoiceActive())
             continue;
 
-          if (user.Nick == userNick)
+          if (user.Id == userId)
             continue;
 
-          ClientModel.Peer.SendMessageIfConnected(user.Nick, ClientPlayVoiceCommand.CommandId, content, true);
+          ClientModel.Peer.SendMessageIfConnected(user.Id, ClientPlayVoiceCommand.CommandId, content, true);
         }
       }
     }

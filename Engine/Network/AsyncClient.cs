@@ -21,7 +21,7 @@ namespace Engine.Network
   public sealed class AsyncClient : Connection
   {
     #region consts
-    public const string ClientId = "Client";
+    public static readonly UserId ClientId = new UserId("Client");
 
     public const long DefaultFilePartSize = 1024 * 1024;
     private const int SystemTimerInterval = 1000;
@@ -64,7 +64,7 @@ namespace Engine.Network
     /// Creates client connection.
     /// </summary>
     [SecurityCritical]
-    public AsyncClient(string id, CertificatesStorage trustedCertificates, X509Certificate2 certificate, IApi api, IClientNotifier notifier, Logger logger)
+    public AsyncClient(UserId id, CertificatesStorage trustedCertificates, X509Certificate2 certificate, IApi api, IClientNotifier notifier, Logger logger)
       : base(trustedCertificates, certificate, logger)
     {
       Id = id;

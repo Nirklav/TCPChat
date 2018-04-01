@@ -5,6 +5,7 @@ using Engine.Audio.OpenAL;
 using Engine.Helpers;
 using Engine.Model.Client.Entities;
 using Engine.Model.Common;
+using Engine.Model.Common.Entities;
 using Engine.Network;
 using Engine.Plugins.Client;
 using System;
@@ -146,7 +147,8 @@ namespace Engine.Model.Client
       if (!initializer.Certificate.HasPrivateKey)
         throw new ArgumentException("Initializer should have certificate with private key.");
 
-      var user = new ClientUser(initializer.Nick, initializer.NickColor, initializer.Certificate);
+      var userId = new UserId(initializer.Nick);
+      var user = new ClientUser(userId, initializer.NickColor, initializer.Certificate);
 
       if (Interlocked.CompareExchange(ref _chat, new ClientChat(user), null) != null)
         throw new InvalidOperationException("model already inited");
@@ -154,8 +156,8 @@ namespace Engine.Model.Client
       TrustedCertificates = new ClientCertificatesStorage(initializer.TrustedCertificatesPath, _notifier, _logger);
 
       Api = new ClientApi();
-      Client = new AsyncClient(initializer.Nick, TrustedCertificates, initializer.Certificate, Api, _notifier, _logger);
-      Peer = new AsyncPeer(initializer.Nick, initializer.Certificate, Api, _notifier, _logger);
+      Client = new AsyncClient(userId, TrustedCertificates, initializer.Certificate, Api, _notifier, _logger);
+      Peer = new AsyncPeer(userId, initializer.Certificate, Api, _notifier, _logger);
 
       Plugins = new ClientPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);

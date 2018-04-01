@@ -18,7 +18,7 @@ namespace Engine.Model.Common.Entities
     /// <summary>
     /// Message sender.
     /// </summary>
-    public readonly string Owner;
+    public readonly UserId Owner;
 
     /// <summary>
     /// Time when message was sent.
@@ -38,13 +38,13 @@ namespace Engine.Model.Common.Entities
     }
 
     [SecuritySafeCritical]
-    public Message(long id, string owner, string text)
+    public Message(long id, UserId owner, string text)
       : this(id, owner, text, DateTime.UtcNow)
     {
     }
 
     [SecuritySafeCritical]
-    public Message(long id, string owner, string text, DateTime time)
+    public Message(long id, UserId owner, string text, DateTime time)
     {
       Owner = owner;
       Id = id;
@@ -60,7 +60,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public bool TryConcat(Message other)
     {
-      if (Owner != null && !Owner.Equals(other.Owner))
+      if (Owner != other.Owner)
         return false;
 
       const double ConcatMinutes = 1;

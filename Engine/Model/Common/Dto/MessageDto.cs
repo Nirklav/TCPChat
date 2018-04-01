@@ -21,7 +21,7 @@ namespace Engine.Model.Common.Dto
     public string Text;
 
     [BinField("o")]
-    public string Owner;
+    public UserId Owner;
 
     public MessageDto(Message msg)
     {

@@ -27,10 +27,7 @@ namespace Engine.Api.Server.P2P
       if (content.RemoteInfo == null)
         throw new ArgumentNullException("content.RemoteInfo");
 
-      if (string.IsNullOrEmpty(content.ReceiverNick))
-        throw new ArgumentException("content.ReceiverNick");
-
-      if (!ServerModel.Server.ContainsConnection(content.ReceiverNick))
+      if (!ServerModel.Server.ContainsConnection(content.ReceiverId))
       {
         ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.P2PUserNotExist));
         return;
@@ -43,7 +40,7 @@ namespace Engine.Api.Server.P2P
         RemoteInfo = content.RemoteInfo
       };
 
-      ServerModel.Server.SendMessage(content.ReceiverNick, ClientConnectToPeerCommand.CommandId, connectContent);
+      ServerModel.Server.SendMessage(content.ReceiverId, ClientConnectToPeerCommand.CommandId, connectContent);
     }
 
     [Serializable]
@@ -51,7 +48,7 @@ namespace Engine.Api.Server.P2P
     public class MessageContent
     {
       [BinField("r")]
-      public string ReceiverNick;
+      public UserId ReceiverId;
 
       [BinField("p")]
       public int PeerPort;

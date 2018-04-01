@@ -17,10 +17,10 @@ namespace Engine.Model.Common.Dto
     public string Name;
 
     [BinField("a")]
-    public string Admin;
+    public UserId Admin;
 
     [BinField("u")]
-    public string[] Users;
+    public UserId[] Users;
 
     [BinField("f")]
     public FileDescriptionDto[] Files;
@@ -32,16 +32,16 @@ namespace Engine.Model.Common.Dto
     public RoomType Type;
 
     [BinField("c")]
-    public string[] ConnectTo;
+    public UserId[] ConnectTo;
 
     public RoomDto(
       string name
-      , string admin
-      , IEnumerable<string> users
+      , UserId admin
+      , IEnumerable<UserId> users
       , IEnumerable<FileDescription> files
       , IEnumerable<Message> messages
       , RoomType type
-      , IEnumerable<string> connectTo)
+      , IEnumerable<UserId> connectTo)
     {
       Name = name;
       Admin = admin;

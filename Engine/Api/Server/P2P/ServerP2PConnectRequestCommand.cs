@@ -22,16 +22,16 @@ namespace Engine.Api.Server.P2P
     [SecuritySafeCritical]
     protected override void OnRun(MessageContent content, CommandArgs args)
     {
-      if (content.Nick == null)
-        throw new ArgumentNullException("content.Nick");
+      if (content.UserId == UserId.Empty)
+        throw new ArgumentException("content.Nick");
 
-      if (!ServerModel.Server.ContainsConnection(content.Nick))
+      if (!ServerModel.Server.ContainsConnection(content.UserId))
       {
         ServerModel.Api.Perform(new ServerSendSystemMessageAction(args.ConnectionId, SystemMessageId.P2PUserNotExist));
         return;
       }
 
-      ServerModel.Server.P2PService.Introduce(args.ConnectionId, content.Nick);
+      ServerModel.Server.P2PService.Introduce(args.ConnectionId, content.UserId);
     }
 
     [Serializable]
@@ -39,7 +39,7 @@ namespace Engine.Api.Server.P2P
     public class MessageContent
     {
       [BinField("n")]
-      public string Nick;
+      public UserId UserId;
     }
   }
 }
