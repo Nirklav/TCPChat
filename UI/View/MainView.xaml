@@ -442,53 +442,53 @@
 
             <MenuItem Header="{Infrastructure:Localized menu-header-connect}">
                 <MenuItem Header="{Infrastructure:Localized menu-connect}"
-                          Command="{Binding Path=ConnectCommand}"/>
+                          Command="{Binding ConnectCommand}"/>
                 <MenuItem Header="{Infrastructure:Localized menu-disconnect}"
-                          Command="{Binding Path=DisconnectCommand}"/>
+                          Command="{Binding DisconnectCommand}"/>
                 <Separator/>
                 <MenuItem Header="{Infrastructure:Localized menu-enableServer}"
-                          Command="{Binding Path=EnableServerCommand}"/>
+                          Command="{Binding EnableServerCommand}"/>
                 <MenuItem Header="{Infrastructure:Localized menu-disableServer}"
-                          Command="{Binding Path=DisableServerCommand}"/>
+                          Command="{Binding DisableServerCommand}"/>
                 <Separator/>
                 <MenuItem Header="{Infrastructure:Localized menu-exit}"
-                          Command="{Binding Path=ExitCommand}"/>
+                          Command="{Binding ExitCommand}"/>
             </MenuItem>
 
             <MenuItem Header="{Infrastructure:Localized menu-header-rooms}">
                 <MenuItem Header="{Infrastructure:Localized menu-createRoom}"
-                          Command="{Binding Path=CreateRoomCommand}"/>
+                          Command="{Binding CreateRoomCommand}"/>
                 <MenuItem Header="{Infrastructure:Localized menu-closeRoom}"
-                          Command="{Binding Path=DeleteRoomCommand}"/>
+                          Command="{Binding DeleteRoomCommand}"/>
                 <Separator/>
                 <MenuItem Header="{Infrastructure:Localized menu-inviteInRoom}"
-                          Command="{Binding Path=SelectedRoom.InviteInRoomCommand}"/>
+                          Command="{Binding SelectedRoom.InviteInRoomCommand}"/>
                 <MenuItem Header="{Infrastructure:Localized menu-kickFromRoom}"
-                          Command="{Binding Path=SelectedRoom.KickFromRoomCommand}"/>
+                          Command="{Binding SelectedRoom.KickFromRoomCommand}"/>
                 <Separator/>
                 <MenuItem Header="{Infrastructure:Localized menu-enableVoiceInRoom}"
-                          Command="{Binding Path=SelectedRoom.EnableVoiceCommand}"/>
+                          Command="{Binding SelectedRoom.EnableVoiceCommand}"/>
                 <MenuItem Header="{Infrastructure:Localized menu-disableVoiceInRoom}"
-                          Command="{Binding Path=SelectedRoom.DisableVoiceCommand}"/>
+                          Command="{Binding SelectedRoom.DisableVoiceCommand}"/>
                 <Separator/>
                 <MenuItem Header="{Infrastructure:Localized menu-exitFromRoom}"
-                          Command="{Binding Path=ExitFromRoomCommand}"/>
+                          Command="{Binding ExitFromRoomCommand}"/>
             </MenuItem>
 
             <MenuItem Header="{Infrastructure:Localized menu-header-File}">
                 <MenuItem Header="{Infrastructure:Localized menu-distributedFiles}"
-                          Command="{Binding Path=OpenFilesDialogCommand}"/>
+                          Command="{Binding OpenFilesDialogCommand}"/>
                 <Separator/>
                 <MenuItem Header="{Infrastructure:Localized menu-addFileToRoom}"
-                          Command="{Binding Path=SelectedRoom.AddFileCommand}"/>
+                          Command="{Binding SelectedRoom.AddFileCommand}"/>
             </MenuItem>
 
             <MenuItem Header="{Infrastructure:Localized menu-header-plugins}"
-                      ItemsSource="{Binding Path=Plugins}">
+                      ItemsSource="{Binding Plugins}">
                 <MenuItem.ItemContainerStyle>
                     <Style TargetType="MenuItem">
-                        <Setter Property="Header" Value="{Binding Path=Header}"/>
-                        <Setter Property="Command" Value="{Binding Path=InvokeCommand}"/>
+                        <Setter Property="Header" Value="{Binding Header}"/>
+                        <Setter Property="Command" Value="{Binding InvokeCommand}"/>
                     </Style>
                 </MenuItem.ItemContainerStyle>
             </MenuItem>
@@ -496,11 +496,13 @@
             <MenuItem Header="{Infrastructure:Localized menu-header-other}">
                 <MenuItem Header="{Infrastructure:Localized menu-notifications}"
                           IsCheckable="True"
-                          IsChecked="{Binding Path=Alerts, Mode=TwoWay}"/>
+                          IsChecked="{Binding Alerts, Mode=TwoWay}"/>
+                <MenuItem Header="{Infrastructure:Localized menu-show-server-certificate}"
+                          Command="{Binding ShowServerCertificateCommand}"/>
                 <MenuItem Header="{Infrastructure:Localized menu-settings}"
-                          Command="{Binding Path=OpenSettingsCommand}"/>
+                          Command="{Binding OpenSettingsCommand}"/>
                 <MenuItem Header="{Infrastructure:Localized menu-about}"
-                          Command="{Binding Path=OpenAboutProgramCommand}"/>
+                          Command="{Binding OpenAboutProgramCommand}"/>
             </MenuItem>
         </Menu>
 

@@ -71,6 +71,7 @@
 
   <row key="menu-header-other" value="Other"/>
   <row key="menu-notifications" value="Notifications"/>
+  <row key="menu-show-server-certificate" value="Show server certificate"/>
   <row key="menu-settings" value="Settings"/>
   <row key="menu-about" value="About program"/>
 

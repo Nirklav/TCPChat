@@ -96,6 +96,7 @@ namespace UI.ViewModel
     public ICommand DeleteRoomCommand { get; private set; }
     public ICommand ExitFromRoomCommand { get; private set; }
     public ICommand OpenFilesDialogCommand { get; private set; }
+    public ICommand ShowServerCertificateCommand { get; private set; }
     public ICommand OpenAboutProgramCommand { get; private set; }
     public ICommand OpenSettingsCommand { get; private set; }
     #endregion
@@ -131,6 +132,7 @@ namespace UI.ViewModel
       DeleteRoomCommand = new Command(DeleteRoom, _ => ClientModel.IsInited);
       ExitFromRoomCommand = new Command(ExitFromRoom, _ => ClientModel.IsInited);
       OpenFilesDialogCommand = new Command(OpenFilesDialog, _ => ClientModel.IsInited);
+      ShowServerCertificateCommand = new Command(ShowServerCertificate, _ => ClientModel.IsInited);
       OpenAboutProgramCommand = new Command(OpenAboutProgram);
       OpenSettingsCommand = new Command(OpenSettings);
 
@@ -336,6 +338,11 @@ namespace UI.ViewModel
         dialog.DataContext = viewModel;
         dialog.ShowDialog();
       }
+    }
+
+    private void ShowServerCertificate(object obj)
+    {
+      X509Certificate2UI.DisplayCertificate(ClientModel.Client.RemoteCertiticate);
     }
 
     private void OpenAboutProgram(object obj)

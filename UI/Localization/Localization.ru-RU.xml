@@ -71,6 +71,7 @@
 
   <row key="menu-header-other" value="Другое"/>
   <row key="menu-notifications" value="Оповещения"/>
+  <row key="menu-show-server-certificate" value="Показать сертификат сервера"/>
   <row key="menu-settings" value="Настройки"/>
   <row key="menu-about" value="О программе"/>
 
