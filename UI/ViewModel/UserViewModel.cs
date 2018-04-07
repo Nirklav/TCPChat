@@ -102,7 +102,7 @@ namespace UI.ViewModel
     #region command methods
     private void UserClick(object obj)
     {
-      _parent.Message += UserId + ", ";
+      _parent.Message += UserId.Nick + ", ";
       _parent.MessageCaretIndex = _parent.Message.Length;
     }
 
