@@ -1,10 +1,5 @@
 ﻿using Engine.Model.Client;
 using Engine.Model.Common.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UI.Infrastructure;
 using WPFColor = System.Windows.Media.Color;
 
