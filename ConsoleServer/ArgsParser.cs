@@ -15,7 +15,7 @@ namespace ConsoleServer
       if (args.Length % 2 != 0)
         throw new InvalidOperationException("invalid args count");
 
-      _params = new Dictionary<string, string>();
+      _params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
       for (int i = 0; i < args.Length; i += 2)
         _params.Add(args[i], args[i + 1]);
 

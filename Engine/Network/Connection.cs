@@ -28,7 +28,6 @@ namespace Engine.Network
       ServerInfoWait,
       HandshakeRequestWait,
       HandshakeResponseWait,
-      HandshakeAcceptWait,
       Connected
     }
     #endregion
@@ -37,7 +36,6 @@ namespace Engine.Network
     protected const long ServerInfo = 1;
     protected const long HandshakeRequest = 2;
     protected const long HandshakeResponse = 3;
-    protected const long HandshakeAccepted = 4;
     
     private const int BufferSize = 4096;
     private const int MaxReceivedDataSize = 1024 * 1024;
@@ -303,12 +301,7 @@ namespace Engine.Network
                 unpacked.Dispose();
                 break;
               case HandshakeResponse:
-                var response = (IPackage<HandshakeResponse>)unpacked.Package;
-                OnHandshakeResponse(response.Content);
-                unpacked.Dispose();
-                break;
-              case HandshakeAccepted:
-                OnHandshakeAccepted();
+                OnHandshakeResponse();
                 unpacked.Dispose();
                 break;
               default:
@@ -381,21 +374,48 @@ namespace Engine.Network
     /// Invokes when connection receive version info.
     /// </summary>
     [SecuritySafeCritical]
-    protected virtual void OnServerInfo(ServerInfo info)
+    protected virtual void OnServerInfo(ServerInfo info) // Invokes on client
     {
       try
       {
         if (_state != ConnectionState.ServerInfoWait)
           throw new InvalidOperationException("Connection must be in ServerInfoWait state");
 
-        _state = ConnectionState.HandshakeResponseWait;
+        var remoteCertificate = new X509Certificate2(info.RawX509Certificate);
+        if (remoteCertificate.HasPrivateKey)
+          throw new InvalidOperationException("Remote certificate has private key");
 
-        var request = new HandshakeRequest();
-        request.RawX509Certificate = _localCertificate.Export(X509ContentType.Cert);
-        SendMessage(HandshakeRequest, request);
+        if (!ValidateCertificate(remoteCertificate))
+          throw new InvalidOperationException("Remote certiticate not validated");
+        
+        _remoteCertificate = remoteCertificate;
+        
+        byte[] key;
+        using (var rng = new RNGCryptoServiceProvider())
+        {
+          _generatedKey = new byte[32];
+          rng.GetBytes(_generatedKey);
+
+          var alg = _remoteCertificate.PublicKey.Key;
+          if (alg is RSACryptoServiceProvider rsa)
+            key = rsa.Encrypt(_generatedKey, false);
+          else
+            throw new InvalidOperationException("not supported key algorithm");
+        }
+
+        SendMessage(HandshakeRequest, new HandshakeRequest
+        {
+          AlgorithmId = AlgorithmId.Aes256CBC,
+          EncryptedKey = key,
+          RawX509Certificate = _localCertificate.Export(X509ContentType.Cert)
+        });
+
+        _state = ConnectionState.HandshakeResponseWait;
       }
       catch (Exception e)
       {
+        _remoteCertificate = null;
+
         OnHandshakeException(e);
       }
     }
@@ -404,7 +424,7 @@ namespace Engine.Network
     /// Invokes when connection receive request handshake from remote connection.
     /// </summary>
     [SecuritySafeCritical]
-    protected virtual void OnHandshakeRequest(HandshakeRequest request)
+    protected virtual void OnHandshakeRequest(HandshakeRequest request) // Invokes on server
     {
       try
       {
@@ -420,64 +440,14 @@ namespace Engine.Network
 
         _remoteCertificate = remoteCertificate;
 
-        byte[] key;
-        using (var rng = new RNGCryptoServiceProvider())
-        {
-          _generatedKey = new byte[32];
-          rng.GetBytes(_generatedKey);
-
-          var alg = _remoteCertificate.PublicKey.Key;
-          if (alg is RSACryptoServiceProvider rsa)
-            key = rsa.Encrypt(_generatedKey, false);
-          else
-            throw new InvalidOperationException("not supported key algorithm");
-        }
-
-        SendMessage(HandshakeResponse, new HandshakeResponse
-        {
-          AlgorithmId = AlgorithmId.Aes256CBC,
-          EncryptedKey = key,
-          RawX509Certificate = _localCertificate.Export(X509ContentType.Cert)
-        });
-
-        _state = ConnectionState.HandshakeAcceptWait;
-      }
-      catch (Exception e)
-      {
-        _remoteCertificate = null;
-
-        OnHandshakeException(e);
-      }
-    }
-
-    /// <summary>
-    /// Invokes when connection receive response handshake from remote connection.
-    /// </summary>
-    [SecuritySafeCritical]
-    protected virtual void OnHandshakeResponse(HandshakeResponse response)
-    {
-      try
-      {
-        if (_state != ConnectionState.HandshakeResponseWait)
-          throw new InvalidOperationException("Connection must be in HandshakeResponseWait state");
-
-        var remoteCertificate = new X509Certificate2(response.RawX509Certificate);
-        if (remoteCertificate.HasPrivateKey)
-          throw new InvalidOperationException("Remote certificate has private key");
-
-        if (!ValidateCertificate(remoteCertificate))
-          throw new InvalidOperationException("Remote certiticate not validated");
-
-        _remoteCertificate = remoteCertificate;
-
         byte[] clearKey;
         var alg = _localCertificate.PrivateKey;
         if (alg is RSACryptoServiceProvider rsa)
-          clearKey = rsa.Decrypt(response.EncryptedKey, false);
+          clearKey = rsa.Decrypt(request.EncryptedKey, false);
         else
           throw new InvalidOperationException("not supported key algorithm");
 
-        SendMessage(HandshakeAccepted);
+        SendMessage(HandshakeResponse);
 
         _packer.SetKey(clearKey);
         _state = ConnectionState.Connected;
@@ -491,15 +461,15 @@ namespace Engine.Network
     }
 
     /// <summary>
-    /// Invokes when remote connection accepted handshake.
+    /// Invokes when connection receive response handshake from remote connection.
     /// </summary>
     [SecuritySafeCritical]
-    protected virtual void OnHandshakeAccepted()
+    protected virtual void OnHandshakeResponse() // Invokes on client
     {
       try
       {
-        if (_state != ConnectionState.HandshakeAcceptWait)
-          throw new InvalidOperationException("Connection must be in HandshakeAcceptWait state");
+        if (_state != ConnectionState.HandshakeResponseWait)
+          throw new InvalidOperationException("Connection must be in HandshakeResponseWait state");
 
         _packer.SetKey(_generatedKey);
         _generatedKey = null;

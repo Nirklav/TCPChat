@@ -9,16 +9,18 @@ namespace Engine.Network
   }
 
   [Serializable]
-  [BinType("HandshakeRequest")]
-  public class HandshakeRequest
+  [BinType("ServerConnectionInfo", Version = 3)]
+  public class ServerInfo
   {
+    [BinField("a")]
+    public string ApiName;
     [BinField("c")]
     public byte[] RawX509Certificate;
   }
 
   [Serializable]
-  [BinType("HandshakeResponse")]
-  public class HandshakeResponse
+  [BinType("HandshakeRequest", Version = 2)]
+  public class HandshakeRequest
   {
     [BinField("c")]
     public byte[] RawX509Certificate;
@@ -28,13 +30,5 @@ namespace Engine.Network
 
     [BinField("k")]
     public byte[] EncryptedKey;
-  }
-
-  [Serializable]
-  [BinType("ServerConnectionInfo", Version = 2)]
-  public class ServerInfo
-  {
-    [BinField("a")]
-    public string ApiName;
   }
 }

@@ -110,9 +110,11 @@ namespace Engine.Network
     [SecurityCritical]
     public void SendServerInfo()
     {
-      var info = new ServerInfo();
-      info.ApiName = _serverApiName;
-      SendMessage(ServerInfo, info);
+      SendMessage(ServerInfo, new ServerInfo
+      {
+        ApiName = _serverApiName,
+        RawX509Certificate = LocalCertificate.Export(X509ContentType.Cert)
+      });
     }
 
     /// <summary>

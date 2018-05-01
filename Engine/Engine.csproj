@@ -60,7 +60,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BinSerializer, Version=2.2.0.0, Culture=neutral, PublicKeyToken=2e2d7f5115ca13f5, processorArchitecture=MSIL">
-      <HintPath>..\packages\ThirtyNineEighty.BinarySerializer.2.2.0\lib\net45\BinSerializer.dll</HintPath>
+      <HintPath>..\packages\ThirtyNineEighty.BinarySerializer.2.2.1\lib\net45\BinSerializer.dll</HintPath>
     </Reference>
     <Reference Include="OpenAL, Version=1.1.0.0, Culture=neutral, PublicKeyToken=2c8b266bc3b03e01, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

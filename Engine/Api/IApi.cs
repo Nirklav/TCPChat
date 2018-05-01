@@ -28,6 +28,6 @@ namespace Engine.Api
     /// <summary>
     /// Name and version of Api.
     /// </summary>
-    public const string Name = "StandardAPI v5.0";
+    public const string Name = "StandardAPI v5.1";
   }
 }

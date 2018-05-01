@@ -246,9 +246,9 @@ namespace Engine.Network
     }
 
     [SecuritySafeCritical]
-    protected override void OnHandshakeResponse(HandshakeResponse response)
+    protected override void OnHandshakeResponse()
     {
-      base.OnHandshakeResponse(response);
+      base.OnHandshakeResponse();
 
       _notifier.Connected(new ConnectEventArgs());
     }
