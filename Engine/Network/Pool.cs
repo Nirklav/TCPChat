@@ -53,13 +53,13 @@ namespace Engine.Network
       [SecuritySafeCritical]
       public override bool Equals(object obj)
       {
-        if (ReferenceEquals(obj, null))
+        if (obj is null)
           return false;
 
-        if (!(obj is Container))
-          return false;
+        if (obj is Container)
+          return Equals((Container)obj);
 
-        return Equals((Container)obj);
+        return false;
       }
 
       [SecuritySafeCritical]

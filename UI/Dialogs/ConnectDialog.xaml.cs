@@ -2,7 +2,6 @@
 using Microsoft.Win32;
 using System;
 using System.Drawing;
-using System.Net;
 using System.Security;
 using System.Windows;
 using UI.Infrastructure;
@@ -49,10 +48,10 @@ namespace UI.Dialogs
       try
       {
         if (string.IsNullOrEmpty(NickField.Text))
-          throw new FormatException();
+          throw new FormatException("Nick field is empty.");
 
         if (string.IsNullOrEmpty(ServerAddressField.Text))
-          throw new FormatException();
+          throw new FormatException("Server address field is empty.");
 
         Nick = NickField.Text;
         NickColor = Color.FromArgb((int)RedColorSlider.Value, (int)GreenColorSlider.Value, (int)BlueColorSlider.Value);
@@ -69,14 +68,15 @@ namespace UI.Dialogs
             Address = ServerAddressField.Text;
             break;
           default:
-            throw new FormatException();
+            throw new FormatException("Unknown host name type. Allowed: Dns, IPv4 or IPv6.");
         }
 
         DialogResult = true;
       }
-      catch (FormatException)
+      catch (FormatException fe)
       {
-        MessageBox.Show(this, Localizer.Instance.Localize("fieldsError"), "TCP Chat");
+        var error = Localizer.Instance.Localize("fieldsError");
+        MessageBox.Show(this, $"{error}\r\n{fe.Message}", "TCP Chat");
       }
     }
 

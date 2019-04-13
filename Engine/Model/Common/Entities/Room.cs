@@ -243,8 +243,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public Message GetMessage(long messageId)
     {
-      Message message;
-      _messages.TryGetValue(messageId, out message);
+      _messages.TryGetValue(messageId, out var message);
       return message;
     }
 
@@ -271,8 +270,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public Message RemoveMessage(long messageId)
     {
-      Message message;
-      if (_messages.TryGetValue(messageId, out message))
+      if (_messages.TryGetValue(messageId, out var message))
         _messages.Remove(messageId);
       return message;
     }
@@ -318,8 +316,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public FileDescription TryGetFile(FileId fileId)
     {
-      FileDescription file;
-      _files.TryGetValue(fileId, out file);
+      _files.TryGetValue(fileId, out var file);
       return file;
     }
 
@@ -358,14 +355,14 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
-      if (ReferenceEquals(obj, null))
+      if (obj is null)
         return false;
 
       if (ReferenceEquals(obj, this))
         return true;
 
       var room = obj as Room;
-      if (ReferenceEquals(room, null))
+      if (room is null)
         return false;
 
       return Equals(room);
@@ -380,7 +377,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public bool Equals(Room room)
     {
-      if (ReferenceEquals(room, null))
+      if (room is null)
         return false;
 
       if (ReferenceEquals(room, this))

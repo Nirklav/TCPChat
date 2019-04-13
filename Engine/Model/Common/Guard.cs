@@ -35,7 +35,7 @@ namespace Engine.Model
         _current = null;
 
       var obj = _obj;
-      _obj = default(T);
+      _obj = default;
 
       Monitor.Exit(obj);
     }

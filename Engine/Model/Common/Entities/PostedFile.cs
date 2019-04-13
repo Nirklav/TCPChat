@@ -75,7 +75,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public bool Equals(PostedFile other)
     {
-      if (ReferenceEquals(other, null))
+      if (other is null)
         return false;
       if (ReferenceEquals(other, this))
         return true;
@@ -85,14 +85,13 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
-      if (ReferenceEquals(obj, null))
+      if (obj is null)
         return false;
       if (ReferenceEquals(obj, this))
         return true;
-      var other = obj as PostedFile;
-      if (other == null)
-        return false;
-      return Equals(other);
+      if (obj is PostedFile other)
+        return Equals(other);
+      return false;
     }
 
     [SecuritySafeCritical]

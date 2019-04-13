@@ -81,8 +81,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public TUser TryGetUser(UserId userId)
     {
-      TUser result;
-      _users.TryGetValue(userId, out result);
+      _users.TryGetValue(userId, out var result);
       return result;
     }
 
@@ -121,8 +120,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public TUser RemoveUser(UserId userId)
     {
-      TUser user;
-      _users.TryGetValue(userId, out user);
+      _users.TryGetValue(userId, out var user);
       _users.Remove(userId);
       return user;
     }
@@ -174,8 +172,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public TRoom GetTextRoom(string roomName)
     {
-      TRoom textRoom;
-      if (!_rooms.TryGetValue(roomName, out textRoom))
+      if (!_rooms.TryGetValue(roomName, out var textRoom))
         throw new ArgumentException(string.Format("Room with {0} name not found.", roomName));
       return textRoom;
     }
@@ -188,8 +185,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public TVoiceRoom GetVoiceRoom(string roomName)
     {
-      TVoiceRoom voiceRoom;
-      if (!_voiceRooms.TryGetValue(roomName, out voiceRoom))
+      if (!_voiceRooms.TryGetValue(roomName, out var voiceRoom))
         throw new ArgumentException(string.Format("Room with {0} name not found.", roomName));
       return voiceRoom;
     }
@@ -216,12 +212,10 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public Room TryGetRoom(string roomName)
     {
-      TRoom textRoom;
-      if (_rooms.TryGetValue(roomName, out textRoom))
+      if (_rooms.TryGetValue(roomName, out var textRoom))
         return textRoom;
 
-      TVoiceRoom voiceRoom;
-      if (_voiceRooms.TryGetValue(roomName, out voiceRoom))
+      if (_voiceRooms.TryGetValue(roomName, out var voiceRoom))
         return voiceRoom;
 
       return null;
@@ -245,8 +239,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public Room RemoveRoom(string roomName)
     {
-      TRoom textRoom;
-      if (_rooms.TryGetValue(roomName, out textRoom))
+      if (_rooms.TryGetValue(roomName, out var textRoom))
       {
         _rooms.Remove(roomName);
         textRoom.Disable();
@@ -254,8 +247,7 @@ namespace Engine.Model.Common.Entities
         return textRoom;
       }
 
-      TVoiceRoom voiceRoom;
-      if (_voiceRooms.TryGetValue(roomName, out voiceRoom))
+      if (_voiceRooms.TryGetValue(roomName, out var voiceRoom))
       {
         _voiceRooms.Remove(roomName);
         voiceRoom.Disable();

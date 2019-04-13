@@ -178,9 +178,10 @@ namespace UI.ViewModel
 
           dialog.SaveSettings();
         }
-        catch (Exception)
+        catch (Exception e)
         {
-          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
+          var errorMessage = Localizer.Instance.Localize(ParamsErrorKey);
+          SelectedRoom.AddSystemMessage($"{errorMessage}\r\n{e.Message}");
 
           if (ServerModel.IsInited)
             ServerModel.Reset();
@@ -259,7 +260,8 @@ namespace UI.ViewModel
         }
         catch (Exception e)
         {
-          SelectedRoom.AddSystemMessage(Localizer.Instance.Localize(ParamsErrorKey));
+          var errorMessage = Localizer.Instance.Localize(ParamsErrorKey);
+          SelectedRoom.AddSystemMessage($"{errorMessage}\r\n{e.Message}");
 
           if (ClientModel.IsInited)
             ClientModel.Reset();
@@ -500,7 +502,7 @@ namespace UI.ViewModel
         }
         catch (Exception)
         {
-          // program will be closed and the exception will not affect it.
+          // Program will be closed and the exception will not affect it.
         }
 
         ClientModel.Reset();

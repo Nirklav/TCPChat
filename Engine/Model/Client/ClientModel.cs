@@ -18,10 +18,6 @@ namespace Engine.Model.Client
   public static class ClientModel
   {
     private static ClientChat _chat;
-    private static IPlayer _player = new OpenALPlayer();
-    private static IRecorder _recorder = new OpenALRecorder();
-    private static IClientNotifier _notifier = NotifierGenerator.MakeInvoker<IClientNotifier>();
-    private static Logger _logger = new Logger("Client.log");
 
     /// <summary>
     /// Client api.
@@ -59,20 +55,12 @@ namespace Engine.Model.Client
     /// <summary>
     /// Sound player.
     /// </summary>
-    public static IPlayer Player
-    {
-      [SecurityCritical]
-      get { return _player; }
-    }
+    public static IPlayer Player { [SecurityCritical] get; } = new OpenALPlayer();
 
     /// <summary>
     /// Sound recorder.
     /// </summary>
-    public static IRecorder Recorder
-    {
-      [SecurityCritical]
-      get { return _recorder; }
-    }
+    public static IRecorder Recorder { [SecurityCritical] get; } = new OpenALRecorder();
 
     /// <summary>
     /// Plugins manager.
@@ -88,20 +76,12 @@ namespace Engine.Model.Client
     /// <summary>
     /// Notifier.
     /// </summary>
-    public static IClientNotifier Notifier
-    {
-      [SecurityCritical]
-      get { return _notifier; }
-    }
+    public static IClientNotifier Notifier { [SecurityCritical] get; } = NotifierGenerator.MakeInvoker<IClientNotifier>();
 
     /// <summary>
     /// Logger.
     /// </summary>
-    public static Logger Logger
-    {
-      [SecurityCritical]
-      get { return _logger; }
-    }
+    public static Logger Logger { [SecurityCritical] get; } = new Logger("Client.log");
 
     /// <summary>
     /// Trusted certificates storage.
@@ -153,11 +133,11 @@ namespace Engine.Model.Client
       if (Interlocked.CompareExchange(ref _chat, new ClientChat(user), null) != null)
         throw new InvalidOperationException("model already inited");
 
-      TrustedCertificates = new ClientCertificatesStorage(initializer.TrustedCertificatesPath, _notifier, _logger);
+      TrustedCertificates = new ClientCertificatesStorage(initializer.TrustedCertificatesPath, Notifier, Logger);
 
       Api = new ClientApi();
-      Client = new AsyncClient(userId, TrustedCertificates, initializer.Certificate, Api, _notifier, _logger);
-      Peer = new AsyncPeer(userId, initializer.Certificate, Api, _notifier, _logger);
+      Client = new AsyncClient(userId, TrustedCertificates, initializer.Certificate, Api, Notifier, Logger);
+      Peer = new AsyncPeer(userId, initializer.Certificate, Api, Notifier, Logger);
 
       Plugins = new ClientPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);

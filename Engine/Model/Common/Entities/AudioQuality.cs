@@ -36,14 +36,14 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
-      if (ReferenceEquals(obj, null))
+      if (obj is null)
         return false;
 
       if (ReferenceEquals(obj, this))
         return true;
 
       var quality = obj as AudioQuality;
-      if (ReferenceEquals(quality, null))
+      if (quality is null)
         return false;
 
       return Equals(quality);
@@ -52,7 +52,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public bool Equals(AudioQuality other)
     {
-      if (ReferenceEquals(other, null))
+      if (other is null)
         return false;
 
       if (ReferenceEquals(other, this))

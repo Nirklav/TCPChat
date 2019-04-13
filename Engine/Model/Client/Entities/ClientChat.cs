@@ -58,8 +58,7 @@ namespace Engine.Model.Client.Entities
     [SecuritySafeCritical]
     public DownloadingFile TryGetFileDownload(FileId fileId)
     {
-      DownloadingFile file;
-      _downloadingFiles.TryGetValue(fileId, out file);
+      _downloadingFiles.TryGetValue(fileId, out var file);
       return file;
     }
 
@@ -81,8 +80,7 @@ namespace Engine.Model.Client.Entities
     [SecuritySafeCritical]
     public string RemoveFileDownload(FileId fileId)
     {
-      DownloadingFile file;
-      if (!_downloadingFiles.TryGetValue(fileId, out file))
+      if (!_downloadingFiles.TryGetValue(fileId, out var file))
         throw new ArgumentException("File not downloading.");
 
       _downloadingFiles.Remove(fileId);
@@ -121,8 +119,7 @@ namespace Engine.Model.Client.Entities
     [SecuritySafeCritical]
     public PostedFile TryGetPostedFile(FileId fileId)
     {
-      PostedFile posted;
-      _postedFiles.TryGetValue(fileId, out posted);
+      _postedFiles.TryGetValue(fileId, out var posted);
       return posted;
     }
 
@@ -163,8 +160,7 @@ namespace Engine.Model.Client.Entities
     [SecuritySafeCritical]
     public void RemovePostedFile(string roomName, FileId fileId)
     {
-      PostedFile posted;
-      if (!_postedFiles.TryGetValue(fileId, out posted))
+      if (!_postedFiles.TryGetValue(fileId, out var posted))
         throw new InvalidOperationException("Posted file not found");
 
       if (!posted.RoomNames.Remove(roomName))

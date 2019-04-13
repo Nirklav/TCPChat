@@ -1,6 +1,5 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Drawing;
 using System.IO;
 using System.Security;
 using System.Windows;
@@ -33,13 +32,13 @@ namespace UI.Dialogs
       try
       {
         if (string.IsNullOrEmpty(ServerAddressField.Text))
-          throw new FormatException();
+          throw new FormatException("Server address field is empty.");
 
         if (string.IsNullOrEmpty(CertificateField.Text))
-          throw new FormatException();
+          throw new FormatException("Certificate field is empty.");
 
         if (!File.Exists(CertificateField.Text))
-          throw new FormatException();
+          throw new FormatException("Certificate file does not exist.");
 
         ServerAddress = ServerAddressField.Text;
         CertificatePath = CertificateField.Text;
@@ -47,9 +46,10 @@ namespace UI.Dialogs
 
         DialogResult = true;
       }
-      catch (FormatException)
+      catch (FormatException fe)
       {
-        MessageBox.Show(this, Localizer.Instance.Localize("fieldsError"), "TCP Chat");
+        var errorMsg = Localizer.Instance.Localize("fieldsError");
+        MessageBox.Show(this, $"{errorMsg}\r\n{fe.Message}", "TCP Chat");
       }
     }
 

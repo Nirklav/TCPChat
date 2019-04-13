@@ -57,14 +57,14 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
-      if (ReferenceEquals(obj, null))
+      if (obj is null)
         return false;
 
       if (ReferenceEquals(obj, this))
         return true;
 
       var user = obj as User;
-      if (ReferenceEquals(user, null))
+      if (user is null)
         return false;
 
       return Equals(user);
@@ -79,7 +79,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public bool Equals(User user)
     {
-      if (ReferenceEquals(user, null))
+      if (user is null)
         return false;
 
       if (ReferenceEquals(user, this))

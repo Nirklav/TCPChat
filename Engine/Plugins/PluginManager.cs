@@ -190,8 +190,7 @@ namespace Engine.Plugins
     {
       lock (SyncObject)
       {
-        PluginContainer container;
-        if (Plugins.TryGetValue(name, out container))
+        if (Plugins.TryGetValue(name, out var container))
           return UnloadPlugin(container);
 
         return false;
@@ -229,7 +228,7 @@ namespace Engine.Plugins
       // Commands
       foreach (var command in loaded.Plugin.Commands)
         if (Commands.ContainsKey(command.Id))
-          throw new ArgumentException(string.Format("In manager already loaded plugin with same command id [CommandId: {0}]", command.Id));
+          throw new ArgumentException($"In manager already loaded plugin with same command id [CommandId: {command.Id}]");
 
       foreach (var command in loaded.Plugin.Commands)
         Commands.Add(command.Id, command);

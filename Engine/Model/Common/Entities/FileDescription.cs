@@ -65,14 +65,14 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public override bool Equals(object obj)
     {
-      if (ReferenceEquals(obj, null))
+      if (obj is null)
         return false;
 
       if (ReferenceEquals(obj, this))
         return true;
 
       var file = obj as FileDescription;
-      if (ReferenceEquals(file, null))
+      if (file is null)
         return false;
 
       return Equals(file);
@@ -81,7 +81,7 @@ namespace Engine.Model.Common.Entities
     [SecuritySafeCritical]
     public bool Equals(FileDescription file)
     {
-      if (ReferenceEquals(file, null))
+      if (file is null)
         return false;
 
       if (ReferenceEquals(file, this))

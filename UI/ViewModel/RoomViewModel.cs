@@ -6,7 +6,6 @@ using Engine.Api.Client.Rooms;
 using Engine.Api.Server.Admin;
 using Engine.Model.Client;
 using Engine.Model.Common.Entities;
-using Engine.Model.Server;
 using Engine.Model.Server.Entities;
 using System;
 using System.Collections.Generic;

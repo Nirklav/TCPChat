@@ -16,8 +16,6 @@ namespace Engine.Model.Server
   {
     #region static model
     private static ServerChat _chat;
-    private static IServerNotifier _notifier = NotifierGenerator.MakeInvoker<IServerNotifier>();
-    private static Logger _logger = new Logger("Server.log");
 
     /// <summary>
     /// Серверный API
@@ -55,20 +53,12 @@ namespace Engine.Model.Server
     /// <summary>
     /// Уведомитель.
     /// </summary>
-    public static IServerNotifier Notifier
-    {
-      [SecurityCritical]
-      get { return _notifier; }
-    }
+    public static IServerNotifier Notifier { [SecurityCritical] get; } = NotifierGenerator.MakeInvoker<IServerNotifier>();
 
     /// <summary>
     /// Logger.
     /// </summary>
-    public static Logger Logger
-    {
-      [SecurityCritical]
-      get { return _logger; }
-    }
+    public static Logger Logger { [SecurityCritical] get; } = new Logger("Server.log");
 
     /// <summary>
     /// Исользовать только с конструкцией using
@@ -103,7 +93,7 @@ namespace Engine.Model.Server
         throw new InvalidOperationException("model already inited");
 
       Api = new ServerApi(initializer.AdminPassword);
-      Server = new AsyncServer(initializer.Certificate, Api, _notifier, Logger);
+      Server = new AsyncServer(initializer.Certificate, Api, Notifier, Logger);
 
       Plugins = new ServerPluginManager(initializer.PluginsPath);
       Plugins.LoadPlugins(initializer.ExcludedPlugins);
