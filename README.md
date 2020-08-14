@@ -5,9 +5,9 @@
 
 # Description:
 Multi-user chat with mixed architecture: client-server, p2p. 
-Server tightly works with certificates. Server and users should have certificates. But program can generate self signed certificates that supports too, but with some peculiarities.
+Server works tightly with certificates. Server and users should have certificates. But program can generate self signed certificates that supports too, but with some peculiarities.
 
-First of all if server has self-signed certificate then users that connect to him will be warned.
+First of all if server has self-signed certificate then users those connect to him will be warned.
 Users also can use self-signed certificates, if them have it, then them will be marked with the appropriate icons in users list.
 Also user can save certificates to local trusted TCPChat storage.
 
@@ -22,8 +22,7 @@ Here is this user icons:
 
 # Server address: 
 ```
-IP:   93.170.186.160
-Port: 10021
+Server uri: 193.105.135.160:10021
 Server certificate tumbprint: 839292da057678529acd42f414a51f8f8b16d1ff
 ```
 Server certificate: [file](https://raw.github.com/Nirklav/TCPChat/master/ServerCertificate.cer)
