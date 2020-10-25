@@ -14,7 +14,7 @@
     <Height>470</Height>
   </FormSize>
   <Alerts>true</Alerts>
-  <ServerAddress>93.170.186.160:10021</ServerAddress>
+  <ServerAddress>193.105.135.160:10021</ServerAddress>
   <TrustedCertificatesPath>TrustedCertificates</TrustedCertificatesPath>
   <ServerStartAddress>0.0.0.0:10021</ServerStartAddress>
   <ServerStartP2PPort>10022</ServerStartP2PPort>
