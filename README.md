@@ -20,13 +20,6 @@ Here is this user icons:
 # Main idea:
   Main idea of this project - is multiple servers without databases. Where you can find friends and recognize that this is really them with he help of certificates.
 
-# Server address: 
-```
-Server uri: 193.105.135.160:10021
-Server certificate tumbprint: 839292da057678529acd42f414a51f8f8b16d1ff
-```
-Server certificate: [file](https://raw.github.com/Nirklav/TCPChat/master/ServerCertificate.cer)
-
 # Supports:
   1. Full trafic encryption. Key exchange with certificates. AES-256 CBC.
   2. Private messages. (P2P)
